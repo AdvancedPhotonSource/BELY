@@ -372,6 +372,28 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
         return getEntityDbFacade().searchEntities(searchString); 
     }
     
+    public String generatePatternString(String searchString) {
+        String patternString; 
+        if (searchString.contains("?") || searchString.contains("*")) { 
+            patternString = searchString.replace("*", ".*"); 
+            patternString = patternString.replace("?", ".");
+        } else {
+            patternString = Pattern.quote(searchString); 
+        }
+        return patternString; 
+    }
+    
+    public Pattern getSearchPattern(String patternString, boolean caseInsensitive) {
+        Pattern searchPattern;
+        if (caseInsensitive) {
+            searchPattern = Pattern.compile(patternString, Pattern.CASE_INSENSITIVE);
+        } else {
+            searchPattern = Pattern.compile(patternString);
+        }
+        
+        return searchPattern; 
+    }
+    
     /**
      * Search all entities for a given string.
      *
@@ -385,21 +407,11 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
             return searchResultList;
         }
         
-        // Start new search        
-        Pattern searchPattern;
-        String patternString;
-        if (searchString.contains("?") || searchString.contains("*")) { 
-            patternString = searchString.replace("*", ".*"); 
-            patternString = patternString.replace("?", ".");
-        } else {
-            patternString = Pattern.quote(searchString); 
-        }
+        // Start new search                
+        String patternString = generatePatternString(searchString);
+        Pattern searchPattern = getSearchPattern(patternString, caseInsensitive); 
         
-        if (caseInsensitive) {
-            searchPattern = Pattern.compile(patternString, Pattern.CASE_INSENSITIVE);
-        } else {
-            searchPattern = Pattern.compile(patternString);
-        }
+        
         List<EntityType> allObjectList = searchEntities(searchString);
         for (EntityType entity : allObjectList) {            
             try {
