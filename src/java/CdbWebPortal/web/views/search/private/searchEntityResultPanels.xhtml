@@ -6,152 +6,51 @@ See LICENSE file.
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://java.sun.com/jsf/facelets"
-                xmlns:p="http://primefaces.org/ui">
-    
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">
+
     <ui:param name="entitySettingObject" value="#{searchController.searchSettings}" />
-   
-    <p:panel header="#{itemDomainMachineDesignController.displayEntityTypeName}s"
-             rendered="#{entitySettingObject.displayMachineDesignItems}"
-             collapsed="#{!itemDomainMachineDesignController.displaySearchResultList}"
-             toggleable="true">
-        <ui:include src="../../itemDomainMachineDesignBase/private/itemDomainMachineDesignSearchTreeTable.xhtml"/>
-        
-        <ui:include src="searchResultLimitDisclaimer.xhtml" />
-    </p:panel>
-    
-    <p:panel header="#{itemDomainCatalogController.displayEntityTypeName}s"
-             rendered="#{entitySettingObject.displayCatalogItems}"
-             collapsed="#{!itemDomainCatalogController.displaySearchResultList}"
-             toggleable="true">
+
+    <p:panel header="#{itemDomainLogbookController.displayEntityTypeName}s">
         <ui:include src="../../item/private/itemSearchDataTable.xhtml">
-            <ui:param name="itemDomainController" value="#{itemDomainCatalogController}" />
+            <ui:param name="itemDomainController" value="#{itemDomainLogbookController}" />
         </ui:include>
-        
-        <ui:include src="searchResultLimitDisclaimer.xhtml" />
+
+        <h2>Log Entries</h2>
+
+        <p:dataTable id="#{itemDomainController.entityTypeName}LogsSearchDataTable" 
+                     var="searchResultObject" 
+                     value="#{itemDomainLogbookController.logResults}" 
+                     sortMode="single"
+                     stripedRows="true"
+                     paginator="true" 
+                     paginatorAlwaysVisible="false" 
+                     rows="#{searchController.searchSettings.displayNumberOfItemsPerPage}" 
+                     emptyMessage="No items match.">
+
+            <p:column sortBy="#{searchResultObject.objectName}" 
+                      filterBy="#{searchResultObject.objectName}"
+                      filterMatchMode="contains"
+                      headerText="Name">
+                <h:outputLink value="../itemDomainLogbook/view.xhtml?id=#{searchResultObject.objectId}&amp;logId=#{searchResultObject.additionalAttribute}&amp;breadcrumb=#{breadcrumb}" title="#{entityTitle}: #{searchResultObject.objectName}">
+                    <h:outputText value="#{searchResultObject.objectName}"/>
+                </h:outputLink>
+            </p:column>
+
+            <p:column sortBy="#{searchResultObject.display}" headerText="Match Description">
+                <h:outputText value="#{searchResultObject.display}"/>
+            </p:column>
+
+            <p:column sortBy="#{searchResultObject.objectId}" headerText="Id">
+                <h:outputText value="#{searchResultObject.objectId}"/>
+            </p:column>
+        </p:dataTable>
+
+
+
+        <!--        
+                <ui:include src="searchResultLimitDisclaimer.xhtml" />-->
     </p:panel>
 
-    <p:panel header="#{itemDomainInventoryController.displayEntityTypeName}s"
-             rendered="#{entitySettingObject.displayInventoryItems}"
-             collapsed="#{!itemDomainInventoryController.displaySearchResultList}"
-             toggleable="true">
-        <ui:include src="../../item/private/itemSearchDataTable.xhtml">
-            <ui:param name="itemDomainController" value="#{itemDomainInventoryController}" />
-        </ui:include>
-        
-        <ui:include src="searchResultLimitDisclaimer.xhtml" />
-    </p:panel>
-    
-    <p:panel header="#{itemDomainCableCatalogController.displayEntityTypeName}s"
-             rendered="#{entitySettingObject.displayCableCatalogItems}"
-             collapsed="#{!itemDomainCableCatalogController.displaySearchResultList}"
-             toggleable="true">
-        <ui:include src="../../item/private/itemSearchDataTable.xhtml">
-            <ui:param name="itemDomainController" value="#{itemDomainCableCatalogController}" />
-        </ui:include>
-        
-        <ui:include src="searchResultLimitDisclaimer.xhtml" />
-    </p:panel>
-    
-    <p:panel header="#{itemDomainCableInventoryController.displayEntityTypeName}s"
-             rendered="#{entitySettingObject.displayCableInventoryItems}"
-             collapsed="#{!itemDomainCableInventoryController.displaySearchResultList}"
-             toggleable="true">
-        <ui:include src="../../item/private/itemSearchDataTable.xhtml">
-            <ui:param name="itemDomainController" value="#{itemDomainCableInventoryController}" />
-        </ui:include>
-        
-        <ui:include src="searchResultLimitDisclaimer.xhtml" />
-    </p:panel>
-    
-    <p:panel header="#{itemDomainCableDesignController.displayEntityTypeName}s"
-             rendered="#{entitySettingObject.displayCableDesignItems}"
-             collapsed="#{!itemDomainCableDesignController.displaySearchResultList}"
-             toggleable="true">
-        <ui:include src="../../item/private/itemSearchDataTable.xhtml">
-            <ui:param name="itemDomainController" value="#{itemDomainCableDesignController}" />
-        </ui:include>
-        
-        <ui:include src="searchResultLimitDisclaimer.xhtml" />
-    </p:panel>
-
-    <p:panel header="Item Elements" 
-             rendered="#{entitySettingObject.displayItemElements}"
-             collapsed="#{!itemElementController.displaySearchResultList}"
-             toggleable="true">
-        <ui:include src="../../itemElement/private/itemElementSearchDataTable.xhtml"/>
-        
-        <ui:include src="searchResultLimitDisclaimer.xhtml" />
-    </p:panel>
-
-    <p:panel header="#{itemDomainLocationController.displayEntityTypeName}s"
-             rendered="#{entitySettingObject.displayLocationItems}"
-             collapsed="#{!itemDomainLocationController.displaySearchResultList}"
-             toggleable="true">
-        <ui:include src="../../item/private/itemSearchDataTable.xhtml">
-            <ui:param name="itemDomainController" value="#{itemDomainLocationController}" />
-        </ui:include>
-    </p:panel>
-    
-    <p:panel header="#{itemDomainMAARCController.displayEntityTypeName}s"
-             rendered="#{entitySettingObject.displayMAARCItems}"
-             collapsed="#{!itemDomainMAARCController.displaySearchResultList}"
-             toggleable="true">
-        <ui:include src="../../item/private/itemSearchDataTable.xhtml">
-            <ui:param name="itemDomainController" value="#{itemDomainMAARCController}" />
-        </ui:include>
-        
-        <ui:include src="searchResultLimitDisclaimer.xhtml" />
-    </p:panel>
-
-    <p:panel header="Item Categories" 
-             rendered="#{entitySettingObject.displayItemCategories}"
-             collapsed="#{!itemCategoryController.displaySearchResultList}"
-             toggleable="true">
-        <ui:include src="../../itemCategory/private/itemCategorySearchDataTable.xhtml"/>
-    </p:panel> 
-
-    <p:panel header="Item Types" 
-             rendered="#{entitySettingObject.displayItemTypes}"
-             collapsed="#{!itemTypeController.displaySearchResultList}"
-             toggleable="true">
-        <ui:include src="../../itemType/private/itemTypeSearchDataTable.xhtml"/>
-    </p:panel>
-
-
-    <p:panel header="Property Types" 
-             rendered="#{entitySettingObject.displayPropertyTypes}"
-             collapsed="#{!propertyTypeController.displaySearchResultList}"
-             toggleable="true">
-        <ui:include src="../../propertyType/private/propertyTypeSearchDataTable.xhtml"/>
-    </p:panel>   
-
-    <p:panel header="Property Type Categories" 
-             rendered="#{entitySettingObject.displayPropertyTypeCategories}"
-             collapsed="#{!propertyTypeCategoryController.displaySearchResultList}"
-             toggleable="true">
-        <ui:include src="../../propertyTypeCategory/private/propertyTypeCategorySearchDataTable.xhtml"/>
-    </p:panel>  
-
-    <p:panel header="Sources" 
-             rendered="#{entitySettingObject.displaySources}"
-             collapsed="#{!sourceController.displaySearchResultList}"
-             toggleable="true">
-        <ui:include src="../../source/private/sourceSearchDataTable.xhtml"/>
-    </p:panel>                              
-
-    <p:panel header="Users" 
-             rendered="#{entitySettingObject.displayUsers}"
-             collapsed="#{!userInfoController.displaySearchResultList}"
-             toggleable="true"                                         
-             >
-        <ui:include src="../../userInfo/private/userInfoSearchDataTable.xhtml"/>
-    </p:panel>
-
-    <p:panel header="User Groups" 
-             rendered="#{entitySettingObject.displayUserGroups}"
-             collapsed="#{!userGroupController.displaySearchResultList}"
-             toggleable="true">
-        <ui:include src="../../userGroup/private/userGroupSearchDataTable.xhtml"/>
-    </p:panel> 
 
 </ui:composition>
