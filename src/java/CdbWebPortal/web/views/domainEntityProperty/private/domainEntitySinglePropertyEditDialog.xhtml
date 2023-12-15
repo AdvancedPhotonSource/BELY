@@ -44,7 +44,7 @@ See LICENSE file.
               styleClass="viewTransparentBackgroundDialog"
               resizable="false"
               closable="false"
-              modal="true">
+              modal="false">
         <p:outputPanel id="#{entityTypeName}SinglePropertyEditOutputPanel"
                        rendered="#{propertyValueObject != null}">
             <div>
@@ -193,7 +193,7 @@ See LICENSE file.
                        : '../../common/private/commonEmptyPage.xhtml'}" />
 
     <p:remoteCommand name="show#{entityTypeName}EntitySinglePropertyController"
-                     update="@form"
+                     update="@form:#{entityTypeName}SinglePropertyEditDialog"
                      oncomplete="PF('#{entityTypeName}SinglePropertySelectDialogWidget').hide();
                      PF('#{entityTypeName}SinglePropertyEditDialogWidget').show()" /> 
 
