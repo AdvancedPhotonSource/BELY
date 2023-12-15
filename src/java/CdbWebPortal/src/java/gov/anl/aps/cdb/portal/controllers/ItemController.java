@@ -68,6 +68,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import javax.ejb.EJB;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
@@ -148,6 +149,7 @@ public abstract class ItemController<
     protected DataModel allowedChildItemSelectDataModel = null;
 
     protected List<ItemCategory> domainItemCategoryList = null;
+    protected List<ItemType> domainItemTypeList = null; 
 
     protected Boolean cloneProperties = false;
     protected Boolean cloneCreateItemElementPlaceholders = false;
@@ -402,10 +404,21 @@ public abstract class ItemController<
         }
         return domainItemCategoryList;
     }
+        
+    public List<ItemType> getDomainItemTypeList() {
+        if (domainItemTypeList == null) {
+            domainItemTypeList = itemTypeFacade.findByDomainName(this.getDefaultDomainName());
+        }
+        return domainItemTypeList;
+    }
 
     @Override
     public SelectItem[] getDomainItemCategoryListForSelectOne() {
         return CollectionUtility.getSelectItems(getDomainItemCategoryList(), true);
+    }
+        
+    public SelectItem[] getDomainItemTypeListForSelectOne() {
+        return CollectionUtility.getSelectItems(getDomainItemTypeList(), true);
     }
 
     @Override
@@ -2009,22 +2022,31 @@ public abstract class ItemController<
         }
         return templateItemsListDataModel;
     }
+    
+    protected void appendTemplateEntityType(ItemDomainEntity item) throws CdbException { 
+        EntityType templateType = entityTypeFacade.findByName(EntityTypeName.template.getValue());
+        if (item.getEntityTypeList() == null) {
+            try {
+                item.setEntityTypeList(new ArrayList<>());
+            } catch (CdbException ex) {
+                LOGGER.error(ex);
+                SessionUtility.addErrorMessage("Error", ex.getErrorMessage());    
+                throw ex; 
+            }
+        }
+        item.getEntityTypeList().add(templateType);
+    }
 
     public String prepareCreateTemplate() {
         String prepareCreate = prepareCreate();
+        
+        ItemDomainEntity current = getCurrent();
 
-        EntityType templateType = entityTypeFacade.findByName(EntityTypeName.template.getValue());
-        if (getCurrent().getEntityTypeList() == null) {
-            try {
-                getCurrent().setEntityTypeList(new ArrayList<>());
-            } catch (CdbException ex) {
-                LOGGER.error(ex);
-                SessionUtility.addErrorMessage("Error", ex.getErrorMessage());
-                return null;
-            }
+        try {       
+            appendTemplateEntityType(current);
+        } catch (CdbException ex) {
+            return null; 
         }
-
-        getCurrent().getEntityTypeList().add(templateType);
 
         return prepareCreate;
     }

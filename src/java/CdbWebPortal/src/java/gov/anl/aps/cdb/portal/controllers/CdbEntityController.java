@@ -1224,16 +1224,21 @@ public abstract class CdbEntityController<ControllerUtility extends CdbEntityCon
             return;
         }
 
-        CdbEntityControllerUtility controllerUtility = getControllerUtility();
-        UserInfo user = SessionUtility.getUser();
-        
-        controllerUtility.destroy(entity, user);
+        performDestroyOperation(entity);
 
         completeEntityDestroy(entity);
         
         resetListDataModel();
         resetSelectDataModel();
         settingObject.clearListFilters();        
+    }
+    
+    protected void performDestroyOperation(EntityType entity) throws CdbException {
+        CdbEntityControllerUtility controllerUtility = getControllerUtility();
+        UserInfo user = SessionUtility.getUser();
+        
+        controllerUtility.destroy(entity, user);
+        
     }
 
     /**
@@ -1591,7 +1596,7 @@ public abstract class CdbEntityController<ControllerUtility extends CdbEntityCon
      * @param searchString search string
      * @param caseInsensitive use case insensitive search
      */
-    public final void performEntitySearch(String searchString, boolean caseInsensitive) {        
+    public void performEntitySearch(String searchString, boolean caseInsensitive) {        
         if (searchString.equals(this.searchString) && caseInsensitive == this.caseInsensitive) {
             // Return old results
             return;
