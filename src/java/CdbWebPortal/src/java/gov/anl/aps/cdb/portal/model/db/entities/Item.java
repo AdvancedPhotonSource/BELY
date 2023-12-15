@@ -81,6 +81,14 @@ import org.primefaces.model.TreeNode;
                 @EntityResult(entityClass = Item.class)},
             columns = {
                 @ColumnResult(name = "parent_relationship_id", type = Integer.class)}
+    ),
+    @SqlResultSetMapping(
+        name = "logResultList",
+        entities = {
+            @EntityResult(entityClass = Item.class),
+            @EntityResult(entityClass = Log.class)},
+        columns = {
+                @ColumnResult(name = "log_id", type = Integer.class)}
     )
 })
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
@@ -215,6 +223,28 @@ import org.primefaces.model.TreeNode;
             name = "item.searchItems",
             procedureName = "search_items",
             resultClasses = Item.class,
+            parameters = {
+                @StoredProcedureParameter(
+                        name = "limit_row",
+                        mode = ParameterMode.IN,
+                        type = Integer.class
+                ),
+                @StoredProcedureParameter(
+                        name = "domain_id",
+                        mode = ParameterMode.IN,
+                        type = Integer.class
+                ),
+                @StoredProcedureParameter(
+                        name = "search_string",
+                        mode = ParameterMode.IN,
+                        type = String.class
+                )
+            }
+    ),
+    @NamedStoredProcedureQuery(
+            name = "item.search_item_logs",
+            procedureName = "search_item_logs",
+            resultSetMappings = "logResultList",
             parameters = {
                 @StoredProcedureParameter(
                         name = "limit_row",
@@ -994,7 +1024,7 @@ public class Item extends CdbDomainEntity implements Serializable {
         }
     }
 
-    public void setEntityTypeList(List<EntityType> entityTypeList) throws CdbException {
+public void setEntityTypeList(List<EntityType> entityTypeList) throws CdbException {
         if (domain != null) {
             List<EntityType> allowedEntityTypeList = domain.getAllowedEntityTypeList();
             for (EntityType entityType : entityTypeList) {
