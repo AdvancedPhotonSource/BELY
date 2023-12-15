@@ -31,6 +31,22 @@ BEGIN
 	LIMIT limit_row;
 END //
 
+DROP PROCEDURE IF EXISTS search_item_logs;//
+CREATE PROCEDURE `search_item_logs` (IN limit_row int, IN domain_id int, IN search_string VARCHAR(255)) 
+BEGIN
+	SET search_string = CONCAT('%', search_string, '%'); 
+	SELECT item.*, log.*, log.id as log_id from item 
+	INNER JOIN v_item_self_element ise ON item.id = ise.item_id 
+	INNER JOIN item_element ie ON ise.self_element_id = ie.id
+	LEFT OUTER JOIN item_element_log iel on iel.item_element_id = ie.id
+	INNER JOIN log on log.id = iel.log_id
+	WHERE item.domain_id = domain_id
+	AND (
+		log.text LIKE search_string
+	)
+	LIMIT limit_row;
+END //
+
 DROP PROCEDURE IF EXISTS search_items_no_entity_type;//
 CREATE PROCEDURE `search_items_no_entity_type` (IN limit_row int, IN domain_id int, IN search_string VARCHAR(255)) 
 BEGIN
