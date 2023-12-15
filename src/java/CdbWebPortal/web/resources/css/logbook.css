@@ -1,0 +1,142 @@
+/*
+ * Copyright (c) UChicago Argonne, LLC. All rights reserved.
+ * See LICENSE file.
+ */
+@import url("portal.css");
+
+.defaultBackground {
+    background-color: #FAFAD2;
+}
+
+/*html {
+  scroll-behavior: smooth;
+}*/
+
+html, body {
+    background-color: #FAFAD2;
+}
+
+
+#bottom {
+    background-color: #FAFAD2;
+}
+
+.domainEntityRowExpansion {
+    background-color: #FAFAD2;
+}
+
+h1 {
+    color: #FAFAD2;
+}
+
+.ui-accordion .ui-accordion-content {
+    background: #FAFAD2;    
+}
+
+.ui-panel {
+    border: 0px; 
+    background: #FAFAD2; 
+}
+
+.catalogItemPropertiesPanel {
+    background-color: #f1efe2; 
+    border-radius: 10px;
+}
+
+.itemTypeListBox .ui-selectlistbox-listcontainer {
+    height: 500px !important;
+}
+
+.logEntryDialogEntryValue {
+    width: 500px; 
+    height: 400px;
+}
+
+.logTimestamp {
+    background: darkslateblue; 
+    color: white; 
+    padding: 5px; 
+}
+
+.logEntry {
+    padding: 10px;
+    /*white-space: pre;*/ 
+}
+
+.ui-datascroller-item:hover .logEntry {
+    background: lightyellow;
+    transition: 0.5s; 
+}
+
+.ui-datascroller-item:hover .logTimestamp {
+    background: slateblue; 
+    transition: 0.5s; 
+}
+
+.ui-datascroller-item:hover .logAttachment {
+    background: lightyellow;
+}
+
+.logDataScroller .ui-datascroller-content  {
+    background: transparent !important;
+    border: none !important; 
+}
+
+.logFooter {
+    display: flow-root;
+}
+
+.logAction {
+    float: right; 
+}
+
+h1 {
+    color: darkblue; 
+}
+
+pre:has(code) {    
+    background: #273647;
+    color: white; 
+    overflow: auto;
+    font-family: 'Monaco', monospace;
+    padding: 1em;
+}
+
+.logEntry h1 {
+    color: #495057; 
+    padding-left: 0px;
+    padding-bottom: 1em;
+    margin: 0px; 
+}
+
+.logEntry h2 {
+    color: #495057; 
+    padding-left: 0px;
+    padding-bottom: 1em;
+    margin: 0px; 
+}
+
+.logEntry h3 {
+    padding-left: 0px;
+    padding-bottom: 1em;
+    margin: 0px; 
+}
+
+.logEntry p {
+    margin-block: 0; 
+}
+
+.activeLogEntry {
+    -webkit-animation:name 2s normal;
+}
+
+
+@-webkit-keyframes name {
+    0% {background-color:white;}
+    100% {background-color: transparent;}
+}
+
+.ui-overlaypanel-content {
+    background: #FAFAD2;
+    border: 3px solid lightgray;    
+}
