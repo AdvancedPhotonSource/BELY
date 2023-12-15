@@ -37,6 +37,8 @@ public abstract class ItemLazyDataModel<Facade extends ItemFacadeBase, QueryBuil
     Integer rowCount = 0;
     
     ItemSettings settings; 
+    
+    Map defaultFilterBy = null; 
 
     public ItemLazyDataModel(Facade facade, Domain itemDomain, ItemSettings settings) {
         this.facade = facade;
@@ -56,6 +58,10 @@ public abstract class ItemLazyDataModel<Facade extends ItemFacadeBase, QueryBuil
         String sortField = null;
         SortMeta sortMeta;
         SortOrder sortOrder = null;
+        
+        if (defaultFilterBy != null) {             
+            filterBy.putAll(defaultFilterBy); 
+        }
 
         if (!sortOrderMap.isEmpty()) {
             sortField = (String) sortOrderMap.keySet().toArray()[0];
@@ -148,6 +154,10 @@ public abstract class ItemLazyDataModel<Facade extends ItemFacadeBase, QueryBuil
         }
             
         return new Item();
+    }
+    
+    protected void setDefaultFilterBy(Map defaultFilterBy) {
+        this.defaultFilterBy = defaultFilterBy; 
     }
 
 }
