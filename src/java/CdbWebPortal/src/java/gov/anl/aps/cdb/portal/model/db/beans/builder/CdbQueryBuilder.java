@@ -30,7 +30,7 @@ public abstract class CdbQueryBuilder {
         if (wherePart.isEmpty()) {
             wherePart += " WHERE ";
         } else {
-            wherePart += "AND ";
+            wherePart += " AND ";
         }
 
         wherePart += rawWhere;
