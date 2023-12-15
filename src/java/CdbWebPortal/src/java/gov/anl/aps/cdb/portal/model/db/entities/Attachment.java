@@ -4,6 +4,7 @@
  */
 package gov.anl.aps.cdb.portal.model.db.entities;
 
+import gov.anl.aps.cdb.portal.utilities.GalleryUtility;
 import gov.anl.aps.cdb.portal.utilities.StorageUtility;
 import java.io.Serializable;
 import java.util.List;
@@ -53,6 +54,7 @@ public class Attachment implements Serializable {
     private List<Log> logList;
     
     private transient String filePath = null;
+    private transient String galleryFilePath = null;
 
     public Attachment() {
     }
@@ -145,5 +147,19 @@ public class Attachment implements Serializable {
         }
         return filePath;
     }
+     
+    public String getGalleryFilePath() {
+       if (galleryFilePath == null) {
+           if (GalleryUtility.viewableFileName(name)) {
+                galleryFilePath = StorageUtility.getLogAttachmentPath(name);
+           } else {
+                galleryFilePath="/resources/images/file.svg";     
+           }
+           
+       }
+        return galleryFilePath;
+    }
+     
+     
     
 }
