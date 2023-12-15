@@ -6,6 +6,7 @@ package gov.anl.aps.cdb.portal.model.db.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import gov.anl.aps.cdb.portal.utilities.MarkdownParser;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -78,7 +79,10 @@ public class Log extends CdbEntity implements Serializable {
         @JoinColumn(name = "log_level_id", referencedColumnName = "id")})
     @ManyToMany
     private List<LogLevel> logLevelList;
-    @ManyToMany(mappedBy = "logList")
+    @JoinTable(name = "item_element_log", joinColumns = {
+        @JoinColumn(name = "log_id", referencedColumnName = "id")}, inverseJoinColumns = {
+        @JoinColumn(name = "item_element_id", referencedColumnName = "id")})    
+    @ManyToMany()
     private List<ItemElement> itemElementList;
     @JoinColumn(name = "entered_by_user_id", referencedColumnName = "id")
     @ManyToOne(optional = false)
@@ -88,6 +92,7 @@ public class Log extends CdbEntity implements Serializable {
     private LogTopic logTopic;
     
     private static transient SimpleDateFormat shortDisplayDateFormat = new SimpleDateFormat("MM/dd/yy HH:mm");
+    private transient String htmlText; 
 
     public Log() {
     }
@@ -237,6 +242,14 @@ public class Log extends CdbEntity implements Serializable {
         int hash = 0;
         hash += (id != null ? id.hashCode() : 0);
         return hash;
+    }
+
+    public String getHtmlText() {
+        if (htmlText == null) {   
+            htmlText = text;                         
+            htmlText = MarkdownParser.parseMarkdownAsHTML(htmlText);             
+        }
+        return htmlText;
     }
 
     @Override

@@ -281,22 +281,24 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         List<ItemElement> itemElementList = newLogEdit.getItemElementList();
 
         ItemDomainLogbook parentItem = (ItemDomainLogbook) itemElementList.get(0).getParentItem();
-
-       newLogEdit = null;
-       UserInfo user = SessionUtility.getUser();
-
-       try {
-           getControllerUtility().update(parentItem, user);
-       } catch (Exception ex) {
-           SessionUtility.addErrorMessage("Error", parentItem.getPersitanceErrorMessage());
-           return null;
-       }
         
         parentItem = (ItemDomainLogbook) getItem(parentItem.getId());         
         List<Log> logList = parentItem.getLogList();
         lastLog = logList.get(logList.size() - 1);                                
 
         return viewForCurrentEntity(); 
+    }
+
+    @Override
+    public String update() {
+        // Refresh logs from DB before update. 
+        ItemDomainLogbook current = getCurrent();
+        Integer id = current.getId();
+        ItemDomainLogbook findById = findById(id);
+        List<Log> latestLogs = findById.getLogList();
+        current.setLogList(latestLogs);
+        
+        return super.update(); 
     }
 
     public Log getLastLog() {

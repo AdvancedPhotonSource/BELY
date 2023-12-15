@@ -4,6 +4,7 @@
  */
 package gov.anl.aps.cdb.portal.controllers;
 
+import gov.anl.aps.cdb.common.exceptions.CdbException;
 import gov.anl.aps.cdb.portal.model.db.entities.Log;
 import gov.anl.aps.cdb.portal.model.db.beans.LogFacade;
 import gov.anl.aps.cdb.portal.model.db.entities.LogLevel;
@@ -11,6 +12,7 @@ import gov.anl.aps.cdb.portal.utilities.SessionUtility;
 import gov.anl.aps.cdb.portal.controllers.settings.LogSettings;
 import gov.anl.aps.cdb.portal.controllers.utilities.LogControllerUtility;
 import gov.anl.aps.cdb.portal.model.LogLazyDataModel;
+import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
 
 import java.io.Serializable;
 import java.util.List;
@@ -26,7 +28,7 @@ import org.apache.logging.log4j.Logger;
 
 @Named("logController")
 @SessionScoped
-public class LogController extends CdbEntityController<LogControllerUtility, Log, LogFacade, LogSettings> implements Serializable {       
+public class LogController extends CdbEntityController<LogControllerUtility, Log, LogFacade, LogSettings> implements Serializable {
 
     private final String SPARES_WARNING_LOG_LEVEL_NAME = "Spares Warning";
 
@@ -37,19 +39,19 @@ public class LogController extends CdbEntityController<LogControllerUtility, Log
 
     private List<LogLevel> filterViewSelectedLogLevels = null;
     private LogLazyDataModel filterViewListDataModelSystemLogs = null;
-    
+
     public LogController() {
         super();
-    } 
+    }
 
-    public static LogController getInstance() {        
+    public static LogController getInstance() {
         return (LogController) SessionUtility.findBean("logController");
     }
 
     @Override
     protected LogFacade getEntityDbFacade() {
         return logFacade;
-    }   
+    }
 
     @Override
     public List<Log> getAvailableItems() {
@@ -69,7 +71,7 @@ public class LogController extends CdbEntityController<LogControllerUtility, Log
 
         return "";
     }
-    
+
     public List<LogLevel> getFilterViewSelectedLogLevels() {
         return filterViewSelectedLogLevels;
     }
@@ -95,7 +97,26 @@ public class LogController extends CdbEntityController<LogControllerUtility, Log
 
     @Override
     protected LogControllerUtility createControllerUtilityInstance() {
-        return new LogControllerUtility(); 
+        return new LogControllerUtility();
+    }
+
+    public void saveLogEntry(Log log) {
+        LogControllerUtility controllerUtility1 = getControllerUtility();
+        UserInfo userInfo = SessionUtility.getUser();
+
+        try {
+            if (log.getId() != null) {
+                controllerUtility1.update(log, userInfo);
+            } else {
+                controllerUtility1.create(log, userInfo);
+            }
+        } catch (CdbException ex) {
+            String persitanceErrorMessage = log.getPersitanceErrorMessage();
+            SessionUtility.addErrorMessage("Error", persitanceErrorMessage);
+        } catch (RuntimeException ex) {
+            String persitanceErrorMessage = log.getPersitanceErrorMessage();
+            SessionUtility.addErrorMessage("Error", persitanceErrorMessage);
+        }
     }
 
     /**
@@ -143,6 +164,6 @@ public class LogController extends CdbEntityController<LogControllerUtility, Log
             }
         }
 
-    }    
+    }
 
 }
