@@ -19,6 +19,7 @@ public class SearchResult {
     private final CdbEntity cdbEntity;
     private final Integer objectId;
     private final String objectName;
+    private String additionalAttribute; 
     private String rowStyle; 
     private HashMap<String, String> objectAttributeMatchMap = new HashMap();
 
@@ -68,9 +69,17 @@ public class SearchResult {
     public void setObjectAttributeMatchMap(HashMap<String, String> objectAttributeMatchMap) {
         this.objectAttributeMatchMap = objectAttributeMatchMap;
     }
-
+   
     public boolean isEmpty() {
         return objectAttributeMatchMap.isEmpty();
+    }
+    
+    public String getAdditionalAttribute() {
+        return additionalAttribute;
+    }
+
+    public void setAdditionalAttribute(String additionalAttribute) {
+        this.additionalAttribute = additionalAttribute;
     }
 
     public boolean doesValueContainPattern(String key, Object value, Pattern searchPattern) {
