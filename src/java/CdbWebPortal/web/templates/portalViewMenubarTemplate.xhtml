@@ -10,136 +10,39 @@ See LICENSE file.
                 xmlns:p="http://primefaces.org/ui"
                 xmlns:f="http://xmlns.jcp.org/jsf/core">
     <p:outputPanel styleClass="mainMenuBar">
-        <p:menubar>
-            <p:submenu label="Browse"
+        <p:menubar>              
+            
+            
+            <p:submenu label="Logbook"
                        id="browseByDropdownButton"
-                       icon="fa fa-search"
-                       styleClass="wideSubMenu #{(fn:startsWith(view.viewId, '/views/itemDomainCatalog/browse') 
-                                                 or fn:startsWith(view.viewId, '/views/itemDomainInventory/browse')) ? 'activeSubMenuParentItem' : ''} ">
-                <p:menuitem value="Browse By Function" 
-                            id="browseByFunctionButton"
-                            icon="ui-icon-catalog" 
-                            url="#{request.contextPath}/views/itemDomainCatalog/browseCategoryType"  
-                            styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainCatalog/browseCategoryType') ? 'activeMenuItem' : ''} "/>                
-                <p:menuitem value="Browse By Owner"
-                            id="browseByOwnerButton"
-                            icon="ui-icon-catalog" 
-                            url="#{request.contextPath}/views/itemDomainCatalog/browseOwner"  
-                            styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainCatalog/browseOwner') ? 'activeMenuItem' : ''} "/>
-                <p:menuitem value="Browse By Location" 
-                            id="browseByLocationButton"
-                            icon="ui-icon-inventory"
-                            url="#{request.contextPath}/views/itemDomainInventory/browseLocation"  
-                            styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainInventory/browseLocation') ? 'activeMenuItem' : ''} "/>               
-                <p:menuitem value="Browse Apps" 
-                            id="browseAppsButton"
-                            icon="fa fa-code" 
-                            url="#{request.contextPath}/views/itemDomainApp/browseCategoryType"  
-                            styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainApp/browseCategoryType') ? 'activeMenuItem' : ''} "/>
+                       icon="fa fa-book"
+                       styleClass="wideSubMenu #{(fn:startsWith(view.viewId, '/views/itemDomainLogbook/')) ? 'activeSubMenuParentItem' : ''} ">
+                <p:menuitem value="All" 
+                        icon="fa fa-book"
+                        rendered="false"
+                        id="maarcMenubarButton" url="#{request.contextPath}/views/itemDomainLogbook/list" 
+                        styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainLogbook/') ? 'activeMenuItem' : ''} "/>
+                
+                <p:menuitem value="Machine Studies" 
+                        icon="fa fa-book"                        
+                        id="aopLogbookListButton" url="#{request.contextPath}/views/itemDomainLogbook/list?logbook=aop"                         
+                        styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainLogbook/list?logbook=aop') ? 'activeMenuItem' : ''} "/>
+                
+                <p:menuitem value="Controls" 
+                        icon="fa fa-book"                        
+                        id="ctlLogbookListButton" url="#{request.contextPath}/views/itemDomainLogbook/list?logbook=ctl"                         
+                        styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainLogbook/list?logbook=ctl') ? 'activeMenuItem' : ''} "/>
+                
+                <p:menuitem value="Operations" 
+                        icon="fa fa-book"                        
+                        id="opsLogbookListButton" url="#{request.contextPath}/views/itemDomainLogbook/list?logbook=ops" 
+                        styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainLogbook/list?logbook=ops') ? 'activeMenuItem' : ''} "/>
             </p:submenu>
-            <p:submenu label="Catalog"
-                       id="catalogDropdownButton"
-                       icon="ui-icon-catalog"
-                       styleClass="#{(fn:startsWith(view.viewId, '/views/itemDomainCatalog/list') 
-                                     or fn:startsWith(view.viewId, '/views/itemDomainCableCatalog/list')) ? 'activeSubMenuParentItem' : ''} ">
-                <p:menuitem value="Component"
-                            id="componentCatalogButton"
-                            icon="ui-icon-catalog"
-                            url="#{request.contextPath}/views/itemDomainCatalog/list"
-                            styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainCatalog/list') ? 'activeMenuItem' : ''} "/>
-                <p:menuitem value="Cable Type"
-                            icon="ui-icon-catalog"
-                            id="cableCatalogButton"
-                            url="#{request.contextPath}/views/itemDomainCableCatalog/list"
-                            styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainCableCatalog/list') ? 'activeMenuItem' : ''} "/>
-            </p:submenu>
-
-            <p:submenu label="Inventory"
-                       icon="ui-icon-inventory"
-                       id="inventoryDropdownButton"
-                       styleClass="#{(fn:startsWith(view.viewId, '/views/itemDomainInventory/list') 
-                                     or fn:startsWith(view.viewId, '/views/itemDomainCableInventory/list')
-                                     or fn:startsWith(view.viewId, '/views/itemDomainMachineDesignInventory/list')) ? 'activeSubMenuParentItem' : ''} ">
-                <p:menuitem value="Component"
-                            id="componentInstanceButton"
-                            icon="ui-icon-inventory"
-                            url="#{request.contextPath}/views/itemDomainInventory/list"
-                            styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainInventory/list') ? 'activeMenuItem' : ''} "/>
-                <p:menuitem value="Cable"
-                            id="cableInventoryButton"
-                            icon="ui-icon-inventory"
-                            url="#{request.contextPath}/views/itemDomainCableInventory/list"
-                            styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainCableInventory/list') ? 'activeMenuItem' : ''} "/>
-                <p:menuitem value="Machine"
-                            icon="ui-icon-machine-design"
-                            url="#{request.contextPath}/views/itemDomainMachineDesignInventory/list"
-                            rendered="#{resources.EnabledMachineInventoryFunctionality}"
-                            styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainMachineDesignInventory/list') ? 'activeMenuItem' : ''} "/>                                
-            </p:submenu>
-
-            <p:submenu label="Design"
-                       id="designMenubarDropdownButton"
-                       icon="ui-icon-design"
-                       styleClass="#{(fn:startsWith(view.viewId, '/views/itemDomainMachineDesign/list') 
-                                     or fn:startsWith(view.viewId, '/views/itemDomainCableDesign/list')
-                                     or fn:startsWith(view.viewId, '/views/itemDomainMachineDesignPower/list')
-                                     or fn:startsWith(view.viewId, '/views/itemDomainMachineDesignControl/list')) ? 'activeSubMenuParentItem' : ''} ">
-                <p:menuitem value="Machine"
-                            id="machineDesignMenubarButton"
-                            icon="ui-icon-machine-design"
-                            url="#{request.contextPath}/views/itemDomainMachineDesign/list"
-                            styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainMachineDesign/list') ? 'activeMenuItem' : ''} "/>                
-                <p:menuitem value="Cable"
-                            id="cableDesignMenubarButton"
-                            icon="ui-icon-cable-design"
-                            url="#{request.contextPath}/views/itemDomainCableDesign/list"
-                            styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainCableDesign/list') ? 'activeMenuItem' : ''} "/>
-                <p:menuitem value="Control"
-                            id="machineControlMenubarButton"
-                            icon="ui-icon-control"
-                            url="#{request.contextPath}/views/itemDomainMachineDesignControl/list"
-                            styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainMachineDesignControl/list') ? 'activeMenuItem' : ''} "/>
-                <p:menuitem value="Power"
-                            id="machinePowerMenubarButton"
-                            icon="fa fa-bolt"
-                            rendered="#{false}"
-                            url="#{request.contextPath}/views/itemDomainMachineDesignPower/list"
-                            styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainMachineDesignPower/list') ? 'activeMenuItem' : ''} "/>
-                <p:menuitem value="Applications"
-                            id="machineApplicationsMenubarButton"
-                            icon="fa fa-code"
-                            url="#{request.contextPath}/views/itemDomainApp/list"
-                            styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainApp/list') ? 'activeMenuItem' : ''} "/>
-            </p:submenu>
-
-            <p:menuitem value="MAARC" 
-                        icon="ui-icon-maarc"
-                        id="maarcMenubarButton" url="#{request.contextPath}/views/itemDomainMAARC/list" 
-                        rendered="#{resources.EnabledMAARCDomainFunctionality}"
-                        styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainMAARC/') ? 'activeMenuItem' : ''} "/>
+            
 
             <f:facet name="options">
                 <p:menubar styleClass="menuBarSupportingItems"> 
-                    <p:menuitem styleClass="noButtonMenuItem"
-                                id="qridMenuItem">
-                        <p:autoComplete id="jumpToQrIdInput" placeholder="QrId/ID"       
-                                        styleClass="expandingAutoComplete menuBarAutoComplete"
-                                     onkeypress="if ((event.which &lt; 48 || event.which &gt; 57) &amp;&amp; event.which != 32) return false;"
-                                     completeMethod="#{facesUtility.getJumpToQrIdEntryCompleteText}"                                     
-                                     value="#{facesUtility.jumpToQrIdEntry}"                                                                           
-                                     title="Jump to QRID">
-                            <p:ajax event="itemSelect" onstart="$('#jumpToQrIdInputCommand').click();" />
-                        </p:autoComplete>
-                        
-                        <p:commandButton id="jumpToQrIdInputCommand"
-                                         action="#{facesUtility.jumpToItemQrId('jumpToQrIdFailed()')}"
-                                         value="Go"
-                                         style="display: none" 
-                                         onclick="PF('loadingDialog').show()"/> 
-
-                        <p:remoteCommand name="jumpToQrIdFailed"
-                                         onstart="PF('loadingDialog').hide()"/> 
-                    </p:menuitem>
+                    
                     <p:menuitem styleClass="noButtonMenuItem"
                                 id="searchMenuItem">
                         <p:inputText id="menuBarSearchInput" placeholder="Search"
@@ -165,6 +68,6 @@ See LICENSE file.
                 </p:menubar>
             </f:facet>
         </p:menubar>
-        <p:tooltip for="maarcMenubarButton" value="Measurement and Analysis Archive" />
+        
     </p:outputPanel>
 </ui:composition>
