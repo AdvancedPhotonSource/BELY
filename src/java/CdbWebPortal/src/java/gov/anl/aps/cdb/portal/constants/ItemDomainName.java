@@ -16,6 +16,8 @@ public enum ItemDomainName {
     app("App", ItemDomainName.APPS_ID), 
     appDeployment("App Deployment", ItemDomainName.APP_DEPLOYMENT_ID), 
     
+    logbook("Logbook", ItemDomainName.LOGBOOK_ID),
+    
     // Deprecated Domain
     cable("Cable", ItemDomainName.CABLE_ID);
 
@@ -34,6 +36,8 @@ public enum ItemDomainName {
     
     public final static int APPS_ID = 10;
     public final static int APP_DEPLOYMENT_ID = 11;
+    
+    public final static int LOGBOOK_ID = 12;
 
     private String value;
     private Integer id;
