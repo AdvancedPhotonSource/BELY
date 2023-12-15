@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="../item/private/templates/itemViewTemplate.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <ui:param name="entityController" value="#{itemDomainLogbookController}" />        
+
+    <f:metadata>
+        <f:viewAction action="#{settingController.updateGlobalSettings()}" />
+        <f:viewAction action="#{itemDomainLogbookController.processViewRequestParams}"/>
+        <f:viewAction action="#{propertyValueController.processPreRender()}"/>
+        <f:viewAction action="#{logController.processPreRender()}"/>
+        <f:viewAction action="#{itemElementController.processPreRender()}"/>
+        <f:viewAction action="#{itemMemberViewController.processPreRender()}" />
+    </f:metadata>
+
+    <ui:define name="itemGalleryPanel" /> 
+    <ui:define name="itemLogListPanel" /> 
+    <ui:define name="itemPropertyListPanel" /> 
+    <ui:define name="itemElementListPanel" />      
+
+    <ui:define name="leftItemContent"/>
+
+
+    <ui:define name="additionalLeftItemPanels">
+
+    </ui:define>
+
+    <ui:define name="additionalItemInformation">
+        <h:outputLabel for="parentName#{viewName}" value="Parent Item" 
+                       styleClass="entityDataEmphasizedLabel"/>
+
+        <ui:fragment>
+            
+            <ui:param name="parentItem"
+                      value="#{itemDomainLogbookController.getParentItem(itemObject)}" /> 
+            <ui:param name="displayString"
+                      value="#{displayString != null 
+                               ? displayString 
+                               : parentItem.name}" />
+            <h:outputLink value="../item/view.xhtml?id=#{parentItem.id}" 
+                          styleClass="#{styleClass}"
+                          rendered="#{parentItem != null}"
+                          title="View #{entityTypeName} details"> 
+                <h:outputText value="#{displayString}"/>
+            </h:outputLink>
+            <h:outputText rendered="#{parentItem == null}"
+                          value="Top level"/>
+        </ui:fragment>
+
+    </ui:define>
+
+    <ui:define name="additionalTopRightItemPanels">
+        <p:commandButton id="showDetails" icon="fa fa-info" value="Logbook Info"/>
+        <p:overlayPanel for="showDetails"
+                        showCloseIcon="true"
+                        dismissable="false">            
+            <ui:insert name="viewPanelGrid" /> 
+
+
+
+
+
+            <p/>
+            <p/>
+
+            <ui:insert name="domainEntityInfoViewDialog"/>
+            <ui:insert name="commonViewActionButtons"/>
+            <ui:insert name="itemDestroyDialog"/>
+
+            <p:panel header="Properties"
+                     id="#{entityTypeName}ViewPropertiesPanel"
+                     rendered="#{entityController.entityDisplayItemProperties}"
+                     toggleable="true" 
+                     collapsed="#{false}">
+                <ui:insert name="itemProperties"/>
+            </p:panel>
+            <p:panel header="#{currentItemController.itemElementsListTitle}"
+                     id="#{entityTypeName}ViewElementsPanel"
+                     rendered="#{entityController.renderItemElementList}"
+                     toggleable="true" 
+                     collapsed="#{false}">
+                <p:commandButton icon="fa fa-plus"
+                                 value="Add"
+                                 rendered="#{isEntityWriteable}"
+                                 onclick="prepareCreateLogbookSection()"/>
+
+
+                <p:dataTable value="#{itemObject.itemElementDisplayList}"
+                             var="itemElementObject">
+                    <p:column headerText="Name">
+                        #{itemElementObject.containedItem.name}
+                    </p:column>
+                </p:dataTable>
+            </p:panel>
+        </p:overlayPanel>
+        <p:panel header="Log Entries" 
+                 id="#{entityTypeName}ViewLogEntriesPanel"
+                 rendered="#{entityController.entityDisplayItemLogs and false}"
+                 toggleable="true" >
+            <ui:insert name="itemLogs" />
+        </p:panel>
+
+
+        <ui:fragment rendered="#{itemObject.itemElementDisplayList.size() == 0}">
+            <ui:include src="private/logbookViewObject.xhtml"/> 
+        </ui:fragment>
+
+        <ui:fragment rendered="#{itemObject.itemElementDisplayList.size() > 0}">
+            <ui:repeat value="#{itemObject.logbookSections}" var="logbookSection">               
+                <ui:include src="private/logbookViewObject.xhtml">
+                    <ui:param name="itemObject"
+                              value="#{logbookSection}" /> 
+                </ui:include>
+            </ui:repeat>            
+        </ui:fragment>
+
+
+    </ui:define>
+
+
+    <ui:define name="additionalViewItemContent">
+        <ui:include src="private/addLogbookSectionDialog.xhtml" /> 
+        <ui:include src="private/addLogbookEntryDialog.xhtml" />                
+
+        <script type="text/javascript">
+            function ScrollToLog(logId) {
+                if (logId) {
+                    var location = 'log-' + logId;
+                    window.location.hash = location;
+
+                    element = document.getElementById(location);
+                    if (element) {
+                        element.classList.add("activeLogEntry");
+                    }
+                }
+            }
+        </script>
+
+        <p:remoteCommand autoRun="true"
+                         oncomplete="ScrollToLog(#{itemDomainLogbookController.lastLog.id});" /> 
+    </ui:define>
+
+
+</ui:composition>
+
+

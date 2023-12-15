@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:dialog header="Create Section"
+              id="createLogbookSectionDialog"
+              widgetVar="createLogbookSectionDialogWidget"
+              styleClass="viewTransparentBackgroundDialog"
+              closable="false"
+              modal="true">
+        <p:outputPanel rendered="#{itemObject.newLogbookSection != null}"
+                       id="createLogbookPanelGrid">
+            <ui:include src="../../item/private/itemCreatePanelGrid.xhtml" >
+                <ui:param name="viewName" value="createSectionDialog" />
+                <ui:param name="itemObject" value="#{itemObject.newLogbookSection}" /> 
+            </ui:include>
+        </p:outputPanel>
+
+        <f:facet name="footer">
+            <p:commandButton value="Save"
+                             update="createLogbookPanelGrid"
+                             action="#{itemDomainLogbookController.createLogbookSection()}"
+                             onstart="PF('loadingDialog').show()"
+                             oncomplete="PF('loadingDialog').hide();"
+                             /> 
+            <p:commandButton value="Cancel"
+                             action="#{itemDomainLogbookController.viewForCurrentEntity()}" /> 
+        </f:facet>
+    </p:dialog>
+
+
+
+
+    <p:remoteCommand name="prepareCreateLogbookSection"
+                     onstart="PF('loadingDialog').show()"
+                     action="#{itemDomainLogbookController.prepareCreateLogbookSection()}" 
+                     update="createLogbookSectionDialog"
+                     oncomplete="PF('loadingDialog').hide(); PF('createLogbookSectionDialogWidget').show();"/>
+
+
+
+
+
+
+</ui:composition>
+
+

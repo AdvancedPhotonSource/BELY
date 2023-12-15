@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <h2>#{itemObject.name}</h2>
+
+    <p:commandButton icon="fa fa-plus"
+                     rendered="#{isEntityWriteable}"
+                     onclick="PF('loadingDialog').show()"
+                     action="#{itemDomainLogbookController.prepareAddLog(itemObject)}"
+                     update="@form:#{entityTypeName}LogbookLogAddDialog"
+                     oncomplete="PF('loadingDialog').hide(); 
+                     PF('#{entityTypeName}LogbookLogAddDialogWidget').show()"/>
+
+
+    <ui:fragment rendered="#{itemObject.logList.size() ==0}">          
+        Click the plus button to create a first log entry.            
+    </ui:fragment>
+
+    <p:dataScroller value="#{itemObject.logList}" var="logObject" styleClass="logDataScroller">
+        <div id="log-#{logObject.id}">
+            <div class="logTimestamp">
+                <span>#{logObject.enteredOnDateTime}</span>
+                <span style="float: right">#{logObject.enteredByUser}</span>
+            </div>
+            <div class="logEntry">
+                <h:outputText escape="false" value="#{logObject.htmlText}"/>
+            </div>
+            <p:outputPanel rendered="#{logObject.attachmentList.size() > 0 and false}"
+                           styleClass="logAttachment">
+                <p:galleria value="#{logObject.attachmentList}"
+                            var="attachment"
+                            showThumbnails="false" 
+                            showCaption="true"
+                            showIndicators="true"
+                            showIndicatorsOnItem="true"
+                            style="max-width: 500px;">
+                    <p:graphicImage value="#{attachment.galleryFilePath}" title="#{attachment.displayName}"
+                                    style="width: 100%; display: block;"
+                                    onclick="window.open('#{attachment.filePath}')"/>  
+                    <f:facet name="footer"> 
+                    </f:facet>
+                </p:galleria>
+            </p:outputPanel>
+            <div class="logFooter">
+                <p:commandLink styleClass="logAction fa fa-link-icon fa-pencil"
+                               onclick="PF('loadingDialog').show()"
+                               rendered="#{isEntityWriteable}"
+                               action="#{itemDomainLogbookController.prepareEditLogEntry(logObject)}"
+                               update="@form:#{entityTypeName}LogbookLogAddDialog"
+                               oncomplete="PF('loadingDialog').hide(); 
+                               PF('#{entityTypeName}LogbookLogAddDialogWidget').show()"
+                               /> 
+
+                <p:commandLink id="#{entityTypeName}LogDestroyButton"
+                               rendered="#{isEntityWriteable}"
+                               styleClass="logAction fa fa-link-icon fa-trash" title="Delete"
+                               onstart="PF('confirmDeleteLog#{logObject.viewUUID}Widget').show();">
+                    <p:tooltip for="#{entityTypeName}LogDestroyButton" value="Delete #{entityTypeName} log entry."/>
+                </p:commandLink>
+
+                <p:confirmDialog message="Would you like to remove the log?"
+                                 header="Confirm Log Delete" 
+                                 severity="alert"
+                                 styleClass="viewTransparentBackgroundDialog viewTransparentBackgroundDialog-alert"
+                                 widgetVar="confirmDeleteLog#{logObject.viewUUID}Widget">
+                    <p:commandButton value="Yes" 
+                                     id="confirmYesDestroyLogEntryButton"
+                                     action="#{entityController.viewForCurrentEntity()}" 
+                                     actionListener="#{logController.destroy(logObject)}"
+                                     onstart="PF('confirmDeleteLog#{logObject.viewUUID}Widget').hide()"/>
+                    <p:commandButton value="No" onclick="PF('confirmDeleteLog#{logObject.viewUUID}Widget').hide();" type="button" />
+                </p:confirmDialog>
+            </div>
+        </div>
+    </p:dataScroller>
+
+
+</ui:composition>
+
+
