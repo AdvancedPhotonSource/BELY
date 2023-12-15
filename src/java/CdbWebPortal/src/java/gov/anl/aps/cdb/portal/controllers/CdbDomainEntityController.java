@@ -533,9 +533,11 @@ public abstract class CdbDomainEntityController<ControllerUtility extends CdbDom
         }
     }
 
-    public void saveLogList() {
+    public String saveLogList() {
         newLogEdit = null;
-        update();        
+        update();      
+        
+        return viewForCurrentEntity(); 
     }
     
     public Log prepareAddLog(EntityType cdbDomainEntity) {
