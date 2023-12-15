@@ -1,10 +1,10 @@
-# Component DB
+# Logbook 
 
 [![Documentation Status](https://readthedocs.org/projects/componentdb/badge/?version=latest)](http://componentdb.readthedocs.io/en/latest/?badge=latest)
 
 **Prerequisites:**
 
-In order to deploy or develop Component DB, you must have some support software installed. Follow the instructions below to achieve this.
+In order to deploy or develop Logbook, you must have some support software installed. Follow the instructions below to achieve this.
     
     # For red-hat based linux distribution run the following:
     yum install -y gcc libgcc expect zlib-devel openssl-devel openldap-devel readline-devel git make cmake sed gawk autoconf automake wget mysql mysql-libs mysql-server mysql-devel curl unzip
