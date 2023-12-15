@@ -30,67 +30,79 @@ See LICENSE file.
         <h:form id="#{entityTypeName}ViewForm" rendered="#{pageRendered}">
             <ui:param name="formName" 
                       value="#{entityTypeName}ViewForm" /> 
-            <div class="domainEntityLeftContent middleCenterLeftContent">
-                <ui:param name="itemObject" value="#{entityController.current}"/>
-                <ui:param name="currentObject" value="#{itemObject}" />
-                <div class="pageTitle">
-                    <h1><ui:insert name="pageTitle"/></h1>
+            <ui:param name="itemObject" value="#{entityController.current}"/>
+            <ui:param name="currentObject" value="#{itemObject}" />
+            <!-- Included for easy code readability in use such as item element list. enityController is very generic-->
+            <ui:param name="currentItemController" value="#{entityController}" />
+            <ui:param name="domainEntityObject" value="#{itemObject}" />
+            <ui:param name="isEntityWriteable" value="#{loginController.isEntityWriteable(itemObject.entityInfo)}"/>
+            
+            <ui:insert name="leftItemContent">
+                <div class="domainEntityLeftContent middleCenterLeftContent">
+
+                    <div class="pageTitle">
+                        <h1><ui:insert name="pageTitle"/></h1>
+                    </div>                   
+
+                    <ui:insert name="viewPanelGrid"/>
+
+                    <p/>
+                    <p/>
+
+                    <ui:insert name="domainEntityInfoViewDialog"/>
+                    <ui:insert name="commonViewActionButtons"/>
+                    <ui:insert name="itemDestroyDialog"/>
+
+                    <p/>
+                    <ui:insert name="itemGalleryPanel">
+                        <p:panel id="#{entityTypeName}ViewGalleryPanel"
+                                 header="Gallery" 
+                                 rendered="#{entityController.entityDisplayItemGallery}"
+                                 toggleable="true" 
+                                 collapsed="#{!entityController.displayImages}">
+                            <ui:insert name="itemGallery" />
+                        </p:panel>
+                    </ui:insert>
+
+
+                    <ui:insert name="itemLogListPanel">
+                        <p:panel header="Log Entries" 
+                                 id="#{entityTypeName}ViewLogEntriesPanel"
+                                 rendered="#{entityController.entityDisplayItemLogs}"
+                                 toggleable="true" 
+                                 collapsed="#{!entityController.displayLogList}">
+                            <ui:insert name="itemLogs" />
+                        </p:panel>
+                    </ui:insert>
+
+                    <ui:insert name="itemConnectorListPanel">
+                        <p:panel header="#{entityController.displayItemConnectorsLabel}"
+                                 id="#{entityTypeName}ViewConnectorsPanel"
+                                 toggleable="true"
+                                 rendered="#{entityController.entityDisplayItemConnectors}"
+                                 collapsed="#{!entityController.displayItemConnectorList}">
+                            <ui:insert name="itemConnectors" />
+                        </p:panel>
+                    </ui:insert>
+
+                    <ui:insert name="additionalLeftItemPanels"/>
                 </div>
-
-                <!-- Included for easy code readability in use such as item element list. enityController is very generic-->
-                <ui:param name="currentItemController" value="#{entityController}" />
-                <ui:param name="domainEntityObject" value="#{itemObject}" />
-                <ui:param name="isEntityWriteable" value="#{loginController.isEntityWriteable(itemObject.entityInfo)}"/>
-
-                <ui:insert name="viewPanelGrid"/>
-
-                <p/>
-                <p/>
-
-                <ui:insert name="domainEntityInfoViewDialog"/>
-                <ui:insert name="commonViewActionButtons"/>
-                <ui:insert name="itemDestroyDialog"/>
-
-                <p/>
-
-                <p:panel id="#{entityTypeName}ViewGalleryPanel"
-                         header="Gallery" 
-                         rendered="#{entityController.entityDisplayItemGallery}"
-                         toggleable="true" 
-                         collapsed="#{!entityController.displayImages}">
-                    <ui:insert name="itemGallery" />
-                </p:panel>
-
-                <p:panel header="Log Entries" 
-                         id="#{entityTypeName}ViewLogEntriesPanel"
-                         rendered="#{entityController.entityDisplayItemLogs}"
-                         toggleable="true" 
-                         collapsed="#{!entityController.displayLogList}">
-                    <ui:insert name="itemLogs" />
-                </p:panel>
-
-                <ui:insert name="itemConnectorListPanel">
-                    <p:panel header="#{entityController.displayItemConnectorsLabel}"
-                             id="#{entityTypeName}ViewConnectorsPanel"
-                             toggleable="true"
-                             rendered="#{entityController.entityDisplayItemConnectors}"
-                             collapsed="#{!entityController.displayItemConnectorList}">
-                        <ui:insert name="itemConnectors" />
-                    </p:panel>
-                </ui:insert>
-
-                <ui:insert name="additionalLeftItemPanels"/>
-            </div>
+            </ui:insert>
 
             <div class="domainEntityRightContent">
-                <p:panel header="Properties"
-                         id="#{entityTypeName}ViewPropertiesPanel"
-                         rendered="#{entityController.entityDisplayItemProperties}"
-                         toggleable="true" 
-                         collapsed="#{!entityController.displayPropertyList}">
-                    <ui:insert name="itemProperties"/>
-                </p:panel>
-                <ui:insert name="itemPropertiesSupport" />
+                <ui:insert name="additionalTopRightItemPanels"/>
+
+                <ui:insert name="itemPropertyListPanel">
+                    <p:panel header="Properties"
+                             id="#{entityTypeName}ViewPropertiesPanel"
+                             rendered="#{entityController.entityDisplayItemProperties}"
+                             toggleable="true" 
+                             collapsed="#{!entityController.displayPropertyList}">
+                        <ui:insert name="itemProperties"/>
+                    </p:panel>
+                    <ui:insert name="itemPropertiesSupport" />
+                </ui:insert>
+
 
                 <p:panel header="#{entityController.coreMetadataPropertyTitle}" 
                          id="#{entityTypeName}ViewCoreMetadataPropertyPanel"
@@ -108,7 +120,7 @@ See LICENSE file.
                              rendered="#{entityController.renderItemElementList}"
                              toggleable="true" 
                              collapsed="#{!entityController.displayItemElementList}">
-                        <ui:insert name="itemElements" />                    
+                        <ui:insert name="itemElements" />
                     </p:panel>
                 </ui:insert>
 
@@ -139,9 +151,9 @@ See LICENSE file.
                          rendered="#{entityController.displayCreatedFromCurrentItemList}"
                          toggleable="true"
                          collapsed="#{entityController.displayContentsOfCreatedFromTemplateItem}">
-                    
+
                     <ui:insert name="createdFromTemplateAdditionalButtons"/>
-                    
+
                     <ui:include src="../itemListCreatedFromTemplateDataTable.xhtml" /> 
                 </p:panel>
 
