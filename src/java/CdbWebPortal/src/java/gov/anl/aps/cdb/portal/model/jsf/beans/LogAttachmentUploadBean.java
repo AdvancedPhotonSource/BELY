@@ -7,6 +7,7 @@ package gov.anl.aps.cdb.portal.model.jsf.beans;
 import gov.anl.aps.cdb.portal.model.db.entities.Attachment;
 import gov.anl.aps.cdb.portal.model.db.entities.Log;
 import gov.anl.aps.cdb.common.utilities.FileUtility;
+import gov.anl.aps.cdb.portal.utilities.GalleryUtility;
 import gov.anl.aps.cdb.portal.utilities.SessionUtility;
 import gov.anl.aps.cdb.portal.utilities.StorageUtility;
 import java.io.File;
@@ -72,6 +73,17 @@ public class LogAttachmentUploadBean implements Serializable {
                     logEntry.setAttachmentList(attachmentList);
                 }
                 attachmentList.add(attachment);
+                String fileName = uploadedFile.getFileName();
+                // TODO make configurable based on domain? 
+                String text = logEntry.getText();   
+                String prefix = "\n\n"; 
+                if (GalleryUtility.viewableFileName(fileName)) {
+                    prefix += '!'; 
+                }
+                text += prefix + "[" + fileName + "](" + attachment.getFilePath() + ") ";
+                logEntry.setText(text);
+                
+                        
                 SessionUtility.addInfoMessage("Success", "Uploaded file " + uploadedFile.getFileName() + ".");
             }
         } catch (IOException ex) {
