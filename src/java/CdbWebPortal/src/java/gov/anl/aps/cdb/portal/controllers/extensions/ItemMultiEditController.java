@@ -9,19 +9,15 @@ import gov.anl.aps.cdb.common.exceptions.CdbException;
 import gov.anl.aps.cdb.common.utilities.StringUtility;
 import gov.anl.aps.cdb.portal.constants.SystemLogLevel;
 import gov.anl.aps.cdb.portal.controllers.ItemControllerExtensionHelper;
-import gov.anl.aps.cdb.portal.controllers.LocatableItemController;
 import gov.anl.aps.cdb.portal.controllers.LoginController;
 import gov.anl.aps.cdb.portal.controllers.PropertyValueController;
 import gov.anl.aps.cdb.portal.controllers.utilities.LogControllerUtility;
-import gov.anl.aps.cdb.portal.model.ItemDomainLocationTreeNode;
 import gov.anl.aps.cdb.portal.model.db.beans.ItemFacade;
 import gov.anl.aps.cdb.portal.model.db.beans.PropertyValueFacade;
 import gov.anl.aps.cdb.portal.model.db.entities.EntityInfo;
 import gov.anl.aps.cdb.portal.model.db.entities.Item;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemDomainLocation;
 import gov.anl.aps.cdb.portal.model.db.entities.ItemElement;
 import gov.anl.aps.cdb.portal.model.db.entities.ItemProject;
-import gov.anl.aps.cdb.portal.model.db.entities.LocatableItem;
 import gov.anl.aps.cdb.portal.model.db.entities.PropertyType;
 import gov.anl.aps.cdb.portal.model.db.entities.PropertyValue;
 import gov.anl.aps.cdb.portal.model.db.entities.UserGroup;
@@ -1171,25 +1167,7 @@ public abstract class ItemMultiEditController extends ItemControllerExtensionHel
                     if (value != null) {
                         value.setValue(currentMockPropertyValueApplyValuesToColumn.getValue());
                     }
-                    break;
-                case location:
-                    LocatableItemController locationController = LocatableItemController.getInstance();
-                    ItemDomainLocationTreeNode node = (ItemDomainLocationTreeNode) currentObjectValueToColumn;
-                    ItemDomainLocation location = null;
-                    if (node != null) {
-                        ItemElement ie = node.getElement();
-                        location = (ItemDomainLocation) ie.getContainedItem();
-                    }
-
-                    LocatableItem locatableItem = (LocatableItem) item;
-                    locationController.updateLocationForItem(locatableItem, location, null);
-                    break;
-                case locationDetails:
-                    String locDetails = getNextValueForCurrentSequence();
-                    LocatableItem locitem = (LocatableItem) item;
-
-                    locitem.setLocationDetails(locDetails);
-                    break;
+                    break;                
                 default:
                     customApplyValuesForColumn(item, currentApplyValuesToColumn);
                     break;
@@ -1218,8 +1196,6 @@ public abstract class ItemMultiEditController extends ItemControllerExtensionHel
             return "applyValuesTo/entityInfoGroupWriteableInput.xhtml";
         } else if (getRenderPropertyInputValue()) {
             return "applyValuesTo/propertyValueInput.xhtml";
-        } else if (getRenderLocationInputValue()) {
-            return LocatableItemController.getRelPathMultiEditLocationInput();
         } else {
             return REL_PATH_EMPTY_PAGE;
         }

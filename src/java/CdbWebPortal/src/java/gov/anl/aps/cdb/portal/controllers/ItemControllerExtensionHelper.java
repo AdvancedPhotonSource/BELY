@@ -9,7 +9,6 @@ import gov.anl.aps.cdb.portal.model.db.beans.ItemFacadeBase;
 import gov.anl.aps.cdb.portal.model.db.entities.Item;
 import gov.anl.aps.cdb.portal.model.db.entities.ItemCategory;
 import java.util.List;
-import gov.anl.aps.cdb.portal.controllers.extensions.ItemEnforcedPropertiesController;
 import gov.anl.aps.cdb.portal.controllers.settings.ItemSettings;
 import gov.anl.aps.cdb.portal.model.db.entities.ItemType;
 import gov.anl.aps.cdb.portal.model.db.entities.PropertyType;
@@ -520,11 +519,6 @@ public abstract class ItemControllerExtensionHelper implements IItemController<I
     @Override
     public Boolean isItemExistInDb(Item item) {
         return getItemController().isItemExistInDb(item); 
-    }
-    
-    @Override
-    public ItemEnforcedPropertiesController getItemEnforcedPropertiesController(){
-        return getItemController().getItemEnforcedPropertiesController(); 
     }
 
     @Override

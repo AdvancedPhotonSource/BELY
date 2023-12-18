@@ -85,35 +85,11 @@ public class SearchController implements Serializable {
         if (performSearch) {
             for (CdbEntityController controller : searchableControllers) {                                                                                
                 // Check if controller needs to be skipped.                               
-                if (controller instanceof ItemDomainCatalogController) {
-                    if (!searchSettings.getDisplayCatalogItems()) continue;
-                }
-                else if (controller instanceof ItemDomainInventoryController) {
-                    if (!searchSettings.getDisplayInventoryItems()) continue;
-                } 
-                else if (controller instanceof ItemDomainMachineDesignController) {
-                    if (!searchSettings.getDisplayMachineDesignItems()) continue;
-                }
-                else if (controller instanceof ItemDomainCableCatalogController) {
-                    if (!searchSettings.getDisplayCableCatalogItems()) continue;
-                } 
-                else if (controller instanceof ItemDomainCableInventoryController) {
-                    if (!searchSettings.getDisplayCableInventoryItems()) continue; 
-                } 
-                else if (controller instanceof ItemDomainCableDesignController) {
-                    if(!searchSettings.getDisplayCableDesignItems()) continue;
-                } 
-                else if (controller instanceof ItemDomainMAARCController) {
-                    if(!searchSettings.getDisplayMAARCItems()) continue;
-                }
-                else if (controller instanceof ItemTypeController) {
+                if (controller instanceof ItemTypeController) {
                     if (!searchSettings.getDisplayItemTypes()) continue;
                 }
                 else if (controller instanceof ItemCategoryController) {
                     if (!searchSettings.getDisplayItemCategories()) continue;
-                }
-                else if (controller instanceof ItemDomainLocationController) {
-                    if (!searchSettings.getDisplayLocationItems()) continue;
                 }
                 else if (controller instanceof PropertyTypeController) {
                     if (!searchSettings.getDisplayPropertyTypes()) continue;

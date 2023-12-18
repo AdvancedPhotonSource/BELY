@@ -15,7 +15,6 @@ import gov.anl.aps.cdb.portal.constants.ListName;
 import gov.anl.aps.cdb.portal.constants.PortalStyles;
 import gov.anl.aps.cdb.portal.controllers.utilities.ItemControllerUtility;
 import gov.anl.aps.cdb.portal.controllers.extensions.ItemCreateWizardController;
-import gov.anl.aps.cdb.portal.controllers.extensions.ItemEnforcedPropertiesController;
 import gov.anl.aps.cdb.portal.controllers.extensions.ItemMultiEditController;
 import gov.anl.aps.cdb.portal.controllers.settings.ItemSettings;
 import gov.anl.aps.cdb.portal.model.ItemBaseLazyTreeNode;
@@ -46,7 +45,6 @@ import gov.anl.aps.cdb.portal.model.db.entities.ItemProject;
 import gov.anl.aps.cdb.portal.model.db.entities.ItemSource;
 import gov.anl.aps.cdb.portal.model.db.entities.ItemType;
 import gov.anl.aps.cdb.portal.model.db.entities.ListTbl;
-import gov.anl.aps.cdb.portal.model.db.entities.LocatableItem;
 import gov.anl.aps.cdb.portal.model.db.entities.PropertyType;
 import gov.anl.aps.cdb.portal.model.db.entities.PropertyTypeHandler;
 import gov.anl.aps.cdb.portal.model.db.entities.PropertyTypeMetadata;
@@ -68,7 +66,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import javax.ejb.EJB;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
@@ -160,8 +157,6 @@ public abstract class ItemController<
     protected ItemProjectController itemProjectController = null;
     protected SettingController settingController;
 
-    private LocatableItemController locatableItemController = null;
-
     protected ItemElementController itemElementController;
 
     protected Integer domainId = null;
@@ -194,11 +189,6 @@ public abstract class ItemController<
      * @return
      */
     public ItemMultiEditController getItemMultiEditController() {
-        return null;
-    }
-
-    @Override
-    public ItemEnforcedPropertiesController getItemEnforcedPropertiesController() {
         return null;
     }
 
@@ -942,14 +932,7 @@ public abstract class ItemController<
 
     @Override
     protected void processPreProcessIteratedDomainEntity(CdbDomainEntity entity) {
-        super.processPreProcessIteratedDomainEntity(entity);
-
-        if (entity instanceof LocatableItem) {
-            if (settingObject.getDisplayLocation()) {
-                LocatableItem item = (LocatableItem) entity;
-                getLocatableItemController().loadCachedLocationStringForItem(getLocationRelationshipCache(), item);
-            }
-        }
+        super.processPreProcessIteratedDomainEntity(entity);       
     }
 
     private List<ItemElementRelationship> getLocationRelationshipCache() {
@@ -1944,12 +1927,7 @@ public abstract class ItemController<
                     ItemDomainEntity item = findByQrId(qrParam);
                     if (item == null) {
                         SessionUtility.addInfoMessage("Not found","Item with QrId: " + qrParam + " does not exist.");
-                        UserInfo sessionUser = (UserInfo) SessionUtility.getUser();
-
-                        ItemDomainInventoryController inventoryController;
-                        inventoryController = ItemDomainInventoryController.getInstance();
-                        inventoryController.qrIdViewParam = qrParam;
-                        inventoryController.setCurrent(null);
+                        UserInfo sessionUser = (UserInfo) SessionUtility.getUser();                       
 
                         if (sessionUser != null) {
                             SessionUtility.navigateTo("/views/itemDomainInventory/create.xhtml?faces-redirect=true");
@@ -2195,13 +2173,7 @@ public abstract class ItemController<
 
     @Override
     public void processEditRequestParams() {
-        super.processEditRequestParams();
-
-        if (getCurrent() instanceof LocatableItem) {
-            // Reset location vars to generate proper model when requested
-            LocatableItem locatableItem = (LocatableItem) getCurrent();
-            locatableItem.resetLocationVariables();
-        }
+        super.processEditRequestParams();       
     }
 
     protected ItemController getItemItemController(Item item) {
@@ -2234,14 +2206,7 @@ public abstract class ItemController<
             settingController = SettingController.getInstance();
         }
         return settingController;
-    }
-
-    public LocatableItemController getLocatableItemController() {
-        if (locatableItemController == null) {
-            locatableItemController = LocatableItemController.getInstance();
-        }
-        return locatableItemController;
-    }
+    }   
 
     public ItemElementController getItemElementController() {
         if (itemElementController == null) {

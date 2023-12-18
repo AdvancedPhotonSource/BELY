@@ -32,8 +32,6 @@ import gov.anl.aps.cdb.portal.import_export.import_.objects.InputColumnModel;
 import gov.anl.aps.cdb.portal.import_export.import_.objects.handlers.InputHandler;
 import gov.anl.aps.cdb.portal.import_export.import_.objects.OutputColumnModel;
 import gov.anl.aps.cdb.portal.import_export.import_.objects.ValidInfo;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.handlers.LocationDetailsHandler;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.handlers.LocationHandler;
 import gov.anl.aps.cdb.portal.import_export.import_.objects.specs.DomainItemTypeListColumnSpec;
 import gov.anl.aps.cdb.portal.import_export.import_.objects.specs.BooleanColumnSpec;
 import gov.anl.aps.cdb.portal.import_export.import_.objects.specs.CustomColumnSpec;
@@ -1890,28 +1888,6 @@ public abstract class ImportHelperBase<EntityType extends CdbEntity, EntityContr
                 ItemTypeController.getInstance(), 
                 List.class, 
                 domainName);
-    }
-    
-    public CustomColumnSpec locationColumnSpec() {
-        LocationHandler locationHandler = new LocationHandler();
-        return new CustomColumnSpec(
-                LocationHandler.HEADER_LOCATION,
-                "importLocationItem",
-                "Name or CDB id of CDB location item (use of word 'parent' allowed for documentation purposes, it is ignored).",
-                "getImportLocationItem",
-                ColumnModeOptions.oCREATEoUPDATE(),
-                locationHandler);
-    }
-    
-    public CustomColumnSpec locationDetailsColumnSpec() {
-        LocationDetailsHandler locationDetailsHandler = new LocationDetailsHandler();
-        return new CustomColumnSpec(
-                LocationDetailsHandler.HEADER_LOCATION_DETAILS,
-                "importLocationDetails",
-                "Item's location details (use of word 'parent' allowed for documentation purposes, it is ignored).",
-                "getImportLocationDetails",
-                ColumnModeOptions.oCREATEoUPDATE(),
-                locationDetailsHandler);
     }
     
     public IntegerColumnSpec existingItemIdColumnSpec() {

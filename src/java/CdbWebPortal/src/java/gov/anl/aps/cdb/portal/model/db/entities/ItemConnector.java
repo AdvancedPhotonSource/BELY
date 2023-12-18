@@ -6,8 +6,6 @@ package gov.anl.aps.cdb.portal.model.db.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import gov.anl.aps.cdb.common.utilities.ObjectUtility;
-import gov.anl.aps.cdb.common.utilities.StringUtility;
-import gov.anl.aps.cdb.portal.constants.ItemDomainName;
 import gov.anl.aps.cdb.portal.controllers.utilities.ItemConnectorControllerUtility;
 import gov.anl.aps.cdb.portal.import_export.import_.objects.ValidInfo;
 import java.io.Serializable;

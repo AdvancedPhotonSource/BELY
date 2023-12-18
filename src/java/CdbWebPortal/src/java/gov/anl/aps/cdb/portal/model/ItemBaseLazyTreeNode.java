@@ -5,7 +5,6 @@
 package gov.anl.aps.cdb.portal.model;
 
 import gov.anl.aps.cdb.common.exceptions.CdbException;
-import gov.anl.aps.cdb.portal.controllers.utilities.ItemDomainMachineDesignControllerUtility;
 import gov.anl.aps.cdb.portal.model.ItemBaseLazyTreeNode.ItemTreeBaseConfiguration;
 import gov.anl.aps.cdb.portal.model.db.beans.ItemFacadeBase;
 import gov.anl.aps.cdb.portal.model.db.entities.Domain;
@@ -259,8 +258,7 @@ public abstract class ItemBaseLazyTreeNode<ItemEntity extends Item, ItemEntityFa
     public class ItemTreeBaseConfiguration {
 
         private boolean setMachineTreeNodeType = true;
-        private boolean loadAllChildren = false;
-        private ItemDomainMachineDesignControllerUtility mdControllerUtility = null;
+        private boolean loadAllChildren = false;        
         private ItemEntityFacade facade;
 
         public ItemTreeBaseConfiguration() {

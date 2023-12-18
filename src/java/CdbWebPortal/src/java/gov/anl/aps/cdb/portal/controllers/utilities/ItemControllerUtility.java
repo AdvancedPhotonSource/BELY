@@ -9,7 +9,6 @@ import gov.anl.aps.cdb.common.exceptions.InvalidRequest;
 import gov.anl.aps.cdb.common.exceptions.ObjectAlreadyExists;
 import gov.anl.aps.cdb.portal.constants.ItemElementRelationshipTypeNames;
 import gov.anl.aps.cdb.portal.constants.ListName;
-import static gov.anl.aps.cdb.portal.controllers.ItemController.getParentItemList;
 import gov.anl.aps.cdb.portal.controllers.PropertyTypeController;
 import gov.anl.aps.cdb.portal.model.db.beans.AllowedPropertyMetadataValueFacade;
 import gov.anl.aps.cdb.portal.model.db.beans.DomainFacade;
@@ -26,7 +25,6 @@ import gov.anl.aps.cdb.portal.model.db.entities.ItemElement;
 import gov.anl.aps.cdb.portal.model.db.entities.ItemElementRelationship;
 import gov.anl.aps.cdb.portal.model.db.entities.ItemSource;
 import gov.anl.aps.cdb.portal.model.db.entities.ListTbl;
-import gov.anl.aps.cdb.portal.model.db.entities.LocatableItem;
 import gov.anl.aps.cdb.portal.model.db.entities.PropertyType;
 import gov.anl.aps.cdb.portal.model.db.entities.PropertyTypeMetadata;
 import gov.anl.aps.cdb.portal.model.db.entities.PropertyValue;
@@ -238,13 +236,7 @@ public abstract class ItemControllerUtility<ItemDomainEntity extends Item, ItemD
         return elementName;
     }
 
-    public void performPrepareEntityInsertUpdate(Item item, UserInfo userInfo) throws InvalidRequest {
-        if (item instanceof LocatableItem) {
-            LocatableItem locatableItem = (LocatableItem) item;
-            LocatableItemControllerUtility locatableControllerUtility;
-            locatableControllerUtility = new LocatableItemControllerUtility();
-            locatableControllerUtility.updateItemLocation(locatableItem, userInfo);
-        }
+    public void performPrepareEntityInsertUpdate(Item item, UserInfo userInfo) throws InvalidRequest {        
         addDynamicPropertiesToItem(item, userInfo);
     }
 

@@ -26,9 +26,7 @@ public abstract class ItemCreateWizardController extends ItemControllerExtension
     
     private String currentWizardStep;
     protected MenuModel createItemWizardStepsMenuModel = null;
-    protected Integer currentWizardStepIndex = null;
-    
-    private Boolean enabledEnforcedProperties = Boolean.parseBoolean(ConfigurationUtility.getUiProperty("EnabledEnforcedPropertiesForInventoryOfCatalogItem"));
+    protected Integer currentWizardStepIndex = null;        
            
     
     public abstract String getItemCreateWizardControllerNamed(); 
@@ -66,15 +64,9 @@ public abstract class ItemCreateWizardController extends ItemControllerExtension
      * @return
      */
     protected String getCreateItemWizardMenuItemValue(ItemCreateWizardSteps step) {
-        if (step.getValue().equals(ItemCreateWizardSteps.enforcedPropertyTypesTab.getValue())) {
-            if (enabledEnforcedProperties) {
-                ItemEnforcedPropertiesController iepc = getItemEnforcedPropertiesController();
-                if (!iepc.isItemHasEditableEnforcedProperties()) {
-                    return null; 
-                }
-            } else {
-                return null; 
-            }
+        if (step.getValue().equals(ItemCreateWizardSteps.enforcedPropertyTypesTab.getValue())) {            
+            // TODO remove this from UI. 
+            return null;             
         }
         else if (step.getValue().equals(ItemCreateWizardSteps.derivedFromItemSelection.getValue())) {            
             if (getEntityDisplayDerivedFromItem()) {

@@ -5,7 +5,6 @@
 package gov.anl.aps.cdb.portal.controllers;
 
 import gov.anl.aps.cdb.common.exceptions.CdbException;
-import gov.anl.aps.cdb.portal.controllers.extensions.ItemEnforcedPropertiesController;
 import gov.anl.aps.cdb.portal.controllers.settings.ItemSettings;
 import gov.anl.aps.cdb.portal.model.db.entities.Item;
 import gov.anl.aps.cdb.portal.model.db.entities.ItemCategory;
@@ -611,14 +610,7 @@ public interface IItemController<ItemDomainEntity extends Item, SettingObject ex
      * @param item
      * @return 
      */
-    public Boolean isItemExistInDb(Item item);
-    
-    /**
-     * Get item enforced properties for current controller. 
-     * 
-     * @return 
-     */
-    public ItemEnforcedPropertiesController getItemEnforcedPropertiesController();
+    public Boolean isItemExistInDb(Item item);            
     
     public void dataTableRowToggleListener(ToggleEvent event);
         

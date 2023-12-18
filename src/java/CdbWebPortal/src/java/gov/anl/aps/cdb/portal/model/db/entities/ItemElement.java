@@ -6,7 +6,6 @@ package gov.anl.aps.cdb.portal.model.db.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import gov.anl.aps.cdb.common.utilities.ObjectUtility;
-import gov.anl.aps.cdb.portal.constants.ItemDomainName;
 import gov.anl.aps.cdb.portal.model.db.utilities.EntityInfoUtility;
 import gov.anl.aps.cdb.portal.utilities.SearchResult;
 import gov.anl.aps.cdb.portal.view.objects.ItemElementConstraintInformation;
@@ -199,17 +198,8 @@ public class ItemElement extends CdbDomainEntity implements Serializable {
     private transient String importChildItemName;
     // </editor-fold>
 
-    // <editor-fold defaultstate="collapsed" desc="Machine Design Element Variables"> 
-    private transient Item catalogItem;
-    private transient Item inventoryItem;
-    private transient ItemDomainMachineDesign machineDesignItem;
-    private transient String catalogDisplayString;
-    private transient String inventoryDisplayString;
-    private transient String machineDesignDisplayString;
-    private transient boolean loadedCatalogInventoryMachineDesignItem = false;
-    private transient boolean itemCanHaveInventoryItem = false;
-    private transient String rowStyle;
-    private transient ItemConnector mdConnector;
+    // <editor-fold defaultstate="collapsed" desc="Machine Design Element Variables">     
+    private transient String rowStyle;    
     // </editor-fold>
 
     // Helper variable used to ensure proper procedure is executed if the attribute changes. 
@@ -267,13 +257,7 @@ public class ItemElement extends CdbDomainEntity implements Serializable {
         this.id = id;
     }
     
-    private ItemElement getRelevantMetadataElement() {
-        if (derivedFromItemElement != null && parentItem != null) {
-            String inventoryDomain = ItemDomainName.inventory.getValue();
-            if (parentItem.getDomain().getName().equals(inventoryDomain)) {
-                return derivedFromItemElement;
-            }
-        }
+    private ItemElement getRelevantMetadataElement() {        
         return this;
     }
 
@@ -467,8 +451,7 @@ public class ItemElement extends CdbDomainEntity implements Serializable {
         return containedItem1;
     }
 
-    public void setContainedItem(Item containedItem) {
-        resetCatalogInventoryMachineDesingItems();
+    public void setContainedItem(Item containedItem) {        
         this.containedItem1 = containedItem;
     }
 
@@ -576,120 +559,6 @@ public class ItemElement extends CdbDomainEntity implements Serializable {
         return this.markedForDeletion;
     }
 
-    // <editor-fold defaultstate="collapsed" desc="Machine Design Logic">  
-    private void resetCatalogInventoryMachineDesingItems() {
-        loadedCatalogInventoryMachineDesignItem = false;
-        itemCanHaveInventoryItem = false;
-        catalogItem = null;
-        inventoryItem = null;
-        machineDesignItem = null;
-        catalogDisplayString = null;
-        inventoryDisplayString = null;
-        machineDesignDisplayString = null;
-    }
-
-    private void loadCatalogInventoryMachineDesignItems() {
-        if (!loadedCatalogInventoryMachineDesignItem) {
-            if (containedItem1 != null) {
-                if (containedItem1 instanceof ItemDomainMachineDesign) {
-                    ItemDomainMachineDesign mdItem = (ItemDomainMachineDesign) containedItem1;
-                    Item assignedItem = mdItem.getAssignedItem();
-                    if (assignedItem != null) {
-                        Domain domain = assignedItem.getDomain();
-                        switch (domain.getId()) {
-                            case ItemDomainName.CATALOG_ID:
-                                catalogItem = assignedItem;
-                                machineDesignDisplayString = "N/A";
-                                catalogDisplayString = catalogItem.toString();
-                                itemCanHaveInventoryItem = true;
-                                break;
-                            case ItemDomainName.INVENTORY_ID:
-                                inventoryItem = assignedItem;
-                                catalogItem = assignedItem.getDerivedFromItem();
-                                machineDesignDisplayString = "N/A";
-                                catalogDisplayString = catalogItem.toString();
-                                inventoryDisplayString = inventoryItem.getName();
-                                itemCanHaveInventoryItem = true;
-                                break;
-                            case ItemDomainName.MACHINE_DESIGN_ID:
-                                machineDesignItem = (ItemDomainMachineDesign) containedItem1;
-                                machineDesignDisplayString = machineDesignItem.toString();
-                                catalogDisplayString = "N/A";
-                                inventoryDisplayString = "N/A";
-                                itemCanHaveInventoryItem = false;
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                }
-            }
-            loadedCatalogInventoryMachineDesignItem = true;
-        }
-    }
-
-    public boolean getItemCanHaveInventoryItem() {
-        return itemCanHaveInventoryItem;
-    }
-
-    public Item getCatalogItem() {
-        loadCatalogInventoryMachineDesignItems();
-        return catalogItem;
-    }
-
-    public Item getInventoryItem() {
-        loadCatalogInventoryMachineDesignItems();
-        return inventoryItem;
-    }
-
-    public void setInventoryItem(Item inventoryItem) {
-        this.inventoryItem = inventoryItem;
-    }
-
-    public ItemDomainMachineDesign getMachineDesignItem() {
-        loadCatalogInventoryMachineDesignItems();
-        return machineDesignItem;
-    }
-
-    public Item getMdTypeContainedItem() {
-        if (getContainedItem() instanceof ItemDomainMachineDesign) {
-            return getContainedItem();
-        }
-        return null;
-    }
-
-    public String getCatalogDisplayString() {
-        loadCatalogInventoryMachineDesignItems();
-        return catalogDisplayString;
-    }
-
-    public String getInventoryDisplayString() {
-        loadCatalogInventoryMachineDesignItems();
-        return inventoryDisplayString;
-    }
-
-    public String getMachineDesignDisplayString() {
-        loadCatalogInventoryMachineDesignItems();
-        return machineDesignDisplayString;
-    }
-
-    public String getRowStyle() {
-        return rowStyle;
-    }
-
-    public void setRowStyle(String rowStyle) {
-        this.rowStyle = rowStyle;
-    }
-
-    public ItemConnector getMdConnector() {
-        return mdConnector;
-    }
-
-    public void setMdConnector(ItemConnector mdConnector) {
-        this.mdConnector = mdConnector;
-    }
-
-    // </editor-fold>
     @Override
     public SearchResult createSearchResultInfo(Pattern searchPattern) {
 
@@ -853,10 +722,6 @@ public class ItemElement extends CdbDomainEntity implements Serializable {
 
     public void setImportChildItemName(String partCatalogItemName) {
         this.importChildItemName = partCatalogItemName;
-    }
-
-    public ItemDomainCatalog getImportChildItem() {
-        return (ItemDomainCatalog) this.getContainedItem();
     }
 
     public void setImportChildItem(Item childItem) {

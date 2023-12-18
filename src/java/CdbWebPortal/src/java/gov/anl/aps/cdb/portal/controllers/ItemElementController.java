@@ -18,7 +18,6 @@ import gov.anl.aps.cdb.portal.model.db.entities.PropertyValue;
 import gov.anl.aps.cdb.portal.model.db.utilities.ItemElementUtility;
 import gov.anl.aps.cdb.portal.model.db.utilities.PropertyValueUtility;
 import gov.anl.aps.cdb.portal.utilities.SessionUtility;
-import gov.anl.aps.cdb.portal.view.objects.CatalogItemElementConstraintInformation;
 import gov.anl.aps.cdb.portal.view.objects.ItemElementConstraintInformation;
 import java.io.IOException;
 
@@ -104,15 +103,7 @@ public class ItemElementController extends CdbDomainEntityController<ItemElement
             SessionUtility.executeRemoteCommand(onSuccessCommand);
         } else {
             String errorMessage = "";
-
-            if (constraint instanceof CatalogItemElementConstraintInformation) {
-                CatalogItemElementConstraintInformation catalogConstraint = (CatalogItemElementConstraintInformation) constraint;
-                errorMessage = getControllerUtility().generateCatalogSpecificPreventDeleteUpdateContainedMessage(catalogConstraint);
-                if (errorMessage == null) {
-                    errorMessage = "";
-                }
-            }
-
+            
             SessionUtility.addErrorMessage("Cannot Edit Contained Item", errorMessage);
         }
     }   

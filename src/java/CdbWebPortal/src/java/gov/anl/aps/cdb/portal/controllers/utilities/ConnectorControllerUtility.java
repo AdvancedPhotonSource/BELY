@@ -56,8 +56,8 @@ public class ConnectorControllerUtility extends CdbEntityControllerUtility<Conne
             Item item = itemConnector.getItem(); 
             String domainName = item.getDomain().getName();
             List<String> validDomainNames = new ArrayList<>();
-            validDomainNames.add(ItemDomainName.catalog.getValue());
-            validDomainNames.add(ItemDomainName.cableCatalog.getValue());
+//            validDomainNames.add(ItemDomainName.catalog.getValue());
+//            validDomainNames.add(ItemDomainName.cableCatalog.getValue());
             if (!validDomainNames.contains(domainName)) {
                 return false; 
             }           

@@ -398,42 +398,6 @@ import org.primefaces.model.TreeNode;
             }
     ),
     @NamedStoredProcedureQuery(
-            name = "item.fetchInventoryAssignedToMachineItemHiearchy",
-            procedureName = "fetch_inventory_assigned_to_machine_item_hierarchy",
-            resultClasses = ItemDomainInventory.class,
-            parameters = {
-                @StoredProcedureParameter(
-                        name = "machine_item_id",
-                        mode = ParameterMode.IN,
-                        type = Integer.class
-                )
-            }
-    ),
-    @NamedStoredProcedureQuery(
-            name = "item.fetchInventoryStoredInLocationHierarchy",
-            procedureName = "fetch_inventory_stored_in_location_hierarchy",
-            resultClasses = ItemDomainInventory.class,
-            parameters = {
-                @StoredProcedureParameter(
-                        name = "location_item_id_input",
-                        mode = ParameterMode.IN,
-                        type = Integer.class
-                )
-            }
-    ),
-    @NamedStoredProcedureQuery(
-            name = "item.fetchInventoryAssignedToAssemblyHierarchy",
-            procedureName = "fetch_inventory_assigned_to_assembly_hierarchy",
-            resultClasses = ItemDomainInventory.class,
-            parameters = {
-                @StoredProcedureParameter(
-                        name = "assembly_item_id",
-                        mode = ParameterMode.IN,
-                        type = Integer.class
-                )
-            }
-    ),
-    @NamedStoredProcedureQuery(
             name = "item.isItemRelationshipHaveCircularReference",
             procedureName = "is_item_relationship_have_circular_reference",
             resultClasses = Item.class,
@@ -503,14 +467,7 @@ import org.primefaces.model.TreeNode;
 @Schema(name = "Item",
         subTypes
         = {
-            ItemDomainCatalog.class,
-            ItemDomainInventory.class,
-            ItemDomainMachineDesign.class,
-            ItemDomainCableCatalog.class,
-            ItemDomainCableInventory.class,
-            ItemDomainCableDesign.class,
-            ItemDomainMAARC.class,
-            ItemDomainLocation.class
+            ItemDomainLogbook.class,            
         }
 )
 public class Item extends CdbDomainEntity implements Serializable {
@@ -1471,25 +1428,7 @@ public void setEntityTypeList(List<EntityType> entityTypeList) throws CdbExcepti
         }
 
         return null;
-    }
-
-    @JsonIgnore
-    public ItemConnector getConnectorNamed(String connectorName) {
-
-        // check this item's connector list for specified connector name
-        ItemConnector itemConnector = findConnectorWithName(connectorName, getItemConnectorList());
-        if (itemConnector != null) {
-            return itemConnector;
-        }
-
-        // check the list of inherited connectors for specified name
-        ItemConnector inheritedConnector = findConnectorWithName(connectorName, getSyncedConnectorList());
-        if (inheritedConnector != null) {
-            return inheritedConnector;
-        }
-
-        return null;
-    }
+    }   
 
     @XmlTransient
     public List<ItemSource> getItemSourceList() {
@@ -2059,92 +1998,7 @@ public void setEntityTypeList(List<EntityType> entityTypeList) throws CdbExcepti
             }
         }
         return maxSortOrder;
-    }
-
-    @JsonIgnore
-    public List<ItemConnector> getSyncedConnectorList() {
-        if (syncedConnectorList == null) {
-            syncedConnectorList = syncUnusedInheritedItemConnectors();
-        }
-        return syncedConnectorList;
-    }
-
-    /**
-     * Returns list of cloned inherited connectors that are not currently in use
-     * for this item.
-     */
-    private List<ItemConnector> syncUnusedInheritedItemConnectors() {
-
-        // get inherited connectors
-        List<ItemConnector> inheritedConnectors = getInheritedItemConnectors();
-        if (inheritedConnectors == null) {
-            return new ArrayList<>();
-        }
-
-        // get this item's connectors
-        List<ItemConnector> itemConnectors = getItemConnectorList();
-        if (itemConnectors == null) {
-            itemConnectors = new ArrayList<>();
-        }
-
-        // create list of connectors not in use for this item that can be used for new connections
-        List<ItemConnector> syncedConnectors = new ArrayList<>();
-        for (ItemConnector catalogConnector : inheritedConnectors) {
-            boolean connectorInUse = false;
-            for (ItemConnector itemConnector : itemConnectors) {
-                if (catalogConnector.getConnector().getName().equals(itemConnector.getConnector().getName())) {
-                    // connector already in use for item
-                    connectorInUse = true;
-                    break;
-                }
-            }
-            if (!connectorInUse) {
-                // connector not in use for item, so "sync" it
-                ItemConnector syncedConnector = cloneInheritedConnector(catalogConnector);
-                syncedConnectors.add(syncedConnector);
-            }
-        }
-
-        return syncedConnectors;
-    }
-
-    @JsonIgnore
-    private List<ItemConnector> getInheritedItemConnectors() {
-
-        Item assignedItem = getInheritedItemConnectorParent();
-
-        if (assignedItem == null) {
-            return new ArrayList<>();
-        }
-
-        Item catalogItem = null;
-        if (assignedItem instanceof ItemDomainInventoryBase) {
-            catalogItem = ((ItemDomainInventoryBase) assignedItem).getCatalogItem();
-        } else if (assignedItem instanceof ItemDomainCatalogBase) {
-            catalogItem = assignedItem;
-        }
-
-        List<ItemConnector> result = null;
-        if (catalogItem != null) {
-            result = catalogItem.getItemConnectorList();
-        }
-
-        if (result == null) {
-            result = new ArrayList<>();
-        }
-
-        return result;
-    }
-
-    /**
-     * Get item to inherit connectors from, default implementation returns null.
-     * Subclasses override to customize, e.g., machine/cable design items return
-     * their assigned catalog/inventory item.
-     */
-    @JsonIgnore
-    protected Item getInheritedItemConnectorParent() {
-        return null;
-    }
+    }   
 
     private ItemConnector cloneInheritedConnector(ItemConnector inheritedConnector) {
 

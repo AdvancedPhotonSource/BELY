@@ -31,17 +31,9 @@ public class ImportExportInfoController {
     
     @PostConstruct
     public void initialize() {
-        List<CdbEntityController> controllerList = new ArrayList<>();
-        controllerList.add(ItemDomainCatalogController.getInstance());
-        controllerList.add(ItemDomainInventoryController.getInstance());
-        controllerList.add(ItemDomainMachineDesignController.getInstance());
-        controllerList.add(ItemDomainMachineDesignInventoryController.getInstance());
-        controllerList.add(ItemDomainCableCatalogController.getInstance());
-        controllerList.add(ItemDomainCableInventoryController.getInstance());
-        controllerList.add(ItemDomainCableDesignController.getInstance());
+        List<CdbEntityController> controllerList = new ArrayList<>();        
         controllerList.add(ItemCategoryController.getInstance());
         controllerList.add(ItemTypeController.getInstance());
-        controllerList.add(ItemDomainLocationController.getInstance());
         controllerList.add(SourceController.getInstance());
         controllerList.add(ConnectorTypeController.getInstance());
         controllerList.add(UserInfoController.getInstance());
