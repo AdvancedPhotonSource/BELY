@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.persistence.Basic;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -72,12 +73,12 @@ public class Log extends CdbEntity implements Serializable {
     @JoinTable(name = "log_attachment", joinColumns = {
         @JoinColumn(name = "log_id", referencedColumnName = "id")}, inverseJoinColumns = {
         @JoinColumn(name = "attachment_id", referencedColumnName = "id")})
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
     private List<Attachment> attachmentList;
     @JoinTable(name = "system_log", joinColumns = {
         @JoinColumn(name = "log_id", referencedColumnName = "id")}, inverseJoinColumns = {
         @JoinColumn(name = "log_level_id", referencedColumnName = "id")})
-    @ManyToMany
+    @ManyToMany()
     private List<LogLevel> logLevelList;
     @JoinTable(name = "item_element_log", joinColumns = {
         @JoinColumn(name = "log_id", referencedColumnName = "id")}, inverseJoinColumns = {
