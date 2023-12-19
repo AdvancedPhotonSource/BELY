@@ -5,11 +5,11 @@ See LICENSE file.
 -->
 <!DOCTYPE glassfish-web-app PUBLIC "-//GlassFish.org//DTD GlassFish Application Server 3.1 Servlet 3.0//EN" "http://glassfish.org/dtds/glassfish-web-app_3_0-1.dtd">
 <glassfish-web-app error-url="">
-    <context-root>/cdb</context-root>
-    <property name="alternatedocroot_1" value="from=/propertyValue/* dir=CDB_DATA_DIR">
+    <context-root>/logr</context-root>
+    <property name="alternatedocroot_1" value="from=/propertyValue/* dir=LOGR_DATA_DIR">
         <description>Serve property value files and images./</description>
     </property>
-    <property name="alternatedocroot_2" value="from=/log/* dir=CDB_DATA_DIR">
+    <property name="alternatedocroot_2" value="from=/log/* dir=LOGR_DATA_DIR">
         <description>Serve log attachments.</description>
     </property>
     <class-loader delegate="true"/>

@@ -1,19 +1,19 @@
 # To change this license header, choose License Headers in Project Properties.
 # To change this template file, choose Tools | Templates
 # and open the template in the editor.
-cdb.portal.adminGroupList=CDB_ADMIN
-cdb.portal.maintainerGroupList=CDB_MAINTAINER
-cdb.portal.advancedGroupList=CDB_ADVANCED
+cdb.portal.adminGroupList=LOGR_ADMIN
+cdb.portal.maintainerGroupList=LOGR_MAINTAINER
+cdb.portal.advancedGroupList=LOGR_ADVANCED
 
 # '%s' string will be replaced by the actual username
-cdb.portal.ldapUrl=CDB_LDAP_AUTH_SERVER_URL
-cdb.portal.ldapDnString=CDB_LDAP_AUTH_DN_FORMAT
-cdb.portal.ldapLookupDn=CDB_LDAP_SERVICE_DN
-cdb.portal.ldapLookupBindDnPassword=CDB_LDAP_SERVICE_PASS
-cdb.portal.ldapLookupDnUsernameFilter=CDB_LDAP_LOOKUP_FILTER
+cdb.portal.ldapUrl=LOGR_LDAP_AUTH_SERVER_URL
+cdb.portal.ldapDnString=LOGR_LDAP_AUTH_DN_FORMAT
+cdb.portal.ldapLookupDn=LOGR_LDAP_SERVICE_DN
+cdb.portal.ldapLookupBindDnPassword=LOGR_LDAP_SERVICE_PASS
+cdb.portal.ldapLookupDnUsernameFilter=LOGR_LDAP_LOOKUP_FILTER
 
 # Storage areas
-cdb.portal.storageDirectory=CDB_DATA_DIR
+cdb.portal.storageDirectory=LOGR_DATA_DIR
 cdb.portal.scaledImageSize=450
 cdb.portal.thumbnailImageSize=32
 
