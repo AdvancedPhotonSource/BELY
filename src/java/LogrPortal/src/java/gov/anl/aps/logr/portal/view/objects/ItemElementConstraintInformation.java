@@ -2,11 +2,11 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.view.objects;
+package gov.anl.aps.logr.portal.view.objects;
 
-import gov.anl.aps.cdb.portal.model.db.entities.ItemElement;
-import gov.anl.aps.cdb.portal.model.db.entities.Log;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValue;
+import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
+import gov.anl.aps.logr.portal.model.db.entities.Log;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -2,12 +2,12 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model;
+package gov.anl.aps.logr.portal.model;
 
-import gov.anl.aps.cdb.portal.model.db.beans.LogFacade;
-import gov.anl.aps.cdb.portal.model.db.beans.builder.LogQueryBuilder;
-import gov.anl.aps.cdb.portal.model.db.entities.Log;
-import gov.anl.aps.cdb.portal.model.db.entities.LogLevel;
+import gov.anl.aps.logr.portal.model.db.beans.LogFacade;
+import gov.anl.aps.logr.portal.model.db.beans.builder.LogQueryBuilder;
+import gov.anl.aps.logr.portal.model.db.entities.Log;
+import gov.anl.aps.logr.portal.model.db.entities.LogLevel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

@@ -2,7 +2,7 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers.util;
+package gov.anl.aps.logr.portal.controllers.util;
 
 import java.util.List;
 import javax.faces.application.FacesMessage;

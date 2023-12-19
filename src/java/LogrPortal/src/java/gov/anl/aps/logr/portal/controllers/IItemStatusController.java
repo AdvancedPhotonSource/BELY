@@ -1,12 +1,12 @@
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
 /*
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
 
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyType;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValue;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
 
 /**
  *

@@ -2,21 +2,21 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.portal.controllers.settings.PropertyTypeSettings;
-import gov.anl.aps.cdb.portal.controllers.utilities.PropertyTypeControllerUtility;
-import gov.anl.aps.cdb.portal.model.db.beans.AllowedPropertyMetadataValueFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyType;
-import gov.anl.aps.cdb.portal.model.db.beans.PropertyTypeFacade;
-import gov.anl.aps.cdb.portal.model.db.beans.PropertyTypeMetadataFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.AllowedPropertyMetadataValue;
-import gov.anl.aps.cdb.portal.model.db.entities.AllowedPropertyValue;
-import gov.anl.aps.cdb.portal.model.db.entities.CdbDomainEntity;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyTypeCategory;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyTypeHandler;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyTypeMetadata;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.portal.controllers.settings.PropertyTypeSettings;
+import gov.anl.aps.logr.portal.controllers.utilities.PropertyTypeControllerUtility;
+import gov.anl.aps.logr.portal.model.db.beans.AllowedPropertyMetadataValueFacade;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
+import gov.anl.aps.logr.portal.model.db.beans.PropertyTypeFacade;
+import gov.anl.aps.logr.portal.model.db.beans.PropertyTypeMetadataFacade;
+import gov.anl.aps.logr.portal.model.db.entities.AllowedPropertyMetadataValue;
+import gov.anl.aps.logr.portal.model.db.entities.AllowedPropertyValue;
+import gov.anl.aps.logr.portal.model.db.entities.CdbDomainEntity;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyTypeCategory;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyTypeHandler;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyTypeMetadata;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
 
 import java.io.Serializable;
 import java.util.ArrayList;

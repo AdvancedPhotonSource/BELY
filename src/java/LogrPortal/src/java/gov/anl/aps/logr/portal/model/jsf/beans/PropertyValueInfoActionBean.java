@@ -2,13 +2,13 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model.jsf.beans;
+package gov.anl.aps.logr.portal.model.jsf.beans;
 
 import java.io.Serializable;
 import javax.inject.Named;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValue;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValueHistory;
-import gov.anl.aps.cdb.portal.plugins.CdbPluginManager;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValueHistory;
+import gov.anl.aps.logr.portal.plugins.CdbPluginManager;
 import javax.enterprise.context.SessionScoped;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

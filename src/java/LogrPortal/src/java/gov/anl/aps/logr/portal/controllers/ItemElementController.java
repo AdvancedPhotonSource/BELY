@@ -2,23 +2,23 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.common.exceptions.CdbException;
-import gov.anl.aps.cdb.common.utilities.ObjectUtility;
+import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.utilities.ObjectUtility;
 
-import gov.anl.aps.cdb.portal.controllers.settings.ItemElementSettings;
-import gov.anl.aps.cdb.portal.controllers.utilities.ItemElementControllerUtility;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemElement;
-import gov.anl.aps.cdb.portal.model.db.beans.ItemElementFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.Domain;
-import gov.anl.aps.cdb.portal.model.db.entities.EntityInfo;
-import gov.anl.aps.cdb.portal.model.db.entities.Item;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValue;
-import gov.anl.aps.cdb.portal.model.db.utilities.ItemElementUtility;
-import gov.anl.aps.cdb.portal.model.db.utilities.PropertyValueUtility;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
-import gov.anl.aps.cdb.portal.view.objects.ItemElementConstraintInformation;
+import gov.anl.aps.logr.portal.controllers.settings.ItemElementSettings;
+import gov.anl.aps.logr.portal.controllers.utilities.ItemElementControllerUtility;
+import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
+import gov.anl.aps.logr.portal.model.db.beans.ItemElementFacade;
+import gov.anl.aps.logr.portal.model.db.entities.Domain;
+import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
+import gov.anl.aps.logr.portal.model.db.entities.Item;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
+import gov.anl.aps.logr.portal.model.db.utilities.ItemElementUtility;
+import gov.anl.aps.logr.portal.model.db.utilities.PropertyValueUtility;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.portal.view.objects.ItemElementConstraintInformation;
 import java.io.IOException;
 
 import java.io.Serializable;

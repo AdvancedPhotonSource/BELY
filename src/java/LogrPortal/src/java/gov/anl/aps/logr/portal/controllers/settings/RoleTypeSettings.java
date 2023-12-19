@@ -2,11 +2,11 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers.settings;
+package gov.anl.aps.logr.portal.controllers.settings;
 
-import gov.anl.aps.cdb.portal.controllers.RoleTypeController;
-import gov.anl.aps.cdb.portal.model.db.entities.SettingEntity;
-import gov.anl.aps.cdb.portal.model.db.entities.SettingType;
+import gov.anl.aps.logr.portal.controllers.RoleTypeController;
+import gov.anl.aps.logr.portal.model.db.entities.SettingEntity;
+import gov.anl.aps.logr.portal.model.db.entities.SettingType;
 import java.util.Map;
 
 /**

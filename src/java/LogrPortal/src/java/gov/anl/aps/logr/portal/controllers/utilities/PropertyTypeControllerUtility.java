@@ -2,16 +2,16 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers.utilities;
+package gov.anl.aps.logr.portal.controllers.utilities;
 
-import gov.anl.aps.cdb.common.exceptions.ObjectAlreadyExists;
-import gov.anl.aps.cdb.portal.model.db.beans.PropertyTypeFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyType;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyTypeHandler;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyTypeMetadata;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
-import gov.anl.aps.cdb.portal.model.jsf.handlers.PropertyTypeHandlerFactory;
-import gov.anl.aps.cdb.portal.model.jsf.handlers.PropertyTypeHandlerInterface;
+import gov.anl.aps.logr.common.exceptions.ObjectAlreadyExists;
+import gov.anl.aps.logr.portal.model.db.beans.PropertyTypeFacade;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyTypeHandler;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyTypeMetadata;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.model.jsf.handlers.PropertyTypeHandlerFactory;
+import gov.anl.aps.logr.portal.model.jsf.handlers.PropertyTypeHandlerInterface;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;

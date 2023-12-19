@@ -2,11 +2,11 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.common.objects;
+package gov.anl.aps.logr.common.objects;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import gov.anl.aps.cdb.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.exceptions.CdbException;
 import java.io.Serializable;
 
 /**

@@ -2,11 +2,11 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model.db.beans;
+package gov.anl.aps.logr.portal.model.db.beans;
 
-import gov.anl.aps.cdb.common.exceptions.CdbException;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemElementRelationship;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.portal.model.db.entities.ItemElementRelationship;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;

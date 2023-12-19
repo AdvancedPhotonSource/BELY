@@ -2,10 +2,10 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.api;
+package gov.anl.aps.logr.api;
 
-import gov.anl.aps.cdb.common.constants.CdbRole;
-import gov.anl.aps.cdb.common.exceptions.InvalidSession;
+import gov.anl.aps.logr.common.constants.CdbRole;
+import gov.anl.aps.logr.common.exceptions.InvalidSession;
 import java.io.Serializable;
 import java.net.HttpCookie;
 

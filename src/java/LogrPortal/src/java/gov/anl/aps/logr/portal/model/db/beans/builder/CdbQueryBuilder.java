@@ -2,7 +2,7 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model.db.beans.builder;
+package gov.anl.aps.logr.portal.model.db.beans.builder;
 
 import java.util.Map;
 import org.primefaces.model.SortOrder;

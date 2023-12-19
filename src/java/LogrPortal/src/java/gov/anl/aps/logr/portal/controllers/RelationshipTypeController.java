@@ -2,13 +2,13 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.portal.controllers.settings.RelationshipTypeSettings;
-import gov.anl.aps.cdb.portal.controllers.utilities.RelationshipTypeControllerUtility;
-import gov.anl.aps.cdb.portal.model.db.entities.RelationshipType;
-import gov.anl.aps.cdb.portal.model.db.beans.RelationshipTypeFacade;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.portal.controllers.settings.RelationshipTypeSettings;
+import gov.anl.aps.logr.portal.controllers.utilities.RelationshipTypeControllerUtility;
+import gov.anl.aps.logr.portal.model.db.entities.RelationshipType;
+import gov.anl.aps.logr.portal.model.db.beans.RelationshipTypeFacade;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
 
 import java.io.Serializable;
 import javax.ejb.EJB;

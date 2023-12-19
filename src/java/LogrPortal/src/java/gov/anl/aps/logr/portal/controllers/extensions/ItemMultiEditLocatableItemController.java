@@ -2,9 +2,9 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers.extensions;
+package gov.anl.aps.logr.portal.controllers.extensions;
 
-import gov.anl.aps.cdb.portal.model.db.entities.Item;
+import gov.anl.aps.logr.portal.model.db.entities.Item;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 

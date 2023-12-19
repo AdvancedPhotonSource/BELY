@@ -2,11 +2,11 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model.db.entities;
+package gov.anl.aps.logr.portal.model.db.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import gov.anl.aps.cdb.portal.utilities.MarkdownParser;
+import gov.anl.aps.logr.portal.utilities.MarkdownParser;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

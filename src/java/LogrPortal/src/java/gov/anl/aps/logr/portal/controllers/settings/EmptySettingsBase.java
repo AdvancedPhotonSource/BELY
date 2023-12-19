@@ -2,7 +2,7 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers.settings;
+package gov.anl.aps.logr.portal.controllers.settings;
 
 import javax.faces.event.ActionEvent;
 import org.apache.logging.log4j.LogManager;

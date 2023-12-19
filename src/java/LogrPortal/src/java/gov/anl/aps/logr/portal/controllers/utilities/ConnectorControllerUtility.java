@@ -2,17 +2,17 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers.utilities;
+package gov.anl.aps.logr.portal.controllers.utilities;
 
-import gov.anl.aps.cdb.common.exceptions.CdbException;
-import gov.anl.aps.cdb.portal.constants.ItemDomainName;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.ValidInfo;
-import gov.anl.aps.cdb.portal.model.db.beans.ConnectorFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.Connector;
-import gov.anl.aps.cdb.portal.model.db.entities.Item;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemConnector;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyType;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.portal.constants.ItemDomainName;
+import gov.anl.aps.logr.portal.import_export.import_.objects.ValidInfo;
+import gov.anl.aps.logr.portal.model.db.beans.ConnectorFacade;
+import gov.anl.aps.logr.portal.model.db.entities.Connector;
+import gov.anl.aps.logr.portal.model.db.entities.Item;
+import gov.anl.aps.logr.portal.model.db.entities.ItemConnector;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;

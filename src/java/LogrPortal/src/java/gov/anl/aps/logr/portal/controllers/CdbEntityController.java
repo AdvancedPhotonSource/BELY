@@ -2,34 +2,34 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.portal.import_export.import_.wizard.ItemDomainImportWizard;
-import gov.anl.aps.cdb.common.constants.CdbProperty;
-import gov.anl.aps.cdb.common.constants.CdbRole;
-import gov.anl.aps.cdb.common.exceptions.AuthorizationError;
-import gov.anl.aps.cdb.common.exceptions.CdbException;
-import gov.anl.aps.cdb.common.exceptions.InvalidRequest;
-import gov.anl.aps.cdb.portal.model.db.beans.CdbEntityFacade;
-import gov.anl.aps.cdb.portal.model.db.beans.LogTopicFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.CdbEntity;
-import gov.anl.aps.cdb.portal.model.db.entities.EntityInfo;
-import gov.anl.aps.cdb.portal.model.db.entities.Log;
-import gov.anl.aps.cdb.portal.model.db.entities.LogTopic;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
-import gov.anl.aps.cdb.portal.model.db.utilities.LogUtility;
-import gov.anl.aps.cdb.portal.utilities.AuthorizationUtility;
-import gov.anl.aps.cdb.common.utilities.CollectionUtility;
-import gov.anl.aps.cdb.portal.utilities.SearchResult;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
-import gov.anl.aps.cdb.common.utilities.StringUtility;
-import gov.anl.aps.cdb.portal.constants.PortalStyles;
-import gov.anl.aps.cdb.portal.controllers.settings.ICdbSettings;
-import gov.anl.aps.cdb.portal.controllers.utilities.CdbEntityControllerUtility;
-import gov.anl.aps.cdb.portal.import_export.export.wizard.ItemDomainExportWizard;
-import gov.anl.aps.cdb.portal.model.ItemLazyDataModel;
-import gov.anl.aps.cdb.portal.utilities.ConfigurationUtility;
-import gov.anl.aps.cdb.portal.view.objects.DomainImportExportInfo;
+import gov.anl.aps.logr.portal.import_export.import_.wizard.ItemDomainImportWizard;
+import gov.anl.aps.logr.common.constants.CdbProperty;
+import gov.anl.aps.logr.common.constants.CdbRole;
+import gov.anl.aps.logr.common.exceptions.AuthorizationError;
+import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.exceptions.InvalidRequest;
+import gov.anl.aps.logr.portal.model.db.beans.CdbEntityFacade;
+import gov.anl.aps.logr.portal.model.db.beans.LogTopicFacade;
+import gov.anl.aps.logr.portal.model.db.entities.CdbEntity;
+import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
+import gov.anl.aps.logr.portal.model.db.entities.Log;
+import gov.anl.aps.logr.portal.model.db.entities.LogTopic;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.model.db.utilities.LogUtility;
+import gov.anl.aps.logr.portal.utilities.AuthorizationUtility;
+import gov.anl.aps.logr.common.utilities.CollectionUtility;
+import gov.anl.aps.logr.portal.utilities.SearchResult;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.common.utilities.StringUtility;
+import gov.anl.aps.logr.portal.constants.PortalStyles;
+import gov.anl.aps.logr.portal.controllers.settings.ICdbSettings;
+import gov.anl.aps.logr.portal.controllers.utilities.CdbEntityControllerUtility;
+import gov.anl.aps.logr.portal.import_export.export.wizard.ItemDomainExportWizard;
+import gov.anl.aps.logr.portal.model.ItemLazyDataModel;
+import gov.anl.aps.logr.portal.utilities.ConfigurationUtility;
+import gov.anl.aps.logr.portal.view.objects.DomainImportExportInfo;
 import java.io.IOException;
 
 import java.io.Serializable;

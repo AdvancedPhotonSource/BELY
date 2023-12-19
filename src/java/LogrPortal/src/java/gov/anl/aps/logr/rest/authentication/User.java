@@ -2,9 +2,9 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.rest.authentication;
+package gov.anl.aps.logr.rest.authentication;
 
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import java.security.Principal;
 import java.util.Date;
  

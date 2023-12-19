@@ -2,27 +2,27 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model.db.entities;
+package gov.anl.aps.logr.portal.model.db.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
-import gov.anl.aps.cdb.common.exceptions.CdbException;
-import gov.anl.aps.cdb.common.utilities.StringUtility;
-import gov.anl.aps.cdb.portal.constants.EntityTypeName;
-import gov.anl.aps.cdb.portal.constants.ItemElementRelationshipTypeNames;
-import gov.anl.aps.cdb.portal.controllers.ItemController;
-import gov.anl.aps.cdb.portal.controllers.utilities.CdbEntityControllerUtility;
-import gov.anl.aps.cdb.portal.controllers.utilities.EntityTypeControllerUtility;
-import gov.anl.aps.cdb.portal.controllers.utilities.ItemControllerUtility;
-import gov.anl.aps.cdb.portal.model.db.beans.ItemElementFacade;
-import gov.anl.aps.cdb.portal.model.db.beans.ItemFacade;
-import gov.anl.aps.cdb.portal.model.db.beans.PropertyTypeFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.comparator.ItemElementRelevantSortOrderComparator;
-import gov.anl.aps.cdb.portal.model.db.utilities.ItemElementUtility;
-import gov.anl.aps.cdb.portal.utilities.SearchResult;
-import gov.anl.aps.cdb.portal.view.objects.ItemMetadataPropertyInfo;
+import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.utilities.StringUtility;
+import gov.anl.aps.logr.portal.constants.EntityTypeName;
+import gov.anl.aps.logr.portal.constants.ItemElementRelationshipTypeNames;
+import gov.anl.aps.logr.portal.controllers.ItemController;
+import gov.anl.aps.logr.portal.controllers.utilities.CdbEntityControllerUtility;
+import gov.anl.aps.logr.portal.controllers.utilities.EntityTypeControllerUtility;
+import gov.anl.aps.logr.portal.controllers.utilities.ItemControllerUtility;
+import gov.anl.aps.logr.portal.model.db.beans.ItemElementFacade;
+import gov.anl.aps.logr.portal.model.db.beans.ItemFacade;
+import gov.anl.aps.logr.portal.model.db.beans.PropertyTypeFacade;
+import gov.anl.aps.logr.portal.model.db.entities.comparator.ItemElementRelevantSortOrderComparator;
+import gov.anl.aps.logr.portal.model.db.utilities.ItemElementUtility;
+import gov.anl.aps.logr.portal.utilities.SearchResult;
+import gov.anl.aps.logr.portal.view.objects.ItemMetadataPropertyInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serializable;
 import java.util.ArrayList;

@@ -2,11 +2,11 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.rest.provider;
+package gov.anl.aps.logr.rest.provider;
 
-import gov.anl.aps.cdb.common.exceptions.AuthenticationError;
-import gov.anl.aps.cdb.common.exceptions.ObjectNotFound;
-import gov.anl.aps.cdb.rest.entities.ApiExceptionMessage;
+import gov.anl.aps.logr.common.exceptions.AuthenticationError;
+import gov.anl.aps.logr.common.exceptions.ObjectNotFound;
+import gov.anl.aps.logr.rest.entities.ApiExceptionMessage;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;

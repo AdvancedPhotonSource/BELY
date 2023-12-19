@@ -2,12 +2,12 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.import_export.import_.helpers;
+package gov.anl.aps.logr.portal.import_export.import_.helpers;
 
-import gov.anl.aps.cdb.portal.controllers.CdbEntityController;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.CreateInfo;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.ValidInfo;
-import gov.anl.aps.cdb.portal.model.db.entities.CdbEntity;
+import gov.anl.aps.logr.portal.controllers.CdbEntityController;
+import gov.anl.aps.logr.portal.import_export.import_.objects.CreateInfo;
+import gov.anl.aps.logr.portal.import_export.import_.objects.ValidInfo;
+import gov.anl.aps.logr.portal.model.db.entities.CdbEntity;
 import java.util.HashMap;
 import java.util.Map;
 

@@ -2,9 +2,9 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.import_export.import_.objects;
+package gov.anl.aps.logr.portal.import_export.import_.objects;
 
-import gov.anl.aps.cdb.portal.import_export.import_.objects.handlers.InputHandler;
+import gov.anl.aps.logr.portal.import_export.import_.objects.handlers.InputHandler;
 import java.util.ArrayList;
 import java.util.List;
 

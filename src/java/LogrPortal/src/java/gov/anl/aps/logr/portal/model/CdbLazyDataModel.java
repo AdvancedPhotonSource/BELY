@@ -2,7 +2,7 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model;
+package gov.anl.aps.logr.portal.model;
 
 import java.util.HashMap;
 import java.util.Map;

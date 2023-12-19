@@ -2,7 +2,7 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.utilities;
+package gov.anl.aps.logr.portal.utilities;
 
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
@@ -13,11 +13,11 @@ import com.itextpdf.text.Phrase;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
-import gov.anl.aps.cdb.common.constants.CdbPropertyValue;
-import gov.anl.aps.cdb.common.exceptions.ExternalServiceError;
-import gov.anl.aps.cdb.common.exceptions.ImageProcessingFailed;
-import gov.anl.aps.cdb.common.utilities.FileUtility;
-import gov.anl.aps.cdb.common.utilities.ImageUtility;
+import gov.anl.aps.logr.common.constants.CdbPropertyValue;
+import gov.anl.aps.logr.common.exceptions.ExternalServiceError;
+import gov.anl.aps.logr.common.exceptions.ImageProcessingFailed;
+import gov.anl.aps.logr.common.utilities.FileUtility;
+import gov.anl.aps.logr.common.utilities.ImageUtility;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

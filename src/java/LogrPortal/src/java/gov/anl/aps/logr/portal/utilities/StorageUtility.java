@@ -2,10 +2,10 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.utilities;
+package gov.anl.aps.logr.portal.utilities;
 
-import gov.anl.aps.cdb.common.constants.CdbProperty;
-import gov.anl.aps.cdb.common.constants.CdbPropertyValue;
+import gov.anl.aps.logr.common.constants.CdbProperty;
+import gov.anl.aps.logr.common.constants.CdbPropertyValue;
 import java.io.File;
 
 /**

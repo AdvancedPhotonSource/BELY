@@ -2,17 +2,17 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.portal.controllers.settings.ItemGenericViewSettings;
-import gov.anl.aps.cdb.portal.controllers.utilities.ItemGenericControllerUtility;
-import gov.anl.aps.cdb.portal.model.ItemGenericLazyDataModel;
-import gov.anl.aps.cdb.portal.model.db.beans.DomainFacade;
-import gov.anl.aps.cdb.portal.model.db.beans.EntityTypeFacade;
-import gov.anl.aps.cdb.portal.model.db.beans.ItemFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.Domain;
-import gov.anl.aps.cdb.portal.model.db.entities.EntityType;
-import gov.anl.aps.cdb.portal.model.db.entities.Item;
+import gov.anl.aps.logr.portal.controllers.settings.ItemGenericViewSettings;
+import gov.anl.aps.logr.portal.controllers.utilities.ItemGenericControllerUtility;
+import gov.anl.aps.logr.portal.model.ItemGenericLazyDataModel;
+import gov.anl.aps.logr.portal.model.db.beans.DomainFacade;
+import gov.anl.aps.logr.portal.model.db.beans.EntityTypeFacade;
+import gov.anl.aps.logr.portal.model.db.beans.ItemFacade;
+import gov.anl.aps.logr.portal.model.db.entities.Domain;
+import gov.anl.aps.logr.portal.model.db.entities.EntityType;
+import gov.anl.aps.logr.portal.model.db.entities.Item;
 import java.util.List;
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;

@@ -2,15 +2,15 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers.utilities;
+package gov.anl.aps.logr.portal.controllers.utilities;
 
-import gov.anl.aps.cdb.portal.model.db.beans.ItemElementRelationshipFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.EntityInfo;
-import gov.anl.aps.cdb.portal.model.db.entities.Item;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemElementRelationship;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyType;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValue;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.model.db.beans.ItemElementRelationshipFacade;
+import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
+import gov.anl.aps.logr.portal.model.db.entities.Item;
+import gov.anl.aps.logr.portal.model.db.entities.ItemElementRelationship;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 
 /**
  *

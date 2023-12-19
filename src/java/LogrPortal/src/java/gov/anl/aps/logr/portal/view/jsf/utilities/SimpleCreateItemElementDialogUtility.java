@@ -2,7 +2,7 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.view.jsf.utilities;
+package gov.anl.aps.logr.portal.view.jsf.utilities;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Named;

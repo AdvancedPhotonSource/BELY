@@ -2,14 +2,14 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.common.exceptions.ObjectAlreadyExists;
-import gov.anl.aps.cdb.portal.controllers.settings.PropertyTypeCategorySettings;
-import gov.anl.aps.cdb.portal.controllers.utilities.PropertyTypeCategoryControllerUtility;
-import gov.anl.aps.cdb.portal.model.db.beans.PropertyTypeCategoryFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyTypeCategory;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.common.exceptions.ObjectAlreadyExists;
+import gov.anl.aps.logr.portal.controllers.settings.PropertyTypeCategorySettings;
+import gov.anl.aps.logr.portal.controllers.utilities.PropertyTypeCategoryControllerUtility;
+import gov.anl.aps.logr.portal.model.db.beans.PropertyTypeCategoryFacade;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyTypeCategory;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.io.Serializable;
 import java.util.List;
 import javax.ejb.EJB;

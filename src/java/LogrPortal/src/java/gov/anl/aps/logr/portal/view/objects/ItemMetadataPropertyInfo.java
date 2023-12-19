@@ -2,9 +2,9 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.view.objects;
+package gov.anl.aps.logr.portal.view.objects;
 
-import gov.anl.aps.cdb.common.constants.ItemMetadataFieldType;
+import gov.anl.aps.logr.common.constants.ItemMetadataFieldType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

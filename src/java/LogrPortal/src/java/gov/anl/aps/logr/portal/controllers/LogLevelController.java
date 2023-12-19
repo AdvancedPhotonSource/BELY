@@ -2,13 +2,13 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.portal.controllers.settings.LogLevelSettings;
-import gov.anl.aps.cdb.portal.model.db.entities.LogLevel;
-import gov.anl.aps.cdb.portal.controllers.util.PaginationHelper;
-import gov.anl.aps.cdb.portal.controllers.utilities.LogLevelControllerUtility;
-import gov.anl.aps.cdb.portal.model.db.beans.LogLevelFacade;
+import gov.anl.aps.logr.portal.controllers.settings.LogLevelSettings;
+import gov.anl.aps.logr.portal.model.db.entities.LogLevel;
+import gov.anl.aps.logr.portal.controllers.util.PaginationHelper;
+import gov.anl.aps.logr.portal.controllers.utilities.LogLevelControllerUtility;
+import gov.anl.aps.logr.portal.model.db.beans.LogLevelFacade;
 
 import java.io.Serializable;
 import javax.ejb.EJB;

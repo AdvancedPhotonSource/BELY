@@ -2,12 +2,12 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.portal.controllers.settings.UserSettingSettings;
-import gov.anl.aps.cdb.portal.controllers.utilities.UserSettingControllerUtility;
-import gov.anl.aps.cdb.portal.model.db.entities.UserSetting;
-import gov.anl.aps.cdb.portal.model.db.beans.UserSettingFacade;
+import gov.anl.aps.logr.portal.controllers.settings.UserSettingSettings;
+import gov.anl.aps.logr.portal.controllers.utilities.UserSettingControllerUtility;
+import gov.anl.aps.logr.portal.model.db.entities.UserSetting;
+import gov.anl.aps.logr.portal.model.db.beans.UserSettingFacade;
 
 import java.io.Serializable;
 import java.util.List;

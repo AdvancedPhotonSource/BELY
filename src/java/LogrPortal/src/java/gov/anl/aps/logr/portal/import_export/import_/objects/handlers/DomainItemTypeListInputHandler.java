@@ -2,15 +2,15 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.import_export.import_.objects.handlers;
+package gov.anl.aps.logr.portal.import_export.import_.objects.handlers;
 
-import gov.anl.aps.cdb.portal.controllers.DomainController;
-import gov.anl.aps.cdb.portal.controllers.ItemTypeController;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.ParseInfo;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.ValidInfo;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.specs.DomainItemTypeListColumnSpec;
-import gov.anl.aps.cdb.portal.model.db.entities.CdbEntity;
-import gov.anl.aps.cdb.portal.model.db.entities.Domain;
+import gov.anl.aps.logr.portal.controllers.DomainController;
+import gov.anl.aps.logr.portal.controllers.ItemTypeController;
+import gov.anl.aps.logr.portal.import_export.import_.objects.ParseInfo;
+import gov.anl.aps.logr.portal.import_export.import_.objects.ValidInfo;
+import gov.anl.aps.logr.portal.import_export.import_.objects.specs.DomainItemTypeListColumnSpec;
+import gov.anl.aps.logr.portal.model.db.entities.CdbEntity;
+import gov.anl.aps.logr.portal.model.db.entities.Domain;
 import java.util.List;
 import java.util.Map;
 import org.apache.poi.ss.usermodel.Row;

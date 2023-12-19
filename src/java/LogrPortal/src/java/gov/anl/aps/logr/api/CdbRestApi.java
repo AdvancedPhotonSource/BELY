@@ -2,20 +2,20 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.api;
+package gov.anl.aps.logr.api;
 
-import gov.anl.aps.cdb.common.constants.CdbHttpHeader;
-import gov.anl.aps.cdb.common.constants.CdbProperty;
-import gov.anl.aps.cdb.common.constants.CdbRole;
-import gov.anl.aps.cdb.common.constants.CdbServiceProtocol;
-import gov.anl.aps.cdb.common.exceptions.AuthorizationError;
-import gov.anl.aps.cdb.common.exceptions.CommunicationError;
-import gov.anl.aps.cdb.common.exceptions.ConfigurationError;
-import gov.anl.aps.cdb.common.exceptions.InvalidArgument;
-import gov.anl.aps.cdb.common.exceptions.InvalidSession;
-import gov.anl.aps.cdb.common.exceptions.CdbException;
-import gov.anl.aps.cdb.common.exceptions.CdbExceptionFactory;
-import gov.anl.aps.cdb.common.utilities.NoServerVerificationSSLSocketFactory;
+import gov.anl.aps.logr.common.constants.CdbHttpHeader;
+import gov.anl.aps.logr.common.constants.CdbProperty;
+import gov.anl.aps.logr.common.constants.CdbRole;
+import gov.anl.aps.logr.common.constants.CdbServiceProtocol;
+import gov.anl.aps.logr.common.exceptions.AuthorizationError;
+import gov.anl.aps.logr.common.exceptions.CommunicationError;
+import gov.anl.aps.logr.common.exceptions.ConfigurationError;
+import gov.anl.aps.logr.common.exceptions.InvalidArgument;
+import gov.anl.aps.logr.common.exceptions.InvalidSession;
+import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.exceptions.CdbExceptionFactory;
+import gov.anl.aps.logr.common.utilities.NoServerVerificationSSLSocketFactory;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;

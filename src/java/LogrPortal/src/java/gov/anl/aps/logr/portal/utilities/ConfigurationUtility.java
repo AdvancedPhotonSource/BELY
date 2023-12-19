@@ -2,7 +2,7 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.utilities;
+package gov.anl.aps.logr.portal.utilities;
 
 import java.io.IOException;
 import java.io.InputStream;

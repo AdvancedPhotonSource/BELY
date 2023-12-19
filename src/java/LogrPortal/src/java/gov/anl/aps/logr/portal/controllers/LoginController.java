@@ -2,19 +2,19 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.common.constants.CdbRole;
-import gov.anl.aps.cdb.portal.model.db.beans.UserInfoFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.EntityInfo;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
-import gov.anl.aps.cdb.portal.utilities.AuthorizationUtility;
-import gov.anl.aps.cdb.portal.utilities.ConfigurationUtility;
-import gov.anl.aps.cdb.common.utilities.LdapUtility;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
-import gov.anl.aps.cdb.common.utilities.CryptUtility;
-import gov.anl.aps.cdb.portal.constants.SystemLogLevel;
-import gov.anl.aps.cdb.portal.model.db.utilities.LogUtility;
+import gov.anl.aps.logr.common.constants.CdbRole;
+import gov.anl.aps.logr.portal.model.db.beans.UserInfoFacade;
+import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.utilities.AuthorizationUtility;
+import gov.anl.aps.logr.portal.utilities.ConfigurationUtility;
+import gov.anl.aps.logr.common.utilities.LdapUtility;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.common.utilities.CryptUtility;
+import gov.anl.aps.logr.portal.constants.SystemLogLevel;
+import gov.anl.aps.logr.portal.model.db.utilities.LogUtility;
 import java.io.Serializable;
 import java.util.List;
 import javax.ejb.EJB;

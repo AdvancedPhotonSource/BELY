@@ -2,19 +2,19 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers.extensions;
+package gov.anl.aps.logr.portal.controllers.extensions;
 
-import gov.anl.aps.cdb.common.utilities.CollectionUtility;
-import gov.anl.aps.cdb.portal.controllers.ItemControllerExtensionHelper;
-import gov.anl.aps.cdb.portal.controllers.ItemProjectController;
-import gov.anl.aps.cdb.portal.model.db.entities.Item;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemCategory;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemProject;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemType;
-import gov.anl.aps.cdb.portal.model.db.entities.UserGroup;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
-import gov.anl.aps.cdb.portal.model.db.utilities.ItemElementUtility;
-import gov.anl.aps.cdb.portal.view.objects.FilterViewResultItem;
+import gov.anl.aps.logr.common.utilities.CollectionUtility;
+import gov.anl.aps.logr.portal.controllers.ItemControllerExtensionHelper;
+import gov.anl.aps.logr.portal.controllers.ItemProjectController;
+import gov.anl.aps.logr.portal.model.db.entities.Item;
+import gov.anl.aps.logr.portal.model.db.entities.ItemCategory;
+import gov.anl.aps.logr.portal.model.db.entities.ItemProject;
+import gov.anl.aps.logr.portal.model.db.entities.ItemType;
+import gov.anl.aps.logr.portal.model.db.entities.UserGroup;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.model.db.utilities.ItemElementUtility;
+import gov.anl.aps.logr.portal.view.objects.FilterViewResultItem;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;

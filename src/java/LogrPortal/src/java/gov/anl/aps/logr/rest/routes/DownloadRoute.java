@@ -2,19 +2,19 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.rest.routes;
+package gov.anl.aps.logr.rest.routes;
 
-import gov.anl.aps.cdb.common.constants.CdbPropertyValue;
-import gov.anl.aps.cdb.common.exceptions.InvalidRequest;
-import gov.anl.aps.cdb.common.exceptions.ObjectNotFound;
-import gov.anl.aps.cdb.portal.model.db.beans.PropertyValueFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyTypeHandler;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValue;
-import gov.anl.aps.cdb.portal.model.jsf.handlers.DocumentPropertyTypeHandler;
-import gov.anl.aps.cdb.portal.model.jsf.handlers.ImagePropertyTypeHandler;
-import gov.anl.aps.cdb.portal.utilities.GalleryUtility;
-import gov.anl.aps.cdb.portal.utilities.StorageUtility;
-import gov.anl.aps.cdb.rest.constants.DownloadRouteMimeType;
+import gov.anl.aps.logr.common.constants.CdbPropertyValue;
+import gov.anl.aps.logr.common.exceptions.InvalidRequest;
+import gov.anl.aps.logr.common.exceptions.ObjectNotFound;
+import gov.anl.aps.logr.portal.model.db.beans.PropertyValueFacade;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyTypeHandler;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
+import gov.anl.aps.logr.portal.model.jsf.handlers.DocumentPropertyTypeHandler;
+import gov.anl.aps.logr.portal.model.jsf.handlers.ImagePropertyTypeHandler;
+import gov.anl.aps.logr.portal.utilities.GalleryUtility;
+import gov.anl.aps.logr.portal.utilities.StorageUtility;
+import gov.anl.aps.logr.rest.constants.DownloadRouteMimeType;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.File;
 import java.io.FileNotFoundException;

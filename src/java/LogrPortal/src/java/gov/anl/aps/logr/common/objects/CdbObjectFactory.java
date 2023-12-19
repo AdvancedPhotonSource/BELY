@@ -2,12 +2,12 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.common.objects;
+package gov.anl.aps.logr.common.objects;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import gov.anl.aps.cdb.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.exceptions.CdbException;
 import java.lang.reflect.Type;
 import java.util.LinkedList;
 import java.util.List;

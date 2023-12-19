@@ -2,28 +2,28 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.common.constants.CdbPropertyValue;
-import gov.anl.aps.cdb.portal.controllers.settings.CdbDomainEntitySettings;
-import gov.anl.aps.cdb.portal.controllers.utilities.CdbDomainEntityControllerUtility;
-import gov.anl.aps.cdb.portal.model.db.beans.CdbEntityFacade;
-import gov.anl.aps.cdb.portal.model.db.beans.PropertyTypeCategoryFacade;
-import gov.anl.aps.cdb.portal.model.db.beans.PropertyTypeFacade;
-import gov.anl.aps.cdb.portal.model.db.beans.PropertyValueFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.CdbDomainEntity;
-import gov.anl.aps.cdb.portal.model.db.entities.Domain;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemElement;
-import gov.anl.aps.cdb.portal.model.db.entities.Log;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyMetadata;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyType;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyTypeCategory;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValue;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValueBase;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
-import gov.anl.aps.cdb.portal.model.db.utilities.PropertyValueUtility;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
-import gov.anl.aps.cdb.portal.utilities.StorageUtility;
+import gov.anl.aps.logr.common.constants.CdbPropertyValue;
+import gov.anl.aps.logr.portal.controllers.settings.CdbDomainEntitySettings;
+import gov.anl.aps.logr.portal.controllers.utilities.CdbDomainEntityControllerUtility;
+import gov.anl.aps.logr.portal.model.db.beans.CdbEntityFacade;
+import gov.anl.aps.logr.portal.model.db.beans.PropertyTypeCategoryFacade;
+import gov.anl.aps.logr.portal.model.db.beans.PropertyTypeFacade;
+import gov.anl.aps.logr.portal.model.db.beans.PropertyValueFacade;
+import gov.anl.aps.logr.portal.model.db.entities.CdbDomainEntity;
+import gov.anl.aps.logr.portal.model.db.entities.Domain;
+import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
+import gov.anl.aps.logr.portal.model.db.entities.Log;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyMetadata;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyTypeCategory;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValueBase;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.model.db.utilities.PropertyValueUtility;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.portal.utilities.StorageUtility;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;

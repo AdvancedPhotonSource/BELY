@@ -2,11 +2,11 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.view.jsf.utilities;
+package gov.anl.aps.logr.portal.view.jsf.utilities;
 
-import gov.anl.aps.cdb.common.constants.CdbProperty;
-import gov.anl.aps.cdb.portal.utilities.ConfigurationUtility;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.common.constants.CdbProperty;
+import gov.anl.aps.logr.portal.utilities.ConfigurationUtility;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;

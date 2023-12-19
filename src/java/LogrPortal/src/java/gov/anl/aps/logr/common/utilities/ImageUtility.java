@@ -2,13 +2,13 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.common.utilities;
+package gov.anl.aps.logr.common.utilities;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifIFD0Directory;
-import gov.anl.aps.cdb.common.exceptions.ImageProcessingFailed;
+import gov.anl.aps.logr.common.exceptions.ImageProcessingFailed;
 import java.awt.AlphaComposite;
 import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;

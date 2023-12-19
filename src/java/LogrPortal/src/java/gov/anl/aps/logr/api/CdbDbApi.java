@@ -2,14 +2,14 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.api;
+package gov.anl.aps.logr.api;
 
-import gov.anl.aps.cdb.common.exceptions.CdbException;
-import gov.anl.aps.cdb.common.exceptions.ConfigurationError;
-import gov.anl.aps.cdb.common.exceptions.InvalidArgument;
-import gov.anl.aps.cdb.common.objects.CdbObjectFactory;
-import gov.anl.aps.cdb.common.objects.Design;
-import gov.anl.aps.cdb.common.utilities.ArgumentUtility;
+import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.exceptions.ConfigurationError;
+import gov.anl.aps.logr.common.exceptions.InvalidArgument;
+import gov.anl.aps.logr.common.objects.CdbObjectFactory;
+import gov.anl.aps.logr.common.objects.Design;
+import gov.anl.aps.logr.common.utilities.ArgumentUtility;
 
 /**
  *

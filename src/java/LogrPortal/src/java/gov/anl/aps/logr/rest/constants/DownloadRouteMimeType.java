@@ -2,7 +2,7 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.rest.constants;
+package gov.anl.aps.logr.rest.constants;
 
 public enum DownloadRouteMimeType {
 

@@ -2,10 +2,10 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.rest.routes;
+package gov.anl.aps.logr.rest.routes;
 
-import gov.anl.aps.cdb.rest.authentication.Secured;
-import gov.anl.aps.cdb.rest.entities.ApiExceptionMessage;
+import gov.anl.aps.logr.rest.authentication.Secured;
+import gov.anl.aps.logr.rest.entities.ApiExceptionMessage;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.ws.rs.GET;

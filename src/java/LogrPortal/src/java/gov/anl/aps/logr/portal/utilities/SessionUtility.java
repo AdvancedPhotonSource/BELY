@@ -2,9 +2,9 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.utilities;
+package gov.anl.aps.logr.portal.utilities;
 
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Stack;

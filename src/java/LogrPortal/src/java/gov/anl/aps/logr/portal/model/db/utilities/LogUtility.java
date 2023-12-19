@@ -2,16 +2,16 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model.db.utilities;
+package gov.anl.aps.logr.portal.model.db.utilities;
 
-import gov.anl.aps.cdb.common.exceptions.CdbException;
-import gov.anl.aps.cdb.portal.constants.SystemLogLevel;
-import gov.anl.aps.cdb.portal.controllers.utilities.LogControllerUtility;
-import gov.anl.aps.cdb.portal.model.db.entities.Log;
-import gov.anl.aps.cdb.portal.model.db.entities.LogTopic;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
-import gov.anl.aps.cdb.portal.utilities.SearchResult;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.portal.constants.SystemLogLevel;
+import gov.anl.aps.logr.portal.controllers.utilities.LogControllerUtility;
+import gov.anl.aps.logr.portal.model.db.entities.Log;
+import gov.anl.aps.logr.portal.model.db.entities.LogTopic;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.utilities.SearchResult;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;

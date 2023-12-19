@@ -2,14 +2,14 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.rest.routes;
+package gov.anl.aps.logr.rest.routes;
 
-import gov.anl.aps.cdb.common.exceptions.InvalidSession;
-import gov.anl.aps.cdb.portal.constants.SystemLogLevel;
-import gov.anl.aps.cdb.portal.model.db.beans.LogFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.Log;
-import gov.anl.aps.cdb.rest.authentication.Secured;
-import gov.anl.aps.cdb.rest.entities.DateParam;
+import gov.anl.aps.logr.common.exceptions.InvalidSession;
+import gov.anl.aps.logr.portal.constants.SystemLogLevel;
+import gov.anl.aps.logr.portal.model.db.beans.LogFacade;
+import gov.anl.aps.logr.portal.model.db.entities.Log;
+import gov.anl.aps.logr.rest.authentication.Secured;
+import gov.anl.aps.logr.rest.entities.DateParam;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.text.ParseException;

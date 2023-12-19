@@ -2,10 +2,10 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model.db.entities;
+package gov.anl.aps.logr.portal.model.db.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import gov.anl.aps.cdb.portal.constants.PortalStyles;
+import gov.anl.aps.logr.portal.constants.PortalStyles;
 import java.io.Serializable;
 import java.util.List;
 import javax.persistence.Basic;

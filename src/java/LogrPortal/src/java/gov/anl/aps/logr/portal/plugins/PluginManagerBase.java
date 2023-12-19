@@ -2,12 +2,12 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.plugins;
+package gov.anl.aps.logr.portal.plugins;
 
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValue;
-import gov.anl.aps.cdb.portal.model.jsf.handlers.PropertyTypeHandlerInterface;
-import gov.anl.aps.cdb.portal.utilities.ConfigurationUtility;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
+import gov.anl.aps.logr.portal.model.jsf.handlers.PropertyTypeHandlerInterface;
+import gov.anl.aps.logr.portal.utilities.ConfigurationUtility;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.util.Properties;
 
 /**

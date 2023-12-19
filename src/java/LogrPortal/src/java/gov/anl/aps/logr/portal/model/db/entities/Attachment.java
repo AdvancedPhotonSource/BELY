@@ -2,10 +2,10 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model.db.entities;
+package gov.anl.aps.logr.portal.model.db.entities;
 
-import gov.anl.aps.cdb.portal.utilities.GalleryUtility;
-import gov.anl.aps.cdb.portal.utilities.StorageUtility;
+import gov.anl.aps.logr.portal.utilities.GalleryUtility;
+import gov.anl.aps.logr.portal.utilities.StorageUtility;
 import java.io.Serializable;
 import java.util.List;
 import javax.persistence.Basic;

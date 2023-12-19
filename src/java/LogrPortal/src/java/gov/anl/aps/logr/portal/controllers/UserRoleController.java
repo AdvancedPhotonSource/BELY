@@ -2,13 +2,13 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.portal.controllers.settings.UserRoleSettings;
-import gov.anl.aps.cdb.portal.controllers.utilities.UserRoleControllerUtility;
-import gov.anl.aps.cdb.portal.model.db.entities.UserRole;
-import gov.anl.aps.cdb.portal.model.db.beans.UserRoleFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.controllers.settings.UserRoleSettings;
+import gov.anl.aps.logr.portal.controllers.utilities.UserRoleControllerUtility;
+import gov.anl.aps.logr.portal.model.db.entities.UserRole;
+import gov.anl.aps.logr.portal.model.db.beans.UserRoleFacade;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 
 import java.io.Serializable;
 import javax.ejb.EJB;
@@ -30,7 +30,7 @@ public class UserRoleController extends CdbEntityController<UserRoleControllerUt
         super();
     }
     
-    public UserRole getUserRole(gov.anl.aps.cdb.portal.model.db.entities.UserRolePK id) {
+    public UserRole getUserRole(gov.anl.aps.logr.portal.model.db.entities.UserRolePK id) {
         return userRoleFacade.find(id);
     }
 
@@ -71,17 +71,17 @@ public class UserRoleController extends CdbEntityController<UserRoleControllerUt
             return controller.getUserRole(getKey(value));
         }
 
-        gov.anl.aps.cdb.portal.model.db.entities.UserRolePK getKey(String value) {
-            gov.anl.aps.cdb.portal.model.db.entities.UserRolePK key;
+        gov.anl.aps.logr.portal.model.db.entities.UserRolePK getKey(String value) {
+            gov.anl.aps.logr.portal.model.db.entities.UserRolePK key;
             String values[] = value.split(SEPARATOR_ESCAPED);
-            key = new gov.anl.aps.cdb.portal.model.db.entities.UserRolePK();
+            key = new gov.anl.aps.logr.portal.model.db.entities.UserRolePK();
             key.setUserId(Integer.parseInt(values[0]));
             key.setRoleTypeId(Integer.parseInt(values[1]));
             key.setUserGroupId(Integer.parseInt(values[2]));
             return key;
         }
 
-        String getStringKey(gov.anl.aps.cdb.portal.model.db.entities.UserRolePK value) {
+        String getStringKey(gov.anl.aps.logr.portal.model.db.entities.UserRolePK value) {
             StringBuilder sb = new StringBuilder();
             sb.append(value.getUserId());
             sb.append(SEPARATOR);

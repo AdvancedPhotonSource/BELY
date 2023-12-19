@@ -2,10 +2,10 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.portal.controllers.settings.SearchSettings;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.portal.controllers.settings.SearchSettings;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashSet;

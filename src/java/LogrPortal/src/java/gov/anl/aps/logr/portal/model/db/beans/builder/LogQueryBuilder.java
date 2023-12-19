@@ -2,16 +2,16 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model.db.beans.builder;
+package gov.anl.aps.logr.portal.model.db.beans.builder;
 
-import gov.anl.aps.cdb.portal.model.db.entities.Domain;
-import gov.anl.aps.cdb.portal.model.db.entities.Item;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemCategory;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemProject;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemType;
-import gov.anl.aps.cdb.portal.model.db.entities.LogLevel;
-import gov.anl.aps.cdb.portal.model.db.entities.UserGroup;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.model.db.entities.Domain;
+import gov.anl.aps.logr.portal.model.db.entities.Item;
+import gov.anl.aps.logr.portal.model.db.entities.ItemCategory;
+import gov.anl.aps.logr.portal.model.db.entities.ItemProject;
+import gov.anl.aps.logr.portal.model.db.entities.ItemType;
+import gov.anl.aps.logr.portal.model.db.entities.LogLevel;
+import gov.anl.aps.logr.portal.model.db.entities.UserGroup;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;

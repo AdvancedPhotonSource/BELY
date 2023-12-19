@@ -2,12 +2,12 @@
   * Copyright (c) UChicago Argonne, LLC. All rights reserved.
   * See LICENSE file.
   */
-package gov.anl.aps.cdb.portal.controllers.extensions;
+package gov.anl.aps.logr.portal.controllers.extensions;
 
-import gov.anl.aps.cdb.common.exceptions.CdbException;
-import gov.anl.aps.cdb.portal.controllers.ItemControllerExtensionHelper;
-import gov.anl.aps.cdb.portal.utilities.ConfigurationUtility;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.portal.controllers.ItemControllerExtensionHelper;
+import gov.anl.aps.logr.portal.utilities.ConfigurationUtility;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.primefaces.event.FlowEvent;

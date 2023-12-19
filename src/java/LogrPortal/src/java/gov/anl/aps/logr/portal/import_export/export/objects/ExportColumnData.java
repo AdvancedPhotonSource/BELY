@@ -2,7 +2,7 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.import_export.export.objects;
+package gov.anl.aps.logr.portal.import_export.export.objects;
 
 import java.util.List;
 

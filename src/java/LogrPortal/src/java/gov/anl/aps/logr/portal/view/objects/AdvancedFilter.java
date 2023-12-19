@@ -2,9 +2,9 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.view.objects;
+package gov.anl.aps.logr.portal.view.objects;
 
-import gov.anl.aps.cdb.portal.controllers.ItemController;
+import gov.anl.aps.logr.portal.controllers.ItemController;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

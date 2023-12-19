@@ -2,7 +2,7 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.common.constants;
+package gov.anl.aps.logr.common.constants;
 
 /**
  * HTTP headers specific to CDB.

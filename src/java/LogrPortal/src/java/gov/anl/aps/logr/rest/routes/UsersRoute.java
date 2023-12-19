@@ -2,12 +2,12 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.rest.routes;
+package gov.anl.aps.logr.rest.routes;
 
-import gov.anl.aps.cdb.portal.model.db.beans.UserGroupFacade;
-import gov.anl.aps.cdb.portal.model.db.beans.UserInfoFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.UserGroup;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.model.db.beans.UserGroupFacade;
+import gov.anl.aps.logr.portal.model.db.beans.UserInfoFacade;
+import gov.anl.aps.logr.portal.model.db.entities.UserGroup;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import javax.ejb.EJB;

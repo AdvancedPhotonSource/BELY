@@ -2,11 +2,11 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.rest.routes;
+package gov.anl.aps.logr.rest.routes;
 
-import gov.anl.aps.cdb.common.exceptions.ObjectNotFound;
-import gov.anl.aps.cdb.portal.model.db.beans.ItemFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.Item;
+import gov.anl.aps.logr.common.exceptions.ObjectNotFound;
+import gov.anl.aps.logr.portal.model.db.beans.ItemFacade;
+import gov.anl.aps.logr.portal.model.db.entities.Item;
 import javax.ejb.EJB;
 import javax.ws.rs.PathParam;
 import org.apache.logging.log4j.LogManager;

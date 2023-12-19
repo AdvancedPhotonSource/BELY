@@ -2,19 +2,19 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers.utilities;
+package gov.anl.aps.logr.portal.controllers.utilities;
 
-import gov.anl.aps.cdb.common.exceptions.CdbException;
-import gov.anl.aps.cdb.common.utilities.ObjectUtility;
-import gov.anl.aps.cdb.portal.controllers.ItemController;
-import gov.anl.aps.cdb.portal.model.db.beans.ItemElementFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.EntityInfo;
-import gov.anl.aps.cdb.portal.model.db.entities.Item;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemElement;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
-import gov.anl.aps.cdb.portal.model.db.utilities.EntityInfoUtility;
-import gov.anl.aps.cdb.portal.model.db.utilities.ItemElementUtility;
-import gov.anl.aps.cdb.portal.view.objects.ItemElementConstraintInformation;
+import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.utilities.ObjectUtility;
+import gov.anl.aps.logr.portal.controllers.ItemController;
+import gov.anl.aps.logr.portal.model.db.beans.ItemElementFacade;
+import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
+import gov.anl.aps.logr.portal.model.db.entities.Item;
+import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.model.db.utilities.EntityInfoUtility;
+import gov.anl.aps.logr.portal.model.db.utilities.ItemElementUtility;
+import gov.anl.aps.logr.portal.view.objects.ItemElementConstraintInformation;
 import java.util.List;
 
 /**

@@ -2,7 +2,7 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.constants;
+package gov.anl.aps.logr.portal.constants;
 
 public enum SystemPropertyTypeNames {
         cotrolInterface("Control Interface");  

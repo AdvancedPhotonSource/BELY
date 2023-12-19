@@ -2,25 +2,25 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model.db.beans;
+package gov.anl.aps.logr.portal.model.db.beans;
 
-import gov.anl.aps.cdb.common.exceptions.CdbException;
-import gov.anl.aps.cdb.portal.constants.EntityTypeName;
-import gov.anl.aps.cdb.portal.constants.ItemDomainName;
-import gov.anl.aps.cdb.portal.controllers.ItemController;
-import gov.anl.aps.cdb.portal.model.db.beans.builder.CdbQueryBuilder;
-import gov.anl.aps.cdb.portal.model.db.beans.builder.ItemQueryBuilder;
-import gov.anl.aps.cdb.portal.model.db.entities.Domain;
-import gov.anl.aps.cdb.portal.model.db.entities.EntityType;
-import gov.anl.aps.cdb.portal.model.db.entities.Item;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemCategory;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemElement;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemProject;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemType;
-import gov.anl.aps.cdb.portal.model.db.entities.ListTbl;
-import gov.anl.aps.cdb.portal.model.db.entities.UserGroup;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
-import gov.anl.aps.cdb.portal.view.objects.AdvancedFilter;
+import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.portal.constants.EntityTypeName;
+import gov.anl.aps.logr.portal.constants.ItemDomainName;
+import gov.anl.aps.logr.portal.controllers.ItemController;
+import gov.anl.aps.logr.portal.model.db.beans.builder.CdbQueryBuilder;
+import gov.anl.aps.logr.portal.model.db.beans.builder.ItemQueryBuilder;
+import gov.anl.aps.logr.portal.model.db.entities.Domain;
+import gov.anl.aps.logr.portal.model.db.entities.EntityType;
+import gov.anl.aps.logr.portal.model.db.entities.Item;
+import gov.anl.aps.logr.portal.model.db.entities.ItemCategory;
+import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
+import gov.anl.aps.logr.portal.model.db.entities.ItemProject;
+import gov.anl.aps.logr.portal.model.db.entities.ItemType;
+import gov.anl.aps.logr.portal.model.db.entities.ListTbl;
+import gov.anl.aps.logr.portal.model.db.entities.UserGroup;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.view.objects.AdvancedFilter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

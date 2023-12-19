@@ -2,15 +2,15 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers.settings;
+package gov.anl.aps.logr.portal.controllers.settings;
 
-import gov.anl.aps.cdb.portal.constants.ItemDisplayListDataModelScope;
-import gov.anl.aps.cdb.portal.controllers.ItemController;
-import gov.anl.aps.cdb.portal.controllers.ItemElementController;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyType;
-import gov.anl.aps.cdb.portal.model.db.entities.SettingEntity;
-import gov.anl.aps.cdb.portal.model.db.entities.SettingType;
-import gov.anl.aps.cdb.portal.view.objects.ItemMetadataPropertyInfo;
+import gov.anl.aps.logr.portal.constants.ItemDisplayListDataModelScope;
+import gov.anl.aps.logr.portal.controllers.ItemController;
+import gov.anl.aps.logr.portal.controllers.ItemElementController;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
+import gov.anl.aps.logr.portal.model.db.entities.SettingEntity;
+import gov.anl.aps.logr.portal.model.db.entities.SettingType;
+import gov.anl.aps.logr.portal.view.objects.ItemMetadataPropertyInfo;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.logging.log4j.LogManager;

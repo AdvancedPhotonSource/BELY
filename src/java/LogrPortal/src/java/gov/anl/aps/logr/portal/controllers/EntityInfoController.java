@@ -2,12 +2,12 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.portal.model.db.entities.EntityInfo;
-import gov.anl.aps.cdb.portal.controllers.util.JsfUtil;
-import gov.anl.aps.cdb.portal.controllers.util.PaginationHelper;
-import gov.anl.aps.cdb.portal.model.db.beans.EntityInfoFacade;
+import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
+import gov.anl.aps.logr.portal.controllers.util.JsfUtil;
+import gov.anl.aps.logr.portal.controllers.util.PaginationHelper;
+import gov.anl.aps.logr.portal.model.db.beans.EntityInfoFacade;
 
 import java.io.Serializable;
 import java.util.ResourceBundle;
@@ -29,7 +29,7 @@ public class EntityInfoController implements Serializable {
     private EntityInfo current;
     private DataModel items = null;
     @EJB
-    private gov.anl.aps.cdb.portal.model.db.beans.EntityInfoFacade ejbFacade;
+    private gov.anl.aps.logr.portal.model.db.beans.EntityInfoFacade ejbFacade;
     private PaginationHelper pagination;
     private int selectedItemIndex;
 

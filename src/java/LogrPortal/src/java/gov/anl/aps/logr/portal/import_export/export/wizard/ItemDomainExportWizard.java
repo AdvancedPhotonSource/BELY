@@ -2,15 +2,15 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.import_export.export.wizard;
+package gov.anl.aps.logr.portal.import_export.export.wizard;
 
-import gov.anl.aps.cdb.portal.import_export.export.objects.GenerateExportResult;
-import gov.anl.aps.cdb.portal.import_export.import_.helpers.ImportHelperBase;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.HelperWizardOption;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.ValidInfo;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
-import gov.anl.aps.cdb.portal.view.objects.DomainImportExportInfo;
-import gov.anl.aps.cdb.portal.view.objects.ImportExportFormatInfo;
+import gov.anl.aps.logr.portal.import_export.export.objects.GenerateExportResult;
+import gov.anl.aps.logr.portal.import_export.import_.helpers.ImportHelperBase;
+import gov.anl.aps.logr.portal.import_export.import_.objects.HelperWizardOption;
+import gov.anl.aps.logr.portal.import_export.import_.objects.ValidInfo;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.portal.view.objects.DomainImportExportInfo;
+import gov.anl.aps.logr.portal.view.objects.ImportExportFormatInfo;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;

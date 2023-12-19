@@ -2,18 +2,18 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.common.constants.CdbPropertyValue;
-import gov.anl.aps.cdb.portal.constants.DisplayType;
-import gov.anl.aps.cdb.portal.controllers.settings.PropertyValueHistorySettings;
-import gov.anl.aps.cdb.portal.controllers.utilities.PropertyValueHistoryControllerUtility;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValueHistory;
-import gov.anl.aps.cdb.portal.model.db.beans.PropertyValueHistoryFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValue;
-import gov.anl.aps.cdb.portal.model.jsf.handlers.PropertyTypeHandlerFactory;
-import gov.anl.aps.cdb.portal.model.jsf.handlers.PropertyTypeHandlerInterface;
-import gov.anl.aps.cdb.portal.utilities.StorageUtility;
+import gov.anl.aps.logr.common.constants.CdbPropertyValue;
+import gov.anl.aps.logr.portal.constants.DisplayType;
+import gov.anl.aps.logr.portal.controllers.settings.PropertyValueHistorySettings;
+import gov.anl.aps.logr.portal.controllers.utilities.PropertyValueHistoryControllerUtility;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValueHistory;
+import gov.anl.aps.logr.portal.model.db.beans.PropertyValueHistoryFacade;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
+import gov.anl.aps.logr.portal.model.jsf.handlers.PropertyTypeHandlerFactory;
+import gov.anl.aps.logr.portal.model.jsf.handlers.PropertyTypeHandlerInterface;
+import gov.anl.aps.logr.portal.utilities.StorageUtility;
 
 import java.io.Serializable;
 import java.util.ArrayList;

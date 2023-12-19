@@ -2,12 +2,12 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.portal.controllers.settings.RoleTypeSettings;
-import gov.anl.aps.cdb.portal.controllers.utilities.RoleTypeControllerUtility;
-import gov.anl.aps.cdb.portal.model.db.entities.RoleType;
-import gov.anl.aps.cdb.portal.model.db.beans.RoleTypeFacade;
+import gov.anl.aps.logr.portal.controllers.settings.RoleTypeSettings;
+import gov.anl.aps.logr.portal.controllers.utilities.RoleTypeControllerUtility;
+import gov.anl.aps.logr.portal.model.db.entities.RoleType;
+import gov.anl.aps.logr.portal.model.db.beans.RoleTypeFacade;
 
 import java.io.Serializable;
 import javax.ejb.EJB;

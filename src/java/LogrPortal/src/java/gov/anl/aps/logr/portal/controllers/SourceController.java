@@ -2,19 +2,19 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.portal.import_export.import_.helpers.ImportHelperBase;
-import gov.anl.aps.cdb.common.exceptions.CdbException;
-import gov.anl.aps.cdb.common.exceptions.ObjectAlreadyExists;
-import gov.anl.aps.cdb.portal.import_export.import_.helpers.ImportHelperSource;
-import gov.anl.aps.cdb.portal.controllers.settings.SourceSettings;
-import gov.anl.aps.cdb.portal.controllers.utilities.SourceControllerUtility;
-import gov.anl.aps.cdb.portal.model.db.beans.SourceFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.Source;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
-import gov.anl.aps.cdb.portal.view.objects.DomainImportExportInfo;
-import gov.anl.aps.cdb.portal.view.objects.ImportExportFormatInfo;
+import gov.anl.aps.logr.portal.import_export.import_.helpers.ImportHelperBase;
+import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.exceptions.ObjectAlreadyExists;
+import gov.anl.aps.logr.portal.import_export.import_.helpers.ImportHelperSource;
+import gov.anl.aps.logr.portal.controllers.settings.SourceSettings;
+import gov.anl.aps.logr.portal.controllers.utilities.SourceControllerUtility;
+import gov.anl.aps.logr.portal.model.db.beans.SourceFacade;
+import gov.anl.aps.logr.portal.model.db.entities.Source;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.portal.view.objects.DomainImportExportInfo;
+import gov.anl.aps.logr.portal.view.objects.ImportExportFormatInfo;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;

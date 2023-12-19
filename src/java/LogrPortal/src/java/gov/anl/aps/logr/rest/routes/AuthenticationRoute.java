@@ -2,15 +2,15 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.rest.routes;
+package gov.anl.aps.logr.rest.routes;
 
-import gov.anl.aps.cdb.common.exceptions.AuthenticationError;
-import gov.anl.aps.cdb.portal.controllers.LoginController;
-import gov.anl.aps.cdb.portal.model.db.beans.UserInfoFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
-import gov.anl.aps.cdb.rest.authentication.Secured;
-import gov.anl.aps.cdb.rest.authentication.User;
-import gov.anl.aps.cdb.rest.authentication.UserSessionKeeper;
+import gov.anl.aps.logr.common.exceptions.AuthenticationError;
+import gov.anl.aps.logr.portal.controllers.LoginController;
+import gov.anl.aps.logr.portal.model.db.beans.UserInfoFacade;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.rest.authentication.Secured;
+import gov.anl.aps.logr.rest.authentication.User;
+import gov.anl.aps.logr.rest.authentication.UserSessionKeeper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;

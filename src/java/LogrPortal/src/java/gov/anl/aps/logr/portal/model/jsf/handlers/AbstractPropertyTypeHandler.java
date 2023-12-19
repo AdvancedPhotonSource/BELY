@@ -2,14 +2,14 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model.jsf.handlers;
+package gov.anl.aps.logr.portal.model.jsf.handlers;
 
-import gov.anl.aps.cdb.common.exceptions.ExternalServiceError;
-import gov.anl.aps.cdb.portal.constants.DisplayType;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValue;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValueHistory;
-import gov.anl.aps.cdb.common.utilities.HttpLinkUtility;
-import gov.anl.aps.cdb.portal.model.db.entities.Domain;
+import gov.anl.aps.logr.common.exceptions.ExternalServiceError;
+import gov.anl.aps.logr.portal.constants.DisplayType;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValueHistory;
+import gov.anl.aps.logr.common.utilities.HttpLinkUtility;
+import gov.anl.aps.logr.portal.model.db.entities.Domain;
 import java.util.List;
 import org.primefaces.model.StreamedContent;
 

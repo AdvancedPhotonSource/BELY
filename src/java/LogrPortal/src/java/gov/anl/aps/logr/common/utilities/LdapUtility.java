@@ -2,9 +2,9 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.common.utilities;
+package gov.anl.aps.logr.common.utilities;
 
-import gov.anl.aps.cdb.portal.utilities.ConfigurationUtility;
+import gov.anl.aps.logr.portal.utilities.ConfigurationUtility;
 import java.util.Hashtable;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;

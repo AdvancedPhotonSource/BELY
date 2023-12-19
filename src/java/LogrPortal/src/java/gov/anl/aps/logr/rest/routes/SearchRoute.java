@@ -2,20 +2,20 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.rest.routes;
+package gov.anl.aps.logr.rest.routes;
 
-import gov.anl.aps.cdb.common.exceptions.InvalidRequest;
-import gov.anl.aps.cdb.portal.controllers.utilities.ItemCategoryControllerUtility;
-import gov.anl.aps.cdb.portal.controllers.utilities.ItemElementControllerUtility;
-import gov.anl.aps.cdb.portal.controllers.utilities.ItemTypeControllerUtility;
-import gov.anl.aps.cdb.portal.controllers.utilities.PropertyTypeCategoryControllerUtility;
-import gov.anl.aps.cdb.portal.controllers.utilities.PropertyTypeControllerUtility;
-import gov.anl.aps.cdb.portal.controllers.utilities.SourceControllerUtility;
-import gov.anl.aps.cdb.portal.controllers.utilities.UserGroupControllerUtility;
-import gov.anl.aps.cdb.portal.controllers.utilities.UserInfoControllerUtility;
-import gov.anl.aps.cdb.portal.utilities.SearchResult;
-import gov.anl.aps.cdb.rest.entities.SearchEntitiesOptions;
-import gov.anl.aps.cdb.rest.entities.SearchEntitiesResults;
+import gov.anl.aps.logr.common.exceptions.InvalidRequest;
+import gov.anl.aps.logr.portal.controllers.utilities.ItemCategoryControllerUtility;
+import gov.anl.aps.logr.portal.controllers.utilities.ItemElementControllerUtility;
+import gov.anl.aps.logr.portal.controllers.utilities.ItemTypeControllerUtility;
+import gov.anl.aps.logr.portal.controllers.utilities.PropertyTypeCategoryControllerUtility;
+import gov.anl.aps.logr.portal.controllers.utilities.PropertyTypeControllerUtility;
+import gov.anl.aps.logr.portal.controllers.utilities.SourceControllerUtility;
+import gov.anl.aps.logr.portal.controllers.utilities.UserGroupControllerUtility;
+import gov.anl.aps.logr.portal.controllers.utilities.UserInfoControllerUtility;
+import gov.anl.aps.logr.portal.utilities.SearchResult;
+import gov.anl.aps.logr.rest.entities.SearchEntitiesOptions;
+import gov.anl.aps.logr.rest.entities.SearchEntitiesResults;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.LinkedList;

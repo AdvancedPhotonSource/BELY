@@ -2,9 +2,9 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers.settings;
+package gov.anl.aps.logr.portal.controllers.settings;
 
-import gov.anl.aps.cdb.portal.controllers.CdbEntityController;
+import gov.anl.aps.logr.portal.controllers.CdbEntityController;
 import java.util.Date;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;

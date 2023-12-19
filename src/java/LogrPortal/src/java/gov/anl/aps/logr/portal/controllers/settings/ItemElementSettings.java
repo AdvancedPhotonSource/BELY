@@ -2,14 +2,14 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers.settings;
+package gov.anl.aps.logr.portal.controllers.settings;
 
-import gov.anl.aps.cdb.portal.controllers.ItemController;
-import gov.anl.aps.cdb.portal.controllers.ItemElementController;
-import gov.anl.aps.cdb.portal.controllers.SettingController;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyType;
-import gov.anl.aps.cdb.portal.model.db.entities.SettingEntity;
-import gov.anl.aps.cdb.portal.model.db.entities.SettingType;
+import gov.anl.aps.logr.portal.controllers.ItemController;
+import gov.anl.aps.logr.portal.controllers.ItemElementController;
+import gov.anl.aps.logr.portal.controllers.SettingController;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
+import gov.anl.aps.logr.portal.model.db.entities.SettingEntity;
+import gov.anl.aps.logr.portal.model.db.entities.SettingType;
 import java.util.Map;
 import org.primefaces.component.datatable.DataTable;
 import org.primefaces.model.FilterMeta;

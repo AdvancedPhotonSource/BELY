@@ -2,7 +2,7 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.rest.authentication;
+package gov.anl.aps.logr.rest.authentication;
 
 import java.io.IOException;
 import javax.annotation.Priority;

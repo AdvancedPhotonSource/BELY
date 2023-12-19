@@ -2,13 +2,13 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model.db.entities;
+package gov.anl.aps.logr.portal.model.db.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import gov.anl.aps.cdb.portal.controllers.CdbEntityController;
-import gov.anl.aps.cdb.portal.controllers.LoginController;
-import gov.anl.aps.cdb.portal.utilities.SearchResult;
+import gov.anl.aps.logr.portal.controllers.CdbEntityController;
+import gov.anl.aps.logr.portal.controllers.LoginController;
+import gov.anl.aps.logr.portal.utilities.SearchResult;
 import java.io.Serializable;
 import java.util.List;
 import java.util.regex.Pattern;

@@ -2,13 +2,13 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.portal.controllers.settings.PropertyMetadataSettings;
-import gov.anl.aps.cdb.portal.controllers.utilities.PropertyMetadataControllerUtility;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyMetadata;
-import gov.anl.aps.cdb.portal.model.db.beans.PropertyMetadataFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValueBase;
+import gov.anl.aps.logr.portal.controllers.settings.PropertyMetadataSettings;
+import gov.anl.aps.logr.portal.controllers.utilities.PropertyMetadataControllerUtility;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyMetadata;
+import gov.anl.aps.logr.portal.model.db.beans.PropertyMetadataFacade;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValueBase;
 
 import java.io.Serializable;
 import javax.ejb.EJB;

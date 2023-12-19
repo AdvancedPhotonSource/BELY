@@ -2,12 +2,12 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.portal.model.db.entities.RelationshipTypeHandler;
-import gov.anl.aps.cdb.portal.controllers.util.JsfUtil;
-import gov.anl.aps.cdb.portal.controllers.util.PaginationHelper;
-import gov.anl.aps.cdb.portal.model.db.beans.RelationshipTypeHandlerFacade;
+import gov.anl.aps.logr.portal.model.db.entities.RelationshipTypeHandler;
+import gov.anl.aps.logr.portal.controllers.util.JsfUtil;
+import gov.anl.aps.logr.portal.controllers.util.PaginationHelper;
+import gov.anl.aps.logr.portal.model.db.beans.RelationshipTypeHandlerFacade;
 
 import java.io.Serializable;
 import java.util.ResourceBundle;
@@ -29,7 +29,7 @@ public class RelationshipTypeHandlerController implements Serializable {
     private RelationshipTypeHandler current;
     private DataModel items = null;
     @EJB
-    private gov.anl.aps.cdb.portal.model.db.beans.RelationshipTypeHandlerFacade ejbFacade;
+    private gov.anl.aps.logr.portal.model.db.beans.RelationshipTypeHandlerFacade ejbFacade;
     private PaginationHelper pagination;
     private int selectedItemIndex;
 

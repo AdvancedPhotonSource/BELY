@@ -2,10 +2,10 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.common.utilities;
+package gov.anl.aps.logr.common.utilities;
 
-import gov.anl.aps.cdb.common.exceptions.InvalidArgument;
-import gov.anl.aps.cdb.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.exceptions.InvalidArgument;
+import gov.anl.aps.logr.common.exceptions.CdbException;
 import java.util.Map;
 import javax.xml.bind.DatatypeConverter;
 

@@ -2,22 +2,22 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model.db.beans.builder;
+package gov.anl.aps.logr.portal.model.db.beans.builder;
 
-import gov.anl.aps.cdb.portal.constants.ItemDisplayListDataModelScope;
-import gov.anl.aps.cdb.portal.constants.ListName;
-import gov.anl.aps.cdb.portal.controllers.SettingController;
-import gov.anl.aps.cdb.portal.controllers.settings.ItemSettings;
-import gov.anl.aps.cdb.portal.model.db.entities.Domain;
-import gov.anl.aps.cdb.portal.model.db.entities.Item;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemCategory;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemProject;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemType;
-import gov.anl.aps.cdb.portal.model.db.entities.ListTbl;
-import gov.anl.aps.cdb.portal.model.db.entities.SettingEntity;
-import gov.anl.aps.cdb.portal.model.db.entities.UserGroup;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.portal.constants.ItemDisplayListDataModelScope;
+import gov.anl.aps.logr.portal.constants.ListName;
+import gov.anl.aps.logr.portal.controllers.SettingController;
+import gov.anl.aps.logr.portal.controllers.settings.ItemSettings;
+import gov.anl.aps.logr.portal.model.db.entities.Domain;
+import gov.anl.aps.logr.portal.model.db.entities.Item;
+import gov.anl.aps.logr.portal.model.db.entities.ItemCategory;
+import gov.anl.aps.logr.portal.model.db.entities.ItemProject;
+import gov.anl.aps.logr.portal.model.db.entities.ItemType;
+import gov.anl.aps.logr.portal.model.db.entities.ListTbl;
+import gov.anl.aps.logr.portal.model.db.entities.SettingEntity;
+import gov.anl.aps.logr.portal.model.db.entities.UserGroup;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;

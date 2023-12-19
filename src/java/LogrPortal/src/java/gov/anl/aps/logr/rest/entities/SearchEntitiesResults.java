@@ -2,9 +2,9 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.rest.entities;
+package gov.anl.aps.logr.rest.entities;
 
-import gov.anl.aps.cdb.portal.utilities.SearchResult;
+import gov.anl.aps.logr.portal.utilities.SearchResult;
 import java.util.LinkedList;
 
 /**

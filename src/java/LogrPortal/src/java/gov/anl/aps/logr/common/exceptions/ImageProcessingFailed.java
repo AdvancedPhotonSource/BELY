@@ -2,9 +2,9 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.common.exceptions;
+package gov.anl.aps.logr.common.exceptions;
 
-import gov.anl.aps.cdb.common.constants.CdbStatus;
+import gov.anl.aps.logr.common.constants.CdbStatus;
 
 /**
  * Image processing failed exception.

@@ -2,16 +2,16 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model.jsf.beans;
+package gov.anl.aps.logr.portal.model.jsf.beans;
 
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValue;
-import gov.anl.aps.cdb.common.utilities.FileUtility;
-import gov.anl.aps.cdb.portal.model.db.beans.PropertyTypeHandlerFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyType;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyTypeHandler;
-import gov.anl.aps.cdb.portal.utilities.GalleryUtility;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
-import gov.anl.aps.cdb.portal.utilities.StorageUtility;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
+import gov.anl.aps.logr.common.utilities.FileUtility;
+import gov.anl.aps.logr.portal.model.db.beans.PropertyTypeHandlerFacade;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyTypeHandler;
+import gov.anl.aps.logr.portal.utilities.GalleryUtility;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.portal.utilities.StorageUtility;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;

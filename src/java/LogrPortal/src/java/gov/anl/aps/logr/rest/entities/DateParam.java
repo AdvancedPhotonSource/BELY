@@ -2,7 +2,7 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.rest.entities;
+package gov.anl.aps.logr.rest.entities;
 
 import java.text.DateFormat;
 import java.text.ParseException;

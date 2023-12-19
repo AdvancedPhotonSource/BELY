@@ -2,20 +2,20 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.portal.controllers.settings.UserInfoSettings;
-import gov.anl.aps.cdb.portal.controllers.utilities.UserInfoControllerUtility;
-import gov.anl.aps.cdb.portal.import_export.import_.helpers.ImportHelperUserInfo;
-import gov.anl.aps.cdb.portal.model.db.beans.SettingTypeFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
-import gov.anl.aps.cdb.portal.model.db.beans.UserInfoFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.SettingType;
-import gov.anl.aps.cdb.portal.model.db.entities.UserRole;
-import gov.anl.aps.cdb.portal.model.db.entities.UserSetting;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
-import gov.anl.aps.cdb.portal.view.objects.DomainImportExportInfo;
-import gov.anl.aps.cdb.portal.view.objects.ImportExportFormatInfo;
+import gov.anl.aps.logr.portal.controllers.settings.UserInfoSettings;
+import gov.anl.aps.logr.portal.controllers.utilities.UserInfoControllerUtility;
+import gov.anl.aps.logr.portal.import_export.import_.helpers.ImportHelperUserInfo;
+import gov.anl.aps.logr.portal.model.db.beans.SettingTypeFacade;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.model.db.beans.UserInfoFacade;
+import gov.anl.aps.logr.portal.model.db.entities.SettingType;
+import gov.anl.aps.logr.portal.model.db.entities.UserRole;
+import gov.anl.aps.logr.portal.model.db.entities.UserSetting;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.portal.view.objects.DomainImportExportInfo;
+import gov.anl.aps.logr.portal.view.objects.ImportExportFormatInfo;
 
 import java.io.Serializable;
 import java.util.ArrayList;

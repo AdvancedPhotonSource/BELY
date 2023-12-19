@@ -2,27 +2,27 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.rest.routes;
+package gov.anl.aps.logr.rest.routes;
 
-import gov.anl.aps.cdb.common.exceptions.AuthorizationError;
-import gov.anl.aps.cdb.common.exceptions.CdbException;
-import gov.anl.aps.cdb.common.exceptions.InvalidArgument;
-import gov.anl.aps.cdb.common.exceptions.ObjectNotFound;
-import gov.anl.aps.cdb.portal.controllers.PropertyValueController;
-import gov.anl.aps.cdb.portal.controllers.utilities.CdbEntityControllerUtility;
-import gov.anl.aps.cdb.portal.controllers.utilities.ItemControllerUtility;
-import gov.anl.aps.cdb.portal.controllers.utilities.PropertyValueControllerUtility;
-import gov.anl.aps.cdb.portal.model.db.beans.ItemFacade;
-import gov.anl.aps.cdb.portal.model.db.beans.PropertyTypeFacade;
-import gov.anl.aps.cdb.portal.model.db.beans.PropertyValueFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.Item;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemElement;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyMetadata;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyType;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValue;
-import gov.anl.aps.cdb.portal.model.db.entities.PropertyValueHistory;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
-import gov.anl.aps.cdb.rest.authentication.Secured;
+import gov.anl.aps.logr.common.exceptions.AuthorizationError;
+import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.exceptions.InvalidArgument;
+import gov.anl.aps.logr.common.exceptions.ObjectNotFound;
+import gov.anl.aps.logr.portal.controllers.PropertyValueController;
+import gov.anl.aps.logr.portal.controllers.utilities.CdbEntityControllerUtility;
+import gov.anl.aps.logr.portal.controllers.utilities.ItemControllerUtility;
+import gov.anl.aps.logr.portal.controllers.utilities.PropertyValueControllerUtility;
+import gov.anl.aps.logr.portal.model.db.beans.ItemFacade;
+import gov.anl.aps.logr.portal.model.db.beans.PropertyTypeFacade;
+import gov.anl.aps.logr.portal.model.db.beans.PropertyValueFacade;
+import gov.anl.aps.logr.portal.model.db.entities.Item;
+import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyMetadata;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValueHistory;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.rest.authentication.Secured;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

@@ -2,12 +2,12 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.portal.controllers.settings.AllowedPropertyValueSettings;
-import gov.anl.aps.cdb.portal.controllers.utilities.AllowedPropertyValueControllerUtility;
-import gov.anl.aps.cdb.portal.model.db.beans.AllowedPropertyValueFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.AllowedPropertyValue;
+import gov.anl.aps.logr.portal.controllers.settings.AllowedPropertyValueSettings;
+import gov.anl.aps.logr.portal.controllers.utilities.AllowedPropertyValueControllerUtility;
+import gov.anl.aps.logr.portal.model.db.beans.AllowedPropertyValueFacade;
+import gov.anl.aps.logr.portal.model.db.entities.AllowedPropertyValue;
 import java.io.Serializable;
 import java.util.List;
 import javax.ejb.EJB;

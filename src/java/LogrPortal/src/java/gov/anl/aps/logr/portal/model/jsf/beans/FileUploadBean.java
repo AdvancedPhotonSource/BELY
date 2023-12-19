@@ -2,7 +2,7 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model.jsf.beans;
+package gov.anl.aps.logr.portal.model.jsf.beans;
 
 import java.io.File;
 import java.io.InputStream;

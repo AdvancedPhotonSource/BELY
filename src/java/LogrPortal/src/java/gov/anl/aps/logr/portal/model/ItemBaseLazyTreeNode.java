@@ -2,16 +2,16 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.model;
+package gov.anl.aps.logr.portal.model;
 
-import gov.anl.aps.cdb.common.exceptions.CdbException;
-import gov.anl.aps.cdb.portal.model.ItemBaseLazyTreeNode.ItemTreeBaseConfiguration;
-import gov.anl.aps.cdb.portal.model.db.beans.ItemFacadeBase;
-import gov.anl.aps.cdb.portal.model.db.entities.Domain;
-import gov.anl.aps.cdb.portal.model.db.entities.Item;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemElement;
-import gov.anl.aps.cdb.portal.model.db.entities.comparator.ItemSelfElementSortOrderComparator;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.portal.model.ItemBaseLazyTreeNode.ItemTreeBaseConfiguration;
+import gov.anl.aps.logr.portal.model.db.beans.ItemFacadeBase;
+import gov.anl.aps.logr.portal.model.db.entities.Domain;
+import gov.anl.aps.logr.portal.model.db.entities.Item;
+import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
+import gov.anl.aps.logr.portal.model.db.entities.comparator.ItemSelfElementSortOrderComparator;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.util.List;
 import org.primefaces.model.DefaultTreeNode;
 import org.primefaces.model.TreeNode;

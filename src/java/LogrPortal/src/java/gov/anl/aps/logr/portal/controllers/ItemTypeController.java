@@ -2,16 +2,16 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.portal.controllers.settings.ItemTypeSettings;
-import gov.anl.aps.cdb.portal.controllers.utilities.ItemTypeControllerUtility;
-import gov.anl.aps.cdb.portal.import_export.import_.helpers.ImportHelperItemType;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemType;
-import gov.anl.aps.cdb.portal.model.db.beans.ItemTypeFacade;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
-import gov.anl.aps.cdb.portal.view.objects.DomainImportExportInfo;
-import gov.anl.aps.cdb.portal.view.objects.ImportExportFormatInfo;
+import gov.anl.aps.logr.portal.controllers.settings.ItemTypeSettings;
+import gov.anl.aps.logr.portal.controllers.utilities.ItemTypeControllerUtility;
+import gov.anl.aps.logr.portal.import_export.import_.helpers.ImportHelperItemType;
+import gov.anl.aps.logr.portal.model.db.entities.ItemType;
+import gov.anl.aps.logr.portal.model.db.beans.ItemTypeFacade;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.portal.view.objects.DomainImportExportInfo;
+import gov.anl.aps.logr.portal.view.objects.ImportExportFormatInfo;
 
 import java.io.Serializable;
 import java.util.ArrayList;

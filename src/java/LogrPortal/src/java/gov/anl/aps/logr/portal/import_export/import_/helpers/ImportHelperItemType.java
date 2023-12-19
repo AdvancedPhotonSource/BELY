@@ -2,18 +2,18 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.import_export.import_.helpers;
+package gov.anl.aps.logr.portal.import_export.import_.helpers;
 
-import gov.anl.aps.cdb.portal.controllers.DomainController;
-import gov.anl.aps.cdb.portal.controllers.ItemTypeController;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.ColumnModeOptions;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.CreateInfo;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.specs.ColumnSpec;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.specs.FloatColumnSpec;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.specs.IdOrNameRefColumnSpec;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.specs.StringColumnSpec;
-import gov.anl.aps.cdb.portal.model.db.entities.Domain;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemType;
+import gov.anl.aps.logr.portal.controllers.DomainController;
+import gov.anl.aps.logr.portal.controllers.ItemTypeController;
+import gov.anl.aps.logr.portal.import_export.import_.objects.ColumnModeOptions;
+import gov.anl.aps.logr.portal.import_export.import_.objects.CreateInfo;
+import gov.anl.aps.logr.portal.import_export.import_.objects.specs.ColumnSpec;
+import gov.anl.aps.logr.portal.import_export.import_.objects.specs.FloatColumnSpec;
+import gov.anl.aps.logr.portal.import_export.import_.objects.specs.IdOrNameRefColumnSpec;
+import gov.anl.aps.logr.portal.import_export.import_.objects.specs.StringColumnSpec;
+import gov.anl.aps.logr.portal.model.db.entities.Domain;
+import gov.anl.aps.logr.portal.model.db.entities.ItemType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

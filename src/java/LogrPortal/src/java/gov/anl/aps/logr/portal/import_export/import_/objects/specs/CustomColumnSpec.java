@@ -2,12 +2,12 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.import_export.import_.objects.specs;
+package gov.anl.aps.logr.portal.import_export.import_.objects.specs;
 
-import gov.anl.aps.cdb.portal.import_export.export.objects.handlers.CustomOutputHandler;
-import gov.anl.aps.cdb.portal.import_export.export.objects.handlers.OutputHandler;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.ColumnModeOptions;
-import gov.anl.aps.cdb.portal.import_export.import_.objects.handlers.InputHandler;
+import gov.anl.aps.logr.portal.import_export.export.objects.handlers.CustomOutputHandler;
+import gov.anl.aps.logr.portal.import_export.export.objects.handlers.OutputHandler;
+import gov.anl.aps.logr.portal.import_export.import_.objects.ColumnModeOptions;
+import gov.anl.aps.logr.portal.import_export.import_.objects.handlers.InputHandler;
 import java.util.List;
 
 /**

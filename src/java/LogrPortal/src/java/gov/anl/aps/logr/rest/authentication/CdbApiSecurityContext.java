@@ -2,7 +2,7 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.rest.authentication;
+package gov.anl.aps.logr.rest.authentication;
 
 import javax.ws.rs.core.SecurityContext;
 import java.security.Principal;

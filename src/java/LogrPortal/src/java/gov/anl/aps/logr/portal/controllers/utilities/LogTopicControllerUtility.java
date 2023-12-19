@@ -2,11 +2,11 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers.utilities;
+package gov.anl.aps.logr.portal.controllers.utilities;
 
-import gov.anl.aps.cdb.portal.model.db.beans.LogTopicFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.LogTopic;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.model.db.beans.LogTopicFacade;
+import gov.anl.aps.logr.portal.model.db.entities.LogTopic;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 
 /**
  *

@@ -2,25 +2,25 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.controllers;
+package gov.anl.aps.logr.portal.controllers;
 
-import gov.anl.aps.cdb.common.exceptions.CdbException;
-import gov.anl.aps.cdb.portal.constants.EntityTypeName;
-import gov.anl.aps.cdb.portal.controllers.extensions.ItemCreateWizardController;
-import gov.anl.aps.cdb.portal.controllers.extensions.ItemCreateWizardDomainLogbookController;
-import gov.anl.aps.cdb.portal.controllers.settings.ItemDomainLogbookSettings;
-import gov.anl.aps.cdb.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
-import gov.anl.aps.cdb.portal.model.ItemDomainLogbookLazyDataModel;
-import gov.anl.aps.cdb.portal.model.db.beans.ItemDomainLogbookFacade;
-import gov.anl.aps.cdb.portal.model.db.beans.LogFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.EntityType;
-import gov.anl.aps.cdb.portal.model.db.entities.Item;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemDomainLogbook;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemElement;
-import gov.anl.aps.cdb.portal.model.db.entities.Log;
-import gov.anl.aps.cdb.portal.model.db.entities.UserInfo;
-import gov.anl.aps.cdb.portal.utilities.SearchResult;
-import gov.anl.aps.cdb.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.portal.constants.EntityTypeName;
+import gov.anl.aps.logr.portal.controllers.extensions.ItemCreateWizardController;
+import gov.anl.aps.logr.portal.controllers.extensions.ItemCreateWizardDomainLogbookController;
+import gov.anl.aps.logr.portal.controllers.settings.ItemDomainLogbookSettings;
+import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
+import gov.anl.aps.logr.portal.model.ItemDomainLogbookLazyDataModel;
+import gov.anl.aps.logr.portal.model.db.beans.ItemDomainLogbookFacade;
+import gov.anl.aps.logr.portal.model.db.beans.LogFacade;
+import gov.anl.aps.logr.portal.model.db.entities.EntityType;
+import gov.anl.aps.logr.portal.model.db.entities.Item;
+import gov.anl.aps.logr.portal.model.db.entities.ItemDomainLogbook;
+import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
+import gov.anl.aps.logr.portal.model.db.entities.Log;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.utilities.SearchResult;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;

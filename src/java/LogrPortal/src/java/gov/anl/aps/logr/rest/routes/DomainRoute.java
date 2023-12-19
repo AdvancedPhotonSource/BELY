@@ -2,15 +2,15 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.rest.routes;
+package gov.anl.aps.logr.rest.routes;
 
-import gov.anl.aps.cdb.portal.model.db.beans.DomainFacade;
-import gov.anl.aps.cdb.portal.model.db.beans.ItemCategoryFacade;
-import gov.anl.aps.cdb.portal.model.db.beans.ItemTypeFacade;
-import gov.anl.aps.cdb.portal.model.db.entities.Domain;
-import gov.anl.aps.cdb.portal.model.db.entities.EntityType;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemCategory;
-import gov.anl.aps.cdb.portal.model.db.entities.ItemType;
+import gov.anl.aps.logr.portal.model.db.beans.DomainFacade;
+import gov.anl.aps.logr.portal.model.db.beans.ItemCategoryFacade;
+import gov.anl.aps.logr.portal.model.db.beans.ItemTypeFacade;
+import gov.anl.aps.logr.portal.model.db.entities.Domain;
+import gov.anl.aps.logr.portal.model.db.entities.EntityType;
+import gov.anl.aps.logr.portal.model.db.entities.ItemCategory;
+import gov.anl.aps.logr.portal.model.db.entities.ItemType;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import javax.ejb.EJB;
