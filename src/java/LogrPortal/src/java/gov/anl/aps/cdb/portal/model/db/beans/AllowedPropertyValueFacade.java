@@ -18,7 +18,7 @@ import javax.persistence.PersistenceContext;
 @Stateless
 public class AllowedPropertyValueFacade extends CdbEntityFacade<AllowedPropertyValue> {
 
-    @PersistenceContext(unitName = "CdbWebPortalPU")
+    @PersistenceContext(unitName = "LogrPortalPU")
     private EntityManager em;
 
     @Override

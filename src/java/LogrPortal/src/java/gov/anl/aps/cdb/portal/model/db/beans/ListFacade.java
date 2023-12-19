@@ -17,7 +17,7 @@ import javax.persistence.PersistenceContext;
 @Stateless
 public class ListFacade extends CdbEntityFacade<ListTbl> {
 
-    @PersistenceContext(unitName = "CdbWebPortalPU")
+    @PersistenceContext(unitName = "LogrPortalPU")
     private EntityManager em;
 
     @Override

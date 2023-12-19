@@ -20,7 +20,7 @@ import javax.persistence.StoredProcedureQuery;
 @Stateless
 public class PropertyValueFacade extends CdbEntityFacade<PropertyValue> {
 
-    @PersistenceContext(unitName = "CdbWebPortalPU")
+    @PersistenceContext(unitName = "LogrPortalPU")
     private EntityManager em;
 
     @Override

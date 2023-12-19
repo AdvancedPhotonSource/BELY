@@ -21,7 +21,7 @@ import javax.persistence.PersistenceContext;
 @Stateless
 public class PropertyTypeFacade extends CdbEntityFacade<PropertyType> {
 
-    @PersistenceContext(unitName = "CdbWebPortalPU")
+    @PersistenceContext(unitName = "LogrPortalPU")
     private EntityManager em;
     
     private final String QUERY_STRING_START = "SELECT p FROM PropertyType p ";

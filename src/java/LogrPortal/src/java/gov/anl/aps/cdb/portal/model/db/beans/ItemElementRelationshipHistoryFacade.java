@@ -16,7 +16,7 @@ import javax.persistence.PersistenceContext;
 @Stateless
 public class ItemElementRelationshipHistoryFacade extends CdbEntityFacade<ItemElementRelationshipHistory> {
 
-    @PersistenceContext(unitName = "CdbWebPortalPU")
+    @PersistenceContext(unitName = "LogrPortalPU")
     private EntityManager em;
 
     @Override

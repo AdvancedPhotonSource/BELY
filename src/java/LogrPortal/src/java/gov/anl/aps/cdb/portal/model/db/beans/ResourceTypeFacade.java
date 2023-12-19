@@ -16,7 +16,7 @@ import javax.persistence.PersistenceContext;
 @Stateless
 public class ResourceTypeFacade extends CdbEntityFacade<ResourceType> {
 
-    @PersistenceContext(unitName = "CdbWebPortalPU")
+    @PersistenceContext(unitName = "LogrPortalPU")
     private EntityManager em;
 
     @Override

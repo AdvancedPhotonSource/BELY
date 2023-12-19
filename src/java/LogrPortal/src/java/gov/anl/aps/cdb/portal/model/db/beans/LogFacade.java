@@ -24,7 +24,7 @@ import javax.persistence.TemporalType;
 @Stateless
 public class LogFacade extends CdbEntityFacade<Log> {
 
-    @PersistenceContext(unitName = "CdbWebPortalPU")
+    @PersistenceContext(unitName = "LogrPortalPU")
     private EntityManager em;
     
     private final String QUERY_STRING_START = "SELECT l FROM Log l ";

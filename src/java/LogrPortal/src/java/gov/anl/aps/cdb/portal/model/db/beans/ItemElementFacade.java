@@ -19,7 +19,7 @@ import javax.persistence.PersistenceContext;
 @Stateless
 public class ItemElementFacade extends CdbEntityFacade<ItemElement> {
 
-    @PersistenceContext(unitName = "CdbWebPortalPU")
+    @PersistenceContext(unitName = "LogrPortalPU")
     private EntityManager em;
     
     protected final Integer SEARCH_RESULT_LIMIT = 1000;

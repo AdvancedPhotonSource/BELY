@@ -20,7 +20,7 @@ import javax.persistence.PersistenceContext;
 @Stateless
 public class ItemCategoryFacade extends CdbEntityFacade<ItemCategory> {
 
-    @PersistenceContext(unitName = "CdbWebPortalPU")
+    @PersistenceContext(unitName = "LogrPortalPU")
     private EntityManager em;
 
     @Override

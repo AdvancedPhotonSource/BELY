@@ -19,7 +19,7 @@ import javax.persistence.PersistenceContext;
 @Stateless
 public class RelationshipTypeFacade extends CdbEntityFacade<RelationshipType> {
 
-    @PersistenceContext(unitName = "CdbWebPortalPU")
+    @PersistenceContext(unitName = "LogrPortalPU")
     private EntityManager em;
 
     @Override

@@ -20,7 +20,7 @@ import javax.persistence.PersistenceContext;
 @Stateless
 public class UserGroupFacade extends CdbEntityFacade<UserGroup> {
 
-    @PersistenceContext(unitName = "CdbWebPortalPU")
+    @PersistenceContext(unitName = "LogrPortalPU")
     private EntityManager em;
 
     @Override

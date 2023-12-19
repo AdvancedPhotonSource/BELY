@@ -20,7 +20,7 @@ import javax.persistence.PersistenceContext;
 @Stateless
 public class SourceFacade extends CdbEntityFacade<Source> {
 
-    @PersistenceContext(unitName = "CdbWebPortalPU")
+    @PersistenceContext(unitName = "LogrPortalPU")
     private EntityManager em;
 
     public static SourceFacade getInstance() {

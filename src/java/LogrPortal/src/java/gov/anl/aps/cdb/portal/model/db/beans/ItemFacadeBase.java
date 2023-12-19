@@ -38,7 +38,7 @@ import org.apache.logging.log4j.Logger;
  */
 public abstract class ItemFacadeBase<ItemDomainEntity extends Item> extends CdbEntityFacade<ItemDomainEntity> {
 
-    @PersistenceContext(unitName = "CdbWebPortalPU")
+    @PersistenceContext(unitName = "LogrPortalPU")
     protected EntityManager em;
     
     private static final Logger logger = LogManager.getLogger(ItemFacadeBase.class.getName());
