@@ -277,10 +277,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @Override
     public String saveLogList() {
-
         List<ItemElement> itemElementList = newLogEdit.getItemElementList();
-
         ItemDomainLogbook parentItem = (ItemDomainLogbook) itemElementList.get(0).getParentItem();
+        newLogEdit = null; 
         
         parentItem = (ItemDomainLogbook) getItem(parentItem.getId());         
         List<Log> logList = parentItem.getLogList();
@@ -372,7 +371,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
 //    @Override
 //    protected void performDestroyOperation(ItemDomainLogbook entity) throws CdbException {
-//        CdbEntityControllerUtility controllerUtility = getControllerUtility();
+//        ItemDomainLogbookControllerUtility controllerUtility = getControllerUtility();
 //        UserInfo user = SessionUtility.getUser();
 //        
 //        List<ItemDomainLogbook> itemsToDestroy = new ArrayList<>();        
@@ -384,9 +383,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 //        
 //        
 //        controllerUtility.destroy(entity, user);
-//        controllerUtility.destroyList(itemsToDestroy, null, user);
-//        
-//        
+//        controllerUtility.destroyList(itemsToDestroy, null, user);  
+//
+//
 //    }
 
     @Override
