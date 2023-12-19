@@ -35,10 +35,10 @@ support-netbeans:
 	$(TOP)/sbin/cdb_install_support_netbeans.sh
 
 clean-db:
-	$(TOP)/sbin/cdb_create_db.sh cdb $(TOP)/db/sql/clean
+	$(TOP)/sbin/cdb_create_db.sh logr $(TOP)/db/sql/clean
 
 test-db:
-	$(TOP)/sbin/cdb_create_db.sh cdb $(TOP)/db/sql/test
+	$(TOP)/sbin/cdb_create_db.sh logr $(TOP)/db/sql/test
 
 test:
 	$(TOP)/sbin/cdb_test.sh
@@ -47,7 +47,7 @@ db:
 	$(TOP)/sbin/cdb_create_db.sh
 
 backup:
-	$(TOP)/sbin/cdb_backup_all.sh
+	$(TOP)/sbin/cdb_backup_all.sh logr
 
 configure-web-portal: dist
 	$(TOP)/sbin/cdb_configure_web_portal.sh
@@ -74,13 +74,13 @@ configuration-dev:
 	$(TOP)/sbin/cdb_create_configuration.sh cdb_dev
 
 db-dev:
-	$(TOP)/sbin/cdb_create_db.sh cdb_dev
+	$(TOP)/sbin/cdb_create_db.sh logr_dev
 
 clean-db-dev:
-	$(TOP)/sbin/cdb_create_db.sh cdb_dev $(TOP)/db/sql/clean
+	$(TOP)/sbin/cdb_create_db.sh logr_dev $(TOP)/db/sql/clean
 
 backup-dev:
-	$(TOP)/sbin/cdb_backup_all.sh cdb_dev
+	$(TOP)/sbin/cdb_backup_all.sh logr_dev
 
 deploy-cdb-plugin-dev:
 	$(TOP)/tools/developer_tools/cdb_plugins/deploy_plugin.py cdb_dev
