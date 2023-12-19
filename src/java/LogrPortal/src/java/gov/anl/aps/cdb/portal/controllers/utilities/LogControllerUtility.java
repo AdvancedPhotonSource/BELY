@@ -30,7 +30,7 @@ public class LogControllerUtility extends CdbEntityControllerUtility<Log, LogFac
     @EJB
     private UserInfoFacade userInfoFacade;
     
-    private final String DEFAULT_SYSTEM_ADMIN_USERNAME = "cdb";
+    private final String DEFAULT_SYSTEM_ADMIN_USERNAME = "logr";
     
     private static LogControllerUtility systemLogInstance;
 
