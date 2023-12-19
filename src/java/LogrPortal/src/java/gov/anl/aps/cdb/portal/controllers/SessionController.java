@@ -32,7 +32,7 @@ public class SessionController {
 
     public static final long BROWSER_LAST_CONNECTED_MIN_TIME = 25000;
     
-    @PersistenceContext(unitName = "CdbWebPortalPU")
+    @PersistenceContext(unitName = "LogrPortalPU")
     private EntityManager em;
 
     private Set<HttpSession> allSessions;
