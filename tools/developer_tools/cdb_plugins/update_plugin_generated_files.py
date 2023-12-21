@@ -14,7 +14,7 @@ See LICENSE file.
 from utilities.plugin_manager import PluginManager
 import sys
 
-cdb_db_name = 'cdb'
+cdb_db_name = 'logr'
 if sys.argv.__len__() == 2:
     cdb_db_name = sys.argv[1]
 

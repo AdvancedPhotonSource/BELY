@@ -8,11 +8,11 @@ import os, shutil
 from utilities.plugin_configuration import PluginConfiguration
 
 CDB_XHTML_PLUGIN_PATH = '%s/%s/web/views/plugins/private'
-CDB_JAVA_PLUGIN_PATH = '%s/%s/src/java/gov/anl/aps/cdb/portal/plugins/support'
+CDB_JAVA_PLUGIN_PATH = '%s/%s/src/java/gov/anl/aps/logr/portal/plugins/support'
 CDB_PYTHON_PLUGIN_PATH = '%s/%s/cdb_web_service/plugins'
 
 CDB_WEB_SERVICE_CODE_PATH = 'src/python/cdb'
-CDB_PORTAL_CODE_PATH = 'src/java/CdbWebPortal'
+CDB_PORTAL_CODE_PATH = 'src/java/LogrPortal'
 
 JAVA_CONFIGURATION_EXT = 'properties'
 PYTHON_CONFIGURATION_EXT = 'cfg'

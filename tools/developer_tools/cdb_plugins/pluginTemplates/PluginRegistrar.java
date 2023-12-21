@@ -3,9 +3,9 @@
  * See LICENSE file.
  */
 
-package gov.anl.aps.cdb.portal.plugins.support;
+package gov.anl.aps.logr.portal.plugins.support;
 
-import gov.anl.aps.cdb.portal.plugins.CdbPluginManager;
+import gov.anl.aps.logr.portal.plugins.CdbPluginManager;
 PYTHON_IMPORT_INSERT_MARKER
 
 /**
