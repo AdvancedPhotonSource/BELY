@@ -78,7 +78,7 @@ $ASADMIN_CMD start-domain ${LOGR_DOMAIN}
 
 # create JDBC connection pool
 echo "Creating JDBC connection pool $LOGR_DB_POOL"
-$ASADMIN_CMD create-jdbc-connection-pool --datasourceclassname org.mariadb.jdbc.MariaDbDataSource --restype javax.sql.DataSource --property user=${LOGR_DB_USER}:password=${LOGR_DB_PASSWORD}:driverClass="org.mariadb.jdbc.Driver":portNumber=${LOGR_DB_PORT}:databaseName=${LOGR_DB_NAME}:serverName=${LOGR_DB_HOST}:url="jdbc\:mariadb\://${LOGR_DB_HOST}\:${LOGR_DB_PORT}/${LOGR_DB_NAME}?zeroDateTimeBehavior\=convertToNull" ${LOGR_DB_POOL}
+$ASADMIN_CMD create-jdbc-connection-pool --datasourceclassname org.mariadb.jdbc.MariaDbDataSource --restype javax.sql.DataSource --property user=${LOGR_DB_USER}:password=${LOGR_DB_PASSWORD}:driverClass="org.mariadb.jdbc.Driver":portNumber=${LOGR_DB_PORT}:databaseName=${LOGR_DB_NAME}:serverName=${LOGR_DB_HOST}:url="jdbc\:mariadb\://${LOGR_DB_HOST}\:${LOGR_DB_PORT}/${LOGR_DB_NAME}?zeroDateTimeBehavior\=convertToNull\&useMysqlMetadata\=true" ${LOGR_DB_POOL}
 
 # create JDBC resource associated with this connection pool
 echo "Creating JDBC resource $LOGR_DATA_SOURCE"
