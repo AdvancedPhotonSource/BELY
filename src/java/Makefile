@@ -2,6 +2,6 @@
 # See LICENSE file.
 
 TOP = ../..
-SUBDIRS = CdbWebPortal
+SUBDIRS = LogrPortal
 
 include $(TOP)/tools/make/RULES_CDB
