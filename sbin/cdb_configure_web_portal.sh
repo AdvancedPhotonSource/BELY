@@ -6,36 +6,36 @@
 
 #
 # Script used for configuring CDB webapp
-# Deployment configuration can be set in etc/$CDB_DB_NAME.deploy.conf file
+# Deployment configuration can be set in etc/$LOGR_DB_NAME.deploy.conf file
 #
 # Usage:
 #
-# $0 [CDB_DB_NAME]
+# $0 [LOGR_DB_NAME]
 #
 
 MY_DIR=`dirname $0` && cd $MY_DIR && MY_DIR=`pwd`
-if [ -z "${CDB_ROOT_DIR}" ]; then
-    CDB_ROOT_DIR=$MY_DIR/..
+if [ -z "${LOGR_ROOT_DIR}" ]; then
+    LOGR_ROOT_DIR=$MY_DIR/..
 fi
-CDB_ENV_FILE=${CDB_ROOT_DIR}/setup.sh
-if [ ! -f ${CDB_ENV_FILE} ]; then
-    echo "Environment file ${CDB_ENV_FILE} does not exist."
+LOGR_ENV_FILE=${LOGR_ROOT_DIR}/setup.sh
+if [ ! -f ${LOGR_ENV_FILE} ]; then
+    echo "Environment file ${LOGR_ENV_FILE} does not exist."
     exit 2
 fi
-. ${CDB_ENV_FILE} > /dev/null
+. ${LOGR_ENV_FILE} > /dev/null
 
 # Use first argument as db name, if provided
-CDB_DB_NAME=${CDB_DB_NAME:=cdb}
+LOGR_DB_NAME=${LOGR_DB_NAME:=logr}
 if [ ! -z "$1" ]; then
-    CDB_DB_NAME=$1
+    LOGR_DB_NAME=$1
 fi
-echo "Using DB name: $CDB_DB_NAME"
+echo "Using DB name: $LOGR_DB_NAME"
 
 # Look for deployment file in etc directory, and use it to override
 # default entries
-deployConfigFile=$CDB_INSTALL_DIR/etc/${CDB_DB_NAME}.deploy.`hostname -s`.conf
+deployConfigFile=$LOGR_INSTALL_DIR/etc/${LOGR_DB_NAME}.deploy.`hostname -s`.conf
 if [ ! -f $deployConfigFile ]; then
-    deployConfigFile=$CDB_INSTALL_DIR/etc/${CDB_DB_NAME}.deploy.conf
+    deployConfigFile=$LOGR_INSTALL_DIR/etc/${LOGR_DB_NAME}.deploy.conf
 fi
 
 if [ -f $deployConfigFile ]; then
@@ -45,45 +45,45 @@ else
     echo "Deployment config file $deployConfigFile not found, using defaults"
 fi
 
-CDB_HOST_ARCH=$(uname -sm | tr -s '[:upper:][:blank:]' '[:lower:][\-]')
-GLASSFISH_DIR=$CDB_SUPPORT_DIR/payara/$CDB_HOST_ARCH
-JAVA_HOME=$CDB_SUPPORT_DIR/java/$CDB_HOST_ARCH
+LOGR_HOST_ARCH=$(uname -sm | tr -s '[:upper:][:blank:]' '[:lower:][\-]')
+GLASSFISH_DIR=$LOGR_SUPPORT_DIR/payara/$LOGR_HOST_ARCH
+JAVA_HOME=$LOGR_SUPPORT_DIR/java/$LOGR_HOST_ARCH
 
 export AS_JAVA=$JAVA_HOME
 ASADMIN_CMD=$GLASSFISH_DIR/bin/asadmin
 
-CDB_DB_HOST=${CDB_DB_HOST:=localhost}
-CDB_DB_PORT=${CDB_DB_PORT:=3306}
-CDB_DB_USER=${CDB_DB_USER:=cdb}
-CDB_DB_POOL=mysql_${CDB_DB_NAME}_DbPool
-CDB_DATA_SOURCE=${CDB_DB_NAME}_DataSource
-CDB_DOMAIN=production
+LOGR_DB_HOST=${LOGR_DB_HOST:=localhost}
+LOGR_DB_PORT=${LOGR_DB_PORT:=3306}
+LOGR_DB_USER=${LOGR_DB_USER:=logr}
+LOGR_DB_POOL=mysql_${LOGR_DB_NAME}_DbPool
+LOGR_DATA_SOURCE=${LOGR_DB_NAME}_DataSource
+LOGR_DOMAIN=production
 
 # Check password from file
-passwordFile=$CDB_INSTALL_DIR/etc/$CDB_DB_NAME.db.passwd
+passwordFile=$LOGR_INSTALL_DIR/etc/$LOGR_DB_NAME.db.passwd
 if [ -f $passwordFile ]; then
-    CDB_DB_PASSWORD=`cat $passwordFile`
+    LOGR_DB_PASSWORD=`cat $passwordFile`
 else
-	CDB_DB_PASSWORD=${CDB_DB_PASSWORD:=cdb}
+	LOGR_DB_PASSWORD=${LOGR_DB_PASSWORD:=logr}
 fi
 
 # copy mysql driver
 echo "Copying mysql driver"
-rsync -ar $CDB_ROOT_DIR/src/java/CdbWebPortal/lib/mariadb-java-client-3.1.0.jar $GLASSFISH_DIR/glassfish/domains/${CDB_DOMAIN}/lib/
+rsync -ar $LOGR_ROOT_DIR/src/java/LogrPortal/lib/mariadb-java-client-3.1.0.jar $GLASSFISH_DIR/glassfish/domains/${LOGR_DOMAIN}/lib/
 
 # restart server
 echo "Restarting glassfish"
-$ASADMIN_CMD stop-domain ${CDB_DOMAIN}
-$ASADMIN_CMD start-domain ${CDB_DOMAIN}
+$ASADMIN_CMD stop-domain ${LOGR_DOMAIN}
+$ASADMIN_CMD start-domain ${LOGR_DOMAIN}
 
 # create JDBC connection pool
-echo "Creating JDBC connection pool $CDB_DB_POOL"
-$ASADMIN_CMD create-jdbc-connection-pool --datasourceclassname com.mysql.jdbc.jdbc2.optional.MysqlDataSource --restype javax.sql.DataSource --property user=${CDB_DB_USER}:password=${CDB_DB_PASSWORD}:driverClass="com.mysql.jdbc.Driver":portNumber=${CDB_DB_PORT}:databaseName=${CDB_DB_NAME}:serverName=${CDB_DB_HOST}:url="jdbc\:mysql\://${CDB_DB_HOST}\:${CDB_DB_PORT}/${CDB_DB_NAME}?zeroDateTimeBehavior\=convertToNull" ${CDB_DB_POOL}
+echo "Creating JDBC connection pool $LOGR_DB_POOL"
+$ASADMIN_CMD create-jdbc-connection-pool --datasourceclassname org.mariadb.jdbc.MariaDbDataSource --restype javax.sql.DataSource --property user=${LOGR_DB_USER}:password=${LOGR_DB_PASSWORD}:driverClass="org.mariadb.jdbc.Driver":portNumber=${LOGR_DB_PORT}:databaseName=${LOGR_DB_NAME}:serverName=${LOGR_DB_HOST}:url="jdbc\:mariadb\://${LOGR_DB_HOST}\:${LOGR_DB_PORT}/${LOGR_DB_NAME}?zeroDateTimeBehavior\=convertToNull" ${LOGR_DB_POOL}
 
 # create JDBC resource associated with this connection pool
-echo "Creating JDBC resource $CDB_DATA_SOURCE"
-$ASADMIN_CMD create-jdbc-resource --connectionpoolid ${CDB_DB_POOL} ${CDB_DATA_SOURCE}
+echo "Creating JDBC resource $LOGR_DATA_SOURCE"
+$ASADMIN_CMD create-jdbc-resource --connectionpoolid ${LOGR_DB_POOL} ${LOGR_DATA_SOURCE}
 
 # test the connection settings
 echo "Testing connection"
-$ASADMIN_CMD ping-connection-pool $CDB_DB_POOL || exit 1
+$ASADMIN_CMD ping-connection-pool $LOGR_DB_POOL || exit 1
