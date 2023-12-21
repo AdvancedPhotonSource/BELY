@@ -6,36 +6,36 @@
 
 #
 # Script used for undeploying CDB webapp
-# Deployment configuration can be set in etc/$CDB_DB_NAME.deploy.conf file
+# Deployment configuration can be set in etc/$LOGR_DB_NAME.deploy.conf file
 #
 # Usage:
 #
-# $0 [CDB_DB_NAME]
+# $0 [LOGR_DB_NAME]
 #
 
 MY_DIR=`dirname $0` && cd $MY_DIR && MY_DIR=`pwd`
-if [ -z "${CDB_ROOT_DIR}" ]; then
-    CDB_ROOT_DIR=$MY_DIR/..
+if [ -z "${LOGR_ROOT_DIR}" ]; then
+    LOGR_ROOT_DIR=$MY_DIR/..
 fi
-CDB_ENV_FILE=${CDB_ROOT_DIR}/setup.sh
-if [ ! -f ${CDB_ENV_FILE} ]; then
-    echo "Environment file ${CDB_ENV_FILE} does not exist."
+LOGR_ENV_FILE=${LOGR_ROOT_DIR}/setup.sh
+if [ ! -f ${LOGR_ENV_FILE} ]; then
+    echo "Environment file ${LOGR_ENV_FILE} does not exist."
     exit 2
 fi
-. ${CDB_ENV_FILE} > /dev/null
+. ${LOGR_ENV_FILE} > /dev/null
 
 # Use first argument as db name, if provided
-CDB_DB_NAME=${CDB_DB_NAME:=cdb}
+LOGR_DB_NAME=${LOGR_DB_NAME:=logr}
 if [ ! -z "$1" ]; then
-    CDB_DB_NAME=$1
+    LOGR_DB_NAME=$1
 fi
-echo "Using DB name: $CDB_DB_NAME"
+echo "Using DB name: $LOGR_DB_NAME"
 
-CDB_INSTALL_DIR=${CDB_INSTALL_DIR:=$CDB_ROOT_DIR/..}
+LOGR_INSTALL_DIR=${LOGR_INSTALL_DIR:=$LOGR_ROOT_DIR/..}
 
 # Look for deployment file in etc directory, and use it to override
 # default entries
-deployConfigFile=$CDB_INSTALL_DIR/etc/${CDB_DB_NAME}.deploy.conf
+deployConfigFile=$LOGR_INSTALL_DIR/etc/${LOGR_DB_NAME}.deploy.conf
 if [ -f $deployConfigFile ]; then
     echo "Using deployment config file: $deployConfigFile"
     . $deployConfigFile
@@ -43,31 +43,31 @@ else
     echo "Deployment config file $deployConfigFile not found, using defaults"
 fi
 
-CDB_DOMAIN_NAME="production"
-CDB_HOST_ARCH=$(uname -sm | tr -s '[:upper:][:blank:]' '[:lower:][\-]')
-CDB_CONTEXT_ROOT=${CDB_CONTEXT_ROOT:=cdb}
-GLASSFISH_DIR=$CDB_SUPPORT_DIR/payara/$CDB_HOST_ARCH
-CDB_APP_DIR=$GLASSFISH_DIR/glassfish/domains/$CDB_DOMAIN_NAME/applications/$CDB_CONTEXT_ROOT
-CDB_DIST_DIR=$CDB_ROOT_DIR/src/java/CdbWebPortal/dist
-CDB_WAR_FILE=$CDB_CONTEXT_ROOT.war
-JAVA_HOME=$CDB_SUPPORT_DIR/java/$CDB_HOST_ARCH
+LOGR_DOMAIN_NAME="production"
+LOGR_HOST_ARCH=$(uname -sm | tr -s '[:upper:][:blank:]' '[:lower:][\-]')
+LOGR_CONTEXT_ROOT=${LOGR_CONTEXT_ROOT:=logr}
+GLASSFISH_DIR=$LOGR_SUPPORT_DIR/payara/$LOGR_HOST_ARCH
+LOGR_APP_DIR=$GLASSFISH_DIR/glassfish/domains/$LOGR_DOMAIN_NAME/applications/$LOGR_CONTEXT_ROOT
+LOGR_DIST_DIR=$LOGR_ROOT_DIR/src/java/LogrPortal/dist
+LOGR_WAR_FILE=$LOGR_CONTEXT_ROOT.war
+JAVA_HOME=$LOGR_SUPPORT_DIR/java/$LOGR_HOST_ARCH
 
 export AS_JAVA=$JAVA_HOME
 ASADMIN_CMD=$GLASSFISH_DIR/bin/asadmin
 
 # remove war file from autodeploy directory
-$ASADMIN_CMD undeploy $CDB_CONTEXT_ROOT
+$ASADMIN_CMD undeploy $LOGR_CONTEXT_ROOT
 
 
 # remove war file from autodeploy directory
-if [ -d $CDB_APP_DIR ]; then
-    echo "Removing application directory $CDB_APP_DIR"
-    rm -rf $CDB_APP_DIR
+if [ -d $LOGR_APP_DIR ]; then
+    echo "Removing application directory $LOGR_APP_DIR"
+    rm -rf $LOGR_APP_DIR
 else
-    echo "Application directory $CDB_APP_DIR not found"
+    echo "Application directory $LOGR_APP_DIR not found"
 fi
 
 # restart server
 echo "Restarting glassfish"
-$ASADMIN_CMD stop-domain ${CDB_DOMAIN_NAME}
-$ASADMIN_CMD start-domain ${CDB_DOMAIN_NAME}
+$ASADMIN_CMD stop-domain ${LOGR_DOMAIN_NAME}
+$ASADMIN_CMD start-domain ${LOGR_DOMAIN_NAME}

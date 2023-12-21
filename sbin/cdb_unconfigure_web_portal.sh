@@ -6,36 +6,36 @@
 
 #
 # Script used for un-configuring CDB webapp
-# Deployment configuration can be set in etc/$CDB_DB_NAME.deploy.conf file
+# Deployment configuration can be set in etc/$LOGR_DB_NAME.deploy.conf file
 #
 # Usage:
 #
-# $0 [CDB_DB_NAME]
+# $0 [LOGR_DB_NAME]
 #
 
 MY_DIR=`dirname $0` && cd $MY_DIR && MY_DIR=`pwd`
-if [ -z "${CDB_ROOT_DIR}" ]; then
-    CDB_ROOT_DIR=$MY_DIR/..
+if [ -z "${LOGR_ROOT_DIR}" ]; then
+    LOGR_ROOT_DIR=$MY_DIR/..
 fi
-CDB_ENV_FILE=${CDB_ROOT_DIR}/setup.sh
-if [ ! -f ${CDB_ENV_FILE} ]; then
-    echo "Environment file ${CDB_ENV_FILE} does not exist."
+LOGR_ENV_FILE=${LOGR_ROOT_DIR}/setup.sh
+if [ ! -f ${LOGR_ENV_FILE} ]; then
+    echo "Environment file ${LOGR_ENV_FILE} does not exist."
     exit 2
 fi
-. ${CDB_ENV_FILE} > /dev/null
+. ${LOGR_ENV_FILE} > /dev/null
 
 # Use first argument as db name, if provided
-CDB_DB_NAME=${CDB_DB_NAME:=cdb}
+LOGR_DB_NAME=${LOGR_DB_NAME:=logr}
 if [ ! -z "$1" ]; then
-    CDB_DB_NAME=$1
+    LOGR_DB_NAME=$1
 fi
-echo "Using DB name: $CDB_DB_NAME"
+echo "Using DB name: $LOGR_DB_NAME"
 
-CDB_INSTALL_DIR=${CDB_INSTALL_DIR:=$CDB_ROOT_DIR/..}
+LOGR_INSTALL_DIR=${LOGR_INSTALL_DIR:=$LOGR_ROOT_DIR/..}
 
 # Look for deployment file in etc directory, and use it to override
 # default entries
-deployConfigFile=$CDB_INSTALL_DIR/etc/${CDB_DB_NAME}.deploy.conf
+deployConfigFile=$LOGR_INSTALL_DIR/etc/${LOGR_DB_NAME}.deploy.conf
 if [ -f $deployConfigFile ]; then
     echo "Using deployment config file: $deployConfigFile"
     . $deployConfigFile
@@ -43,26 +43,26 @@ else
     echo "Deployment config file $deployConfigFile not found, using defaults"
 fi
 
-CDB_HOST_ARCH=$(uname -sm | tr -s '[:upper:][:blank:]' '[:lower:][\-]')
-GLASSFISH_DIR=$CDB_SUPPORT_DIR/payara/$CDB_HOST_ARCH
-JAVA_HOME=$CDB_SUPPORT_DIR/java/$CDB_HOST_ARCH
+LOGR_HOST_ARCH=$(uname -sm | tr -s '[:upper:][:blank:]' '[:lower:][\-]')
+GLASSFISH_DIR=$LOGR_SUPPORT_DIR/payara/$LOGR_HOST_ARCH
+JAVA_HOME=$LOGR_SUPPORT_DIR/java/$LOGR_HOST_ARCH
 
 export AS_JAVA=$JAVA_HOME
 ASADMIN_CMD=$GLASSFISH_DIR/bin/asadmin
 
-CDB_DB_POOL=mysql_${CDB_DB_NAME}_DbPool
-CDB_DATA_SOURCE=${CDB_DB_NAME}_DataSource
-CDB_DOMAIN=production
+LOGR_DB_POOL=mysql_${LOGR_DB_NAME}_DbPool
+LOGR_DATA_SOURCE=${LOGR_DB_NAME}_DataSource
+LOGR_DOMAIN=production
 
 # restart server
 echo "Restarting glassfish"
-$ASADMIN_CMD stop-domain ${CDB_DOMAIN}
-$ASADMIN_CMD start-domain ${CDB_DOMAIN}
+$ASADMIN_CMD stop-domain ${LOGR_DOMAIN}
+$ASADMIN_CMD start-domain ${LOGR_DOMAIN}
 
 # delete JDBC resource associated with this connection pool
-echo "Deleting JDBC resource $CDB_DATA_SOURCE"
-$ASADMIN_CMD delete-jdbc-resource ${CDB_DATA_SOURCE}
+echo "Deleting JDBC resource $LOGR_DATA_SOURCE"
+$ASADMIN_CMD delete-jdbc-resource ${LOGR_DATA_SOURCE}
 
 # delete JDBC connection pool
-echo "Deleting JDBC connection pool $CDB_DB_POOL"
-$ASADMIN_CMD delete-jdbc-connection-pool ${CDB_DB_POOL}
+echo "Deleting JDBC connection pool $LOGR_DB_POOL"
+$ASADMIN_CMD delete-jdbc-connection-pool ${LOGR_DB_POOL}
