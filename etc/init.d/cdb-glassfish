@@ -16,68 +16,68 @@
 
 # Set root to default if needed.
 MY_DIR=`dirname $0` && cd $MY_DIR && MY_DIR=`pwd`
-if [ -z "${CDB_ROOT_DIR}" ]; then
-    CDB_ROOT_DIR=$MY_DIR/../..
+if [ -z "${LOGR_ROOT_DIR}" ]; then
+    LOGR_ROOT_DIR=$MY_DIR/../..
 fi
         
 # Source environment file.
-CDB_USER=`id -nu`
-CDB_HOST=`hostname -s`
-CDB_ENV_FILE=${CDB_ROOT_DIR}/setup.sh
-if [ ! -f ${CDB_ENV_FILE} ]; then
-    echo "Environment file ${CDB_ENV_FILE} does not exist." 
+LOGR_USER=`id -nu`
+LOGR_HOST=`hostname -s`
+LOGR_ENV_FILE=${LOGR_ROOT_DIR}/setup.sh
+if [ ! -f ${LOGR_ENV_FILE} ]; then
+    echo "Environment file ${LOGR_ENV_FILE} does not exist." 
     exit 2
 fi
-. ${CDB_ENV_FILE} > /dev/null
+. ${LOGR_ENV_FILE} > /dev/null
 
-export AS_JAVA=$CDB_SUPPORT_DIR/java/$CDB_HOST_ARCH
-GLASSFISH_DIR=$CDB_SUPPORT_DIR/payara/$CDB_HOST_ARCH
-DERBY_DIR=$CDB_SUPPORT_DIR/payara/$CDB_HOST_ARCH/javadb/bin
+export AS_JAVA=$LOGR_SUPPORT_DIR/java/$LOGR_HOST_ARCH
+GLASSFISH_DIR=$LOGR_SUPPORT_DIR/payara/$LOGR_HOST_ARCH
+DERBY_DIR=$LOGR_SUPPORT_DIR/payara/$LOGR_HOST_ARCH/javadb/bin
 
-CDB_DAEMON_NAME=glassfish
-CDB_DAEMON_CONTROL_CMD=$GLASSFISH_DIR/bin/asadmin
-CDB_DOMAIN_NAME=production
-CDB_DAEMON_START_ARGS="start-domain $CDB_DOMAIN_NAME"
-CDB_DAEMON_STOP_ARGS="stop-domain $CDB_DOMAIN_NAME"
-CDB_DAEMON_STATUS_CMDS="uptime list-domains list-applications list-jdbc-resources"
+LOGR_DAEMON_NAME=glassfish
+LOGR_DAEMON_CONTROL_CMD=$GLASSFISH_DIR/bin/asadmin
+LOGR_DOMAIN_NAME=production
+LOGR_DAEMON_START_ARGS="start-domain $LOGR_DOMAIN_NAME"
+LOGR_DAEMON_STOP_ARGS="stop-domain $LOGR_DOMAIN_NAME"
+LOGR_DAEMON_STATUS_CMDS="uptime list-domains list-applications list-jdbc-resources"
 
 start() {
-    echo -n $"Starting ${CDB_DAEMON_NAME}: "       
+    echo -n $"Starting ${LOGR_DAEMON_NAME}: "       
     # Check if we're a privileged user
-    if [ `id -u` = 0 -a ${CDB_USER} != "root" ]; then
-        su -m -c "${CDB_DAEMON_CONTROL_CMD} ${CDB_DAEMON_START_ARGS}" ${CDB_USER}
+    if [ `id -u` = 0 -a ${LOGR_USER} != "root" ]; then
+        su -m -c "${LOGR_DAEMON_CONTROL_CMD} ${LOGR_DAEMON_START_ARGS}" ${LOGR_USER}
     else
-        ${CDB_DAEMON_CONTROL_CMD} ${CDB_DAEMON_START_ARGS}
+        ${LOGR_DAEMON_CONTROL_CMD} ${LOGR_DAEMON_START_ARGS}
     fi
     RETVAL=$?
-    [ $RETVAL -eq 0 ] && success $"${CDB_DAEMON_NAME} startup" || failure $"${CDB_DAEMON_NAME} startup"
+    [ $RETVAL -eq 0 ] && success $"${LOGR_DAEMON_NAME} startup" || failure $"${LOGR_DAEMON_NAME} startup"
     echo
     return $RETVAL
 }
 
 stop() {
-    echo -n $"Stopping ${CDB_DAEMON_NAME}: "       
+    echo -n $"Stopping ${LOGR_DAEMON_NAME}: "       
     # Check if we're a privileged user
-    if [ `id -u` = 0 -a ${CDB_USER} != "root" ]; then
-        su -m -c "${CDB_DAEMON_CONTROL_CMD} ${CDB_DAEMON_STOP_ARGS}" ${CDB_USER}
+    if [ `id -u` = 0 -a ${LOGR_USER} != "root" ]; then
+        su -m -c "${LOGR_DAEMON_CONTROL_CMD} ${LOGR_DAEMON_STOP_ARGS}" ${LOGR_USER}
     else
-        ${CDB_DAEMON_CONTROL_CMD} ${CDB_DAEMON_STOP_ARGS}
+        ${LOGR_DAEMON_CONTROL_CMD} ${LOGR_DAEMON_STOP_ARGS}
     fi
     RETVAL=$?
-    [ $RETVAL -eq 0 ] && success $"${CDB_DAEMON_NAME} shutdown" || failure $"${CDB_DAEMON_NAME} shutdown"
+    [ $RETVAL -eq 0 ] && success $"${LOGR_DAEMON_NAME} shutdown" || failure $"${LOGR_DAEMON_NAME} shutdown"
     echo
     return $RETVAL
 }
 
 status() {
     # Check if we're a privileged user
-    if [ `id -u` = 0 -a ${CDB_USER} != "root" ]; then
-        for cmd in ${CDB_DAEMON_STATUS_CMDS}; do
-            su -m -c "${CDB_DAEMON_CONTROL_CMD} ${cmd}" ${CDB_USER}
+    if [ `id -u` = 0 -a ${LOGR_USER} != "root" ]; then
+        for cmd in ${LOGR_DAEMON_STATUS_CMDS}; do
+            su -m -c "${LOGR_DAEMON_CONTROL_CMD} ${cmd}" ${LOGR_USER}
         done
     else
-        for cmd in ${CDB_DAEMON_STATUS_CMDS}; do
-            ${CDB_DAEMON_CONTROL_CMD} ${cmd}
+        for cmd in ${LOGR_DAEMON_STATUS_CMDS}; do
+            ${LOGR_DAEMON_CONTROL_CMD} ${cmd}
         done
     fi
 }
