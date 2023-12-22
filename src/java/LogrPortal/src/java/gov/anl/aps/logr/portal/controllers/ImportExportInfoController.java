@@ -34,8 +34,9 @@ public class ImportExportInfoController {
         List<CdbEntityController> controllerList = new ArrayList<>();        
         controllerList.add(ItemCategoryController.getInstance());
         controllerList.add(ItemTypeController.getInstance());
-        controllerList.add(SourceController.getInstance());
-        controllerList.add(ConnectorTypeController.getInstance());
+        // TODO remove those tables. 
+//        controllerList.add(SourceController.getInstance());
+//        controllerList.add(ConnectorTypeController.getInstance());
         controllerList.add(UserInfoController.getInstance());
         controllerList.add(UserGroupController.getInstance());
         for (CdbEntityController controller : controllerList) {
