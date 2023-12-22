@@ -2,6 +2,21 @@ LOCK TABLES `setting_type` WRITE;
 /*!40000 ALTER TABLE `setting_type` DISABLE KEYS */;
 INSERT INTO `setting_type` VALUES
 /*Logbook domain settings 1-998*/
+(1,'ItemDomainLogbook.List.Display.NumberOfItemsPerPage','Display specified number of items per page.','25'),
+(2,'ItemDomainLogbook.List.Display.Id','Display allowed property value id.','false'),
+(3,'ItemDomainLogbook.List.Display.Description','Display allowed property value description.','false'),
+(4,'ItemDomainLogbook.List.Display.ItemType','Display allowed property value sort order.','true'),
+(5,'ItemDomainLogbook.List.Display.OwnerUser','Display allowed property value units.','false'),
+(6,'ItemDomainLogbook.List.Display.OwnerGroup','Display allowed property value units.','false'),
+(7,'ItemDomainLogbook.List.Display.CreatedUser','Display allowed property value units.','false'),
+(8,'ItemDomainLogbook.List.Display.CreatedTime','Display allowed property value units.','false'),
+(9,'ItemDomainLogbook.List.Display.ModifiedByUser','Display allowed property value units.','true'),
+(10,'ItemDomainLogbook.List.Display.ModifiedTime','Display allowed property value units.','false'),
+(11,'ItemDomainLogbook.List.Display.PropertyTypeId1','Display property value for property type id #1.',''),
+(12,'ItemDomainLogbook.List.Display.PropertyTypeId2','Display property value for property type id #2.',''),
+(13,'ItemDomainLogbook.List.Display.PropertyTypeId3','Display property value for property type id #3.',''),
+(14,'ItemDomainLogbook.List.Display.PropertyTypeId4','Display property value for property type id #4.',''),
+(15,'ItemDomainLogbook.List.Display.PropertyTypeId5','Display property value for property type id #5.',''),
 (999,'DomainEntity.Detail.Display.GalleryViewableDocuments','Display viewable documents in the gallery.','true'),
 (1000,'AllowedPropertyValue.List.Display.Description','Display allowed property value description.','false'),
 (1001,'AllowedPropertyValue.List.Display.Id','Display allowed property value id.','false'),
