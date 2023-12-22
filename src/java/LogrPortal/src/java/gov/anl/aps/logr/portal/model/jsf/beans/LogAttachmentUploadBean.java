@@ -79,6 +79,8 @@ public class LogAttachmentUploadBean implements Serializable {
                 String prefix = "\n\n"; 
                 if (GalleryUtility.viewableFileName(fileName)) {
                     prefix += '!'; 
+                    // Generate scaled images 
+                    GalleryUtility.storeImagePreviews(originalFile);
                 }
                 text += prefix + "[" + fileName + "](" + attachment.getFilePath() + ") ";
                 logEntry.setText(text);
