@@ -12,10 +12,9 @@
   scroll-behavior: smooth;
 }*/
 
-html, body {
-    background-color: #FAFAD2;
+html, body {    
+    background-color: #f8f8f8;
 }
-
 
 #bottom {
     background-color: #FAFAD2;
@@ -35,7 +34,7 @@ h1 {
 
 .ui-panel {
     border: 0px; 
-    background: #FAFAD2; 
+    background: transparent; 
 }
 
 .catalogItemPropertiesPanel {
@@ -53,28 +52,33 @@ h1 {
 }
 
 .logTimestamp {
-    background: darkslateblue; 
+    background: lightslategrey; 
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px; 
+    /*border-bottom: solid black;*/ 
     color: white; 
-    padding: 5px; 
+    padding: 3px; 
 }
 
 .logEntry {
     padding: 10px;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px; 
     /*white-space: pre;*/ 
 }
 
 .ui-datascroller-item:hover .logEntry {
-    background: lightyellow;
+    background: #ecf2f9;
     transition: 0.5s; 
 }
 
 .ui-datascroller-item:hover .logTimestamp {
-    background: slateblue; 
+    background: slategray; 
     transition: 0.5s; 
 }
 
 .ui-datascroller-item:hover .logAttachment {
-    background: lightyellow;
+    background: #ecf2f9;
 }
 
 .logDataScroller .ui-datascroller-content  {
@@ -132,11 +136,17 @@ pre:has(code) {
 
 
 @-webkit-keyframes name {
-    0% {background-color:white;}
+    0% {background-color:lightblue;}
     100% {background-color: transparent;}
 }
 
 .ui-overlaypanel-content {
-    background: #FAFAD2;
-    border: 3px solid lightgray;    
+    border-radius: 5px; 
+}
+
+div.logbookSection {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    margin: 16px;
+    background-color: white;
+    border-radius: 5px
 }
