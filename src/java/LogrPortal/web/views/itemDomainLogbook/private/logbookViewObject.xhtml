@@ -10,16 +10,7 @@ See LICENSE file.
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:h="http://xmlns.jcp.org/jsf/html">
 
-    <h2>#{itemObject.name}</h2>
-
-    <p:commandButton icon="fa fa-plus"
-                     rendered="#{isEntityWriteable}"
-                     onclick="PF('loadingDialog').show()"
-                     action="#{itemDomainLogbookController.prepareAddLog(itemObject)}"
-                     update="@form:#{entityTypeName}LogbookLogAddDialog"
-                     oncomplete="PF('loadingDialog').hide(); 
-                     PF('#{entityTypeName}LogbookLogAddDialogWidget').show()"/>
-
+    <h2>#{itemObject.name}</h2>  
 
     <div class="logbookSection">
         <div class="logEntry">
@@ -88,6 +79,16 @@ See LICENSE file.
             </p:dataScroller>
         </ui:fragment>
     </div>
+
+    <p:commandButton icon="fa fa-plus"
+                     value="Add Log Entry"
+                     rendered="#{isEntityWriteable}"
+                     onclick="PF('loadingDialog').show()"
+                     action="#{itemDomainLogbookController.prepareAddLog(itemObject)}"
+                     update="@form:#{entityTypeName}LogbookLogAddDialog"
+                     oncomplete="PF('loadingDialog').hide(); 
+                     PF('#{entityTypeName}LogbookLogAddDialogWidget').show()"/>
+
 
 
 </ui:composition>
