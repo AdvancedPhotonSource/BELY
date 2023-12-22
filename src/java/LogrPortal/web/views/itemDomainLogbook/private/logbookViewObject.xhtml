@@ -13,11 +13,13 @@ See LICENSE file.
     <h2>#{itemObject.name}</h2>  
 
     <div class="logbookSection">
-        <div class="logEntry">
-            <ui:fragment rendered="#{itemObject.logList.size() ==0}">          
+
+        <ui:fragment rendered="#{itemObject.logList.size() ==0}">          
+            <div class="logEntry">
                 Click the plus button to create a first log entry.            
-            </ui:fragment>
-        </div>
+            </div>
+        </ui:fragment>
+
 
         <ui:fragment rendered="#{itemObject.logList.size() !=0}">
             <p:dataScroller value="#{itemObject.logList}" var="logObject" styleClass="logDataScroller">
