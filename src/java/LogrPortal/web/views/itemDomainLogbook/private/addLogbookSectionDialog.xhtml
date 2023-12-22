@@ -16,7 +16,8 @@ See LICENSE file.
               closable="false"
               modal="true">
         <p:outputPanel rendered="#{itemObject.newLogbookSection != null}"
-                       id="createLogbookPanelGrid">
+                       id="createLogbookPanelGrid"
+                       styleClass="leftAlignedText">
             <ui:include src="../../item/private/itemCreatePanelGrid.xhtml" >
                 <ui:param name="viewName" value="createSectionDialog" />
                 <ui:param name="itemObject" value="#{itemObject.newLogbookSection}" /> 
@@ -31,6 +32,7 @@ See LICENSE file.
                              oncomplete="PF('loadingDialog').hide();"
                              /> 
             <p:commandButton value="Cancel"
+                             immediate="true"
                              action="#{itemDomainLogbookController.viewForCurrentEntity()}" /> 
         </f:facet>
     </p:dialog>
