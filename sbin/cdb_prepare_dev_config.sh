@@ -126,6 +126,6 @@ cmd="cat $LOGR_ROOT_DIR/etc/cdb-web-service.conf.template \
 eval $cmd || exit 1
 #rsync -ar $LOGR_DB_PASSWORD_FILE $LOGR_ETC_DIR || exit 1
 
-python $LOGR_ROOT_DIR/tools/developer_tools/LOGR_plugins/update_plugin_generated_files.py
+python $LOGR_ROOT_DIR/tools/developer_tools/logr_plugins/update_plugin_generated_files.py
 
 echo "Done preparing development configuration"
