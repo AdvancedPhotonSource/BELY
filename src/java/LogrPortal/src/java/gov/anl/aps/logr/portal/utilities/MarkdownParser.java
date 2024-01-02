@@ -87,11 +87,12 @@ public class MarkdownParser {
             html.attr("target", "_log_img");
             html.srcPos(node.getChars()).withAttr(aLink).tag("a");
             
-            // Update image node to use scaled image 
-            // TODO: do not add scaled extension for external image references. 
+            // Update image node to use scaled image             
             BasedSequence nodeUrl = node.getUrl();
-            nodeUrl = nodeUrl.append(CdbPropertyValue.SCALED_IMAGE_EXTENSION);
-            node.setUrl(nodeUrl); 
+            if (nodeUrl.startsWith("/")) {
+                nodeUrl = nodeUrl.append(CdbPropertyValue.SCALED_IMAGE_EXTENSION);
+                node.setUrl(nodeUrl);                 
+            }                        
 
             // Standard image render function. Original is "private" 
             // See https://github.com/vsch/flexmark-java/blob/cc3a2f59ba6e532833f4805f8134b4dc966ff837/flexmark/src/main/java/com/vladsch/flexmark/html/renderer/CoreNodeRenderer.java#L617
