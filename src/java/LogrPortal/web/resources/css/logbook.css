@@ -130,6 +130,10 @@ pre:has(code) {
     margin-block: 0; 
 }
 
+.logEntry img {
+    max-width: 450px; 
+}
+
 .activeLogEntry {
     -webkit-animation:name 2s normal;
 }
