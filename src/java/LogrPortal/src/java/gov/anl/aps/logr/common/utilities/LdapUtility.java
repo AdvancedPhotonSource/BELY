@@ -74,7 +74,7 @@ public class LdapUtility {
             env.put(Context.SECURITY_CREDENTIALS, password);
             // the below property allows us to circumvent server certificate checks
             if (ldapUrl.startsWith(SecureLdapProtocol)) {
-                env.put("java.naming.ldap.factory.socket", "gov.anl.aps.cdb.common.utilities.NoServerVerificationSSLSocketFactory");
+                env.put("java.naming.ldap.factory.socket", "gov.anl.aps.logr.common.utilities.NoServerVerificationSSLSocketFactory");
             }
             try {
                 ctx = new InitialDirContext(env);
