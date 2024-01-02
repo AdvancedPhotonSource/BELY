@@ -53,7 +53,7 @@ configure-web-portal: dist
 	$(TOP)/sbin/cdb_configure_web_portal.sh
 
 deploy-cdb-plugin:
-	$(TOP)/tools/developer_tools/cdb_plugins/deploy_plugin.py cdb
+	$(TOP)/tools/developer_tools/logr_plugins/deploy_plugin.py cdb
 
 deploy-web-portal: dist
 	$(TOP)/sbin/cdb_deploy_web_portal.sh
@@ -83,7 +83,7 @@ backup-dev:
 	$(TOP)/sbin/cdb_backup_all.sh logr_dev
 
 deploy-cdb-plugin-dev:
-	$(TOP)/tools/developer_tools/cdb_plugins/deploy_plugin.py cdb_dev
+	$(TOP)/tools/developer_tools/logr_plugins/deploy_plugin.py cdb_dev
 
 deploy-web-portal-dev: dist 
 	$(TOP)/sbin/cdb_deploy_web_portal.sh cdb_dev Dev
