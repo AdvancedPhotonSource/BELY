@@ -25,7 +25,7 @@ make test
 ```
 - IDE:
 Use your favorite IDE such as vscode to open up `$LOGR_ROOT_DIR/tools/developer_tools/portal_testing/PythonSeleniumTest/`. Running the `gui-test.py` would start up the test suite. 
-When using this method you may need to run `make test-db` from `$LOGR_ROOT_DIR`. 
+When using this method you may need to run `make test-db` from `$LOGR_ROOT_DIR` before running tests. 
 
 Also you may need to add `$LOGR_ROOT_DIR/tools/developer_tools/portal_testing/PythonSeleniumTest/support_bin` to enviornment path.
 
