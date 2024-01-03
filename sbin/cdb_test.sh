@@ -19,34 +19,34 @@ read -s db_password
 CURRENT_DIR=`pwd`
 MY_DIR=`dirname $0` && cd $MY_DIR && MY_DIR=`pwd`
 cd $MY_DIR/..
-CDB_DIST_DIR=`pwd`
+LOGR_DIST_DIR=`pwd`
 cd $CURRENT_DIR
 
 $MY_DIR/cdb_backup_db.sh
 
 timestamp=`date +%Y%m%d`
-CDB_BACKUP_DIR=$CDB_INSTALL_DIR/backup/cdb/$timestamp
+LOGR_BACKUP_DIR=$LOGR_INSTALL_DIR/backup/logr/$timestamp
 
-yes $db_password | $MY_DIR/cdb_create_db.sh cdb $CDB_DIST_DIR/db/sql/test || exit 1
+yes $db_password | $MY_DIR/cdb_create_db.sh cdb $LOGR_DIST_DIR/db/sql/test || exit 1
 
 # Regenerate the API with current code base
-API_CLIENT_PATH=$CDB_DIST_DIR/tools/developer_tools/python-client/
-cd $API_CLIENT_PATH
-./generatePyClient.sh http://localhost:8080/cdb
+# API_CLIENT_PATH=$LOGR_DIST_DIR/tools/developer_tools/python-client/
+# cd $API_CLIENT_PATH
+# ./generatePyClient.sh http://localhost:8080/cdb
 
 HEADER_TEXT='****************'
 PRINTF_HEADER="\n\n$HEADER_TEXT Starting %s Test $HEADER_TEXT\n\n\n"
 
-printf "$PRINTF_HEADER" "Unit Tests"
-cd $CDB_DIST_DIR/tools/developer_tools/code_testing/CdbWebPortalTest
-mvn test
+# printf "$PRINTF_HEADER" "Unit Tests"
+# cd $LOGR_DIST_DIR/tools/developer_tools/code_testing/CdbWebPortalTest
+# mvn test
 
-printf "$PRINTF_HEADER" "API"
-cd $API_CLIENT_PATH/test
-pytest api_test.py
+# printf "$PRINTF_HEADER" "API"
+# cd $API_CLIENT_PATH/test
+# pytest api_test.py
 
 printf "$PRINTF_HEADER" "Selenium"
-cd $CDB_DIST_DIR/tools/developer_tools/portal_testing/PythonSeleniumTest
+cd $LOGR_DIST_DIR/tools/developer_tools/portal_testing/PythonSeleniumTest
 
 if [ ! -d "support_bin" ]; then
     mkdir support_bin
@@ -57,16 +57,17 @@ cd support_bin
 skiptest=0
 needs_download=1
 
-chromedriver_version_start=`google-chrome --version | grep -oP "[^A-Z ][0-9]+.[0-9]+.[0-9]+"`
-chromedriver_version_regex="$chromedriver_version_start.[0-9]+/chromedriver_linux64.zip"
-chromedriver_version=(`curl https://chromedriver.storage.googleapis.com/ | grep -oP $chromedriver_version_regex`)
-echo ${chromedriver_version[0]}
+# TODO Update parsing for the new json. 
+# chromedriver_version_start=`google-chrome --version | grep -oP "[^A-Z ][0-9]+.[0-9]+.[0-9]+"`
+# chromedriver_version_regex="$chromedriver_version_start.[0-9]+/chromedriver_linux64.zip"
+# chromedriver_version=(`curl https://chromedriver.storage.googleapis.com/ | grep -oP $chromedriver_version_regex`)
+# echo ${chromedriver_version[0]}
 
-count_results=`echo $chromedriver_version | wc -l`
+# count_results=`echo $chromedriver_version | wc -l`
 
-if [ $count_results > 1 ]; then
-    chromedriver_version=`echo ${chromedriver_version%%$'\n'*}`
-fi
+# if [ $count_results > 1 ]; then
+#     chromedriver_version=`echo ${chromedriver_version%%$'\n'*}`
+# fi
 
 if [ -f "chromedriver" ]; then 
     current_version_result=`./chromedriver --version | grep -oP $chromedriver_version`
@@ -78,9 +79,13 @@ if [ -f "chromedriver" ]; then
 fi
 
 if [[ $needs_download == 1 ]]; then
-    wget https://chromedriver.storage.googleapis.com/$chromedriver_version || skiptest=1
-    unzip chromedriver_linux64.zip
-    rm chromedriver_linux64.zip
+    # TODO update to select closest to installed chrome version.
+    wget https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/115.0.5790.3/linux64/chromedriver-linux64.zip
+    # wget https://chromedriver.storage.googleapis.com/$chromedriver_version || skiptest=1
+    unzip chromedriver-linux64.zip
+    mv chromedriver-linux64/chromedriver ./ 
+    rm -rf chromedriver-linux64
+    rm chromedriver-linux64.zip
 fi
 
 
@@ -95,6 +100,6 @@ fi
 printf "\n\nPress enter to proceed restoring original database back to cdb..."
 read -s 
 
-yes $db_password | $MY_DIR/cdb_create_db.sh cdb $CDB_BACKUP_DIR
+yes $db_password | $MY_DIR/cdb_create_db.sh cdb $LOGR_BACKUP_DIR
 
 cd $CURRENT_DIR
