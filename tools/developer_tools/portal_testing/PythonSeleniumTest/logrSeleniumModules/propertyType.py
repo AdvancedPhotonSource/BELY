@@ -11,11 +11,11 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
-from cdbSeleniumModules.cdbSeleniumModuleBase import CdbSeleniumModuleBase
+from logrSeleniumModules.logrSeleniumModuleBase import LogrSeleniumModuleBase
 
 SAMPLE_PROPERTY_TYPE_NAME = '0000000000000Sample'
 
-class PropertyType(CdbSeleniumModuleBase):
+class PropertyType(LogrSeleniumModuleBase):
 
 	def _navigateToAdminPropertyType(self):
 		self._navigate_to_dropdown('administrativeButton', 'adminPropertyTypesButton', 'propertyType/list')
@@ -33,21 +33,19 @@ class PropertyType(CdbSeleniumModuleBase):
 		descriptionInput.send_keys("Sample Property Type created for tests")
 
 		self._click_on_id('addPropertyTypeForm:allowedDomain')
-		catalogCheckboxXpath = '//*[@id="addPropertyTypeForm:allowedDomain_panel"]/div[2]/ul/li[2]/div/div[2]'
-		catalogCheckbox = self._wait_for_visible_xpath(catalogCheckboxXpath)
-		inventoryCheckbox = self._wait_for_visible_xpath('//*[@id="addPropertyTypeForm:allowedDomain_panel"]/div[2]/ul/li[3]/div/div[2]')
-		catalogCheckbox.click()
-		inventoryCheckbox.click()
+		logbookCheckboxXpath = '//*[@id="addPropertyTypeForm:allowedDomain_panel"]/div[2]/ul/li/div/div[2]/span'
+		logbookCheckbox = self._wait_for_visible_xpath(logbookCheckboxXpath)		
+		logbookCheckbox.click()
 		self._click_on_id('addPropertyTypeForm:allowedDomain')
 
-		WebDriverWait(self.driver, CdbSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(EC.invisibility_of_element_located((By.XPATH, '//*[@id="addPropertyTypeForm:allowedDomain_panel"]/div[2]/ul/li[2]')))
+		WebDriverWait(self.driver, LogrSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(EC.invisibility_of_element_located((By.XPATH, '//*[@id="addPropertyTypeForm:allowedDomain_panel"]/div[2]/ul/li[2]')))
 
 		self._click_on_id('addPropertyTypeForm:category')
 		firstCategory = self._wait_for_visible_id('addPropertyTypeForm:category_1')
 		firstCategory.click()
 
 		self._click_on_id("addPropertyTypeForm:propertyTypeCreateSaveButton")
-		WebDriverWait(self.driver, CdbSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(EC.url_contains('/view'))
+		WebDriverWait(self.driver, LogrSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(EC.url_contains('/view'))
 		self._wait_for_id('viewPropertyTypeForm:name')
 
 	def delete_sample_test_property_type(self):
@@ -63,4 +61,4 @@ class PropertyType(CdbSeleniumModuleBase):
 		confirmDelete = self._wait_for_visible_xpath('//*[@id="viewPropertyTypeForm:confirmDestroyPropertyType"]')
 		confirmDelete.click()
 
-		WebDriverWait(self.driver, CdbSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(EC.url_contains('/list'))
+		WebDriverWait(self.driver, LogrSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(EC.url_contains('/list'))

@@ -14,13 +14,13 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
-from cdbSeleniumModules.cdbSeleniumModuleDecorators import add_stale_protection
+from logrSeleniumModules.logrSeleniumModuleDecorators import add_stale_protection
 
 GROWL_MESSAGE_CONTAINER = '//*[@id="messages_container"]/div/div'
 GROWL_MESSAGE_CONTAINER_2 = '//*[@id="messages_container"]/div[2]/div'
 GROWL_MESSAGE_CLOSE_BUTTON = GROWL_MESSAGE_CONTAINER + '/div[1]'
 
-class CdbSeleniumModuleBase:
+class LogrSeleniumModuleBase:
 
 	WAIT_FOR_ELEMENT_TIMEOUT = 10
 	VISIBLE_ID_TIMEOUT = 10
@@ -64,7 +64,7 @@ class CdbSeleniumModuleBase:
 		time.sleep(0.5)
 		self._wait_for_id_and_click(buttonId)
 
-		WebDriverWait(self.driver, CdbSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(
+		WebDriverWait(self.driver, LogrSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(
 			EC.url_contains(urlPartContains))
 
 	def _click_using_javascript(self, element):
@@ -104,7 +104,7 @@ class CdbSeleniumModuleBase:
 		return self._wait_for_visible(By.XPATH, xpath)
 
 	def _wait_for_visible(self, by, identifier):
-		return WebDriverWait(self.driver, CdbSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(
+		return WebDriverWait(self.driver, LogrSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(
 			EC.visibility_of_element_located((by, identifier)))
 
 	def _wait_for_invisible_by_id(self, identifier, timeout=VISIBLE_ID_TIMEOUT):
@@ -124,7 +124,7 @@ class CdbSeleniumModuleBase:
 		return self._wait_for_clickable(By.XPATH, xpath)
 
 	def _wait_for_clickable(self, by, identifier):
-		return WebDriverWait(self.driver, CdbSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(
+		return WebDriverWait(self.driver, LogrSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(
 			EC.element_to_be_clickable((by, identifier)))
 
 	def _wait_for_id(self, id):
@@ -137,15 +137,15 @@ class CdbSeleniumModuleBase:
 		return self._wait_for(By.XPATH, xpath)
 
 	def _wait_for(self, by, identifier):
-		return WebDriverWait(self.driver, CdbSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(
+		return WebDriverWait(self.driver, LogrSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(
 			EC.presence_of_element_located((by, identifier))
 		)
 
 	def _wait_for_url_contains(self, urlSubstring):
-		WebDriverWait(self.driver, CdbSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(EC.url_contains(urlSubstring))
+		WebDriverWait(self.driver, LogrSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(EC.url_contains(urlSubstring))
 
 	def _wait_until_enabled_by_xpath(self, xpath):
-		timeout = time.time() + CdbSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT
+		timeout = time.time() + LogrSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT
 
 		while time.time() < timeout:
 			time.sleep(0.01)
@@ -303,7 +303,7 @@ class CdbSeleniumModuleBase:
 		self._click_on_id('%s:%sSaveLogButton' % (form_name, entity_name))
 
 		newLogEntrySelector = "#%s\\3a %sLogListDataTable\\3a 0\\3a logEntryColumnCellEditor > div.ui-cell-editor-output" % (form_name, entity_name)
-		WebDriverWait(self.driver, CdbSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(EC.text_to_be_present_in_element((By.CSS_SELECTOR, newLogEntrySelector), log_entry))
+		WebDriverWait(self.driver, LogrSeleniumModuleBase.WAIT_FOR_ELEMENT_TIMEOUT).until(EC.text_to_be_present_in_element((By.CSS_SELECTOR, newLogEntrySelector), log_entry))
 
 	def _add_property_to_item(self, test, form_name, entity_name, prop_value_text, needs_toggler=True):
 		if needs_toggler:

@@ -5,15 +5,15 @@ Copyright (c) UChicago Argonne, LLC. All rights reserved.
 See LICENSE file.
 """
 
-from cdbSeleniumModules.cdbSeleniumModuleBase import CdbSeleniumModuleBase
+from logrSeleniumModules.logrSeleniumModuleBase import LogrSeleniumModuleBase
 
-CDB_LOGIN = 'cdb'
-CDB_PASSWORD = 'cdb'
+CDB_LOGIN = 'logr'
+CDB_PASSWORD = 'logr'
 LOGIN_BUTTON_ID = 'loginButton'
 LOGOUT_BUTTON_ID = 'logoutButton'
 
 
-class Portal(CdbSeleniumModuleBase):
+class Portal(LogrSeleniumModuleBase):
 
 	def login(self, login=CDB_LOGIN, password=CDB_PASSWORD):
 		self._click_on_id(LOGIN_BUTTON_ID)

@@ -1,7 +1,7 @@
-from cdbSeleniumModules.cdbSeleniumModuleBase import CdbSeleniumModuleBase
+from logrSeleniumModules.logrSeleniumModuleBase import LogrSeleniumModuleBase
 
 
-class UserInfo(CdbSeleniumModuleBase):
+class UserInfo(LogrSeleniumModuleBase):
 
     VIEW_BASE_NAME = 'userInfo'
     ENTITY_TYPE_NAME = 'userInfo'
