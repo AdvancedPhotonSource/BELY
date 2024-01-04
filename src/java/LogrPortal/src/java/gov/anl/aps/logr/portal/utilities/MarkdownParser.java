@@ -31,6 +31,8 @@ import java.util.Arrays;
  * @author djarosz
  */
 public class MarkdownParser {
+    
+    private static String contextRoot = null; 
 
     private static MutableDataHolder options = new MutableDataSet()
             .set(Parser.EXTENSIONS, Arrays.asList(
@@ -79,16 +81,37 @@ public class MarkdownParser {
                     new NodeRenderingHandler<>(Image.class, this::render)
             ));
         }
+        
+        private String getContextRoot() {
+            if (contextRoot == null) {
+                contextRoot = SessionUtility.getContextRoot(); 
+            }
+            return contextRoot; 
+        }
 
-        private void render(Image node, NodeRendererContext context, HtmlWriter html) {
-            // Create a link to full size image. 
+        private void render(Image node, NodeRendererContext context, HtmlWriter html) {            
+            BasedSequence nodeUrl = node.getUrl();
             ResolvedLink aLink = context.resolveLink(LinkType.LINK, node.getUrl().unescape(), null, null);
-            html.attr("href", aLink.getUrl());
+            ResolvedLink imgLink = context.resolveLink(LinkType.IMAGE, node.getUrl().unescape(), null, null);
+
+            String fullResUrl = aLink.getUrl(); 
+            String scaledUrl = imgLink.getUrl(); 
+            
+            if (nodeUrl.startsWith("/")) {
+                // Ensure that conext root is loaded. 
+                String contextRoot = getContextRoot();
+                
+                fullResUrl = contextRoot + fullResUrl; 
+                scaledUrl = contextRoot + scaledUrl + CdbPropertyValue.SCALED_IMAGE_EXTENSION; 
+            }
+            
+            
+            // Create a link to full size image. 
+            html.attr("href", fullResUrl);
             html.attr("target", "_log_img");
             html.srcPos(node.getChars()).withAttr(aLink).tag("a");
             
-            // Update image node to use scaled image             
-            BasedSequence nodeUrl = node.getUrl();
+            // Update image node to use scaled image
             if (nodeUrl.startsWith("/")) {
                 nodeUrl = nodeUrl.append(CdbPropertyValue.SCALED_IMAGE_EXTENSION);
                 node.setUrl(nodeUrl);                 
@@ -98,25 +121,23 @@ public class MarkdownParser {
             // See https://github.com/vsch/flexmark-java/blob/cc3a2f59ba6e532833f4805f8134b4dc966ff837/flexmark/src/main/java/com/vladsch/flexmark/html/renderer/CoreNodeRenderer.java#L617
             if (!(context.isDoNotRenderLinks() || isSuppressedLinkPrefix(node.getUrl(), context))) {
                 String altText = new TextCollectingVisitor().collectAndGetText(node);                                                
-                ResolvedLink resolvedLink = context.resolveLink(LinkType.IMAGE, node.getUrl().unescape(), null, null);
-                String url = resolvedLink.getUrl();
 
                 if (!node.getUrlContent().isEmpty()) {
                     // reverse URL encoding of =, &
                     String content = Escaping.percentEncodeUrl(node.getUrlContent()).replace("+", "%2B").replace("%3D", "=").replace("%26", "&amp;");
-                    url += content;
+                    scaledUrl += content;
                 }
 
-                html.attr("src", url);
+                html.attr("src", scaledUrl);
                 html.attr("alt", altText);
 
                 // we have a title part, use that
                 if (node.getTitle().isNotNull()) {
-                    resolvedLink = resolvedLink.withTitle(node.getTitle().unescape());
+                    imgLink = imgLink.withTitle(node.getTitle().unescape());
                 }
 
-                html.attr(resolvedLink.getNonNullAttributes());
-                html.srcPos(node.getChars()).withAttr(resolvedLink).tagVoid("img");
+                html.attr(imgLink.getNonNullAttributes());
+                html.srcPos(node.getChars()).withAttr(imgLink).tagVoid("img");
             }
             // End of image block 
 
