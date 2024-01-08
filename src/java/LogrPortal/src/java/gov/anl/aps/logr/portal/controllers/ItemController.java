@@ -66,6 +66,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import javax.ejb.EJB;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
@@ -2047,6 +2048,26 @@ public abstract class ItemController<
 
     public void completeSelectionOfTemplate() {
         ItemDomainEntity current = getCurrent();
+        Item createdFromTemplate = current.getCreatedFromTemplate();
+        
+        if (createdFromTemplate != null) {
+            // Create a new item. Already assigned to a template before selecting a new one. 
+            EntityInfo entityInfo = current.getEntityInfo();
+            UserInfo userInfo = entityInfo.getCreatedByUser();
+            UserGroup ownerUserGroup = entityInfo.getOwnerUserGroup();
+            
+            try { 
+                String originalName = current.getName();
+                current = (ItemDomainEntity) current.clone(userInfo, ownerUserGroup);
+                current.setOwnerUser(entityInfo.getOwnerUser());
+                current.setName(originalName);
+                setCurrent(current);
+            } catch (CloneNotSupportedException ex) {
+                SessionUtility.addErrorMessage("Error", "Error cloning item for template change. Creating a new one.");
+                prepareCreate(); 
+            }
+        }   
+        
         if (this.templateToCreateNewItem != null) {
             current.setItemCategoryList(templateToCreateNewItem.getItemCategoryList());
             current.setItemTypeList(templateToCreateNewItem.getItemTypeList());

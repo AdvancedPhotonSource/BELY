@@ -167,14 +167,13 @@ public abstract class ItemControllerUtility<ItemDomainEntity extends Item, ItemD
             }
         }
     }
-    
-    
+
     @Override
     public PropertyValue preparePropertyTypeValueAdd(ItemDomainEntity cdbDomainEntity,
             PropertyType propertyType, String propertyValueString, String tag) {
         EntityInfo entityInfo = cdbDomainEntity.getEntityInfo();
         UserInfo ownerUser = entityInfo.getOwnerUser();
-        
+
         return preparePropertyTypeValueAdd(cdbDomainEntity, propertyType, propertyValueString, tag, ownerUser);
     }
 
@@ -206,7 +205,7 @@ public abstract class ItemControllerUtility<ItemDomainEntity extends Item, ItemD
         // and not rebuilt as child items are added, the generated element names were not correct when adding 
         // multiple children to the same parent sequentially.  The generated name was always "E1".
         item.resetItemElementDisplayList();
-        
+
         List<ItemElement> itemElementsDisplayList = item.getItemElementDisplayList();
         int elementNumber = itemElementsDisplayList.size() + 1;
         String elementNameSuffix = "E";
@@ -236,7 +235,7 @@ public abstract class ItemControllerUtility<ItemDomainEntity extends Item, ItemD
         return elementName;
     }
 
-    public void performPrepareEntityInsertUpdate(Item item, UserInfo userInfo) throws InvalidRequest {        
+    public void performPrepareEntityInsertUpdate(Item item, UserInfo userInfo) throws InvalidRequest {
         addDynamicPropertiesToItem(item, userInfo);
     }
 
@@ -745,19 +744,22 @@ public abstract class ItemControllerUtility<ItemDomainEntity extends Item, ItemD
 
         item.setItemElementRelationshipList(new ArrayList<>());
         item.getItemElementRelationshipList().add(itemElementRelationship);
+
+        item.resetTemplateInfoLoaded();
     }
 
     public ItemDomainEntity completeClone(ItemDomainEntity clonedItem, Integer cloningFromItemId, UserInfo user, boolean cloneProperties, boolean cloneSources, boolean cloneCreateItemElementPlaceholders) {
-        ItemDomainEntity cloningFrom = findById(cloningFromItemId);
-
-        if (cloneProperties) {
-            clonedItem = cloneProperties(clonedItem, cloningFrom, user);
-        }
-        if (cloneSources) {
-            clonedItem = cloneSources(clonedItem, cloningFrom);
-        }
-        if (cloneCreateItemElementPlaceholders) {            
-            clonedItem = defaultCloneCreateItemElementsForClone(clonedItem, cloningFrom, user);
+        if (cloningFromItemId != null) {
+            ItemDomainEntity cloningFrom = findById(cloningFromItemId);
+            if (cloneProperties) {
+                clonedItem = cloneProperties(clonedItem, cloningFrom, user);
+            }
+            if (cloneSources) {
+                clonedItem = cloneSources(clonedItem, cloningFrom);
+            }
+            if (cloneCreateItemElementPlaceholders) {
+                clonedItem = defaultCloneCreateItemElementsForClone(clonedItem, cloningFrom, user);
+            }
         }
 
         cloneProperties = false;
@@ -766,14 +768,15 @@ public abstract class ItemControllerUtility<ItemDomainEntity extends Item, ItemD
 
         return clonedItem;
     }
-    
+
     /**
-     * Default domain specific configuration for cloning elements when doing the complete clone
-     * 
+     * Default domain specific configuration for cloning elements when doing the
+     * complete clone
+     *
      * @param clonedItem
      * @param cloningFrom
      * @param user
-     * @return 
+     * @return
      */
     protected ItemDomainEntity defaultCloneCreateItemElementsForClone(ItemDomainEntity clonedItem, ItemDomainEntity cloningFrom, UserInfo user) {
         return cloneCreateItemElements(clonedItem, cloningFrom, user, false, false, false);
@@ -854,6 +857,8 @@ public abstract class ItemControllerUtility<ItemDomainEntity extends Item, ItemD
             }
         }
 
+        clonedItem.resetItemElementDisplayList();
+
         return clonedItem;
     }
 
@@ -902,17 +907,17 @@ public abstract class ItemControllerUtility<ItemDomainEntity extends Item, ItemD
 
         return newItemElement;
     }
-    
-    public List<Item> getParentItemList(ItemDomainEntity itemEntity) {        
+
+    public List<Item> getParentItemList(ItemDomainEntity itemEntity) {
         List<Item> parentItemList = itemEntity.getParentItemList();
-        if (parentItemList == null) {            
+        if (parentItemList == null) {
             parentItemList = getStandardParentItemList(itemEntity);
             itemEntity.setParentItemList(parentItemList);
         }
 
         return parentItemList;
     }
-    
+
     public static List<Item> getStandardParentItemList(Item itemEntity) {
 
         List<Item> itemList = new ArrayList<>();

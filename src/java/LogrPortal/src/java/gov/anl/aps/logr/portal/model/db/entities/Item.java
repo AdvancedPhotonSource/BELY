@@ -1233,6 +1233,10 @@ public void setEntityTypeList(List<EntityType> entityTypeList) throws CdbExcepti
     public void resetSelfElement() {
         selfItemElement = null;
     }
+    
+    public void resetTemplateInfoLoaded() {
+        templateInfoLoaded = false; 
+    }
 
     public void updateDynamicProperties(UserInfo enteredByUser, Date enteredOnDateTime) {
         if (isCloned) {
