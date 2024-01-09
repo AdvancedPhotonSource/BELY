@@ -7,6 +7,7 @@ package gov.anl.aps.logr.portal.utilities;
 import com.vladsch.flexmark.html.renderer.ResolvedLink;
 import javax.validation.constraints.NotNull;
 import com.vladsch.flexmark.ast.Image;
+import com.vladsch.flexmark.ast.Link;
 import com.vladsch.flexmark.html.renderer.*;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.html.HtmlWriter;
@@ -31,8 +32,8 @@ import java.util.Arrays;
  * @author djarosz
  */
 public class MarkdownParser {
-    
-    private static String contextRoot = null; 
+
+    private static String contextRoot = null;
 
     private static MutableDataHolder options = new MutableDataSet()
             .set(Parser.EXTENSIONS, Arrays.asList(
@@ -78,49 +79,49 @@ public class MarkdownParser {
         @Override
         public Set<NodeRenderingHandler<?>> getNodeRenderingHandlers() {
             return new HashSet<>(Arrays.asList(
-                    new NodeRenderingHandler<>(Image.class, this::render)
+                    new NodeRenderingHandler<>(Image.class, this::render),
+                    new NodeRenderingHandler<>(Link.class, this::render)
             ));
         }
-        
+
         private String getContextRoot() {
             if (contextRoot == null) {
-                contextRoot = SessionUtility.getContextRoot(); 
+                contextRoot = SessionUtility.getContextRoot();
             }
-            return contextRoot; 
+            return contextRoot;
         }
 
-        private void render(Image node, NodeRendererContext context, HtmlWriter html) {            
+        private void render(Image node, NodeRendererContext context, HtmlWriter html) {
             BasedSequence nodeUrl = node.getUrl();
             ResolvedLink aLink = context.resolveLink(LinkType.LINK, node.getUrl().unescape(), null, null);
             ResolvedLink imgLink = context.resolveLink(LinkType.IMAGE, node.getUrl().unescape(), null, null);
 
-            String fullResUrl = aLink.getUrl(); 
-            String scaledUrl = imgLink.getUrl(); 
-            
+            String fullResUrl = aLink.getUrl();
+            String scaledUrl = imgLink.getUrl();
+
             if (nodeUrl.startsWith("/")) {
                 // Ensure that conext root is loaded. 
                 String contextRoot = getContextRoot();
-                
-                fullResUrl = contextRoot + fullResUrl; 
-                scaledUrl = contextRoot + scaledUrl + CdbPropertyValue.SCALED_IMAGE_EXTENSION; 
+
+                fullResUrl = contextRoot + fullResUrl;
+                scaledUrl = contextRoot + scaledUrl + CdbPropertyValue.SCALED_IMAGE_EXTENSION;
             }
-            
-            
+
             // Create a link to full size image. 
             html.attr("href", fullResUrl);
             html.attr("target", "_log_img");
             html.srcPos(node.getChars()).withAttr(aLink).tag("a");
-            
+
             // Update image node to use scaled image
             if (nodeUrl.startsWith("/")) {
                 nodeUrl = nodeUrl.append(CdbPropertyValue.SCALED_IMAGE_EXTENSION);
-                node.setUrl(nodeUrl);                 
-            }                        
+                node.setUrl(nodeUrl);
+            }
 
             // Standard image render function. Original is "private" 
             // See https://github.com/vsch/flexmark-java/blob/cc3a2f59ba6e532833f4805f8134b4dc966ff837/flexmark/src/main/java/com/vladsch/flexmark/html/renderer/CoreNodeRenderer.java#L617
             if (!(context.isDoNotRenderLinks() || isSuppressedLinkPrefix(node.getUrl(), context))) {
-                String altText = new TextCollectingVisitor().collectAndGetText(node);                                                
+                String altText = new TextCollectingVisitor().collectAndGetText(node);
 
                 if (!node.getUrlContent().isEmpty()) {
                     // reverse URL encoding of =, &
@@ -144,6 +145,35 @@ public class MarkdownParser {
             // Close a tag after adding image 
             html.tag("/a");
         }
+        
+        //See https://github.com/vsch/flexmark-java/blob/cc3a2f59ba6e532833f4805f8134b4dc966ff837/flexmark/src/main/java/com/vladsch/flexmark/html/renderer/CoreNodeRenderer.java#L642
+        void render(Link node, NodeRendererContext context, HtmlWriter html) {            
+            if (context.isDoNotRenderLinks() || isSuppressedLinkPrefix(node.getUrl(), context)) {
+                context.renderChildren(node);
+            } else {
+                ResolvedLink resolvedLink = context.resolveLink(LinkType.LINK, node.getUrl().unescape(), null, null);
+                String url = resolvedLink.getUrl();
+                
+                if (url.startsWith("/")) {
+                    // Ensure that conext root is loaded. 
+                    String contextRoot = getContextRoot();
+                    url = contextRoot + url;
+                }                
+                
+                html.attr("href", url);
+                html.attr("target", "_log_link"); 
+
+                // we have a title part, use that
+                if (node.getTitle().isNotNull()) {
+                    resolvedLink = resolvedLink.withTitle(node.getTitle().unescape());
+                }
+
+                html.attr(resolvedLink.getNonNullAttributes());
+                html.srcPos(node.getChars()).withAttr(resolvedLink).tag("a");
+                context.renderChildren(node);
+                html.tag("/a");
+            }
+        }                 
 
         public static class Factory implements NodeRendererFactory {
 
