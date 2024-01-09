@@ -73,8 +73,7 @@ See LICENSE file.
             <p/>
 
             <ui:insert name="domainEntityInfoViewDialog"/>
-            <ui:insert name="commonViewActionButtons"/>
-            <ui:insert name="itemDestroyDialog"/>
+            <ui:insert name="commonViewActionButtons"/>                        
 
             <p:panel header="Properties"
                      id="#{entityTypeName}ViewPropertiesPanel"
@@ -128,6 +127,7 @@ See LICENSE file.
 
 
     <ui:define name="additionalViewItemContent">
+        <ui:insert name="itemDestroyDialog"/>
         <ui:include src="private/addLogbookSectionDialog.xhtml" /> 
         <ui:include src="private/addLogbookEntryDialog.xhtml" />                
 
