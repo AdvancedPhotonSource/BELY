@@ -82,7 +82,7 @@ public class LogAttachmentUploadBean implements Serializable {
                     // Generate scaled images 
                     GalleryUtility.storeImagePreviews(originalFile);
                 }
-                text += prefix + "[" + fileName + "](" + attachment.getGalleryFilePath()+ ") ";
+                text += prefix + "[" + fileName + "](" + attachment.getLogAttachmentPath()+ ") ";
                 logEntry.setText(text);
                 
                         

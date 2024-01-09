@@ -148,10 +148,14 @@ public class Attachment implements Serializable {
         return filePath;
     }
      
+    public String getLogAttachmentPath() {
+        return StorageUtility.getLogAttachmentPath(name);
+    }
+     
     public String getGalleryFilePath() {
        if (galleryFilePath == null) {
            if (GalleryUtility.viewableFileName(name)) {
-                galleryFilePath = StorageUtility.getLogAttachmentPath(name);
+                galleryFilePath = getLogAttachmentPath();
            } else {
                 galleryFilePath="/resources/images/file.svg";     
            }
