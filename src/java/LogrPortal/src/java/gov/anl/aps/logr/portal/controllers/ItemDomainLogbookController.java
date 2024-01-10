@@ -52,6 +52,10 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     private List<SearchResult> logResults;
     
+    private static final String ctlEntityTypeName = "ctl"; 
+    private static final String aopEntityTypeName = "aop"; 
+    private static final String opsEntityTypeName = "ops"; 
+    
     public final static String controllerNamed = "itemDomainLogbookController";
 
     public static ItemDomainLogbookController getInstance() {
@@ -319,6 +323,27 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             Log log = logFacade.find(logIdInt);
             lastLog = log;
         }
+    }
+    
+    public void processPreRenderCTLList() {
+        processPreRenderSpecificList(ctlEntityTypeName);
+    }
+    
+    public void processPreRenderOPSList() {
+        processPreRenderSpecificList(opsEntityTypeName);
+    }
+    
+    public void processPreRenderAOPList() {
+        processPreRenderSpecificList(aopEntityTypeName);
+    }
+    
+    private void processPreRenderSpecificList(String entityTypeName) {
+        super.processPreRenderList();
+        
+        currentEntityType = entityTypeName; 
+        
+        ItemDomainLogbookLazyDataModel itemLazyDataModel = getItemLazyDataModel();      
+        itemLazyDataModel.setCurrentEntityType(currentEntityType);
     }
 
     @Override

@@ -25,18 +25,18 @@ See LICENSE file.
                 
                 <p:menuitem value="Machine Studies" 
                         icon="fa fa-book"                        
-                        id="aopLogbookListButton" url="#{request.contextPath}/views/itemDomainLogbook/list?logbook=aop"                         
-                        styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainLogbook/list?logbook=aop') ? 'activeMenuItem' : ''} "/>
+                        id="aopLogbookListButton" url="#{request.contextPath}/views/itemDomainLogbook/aopList"                         
+                        styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainLogbook/aopList') ? 'activeMenuItem' : ''} "/>
                 
                 <p:menuitem value="Controls" 
                         icon="fa fa-book"                        
-                        id="ctlLogbookListButton" url="#{request.contextPath}/views/itemDomainLogbook/list?logbook=ctl"                         
-                        styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainLogbook/list?logbook=ctl') ? 'activeMenuItem' : ''} "/>
+                        id="ctlLogbookListButton" url="#{request.contextPath}/views/itemDomainLogbook/ctlList"                         
+                        styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainLogbook/ctlList') ? 'activeMenuItem' : ''} "/>
                 
                 <p:menuitem value="Operations" 
                         icon="fa fa-book"                        
-                        id="opsLogbookListButton" url="#{request.contextPath}/views/itemDomainLogbook/list?logbook=ops" 
-                        styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainLogbook/list?logbook=ops') ? 'activeMenuItem' : ''} "/>
+                        id="opsLogbookListButton" url="#{request.contextPath}/views/itemDomainLogbook/opsList" 
+                        styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainLogbook/opsList') ? 'activeMenuItem' : ''} "/>
             </p:submenu>
             
 
