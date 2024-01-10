@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <p:dialog id="markdownExampleDialog"
+              widgetVar="markdownExampleDialogWidget" 
+              header="Markdown Example" 
+              styleClass="viewTransparentBackgroundDialog markdown-example-dialog"              
+              dynamic="true"
+              modal="false">
+
+        <p:panelGrid columns="2" styleClass="leftAlignedText">
+            <h:outputText value="Markdown Text"/>
+            <h:outputText value="Rendered Markdown"/>
+
+
+            <p:outputPanel styleClass="markdown-example-field">
+                <pre style="margin: 0; padding: 1em;">#{itemDomainLogbookController.exampleMarkdown}</pre>
+            </p:outputPanel>
+
+            <p:outputPanel styleClass="markdown-example-field">
+                <div class="logEntry">
+                    <h:outputText escape="false" value="#{itemDomainLogbookController.renderExampleMarkdown()}"/>
+                </div>                
+            </p:outputPanel>
+
+        </p:panelGrid>
+
+        <f:facet name="footer" class="dialog">        
+            <p:commandButton value="Close" 
+                             icon="fa fa-close"                                 
+                             onclick="PF('markdownExampleDialogWidget').hide()"
+                             />            
+        </f:facet>
+
+    </p:dialog>
+
+
+
+</ui:composition>
+
+
