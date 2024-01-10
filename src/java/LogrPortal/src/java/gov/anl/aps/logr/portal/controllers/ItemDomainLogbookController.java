@@ -19,6 +19,7 @@ import gov.anl.aps.logr.portal.model.db.entities.ItemDomainLogbook;
 import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
 import gov.anl.aps.logr.portal.model.db.entities.Log;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.utilities.MarkdownParser;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.util.ArrayList;
@@ -42,15 +43,15 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @EJB
     ItemDomainLogbookFacade itemDomainLogbookFacade;
-    
+
     @EJB
-    LogFacade logFacade; 
+    LogFacade logFacade;
 
     private String currentEntityType = null;
-    private Log lastLog; 
-    
-    private List<SearchResult> logResults; 
+    private Log lastLog;
 
+    private List<SearchResult> logResults;
+    
     public final static String controllerNamed = "itemDomainLogbookController";
 
     public static ItemDomainLogbookController getInstance() {
@@ -74,9 +75,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @Override
     protected ItemCreateWizardController getItemCreateWizardController() {
-        return ItemCreateWizardDomainLogbookController.getInstance(); 
+        return ItemCreateWizardDomainLogbookController.getInstance();
     }
-    
+
     @Override
     public DataModel getTemplateItemsListDataModel() {
         if (templateItemsListDataModel == null) {
@@ -85,8 +86,6 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
         return templateItemsListDataModel;
     }
-    
-    
 
     @Override
     protected ItemDomainLogbookFacade getEntityDbFacade() {
@@ -279,13 +278,13 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public String saveLogList() {
         List<ItemElement> itemElementList = newLogEdit.getItemElementList();
         ItemDomainLogbook parentItem = (ItemDomainLogbook) itemElementList.get(0).getParentItem();
-        newLogEdit = null; 
-        
-        parentItem = (ItemDomainLogbook) getItem(parentItem.getId());         
-        List<Log> logList = parentItem.getLogList();
-        lastLog = logList.get(logList.size() - 1);                                
+        newLogEdit = null;
 
-        return viewForCurrentEntity(); 
+        parentItem = (ItemDomainLogbook) getItem(parentItem.getId());
+        List<Log> logList = parentItem.getLogList();
+        lastLog = logList.get(logList.size() - 1);
+
+        return viewForCurrentEntity();
     }
 
     @Override
@@ -296,30 +295,30 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         ItemDomainLogbook findById = findById(id);
         List<Log> latestLogs = findById.getLogList();
         current.setLogList(latestLogs);
-        
-        return super.update(); 
+
+        return super.update();
     }
 
     public Log getLastLog() {
         if (lastLog != null) {
             Log temp = lastLog;
-            lastLog = null; 
-            return temp; 
+            lastLog = null;
+            return temp;
         }
         return lastLog;
     }
 
     @Override
     public void processViewRequestParams() {
-        super.processViewRequestParams(); 
-        
+        super.processViewRequestParams();
+
         String logId = SessionUtility.getRequestParameterValue("logId");
-        
+
         if (logId != null) {
-            int logIdInt = Integer.parseInt(logId); 
-            Log log = logFacade.find(logIdInt); 
-            lastLog = log;             
-        }                
+            int logIdInt = Integer.parseInt(logId);
+            Log log = logFacade.find(logIdInt);
+            lastLog = log;
+        }
     }
 
     @Override
@@ -327,25 +326,25 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         super.processPreRenderList();
 
         ItemDomainLogbookLazyDataModel itemLazyDataModel = getItemLazyDataModel();
-        String lastEntityType = currentEntityType; 
+        String lastEntityType = currentEntityType;
         currentEntityType = SessionUtility.getRequestParameterValue("logbook");
-        
+
         if (currentEntityType == null) {
             if (lastEntityType != null) {
-                currentEntityType = lastEntityType; 
+                currentEntityType = lastEntityType;
             } else {
-                currentEntityType = "ctl"; 
-            }            
-        } else if (currentEntityType.equals("none")) { 
-            currentEntityType = null; 
+                currentEntityType = "ctl";
+            }
+        } else if (currentEntityType.equals("none")) {
+            currentEntityType = null;
         }
-        
+
         itemLazyDataModel.setCurrentEntityType(currentEntityType);
     }
 
     @Override
     public ItemDomainLogbook createEntityInstance() {
-        ItemDomainLogbook entity = super.createEntityInstance();                
+        ItemDomainLogbook entity = super.createEntityInstance();
 
         if (currentEntityType != null) {
             try {
@@ -358,7 +357,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
 
         return entity;
-    } 
+    }
 
     @Override
     protected void appendTemplateEntityType(ItemDomainLogbook item) throws CdbException {
@@ -366,32 +365,31 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         if (entityTypeList != null) {
             entityTypeList.clear();
         }
-        super.appendTemplateEntityType(item); 
+        super.appendTemplateEntityType(item);
     }
 
     @Override
     protected void performDestroyOperation(ItemDomainLogbook entity) throws CdbException {
         if (entity.getIsItemTemplate()) {
             List<Item> itemsCreatedFromThisTemplateItem = entity.getItemsCreatedFromThisTemplateItem();
-            
-            if (itemsCreatedFromThisTemplateItem.size() > 0) {                
-                throw new CdbException("The item has template instances."); 
+
+            if (itemsCreatedFromThisTemplateItem.size() > 0) {
+                throw new CdbException("The item has template instances.");
             }
         }
-        
+
         ItemDomainLogbookControllerUtility controllerUtility = getControllerUtility();
         UserInfo user = SessionUtility.getUser();
-        
-        List<ItemDomainLogbook> itemsToDestroy = new ArrayList<>();        
-        
+
+        List<ItemDomainLogbook> itemsToDestroy = new ArrayList<>();
+
         for (ItemElement child : entity.getItemElementDisplayList()) {
             ItemDomainLogbook containedItem = (ItemDomainLogbook) child.getContainedItem();
-            itemsToDestroy.add(containedItem);           
+            itemsToDestroy.add(containedItem);
         }
-        
-        
+
         controllerUtility.destroy(entity, user);
-        controllerUtility.destroyList(itemsToDestroy, null, user);  
+        controllerUtility.destroyList(itemsToDestroy, null, user);
     }
 
     @Override
@@ -406,62 +404,69 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @Override
     public String getItemListPageTitle() {
-        String itemListPageTitle = super.getItemListPageTitle();      
-        
+        String itemListPageTitle = super.getItemListPageTitle();
+
         if (currentEntityType != null) {
-            itemListPageTitle = currentEntityType.toUpperCase() + " " + itemListPageTitle; 
-        } 
-        return itemListPageTitle; 
-    } 
+            itemListPageTitle = currentEntityType.toUpperCase() + " " + itemListPageTitle;
+        }
+        return itemListPageTitle;
+    }
 
     @Override
     public void performEntitySearch(String searchString, boolean caseInsensitive) {
-        super.performEntitySearch(searchString, caseInsensitive); 
-        
+        super.performEntitySearch(searchString, caseInsensitive);
+
         // Search log entries. 
         List<Object[]> results = itemDomainLogbookFacade.searchEntityLogs(searchString);
-        
+
         ItemDomainLogbookControllerUtility controllerUtility1 = getControllerUtility();
         String patternString = controllerUtility1.generatePatternString(searchString);
-        Pattern searchPattern = controllerUtility1.getSearchPattern(patternString, caseInsensitive);        
-        
-        logResults = new ArrayList<>(); 
-        
+        Pattern searchPattern = controllerUtility1.getSearchPattern(patternString, caseInsensitive);
+
+        logResults = new ArrayList<>();
+
         for (Object[] result : results) {
             ItemDomainLogbook logbook = (ItemDomainLogbook) result[0];
-            Log log = (Log) result[1]; 
-            Long logId = (Long) result[2]; 
-            
-            SearchResult searchResult = new SearchResult(logbook, logbook.getId(), logbook.getName()); 
+            Log log = (Log) result[1];
+            Long logId = (Long) result[2];
+
+            SearchResult searchResult = new SearchResult(logbook, logbook.getId(), logbook.getName());
             searchResult.setAdditionalAttribute("" + logId);
-            
+
             String text = log.getText();
-            String[] logLines = text.split("\n"); 
-            
+            String[] logLines = text.split("\n");
+
             for (int i = 0; i < logLines.length; i++) {
-                String lineNum = "log_line_" + (i+1); 
-                String lineText = logLines[i]; 
-                
-                searchResult.doesValueContainPattern(lineNum, lineText, searchPattern);                 
-            }                        
-            logResults.add(searchResult);                         
-        }                        
+                String lineNum = "log_line_" + (i + 1);
+                String lineText = logLines[i];
+
+                searchResult.doesValueContainPattern(lineNum, lineText, searchPattern);
+            }
+            logResults.add(searchResult);
+        }
     }
 
     public List<SearchResult> getLogResults() {
         return logResults;
     }
-    
+
     public Item getParentItem(ItemDomainLogbook child) {
-        
-        List<Item> parentItemList = getControllerUtility().getParentItemList(child); 
-        
+
+        List<Item> parentItemList = getControllerUtility().getParentItemList(child);
+
         if (parentItemList != null && parentItemList.size() > 0) {
-            return parentItemList.get(0); 
+            return parentItemList.get(0);
         }
-        
-        return null;         
+
+        return null;
     }
-
-
+    
+   
+    public String renderExampleMarkdown() {
+        return MarkdownParser.getMarkdownExampleHtml(); 
+    }
+    
+    public String getExampleMarkdown() {
+        return MarkdownParser.getMarkdownExampleText(); 
+    }
 }

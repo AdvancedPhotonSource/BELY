@@ -33,7 +33,39 @@ import java.util.Arrays;
  */
 public class MarkdownParser {
 
+    private final static String markdownExample = "### Bullet List\n"
+            + "\n\n"
+            + "- Bullet list item\n"
+            + "  - Sub item\n"
+            + "- Another item\n"
+            + "\n"
+            + "### Numbered List\n"
+            + "\n\n"
+            + "1. Numbered List.\n"
+            + "1. Another numbered item.\n"
+            + "1. Third item. \n"
+            + "\n"
+            + "\n"
+            + "### Text Decorate\n"
+            + "\n"
+            + "- **bold** text\n"
+            + "- _italicized_ text\n"
+            + "\n\n"
+            + "### Link\n"
+            + "\n\n"
+            + "- [CDB](https://cdb.aps.anl.gov)\n"
+            + "\n"
+            + "# Heading Levels:\n"
+            + "# Level 1 Heading\n"
+            + "## Level 2 Heading\n"
+            + "### Level 3 Heading\n"
+            + "#### Level 4 Heading\n"
+            + "##### Level 5 Heading\n"
+            + "###### Level 6 Heading\n";
+
     private static String contextRoot = null;
+
+    private static String markdownExampleAsHtml = null;
 
     private static MutableDataHolder options = new MutableDataSet()
             .set(Parser.EXTENSIONS, Arrays.asList(
@@ -50,6 +82,18 @@ public class MarkdownParser {
         String html = renderer.render(document);
 
         return html;
+    }
+
+    public static String getMarkdownExampleText() {
+        return markdownExample;
+    }
+
+    public static String getMarkdownExampleHtml() {
+        if (markdownExampleAsHtml == null) {
+            markdownExampleAsHtml = parseMarkdownAsHTML(markdownExample);
+        }
+
+        return markdownExampleAsHtml;
     }
 
     static class LogrFlexmarkExtension implements HtmlRenderer.HtmlRendererExtension {
@@ -145,23 +189,23 @@ public class MarkdownParser {
             // Close a tag after adding image 
             html.tag("/a");
         }
-        
+
         //See https://github.com/vsch/flexmark-java/blob/cc3a2f59ba6e532833f4805f8134b4dc966ff837/flexmark/src/main/java/com/vladsch/flexmark/html/renderer/CoreNodeRenderer.java#L642
-        void render(Link node, NodeRendererContext context, HtmlWriter html) {            
+        void render(Link node, NodeRendererContext context, HtmlWriter html) {
             if (context.isDoNotRenderLinks() || isSuppressedLinkPrefix(node.getUrl(), context)) {
                 context.renderChildren(node);
             } else {
                 ResolvedLink resolvedLink = context.resolveLink(LinkType.LINK, node.getUrl().unescape(), null, null);
                 String url = resolvedLink.getUrl();
-                
+
                 if (url.startsWith("/")) {
                     // Ensure that conext root is loaded. 
                     String contextRoot = getContextRoot();
                     url = contextRoot + url;
-                }                
-                
+                }
+
                 html.attr("href", url);
-                html.attr("target", "_log_link"); 
+                html.attr("target", "_log_link");
 
                 // we have a title part, use that
                 if (node.getTitle().isNotNull()) {
@@ -173,7 +217,7 @@ public class MarkdownParser {
                 context.renderChildren(node);
                 html.tag("/a");
             }
-        }                 
+        }
 
         public static class Factory implements NodeRendererFactory {
 

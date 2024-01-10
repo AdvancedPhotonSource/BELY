@@ -23,7 +23,12 @@ See LICENSE file.
 
             <h:outputLabel for="logbookLogEntryValue" value="Log Entry" styleClass="entityDataEmphasizedLabel"/>
             <h:inputTextarea styleClass="logEntryDialogEntryValue" id="logbookLogEntryValue" value="#{logObject.text}"
-                              onblur="logbookLogEntryValueBlur()"/>         
+                             onblur="logbookLogEntryValueBlur()"/> 
+
+            <p:column/> 
+            <p:column>
+                <p:commandLink value="Markdown Help" onclick="PF('markdownExampleDialogWidget').show()" /> 
+            </p:column>
 
             <h:outputLabel for="logbookLogAttachmentsValue" value="Attachments" styleClass="entityDataEmphasizedLabel"/>
             <p:outputPanel id="logbookLogAttachmentsValue">
@@ -43,7 +48,7 @@ See LICENSE file.
 
 
         </p:panelGrid>
-        
+
         <p:remoteCommand name="logbookLogEntryValueBlur" 
                          update="logbookLogEntryValue"/> 
         <f:facet name="footer" class="dialog">

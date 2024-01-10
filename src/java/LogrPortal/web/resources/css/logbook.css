@@ -154,3 +154,9 @@ div.logbookSection {
     background-color: white;
     border-radius: 5px
 }
+
+.markdown-example-field {
+    background: white;
+    width: 300px;
+    height: 680px;     
+}
