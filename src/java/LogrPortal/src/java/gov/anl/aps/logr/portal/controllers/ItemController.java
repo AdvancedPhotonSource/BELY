@@ -136,6 +136,7 @@ public abstract class ItemController<
 
     private List<ItemDomainEntity> selectItemElementItemCandidateList;
 
+    protected List<ItemDomainEntity> templatesList = null; 
     protected DataModel templateItemsListDataModel = null;
     protected ItemDomainEntity templateToCreateNewItem = null;
 
@@ -1993,10 +1994,17 @@ public abstract class ItemController<
     public String templateList() {
         return "templateList.xhtml?faces-redirect=true";
     }
+    
+    public List<ItemDomainEntity> getTemplatesList() {
+        if (templatesList == null) {
+            templatesList = getEntityDbFacade().findByDomainAndEntityType(getDefaultDomainName(), EntityTypeName.template.getValue());
+        }
+        return templatesList; 
+    }
 
     public DataModel getTemplateItemsListDataModel() {
         if (templateItemsListDataModel == null) {
-            List<ItemDomainEntity> templates = getEntityDbFacade().findByDomainAndEntityType(getDefaultDomainName(), EntityTypeName.template.getValue());
+            List<ItemDomainEntity> templates = getTemplatesList(); 
             templateItemsListDataModel = new ListDataModel(templates);
         }
         return templateItemsListDataModel;
@@ -2069,6 +2077,8 @@ public abstract class ItemController<
         }   
         
         if (this.templateToCreateNewItem != null) {
+            additionalSelectionOfTemplateSteps(); 
+            
             current.setItemCategoryList(templateToCreateNewItem.getItemCategoryList());
             current.setItemTypeList(templateToCreateNewItem.getItemTypeList());
 
@@ -2079,6 +2089,10 @@ public abstract class ItemController<
             current = controllerUtility.cloneSources(current, templateToCreateNewItem);
             addCreatedFromTemplateRelationshipToItem(current);
         }
+    }
+    
+    protected void additionalSelectionOfTemplateSteps() {
+        
     }
 
     public void addCreatedFromTemplateRelationshipToItem(ItemDomainEntity item) {

@@ -24,14 +24,18 @@ import gov.anl.aps.logr.portal.utilities.SearchResult;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
+import javax.faces.component.UIComponent;
+import javax.faces.context.FacesContext;
+import javax.faces.convert.Converter;
+import javax.faces.convert.FacesConverter;
 import javax.faces.model.DataModel;
 import javax.faces.model.ListDataModel;
 import javax.inject.Named;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -40,6 +44,8 @@ import javax.inject.Named;
 @Named(ItemDomainLogbookController.controllerNamed)
 @SessionScoped
 public class ItemDomainLogbookController extends ItemController<ItemDomainLogbookControllerUtility, ItemDomainLogbook, ItemDomainLogbookFacade, ItemDomainLogbookSettings, ItemDomainLogbookLazyDataModel> {
+
+    private static final Logger logger = LogManager.getLogger(ItemDomainLogbookController.class.getName());
 
     @EJB
     ItemDomainLogbookFacade itemDomainLogbookFacade;
@@ -51,11 +57,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private Log lastLog;
 
     private List<SearchResult> logResults;
-    
-    private static final String ctlEntityTypeName = "ctl"; 
-    private static final String aopEntityTypeName = "aop"; 
-    private static final String opsEntityTypeName = "ops"; 
-    
+
+    private static final String ctlEntityTypeName = "ctl";
+    private static final String aopEntityTypeName = "aop";
+    private static final String opsEntityTypeName = "ops";
+
     public final static String controllerNamed = "itemDomainLogbookController";
 
     public static ItemDomainLogbookController getInstance() {
@@ -83,10 +89,18 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     @Override
+    public List<ItemDomainLogbook> getTemplatesList() {
+        if (templatesList == null) {
+            templatesList = getEntityDbFacade().findByDomainAndEntityTypeAndTopLevel(getDefaultDomainName(), EntityTypeName.template.getValue());
+        }
+        return templatesList;
+    }
+
+    @Override
     public DataModel getTemplateItemsListDataModel() {
         if (templateItemsListDataModel == null) {
-            List<ItemDomainLogbook> templates = getEntityDbFacade().findByDomainAndEntityTypeAndTopLevel(getDefaultDomainName(), EntityTypeName.template.getValue());
-            templateItemsListDataModel = new ListDataModel(templates);
+            List<ItemDomainLogbook> templatesList = getTemplatesList();
+            templateItemsListDataModel = new ListDataModel(templatesList);
         }
         return templateItemsListDataModel;
     }
@@ -234,44 +248,82 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         return viewForCurrentEntity();
     }
 
+//    @Override
+////    public void completeSelectionOfTemplate() {
+////        ItemDomainLogbook current = getCurrent();
+////
+////        if (this.templateToCreateNewItem != null) {
+////            ItemDomainLogbook originalTemplateToCreateNewItem = getTemplateToCreateNewItem();
+////
+////            UserInfo user = SessionUtility.getUser();
+////            getControllerUtility().cloneCreateItemElements(current, templateToCreateNewItem, user, true, true, true);
+////
+////            List<ItemElement> itemElementDisplayList = current.getItemElementDisplayList();
+////            for (ItemElement ie : itemElementDisplayList) {
+////                ItemDomainLogbook containedItem = (ItemDomainLogbook) ie.getContainedItem();
+////                ItemDomainLogbook newItem = null;
+////
+////                try {
+////                    newItem = (ItemDomainLogbook) containedItem.clone(user, user.getUserGroupList().get(0), false, false, false);
+////                } catch (CloneNotSupportedException ex) {
+////                    SessionUtility.addErrorMessage("Error", ex.getMessage());
+////                }
+////
+////                newItem.getEntityTypeList().clear();
+////                newItem.setName(containedItem.getName());
+////                newItem.setItemIdentifier2(current.getViewUUID());
+////
+////                setTemplateToCreateNewItem(containedItem);
+////                setCurrent(newItem);
+////
+////                completeSelectionOfTemplate();
+////
+////                ie.setContainedItem(newItem);
+////            }
+////
+////            setTemplateToCreateNewItem(originalTemplateToCreateNewItem);
+////            setCurrent(current);
+////
+////        }
+////        super.completeSelectionOfTemplate();
+////    }
+
     @Override
-    public void completeSelectionOfTemplate() {
+    protected void additionalSelectionOfTemplateSteps() {
         ItemDomainLogbook current = getCurrent();
+        
+        ItemDomainLogbook originalTemplateToCreateNewItem = getTemplateToCreateNewItem();
 
-        if (this.templateToCreateNewItem != null) {
-            ItemDomainLogbook originalTemplateToCreateNewItem = getTemplateToCreateNewItem();
+        UserInfo user = SessionUtility.getUser();
+        getControllerUtility().cloneCreateItemElements(current, templateToCreateNewItem, user, true, true, true);
 
-            UserInfo user = SessionUtility.getUser();
-            getControllerUtility().cloneCreateItemElements(current, templateToCreateNewItem, user, true, true, true);
+        List<ItemElement> itemElementDisplayList = current.getItemElementDisplayList();
+        for (ItemElement ie : itemElementDisplayList) {
+            ItemDomainLogbook containedItem = (ItemDomainLogbook) ie.getContainedItem();
+            ItemDomainLogbook newItem = null;
 
-            List<ItemElement> itemElementDisplayList = current.getItemElementDisplayList();
-            for (ItemElement ie : itemElementDisplayList) {
-                ItemDomainLogbook containedItem = (ItemDomainLogbook) ie.getContainedItem();
-                ItemDomainLogbook newItem = null;
-
-                try {
-                    newItem = (ItemDomainLogbook) containedItem.clone(user, user.getUserGroupList().get(0), false, false, false);
-                } catch (CloneNotSupportedException ex) {
-                    SessionUtility.addErrorMessage("Error", ex.getMessage());
-                }
-
-                newItem.getEntityTypeList().clear();
-                newItem.setName(containedItem.getName());
-                newItem.setItemIdentifier2(current.getViewUUID());
-
-                setTemplateToCreateNewItem(containedItem);
-                setCurrent(newItem);
-
-                completeSelectionOfTemplate();
-
-                ie.setContainedItem(newItem);
+            try {
+                newItem = (ItemDomainLogbook) containedItem.clone(user, user.getUserGroupList().get(0), false, false, false);
+            } catch (CloneNotSupportedException ex) {
+                SessionUtility.addErrorMessage("Error", ex.getMessage());
             }
 
-            setTemplateToCreateNewItem(originalTemplateToCreateNewItem);
-            setCurrent(current);
+            newItem.getEntityTypeList().clear();
+            newItem.setName(containedItem.getName());
+            newItem.setItemIdentifier2(current.getViewUUID());
 
+            setTemplateToCreateNewItem(containedItem);
+            setCurrent(newItem);
+
+            completeSelectionOfTemplate();
+
+            ie.setContainedItem(newItem);
         }
-        super.completeSelectionOfTemplate();
+
+        setTemplateToCreateNewItem(originalTemplateToCreateNewItem);
+        setCurrent(current);
+
+        super.additionalSelectionOfTemplateSteps();
     }
 
     public void prepareEditLogEntry(Log entry) {
@@ -324,25 +376,25 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             lastLog = log;
         }
     }
-    
+
     public void processPreRenderCTLList() {
         processPreRenderSpecificList(ctlEntityTypeName);
     }
-    
+
     public void processPreRenderOPSList() {
         processPreRenderSpecificList(opsEntityTypeName);
     }
-    
+
     public void processPreRenderAOPList() {
         processPreRenderSpecificList(aopEntityTypeName);
     }
-    
+
     private void processPreRenderSpecificList(String entityTypeName) {
         super.processPreRenderList();
-        
-        currentEntityType = entityTypeName; 
-        
-        ItemDomainLogbookLazyDataModel itemLazyDataModel = getItemLazyDataModel();      
+
+        currentEntityType = entityTypeName;
+
+        ItemDomainLogbookLazyDataModel itemLazyDataModel = getItemLazyDataModel();
         itemLazyDataModel.setCurrentEntityType(currentEntityType);
     }
 
@@ -377,7 +429,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
                 EntityType entityType = entityTypeFacade.findByName(currentEntityType);
                 entity.getEntityTypeList().add(entityType);
             } catch (CdbException ex) {
-                Logger.getLogger(ItemDomainLogbookController.class.getName()).log(Level.SEVERE, null, ex);
+                logger.error(ex);
             }
         }
 
@@ -485,13 +537,56 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         return null;
     }
-    
-   
+
     public String renderExampleMarkdown() {
-        return MarkdownParser.getMarkdownExampleHtml(); 
+        return MarkdownParser.getMarkdownExampleHtml();
     }
-    
+
     public String getExampleMarkdown() {
-        return MarkdownParser.getMarkdownExampleText(); 
+        return MarkdownParser.getMarkdownExampleText();
+    }
+
+    @FacesConverter(forClass = ItemDomainLogbook.class)
+    public static class ItemDomainLogbookControllerConverter implements Converter {
+
+        @Override
+        public Object getAsObject(FacesContext facesContext, UIComponent component, String value) {
+            try {
+                if (value == null || value.length() == 0) {
+                    return null;
+                }
+                ItemDomainLogbookController controller = (ItemDomainLogbookController) facesContext.getApplication().getELResolver().
+                        getValue(facesContext.getELContext(), null, controllerNamed);
+                return controller.getEntity(getIntegerKey(value));
+            } catch (Exception ex) {
+                // we cannot get entity from a given key
+                logger.warn("Value " + value + " cannot be converted to logbook domain item.");
+                return null;
+            }
+        }
+
+        Integer getIntegerKey(String value) {
+            return Integer.valueOf(value);
+        }
+
+        String getStringKey(Integer value) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(value);
+            return sb.toString();
+        }
+
+        @Override
+        public String getAsString(FacesContext facesContext, UIComponent component, Object object) {
+            if (object == null) {
+                return null;
+            }
+            if (object instanceof ItemDomainLogbook) {
+                ItemDomainLogbook o = (ItemDomainLogbook) object;
+                return getStringKey(o.getId());
+            } else {
+                throw new IllegalArgumentException("object " + object + " is of type " + object.getClass().getName() + "; expected type: " + ItemDomainLogbook.class.getName());
+            }
+        }
+
     }
 }

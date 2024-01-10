@@ -5,9 +5,10 @@ See LICENSE file.
 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:ui="http://java.sun.com/jsf/facelets"
-                xmlns:f="http://java.sun.com/jsf/core"
-                template="../item/private/templates/itemCreateWizardTemplate.xhtml">
+                xmlns:ui="http://java.sun.com/jsf/facelets"                                              
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                template="../item/private/templates/itemCreateTemplate.xhtml">
 
     <f:metadata>
         <f:viewAction action="#{settingController.updateGlobalSettings()}" />
@@ -15,11 +16,34 @@ See LICENSE file.
         <f:viewAction action="#{logController.processPreRender()}"/>        
     </f:metadata>
 
-    <ui:param name="entityController" value="#{itemCreateWizardDomainLogbookController}"/>        
-    
-    <ui:define name="classificationTab"></ui:define>
-    
-    
+    <ui:param name="entityController" value="#{itemDomainLogbookController}"/>                
+
+    <ui:define name="itemCreatedFromTemplateValue">
+        <p:outputPanel rendered="#{entityController.displayCreatedFromTemplateForCurrent}">            
+            <p:selectOneMenu value="#{entityController.templateToCreateNewItem}"
+                             styleClass="entityDataText"
+                             id="templateTitleOutputText"                                                          
+                             filter="true" filterMatchMode="startsWith">   
+                
+                <p:ajax event="valueChange" update="@this"/>
+                <p:ajax event="itemSelect" onstart="finalizeTemplateSelection()" />
+
+                <f:selectItem itemLabel="Select" noSelectionOption="true" /> 
+                <f:selectItems value="#{entityController.templatesList}" 
+                               var="templateItem"
+                               itemLabel="#{templateItem.name}" 
+                               itemValue="#{templateItem}"/>               
+            </p:selectOneMenu>
+            
+        </p:outputPanel>        
+    </ui:define>
+
+    <ui:define name="additionalItemCreateContent">                
+        <p:remoteCommand name="finalizeTemplateSelection"                         
+                         process="@this"
+                         action="#{entityController.completeSelectionOfTemplate()}"/> 
+    </ui:define>
+
 </ui:composition>
 
 
