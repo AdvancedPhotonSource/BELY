@@ -49,11 +49,11 @@ public class ItemDomainLogbookSettings extends ItemSettings<ItemDomainLogbookCon
         displayCreatedOnDateTime = Boolean.valueOf(settingTypeMap.get(DisplayCreatedTimeSettingTypeKey).getDefaultValue());
         displayLastModifiedByUser = Boolean.valueOf(settingTypeMap.get(DisplayModifiedByUserSettingTypeKey).getDefaultValue());
         displayLastModifiedOnDateTime = Boolean.valueOf(settingTypeMap.get(DisplayModifiedTimeSettingTypeKey).getDefaultValue());
-        displayPropertyTypeId1 = Integer.valueOf(settingTypeMap.get(DisplayPropertyTypeId1SettingTypeKey).getDefaultValue());
-        displayPropertyTypeId2 = Integer.valueOf(settingTypeMap.get(DisplayPropertyTypeId2SettingTypeKey).getDefaultValue());
-        displayPropertyTypeId3 = Integer.valueOf(settingTypeMap.get(DisplayPropertyTypeId3SettingTypeKey).getDefaultValue());
-        displayPropertyTypeId4 = Integer.valueOf(settingTypeMap.get(DisplayPropertyTypeId4SettingTypeKey).getDefaultValue());
-        displayPropertyTypeId5 = Integer.valueOf(settingTypeMap.get(DisplayPropertyTypeId5SettingTypeKey).getDefaultValue());
+        displayPropertyTypeId1 = parseSettingValueAsInteger(settingTypeMap.get(DisplayPropertyTypeId1SettingTypeKey).getDefaultValue());
+        displayPropertyTypeId2 = parseSettingValueAsInteger(settingTypeMap.get(DisplayPropertyTypeId2SettingTypeKey).getDefaultValue());
+        displayPropertyTypeId3 = parseSettingValueAsInteger(settingTypeMap.get(DisplayPropertyTypeId3SettingTypeKey).getDefaultValue());
+        displayPropertyTypeId4 = parseSettingValueAsInteger(settingTypeMap.get(DisplayPropertyTypeId4SettingTypeKey).getDefaultValue());
+        displayPropertyTypeId5 = parseSettingValueAsInteger(settingTypeMap.get(DisplayPropertyTypeId5SettingTypeKey).getDefaultValue());
     }
 
     @Override
