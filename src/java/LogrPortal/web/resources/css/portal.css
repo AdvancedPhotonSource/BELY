@@ -551,13 +551,7 @@ th.narrowColumn {
 }
 
 h1 {
-    font-family: Arial, "Arial CE", "Lucida Grande CE", lucida, "Helvetica CE", sans-serif;
-    font-size:  24px;
-    font-weight: bold;
-    margin: 20px;
-    padding-bottom: 0px;
-    color: #f2f4f7;
-    vertical-align: middle;
+    color: #4e80b6;    
 }
 
 .homePage {

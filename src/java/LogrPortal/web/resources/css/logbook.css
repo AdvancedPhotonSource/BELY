@@ -24,10 +24,6 @@ html, body {
     background-color: #FAFAD2;
 }
 
-h1 {
-    color: #FAFAD2;
-}
-
 .ui-accordion .ui-accordion-content {
     background: #FAFAD2;    
 }
@@ -92,10 +88,6 @@ h1 {
 
 .logAction {
     float: right; 
-}
-
-h1 {
-    color: darkblue; 
 }
 
 pre:has(code) {    

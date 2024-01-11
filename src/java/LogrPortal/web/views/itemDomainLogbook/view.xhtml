@@ -114,6 +114,7 @@ See LICENSE file.
         </ui:fragment>
 
         <ui:fragment rendered="#{itemObject.itemElementDisplayList.size() > 0}">
+            <h1>#{itemObject.name}</h1>
             <ui:repeat value="#{itemObject.logbookSections}" var="logbookSection">               
                 <ui:include src="private/logbookViewObject.xhtml">
                     <ui:param name="itemObject"
