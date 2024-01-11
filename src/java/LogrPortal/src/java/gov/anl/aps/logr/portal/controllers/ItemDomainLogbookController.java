@@ -197,7 +197,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @Override
     public String getItemElementsListTitle() {
-        return "Logbook Sections";
+        return "Log Document Sections";
     }
 
     public void prepareCreateLogbookSection() {
