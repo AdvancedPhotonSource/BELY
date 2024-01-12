@@ -3,13 +3,11 @@
 Copyright (c) UChicago Argonne, LLC. All rights reserved.
 See LICENSE file.
 -->
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="http://java.sun.com/jsf/html"
-                xmlns:ui="http://java.sun.com/jsf/facelets"
-                xmlns:f="http://java.sun.com/jsf/core"
-                xmlns:p="http://primefaces.org/ui"
-                template="../templates/homeViewTemplate.xhtml">
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:p="http://primefaces.org/ui" template="../templates/homeViewTemplate.xhtml">
 
     <f:metadata>
         <f:viewAction action="#{settingController.updateGlobalSettings()}" />
@@ -24,50 +22,63 @@ See LICENSE file.
             </div>
 
             <div class="sectionText">
-                Logr serves as an essential logbook application within ASD APS, flexibly caters to to the specific requirements of various technical groups, including AOP, CTL, and MCR OPS. Its primary purpose is to facilitate the organized recording of logbook entries, with an emphasis on chronological organization and the ability to group entries by task or shift. This approach accommodates the needs of technical group members making occasional entries and operational or physics crews creating a sequence of grouped entries for shifts or studies. Logr offers exceptional flexibility by allowing users to define their own properties, tailoring the logbook to suit their specific requirements. Additionally, it provides robust search features, enhancing the efficiency of logbook entry retrieval and analysis.
-                <p/>
+                Logr serves as an essential logbook application within ASD APS, flexibly caters to to the specific
+                requirements of various technical groups, including AOP, CTL, and MCR OPS. Its primary purpose is to
+                facilitate the organized recording of logbook entries, with an emphasis on chronological organization
+                and the ability to group entries by task or shift. This approach accommodates the needs of technical
+                group members making occasional entries and operational or physics crews creating a sequence of grouped
+                entries for shifts or studies. Logr offers exceptional flexibility by allowing users to define their own
+                properties, tailoring the logbook to suit their specific requirements. Additionally, it provides robust
+                search features, enhancing the efficiency of logbook entry retrieval and analysis.
+                <p />
                 <ui:fragment rendered="#{!loginController.loggedIn}">
                     You can browse system pages withoug logging in. If you would like to add or modify
-                    Logr data, please <h:link outcome="/views/login" value="login"/>.
+                    Logr data, please
+                    <h:link outcome="/views/login" value="login" />.
                 </ui:fragment>
-                <p/>
+                <p />
             </div>
 
             <div class="sectionTitle">
                 <h2>System At A Glance</h2>
-            </div>    
+            </div>
 
             <h:form id="systemSummaryForm">
                 <p:growl id="messages" showDetail="true">
-                    <p:autoUpdate/> 
+                    <p:autoUpdate />
                 </p:growl>
 
                 <p:panelGrid columns="2">
 
-                    <p:outputLabel for="numberOfUsers" value="Registered Users" styleClass="sectionText"/>
-                    <h:outputText id="numberOfUsers" styleClass="sectionText" 
-                                  value="#{userInfoController.countOfEntity}"/>
+                    <p:outputLabel for="numberOfUsers" value="Registered Users" styleClass="sectionText" />
+                    <h:outputText id="numberOfUsers" styleClass="sectionText"
+                        value="#{userInfoController.countOfEntity}" />
 
-                    <h:outputText value="Software Version" styleClass="sectionText"/>
+                    <p:outputLabel for="numberOfLogDocuments" value="Log Documents" styleClass="sectionText" />
+                    <h:outputText id="numberOfLogDocuments" styleClass="sectionText"
+                        value="#{itemDomainLogbookController.countOfEntity}" />
+
+                    <h:outputText value="Software Version" styleClass="sectionText" />
                     <h:outputLink value="#{resources.CdbSoftwareVersionUrl}" target="#{resources.CdbSoftwareVersion}">
-                        <h:outputText id="softwareVersion" value="#{resources.CdbSoftwareVersion}" styleClass="sectionText"/>
-                    </h:outputLink>                        
+                        <h:outputText id="softwareVersion" value="#{resources.CdbSoftwareVersion}"
+                            styleClass="sectionText" />
+                    </h:outputLink>
                 </p:panelGrid>
             </h:form>
         </div>
 
         <ui:fragment>
-            <p/>
+            <p />
             <div class="sectionTitle">
                 <h2>Quick Links</h2>
                 <h:form id="quickLinksForm">
                     <div class="quickLinksDiv">
                         <h:outputLink value="#{resources.CdbCodeRepository}" target="GithubRepository">
-                            <h:outputText value="Github Repository"/>
+                            <h:outputText value="Github Repository" />
                         </h:outputLink>
                         <h:outputLink value="#{resources.CdbBugReportUrl}" target="GithubNewIssue">
-                            <h:outputText value="Request Feature/Report Bug"/>
-                        </h:outputLink>                        
+                            <h:outputText value="Request Feature/Report Bug" />
+                        </h:outputLink>
                         <ui:include src="plugins/private/aboutPagePluginLinks.xhtml" />
                     </div>
                 </h:form>
@@ -76,18 +87,16 @@ See LICENSE file.
         </ui:fragment>
 
         <ui:fragment rendered="#{loginController.loggedInAsAdmin || loginController.loggedInAsMaintainer}">
-            <p/>
+            <p />
             <div class="sectionTitle">
                 <h2>Administrative Tools</h2>
                 <h:form id="adminToolsForm">
                     <p:panelGrid columns="1">
                         <div class="commandLink">
-                            <h:commandLink action="#{loginController.dropAdminRole()}" 
-                                           rendered="#{loginController.loggedInAsAdmin}"
-                                           value="Drop Administrator Role"/>
-                            <h:commandLink action="#{loginController.dropMaintainerRole()}" 
-                                           rendered="#{loginController.loggedInAsMaintainer}"
-                                           value="Drop Maintainer Role"/>
+                            <h:commandLink action="#{loginController.dropAdminRole()}"
+                                rendered="#{loginController.loggedInAsAdmin}" value="Drop Administrator Role" />
+                            <h:commandLink action="#{loginController.dropMaintainerRole()}"
+                                rendered="#{loginController.loggedInAsMaintainer}" value="Drop Maintainer Role" />
                         </div>
                     </p:panelGrid>
                 </h:form>
@@ -96,4 +105,3 @@ See LICENSE file.
 
     </ui:define>
 </ui:composition>
-
