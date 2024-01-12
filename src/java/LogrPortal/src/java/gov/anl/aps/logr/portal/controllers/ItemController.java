@@ -66,7 +66,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import javax.ejb.EJB;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
@@ -754,6 +753,7 @@ public abstract class ItemController<
         super.resetListDataModel();
         scopedListDataModel = null;
         itemsWithNoParentsListDataModel = null;
+        templatesList = null; 
         templateItemsListDataModel = null;
         itemsWithNoParentsRootNode = null;
         displayListDataModelScopeSelectionList = null;
