@@ -57,8 +57,8 @@ See LICENSE file.
         </ui:fragment>
 
     </ui:define>
-
-    <ui:define name="additionalTopRightItemPanels">
+    
+    <ui:define name="additionalTopRightItemPanels">        
         <p:commandButton id="showDetails" icon="fa fa-info" value="Log Document Info"/>
         <p:overlayPanel for="showDetails"
                         showCloseIcon="true"
@@ -101,6 +101,13 @@ See LICENSE file.
                 </p:dataTable>
             </p:panel>
         </p:overlayPanel>
+        
+        <p:commandButton id="toggleTimestamp" style="float: right" icon="fa fa-clock-o"
+                         ajax="true"                        
+                         onclick="toggleTimestamps()">
+            <p:tooltip for="toggleTimestamp" value="Click to show/hide the timestamp on each log entry." /> 
+        </p:commandButton>
+        
         <p:panel header="Log Entries" 
                  id="#{entityTypeName}ViewLogEntriesPanel"
                  rendered="#{entityController.entityDisplayItemLogs and false}"
@@ -129,6 +136,7 @@ See LICENSE file.
 
     <ui:define name="additionalViewItemContent">
         <ui:insert name="itemDestroyDialog"/>
+        <ui:insert name="itemPropertiesSupport" />
         <ui:include src="private/addLogbookSectionDialog.xhtml" /> 
         <ui:include src="private/addLogbookEntryDialog.xhtml" />   
         <ui:include src="private/markdownExampleDialog.xhtml" /> 
@@ -144,6 +152,15 @@ See LICENSE file.
                         element.classList.add("activeLogEntry");
                     }
                 }
+            }
+            
+            function toggleTimestamps() {
+                var timestampPanels = document.getElementsByClassName('logTimestamp');
+                
+                for (var i =0; i &lt; timestampPanels.length; i++) {
+                    var widgetVar = timestampPanels[i].getAttribute('data-widget'); 
+                    PF(widgetVar).toggle();                      
+                }                                               
             }
         </script>
 

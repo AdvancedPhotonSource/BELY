@@ -22,6 +22,8 @@ public class ItemDomainLogbook extends Item {
 
     private transient ItemDomainLogbook newLogbookSection = null;
     private transient List<ItemDomainLogbook> logbookSections;
+    
+    private transient PropertyValue logbookDocumentSettings; 
 
     public ItemDomainLogbook() {
     }
@@ -67,5 +69,14 @@ public class ItemDomainLogbook extends Item {
         }
 
         return logbookSections;
+    }
+
+    @JsonIgnore
+    public PropertyValue getLogbookDocumentSettings() {
+        return logbookDocumentSettings;
+    }
+
+    public void setLogbookDocumentSettings(PropertyValue logbookDocumentSettings) {
+        this.logbookDocumentSettings = logbookDocumentSettings;
     }
 }

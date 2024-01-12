@@ -53,7 +53,12 @@ html, body {
     border-top-right-radius: 3px; 
     /*border-bottom: solid black;*/ 
     color: white; 
-    padding: 3px; 
+    padding: 0 !important; 
+}
+
+.logTimestamp div {
+    padding: 3px !important;
+    color: white !important;
 }
 
 .logEntry {

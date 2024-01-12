@@ -23,11 +23,17 @@ See LICENSE file.
 
         <ui:fragment rendered="#{itemObject.logList.size() !=0}">
             <p:dataScroller value="#{itemObject.logList}" var="logObject" styleClass="logDataScroller">
-                <div id="log-#{logObject.id}">
-                    <div class="logTimestamp">
+                <div id="log-#{logObject.id}">                   
+                    <p:panel collapsed="#{!itemDomainLogbookController.logbookDisplayTimestamps}"
+                             styleClass="logTimestamp"
+                             toggleable="true"
+                             toggleSpeed="100"
+                             id="timestampPanel"
+                             widgetVar="timestampPanelWidget#{logObject.id}">
                         <span>#{logObject.enteredOnDateTime}</span>
                         <span style="float: right">#{logObject.enteredByUser}</span>
-                    </div>
+                    </p:panel>
+                    
                     <div class="logEntry">
                         <h:outputText escape="false" value="#{logObject.htmlText}"/>
                     </div>
@@ -47,7 +53,7 @@ See LICENSE file.
                             </f:facet>
                         </p:galleria>
                     </p:outputPanel>
-                    <div class="logFooter">
+                    <div class="logFooter">                                                                        
                         <p:commandLink styleClass="logAction fa fa-link-icon fa-pencil"
                                        onclick="PF('loadingDialog').show()"
                                        rendered="#{isEntityWriteable}"

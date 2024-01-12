@@ -18,6 +18,8 @@ import gov.anl.aps.logr.portal.model.db.entities.Item;
 import gov.anl.aps.logr.portal.model.db.entities.ItemDomainLogbook;
 import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
 import gov.anl.aps.logr.portal.model.db.entities.Log;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.utilities.MarkdownParser;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
@@ -58,9 +60,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     private List<SearchResult> logResults;
 
-    private static final String ctlEntityTypeName = "ctl";
-    private static final String aopEntityTypeName = "aop";
-    private static final String opsEntityTypeName = "ops";
+    private static final String CTL_ENTITY_TYPE_NAME = "ctl";
+    private static final String AOP_ENTITY_TYPE_NAME = "aop";
+    private static final String OPS_ENTITY_TYPE_NAME = "ops";
+    
+    private static final String LOGBOOK_SETTINGS_PROPERTY_TYPE_NAME = "Logbook Document Settings"; 
+    private static final String LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY = "showTimestamps"; 
 
     public final static String controllerNamed = "itemDomainLogbookController";
 
@@ -194,10 +199,51 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public boolean entityCanBeCreatedByUsers() {
         return true;
     }
+    
+    public boolean getLogbookDisplayTimestamps() {
+        return getLogbookSettingValue(true, LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY); 
+    }
 
     @Override
     public String getItemElementsListTitle() {
         return "Log Document Sections";
+    }
+    
+    
+    private PropertyValue getLogbookSettingsProperty() {
+        ItemDomainLogbook current = getCurrent();
+        
+        PropertyValue logbookDocumentSettings = current.getLogbookDocumentSettings();
+        
+        if (logbookDocumentSettings == null) {
+            List<PropertyValue> propertyValueList = current.getPropertyValueList();
+            
+            for (PropertyValue pv : propertyValueList) {
+                PropertyType propertyType = pv.getPropertyType();
+                String propertyTypeName = propertyType.getName();
+                
+                if (propertyTypeName.equals(LOGBOOK_SETTINGS_PROPERTY_TYPE_NAME)) {
+                    logbookDocumentSettings = pv; 
+                    break; 
+                }
+            }
+            
+            current.setLogbookDocumentSettings(logbookDocumentSettings);
+        }
+        return logbookDocumentSettings; 
+    }
+    
+    private boolean getLogbookSettingValue(boolean defaultValue, String settingKey) {
+        PropertyValue logbookSettingsProperty = getLogbookSettingsProperty();
+        
+        if (logbookSettingsProperty != null) {
+            String propertyMetadataValueForKey = logbookSettingsProperty.getPropertyMetadataValueForKey(settingKey);
+            if (propertyMetadataValueForKey != null) {
+                return Boolean.parseBoolean(propertyMetadataValueForKey); 
+            }
+        }
+        
+        return defaultValue;         
     }
 
     public void prepareCreateLogbookSection() {
@@ -247,46 +293,6 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         return viewForCurrentEntity();
     }
-
-//    @Override
-////    public void completeSelectionOfTemplate() {
-////        ItemDomainLogbook current = getCurrent();
-////
-////        if (this.templateToCreateNewItem != null) {
-////            ItemDomainLogbook originalTemplateToCreateNewItem = getTemplateToCreateNewItem();
-////
-////            UserInfo user = SessionUtility.getUser();
-////            getControllerUtility().cloneCreateItemElements(current, templateToCreateNewItem, user, true, true, true);
-////
-////            List<ItemElement> itemElementDisplayList = current.getItemElementDisplayList();
-////            for (ItemElement ie : itemElementDisplayList) {
-////                ItemDomainLogbook containedItem = (ItemDomainLogbook) ie.getContainedItem();
-////                ItemDomainLogbook newItem = null;
-////
-////                try {
-////                    newItem = (ItemDomainLogbook) containedItem.clone(user, user.getUserGroupList().get(0), false, false, false);
-////                } catch (CloneNotSupportedException ex) {
-////                    SessionUtility.addErrorMessage("Error", ex.getMessage());
-////                }
-////
-////                newItem.getEntityTypeList().clear();
-////                newItem.setName(containedItem.getName());
-////                newItem.setItemIdentifier2(current.getViewUUID());
-////
-////                setTemplateToCreateNewItem(containedItem);
-////                setCurrent(newItem);
-////
-////                completeSelectionOfTemplate();
-////
-////                ie.setContainedItem(newItem);
-////            }
-////
-////            setTemplateToCreateNewItem(originalTemplateToCreateNewItem);
-////            setCurrent(current);
-////
-////        }
-////        super.completeSelectionOfTemplate();
-////    }
 
     @Override
     protected void additionalSelectionOfTemplateSteps() {
@@ -378,15 +384,15 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     public void processPreRenderCTLList() {
-        processPreRenderSpecificList(ctlEntityTypeName);
+        processPreRenderSpecificList(CTL_ENTITY_TYPE_NAME);
     }
 
     public void processPreRenderOPSList() {
-        processPreRenderSpecificList(opsEntityTypeName);
+        processPreRenderSpecificList(OPS_ENTITY_TYPE_NAME);
     }
 
     public void processPreRenderAOPList() {
-        processPreRenderSpecificList(aopEntityTypeName);
+        processPreRenderSpecificList(AOP_ENTITY_TYPE_NAME);
     }
 
     private void processPreRenderSpecificList(String entityTypeName) {
@@ -467,6 +473,13 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         controllerUtility.destroy(entity, user);
         controllerUtility.destroyList(itemsToDestroy, null, user);
+    }
+
+    @Override
+    // TODO this may not be needed once the property gets its own custom UI. 
+    public String updateEditProperty() {
+        super.updateEditProperty();        
+        return viewForCurrentEntity();
     }
 
     @Override
