@@ -25,6 +25,7 @@ import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
 import gov.anl.aps.logr.portal.model.db.entities.ItemElementRelationship;
 import gov.anl.aps.logr.portal.model.db.entities.ItemSource;
 import gov.anl.aps.logr.portal.model.db.entities.ListTbl;
+import gov.anl.aps.logr.portal.model.db.entities.PropertyMetadata;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyTypeMetadata;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
@@ -812,6 +813,22 @@ public abstract class ItemControllerUtility<ItemDomainEntity extends Item, ItemD
                 newPropertyValue.setEnteredByUser(enteredByUser);
 
                 newItemPropertyValueList.add(newPropertyValue);
+
+                List<PropertyMetadata> propertyMetadataList = propertyValue.getPropertyMetadataList();
+
+                if (propertyMetadataList.size() > 0) {
+                    List<PropertyMetadata> newPropertyMetadata = new ArrayList<>(); 
+                    newPropertyValue.setPropertyMetadataList(newPropertyMetadata);
+                    for (PropertyMetadata pm : propertyMetadataList) {
+                        PropertyMetadata newPm = new PropertyMetadata();
+                        newPm.setMetadataKey(pm.getMetadataKey());
+                        newPm.setMetadataValue(pm.getMetadataValue());
+                        newPm.setPropertyValue(newPropertyValue);
+                        
+                        newPropertyMetadata.add(newPm); 
+                    }
+                }
+
             }
 
             clonedItem.setPropertyValueList(newItemPropertyValueList);
