@@ -57,6 +57,11 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
     public String getEntityTypeName() {
         return "logbook";
     }
+
+    // @Override
+    public String getDisplayEntityTypeName() {
+        return "Log Document";
+    }
     
     @Override
     public boolean isEntityHasItemIdentifier2() {
