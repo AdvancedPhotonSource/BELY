@@ -497,7 +497,21 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         String itemListPageTitle = super.getItemListPageTitle();
 
         if (currentEntityType != null) {
-            itemListPageTitle = currentEntityType.toUpperCase() + " " + itemListPageTitle;
+            String entityName = null;
+            
+            switch (currentEntityType) {
+                case CTL_ENTITY_TYPE_NAME:
+                    entityName = "Controls";                     
+                    break;
+                case OPS_ENTITY_TYPE_NAME:
+                    entityName = "Operations";
+                    break; 
+                default:
+                    entityName = currentEntityType.toUpperCase();
+                    break; 
+            }
+            
+            itemListPageTitle = entityName + " " + itemListPageTitle;
         }
         return itemListPageTitle;
     }
