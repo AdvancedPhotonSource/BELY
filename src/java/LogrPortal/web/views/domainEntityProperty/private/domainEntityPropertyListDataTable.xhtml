@@ -41,7 +41,7 @@ See LICENSE file.
                                            PF('propertyValueHistoryListDialogWidget').show()" 
                                styleClass="fa fa-link-icon fa-history" 
                                title="View property value history."
-                               update="@form">
+                               update="@form:propertyValueHistoryListDialog">
                     <f:setPropertyActionListener target="#{propertyValueHistoryController.selectedPropertyValue}" 
                                                  value="#{propertyValueObject}"/>
                     <p:tooltip for="#{entityTypeName}PropertyValueHistoryListViewButton" value="View property value history."/>
@@ -54,7 +54,7 @@ See LICENSE file.
                                title="Edit property"
                                action="#{entityController.setCurrentEditPropertyValue(propertyValueObject)}"
                                rendered="#{isEntityWriteable or (propertyValueObject.isUserWriteable and loginController.loggedIn)}"
-                               update="@form"
+                               update="@form:#{entityTypeName}SinglePropertyEditDialog"
                                onstart="PF('loadingDialog').show();"
                                onerror="PF('loadingDialog').hide();"
                                oncomplete="PF('loadingDialog').hide();
