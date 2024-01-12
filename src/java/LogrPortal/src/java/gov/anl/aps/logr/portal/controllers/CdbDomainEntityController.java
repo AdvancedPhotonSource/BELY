@@ -186,8 +186,9 @@ public abstract class CdbDomainEntityController<ControllerUtility extends CdbDom
 
     }
 
-    public void updateEditProperty() {        
+    public String updateEditProperty() {        
         this.update();        
+        return null; 
     }
 
     public void deleteCurrentEditPropertyValue() {

@@ -467,8 +467,8 @@ public abstract class ItemControllerExtensionHelper implements IItemController<I
     }
     
     @Override
-    public void updateEditProperty() {
-        getItemController().updateEditProperty(); 
+    public String updateEditProperty() {
+        return getItemController().updateEditProperty(); 
     }
     
     @Override

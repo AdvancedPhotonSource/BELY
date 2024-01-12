@@ -687,9 +687,11 @@ public abstract class ItemMultiEditController extends ItemControllerExtensionHel
     }
 
     @Override
-    public void updateEditProperty() {
+    public String updateEditProperty() {
         // Perform nothing... When user decides to updated all items, changes will be saved. 
         currentMultiEditPropertyRecord = null;
+        
+        return null; 
     }
 
     @Override

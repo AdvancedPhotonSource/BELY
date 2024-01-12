@@ -30,7 +30,7 @@ public interface ICdbDomainEntityController<DomainEntity extends CdbDomainEntity
     /**
      * Functionality saves the edits made to the currently edit property.
      */
-    public void updateEditProperty(); 
+    public String updateEditProperty(); 
     
     /**
      * Functionality deletes the single property currently being edited.
