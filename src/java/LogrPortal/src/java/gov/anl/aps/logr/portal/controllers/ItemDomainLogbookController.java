@@ -469,6 +469,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     @Override
+    public void processPreRenderTemplateList() {
+        super.processPreRenderList(); 
+    }
+
+    @Override
     public ItemDomainLogbook createEntityInstance() {
         ItemDomainLogbook entity = super.createEntityInstance();
 
