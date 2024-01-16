@@ -35,6 +35,7 @@ See LICENSE file.
             <p:commandButton value="Create"
                              icon="fa fa-save"
                              onclick="PF('loadingDialog').show()"
+                             oncomplete="PF('loadingDialog').hide()"
                              action="#{itemDomainLogbookController.createOperationsItem()}"
                              /> 
 

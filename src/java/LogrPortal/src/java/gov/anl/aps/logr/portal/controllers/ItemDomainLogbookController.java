@@ -706,6 +706,17 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
 
         ItemDomainLogbook current = getCurrent();
+        
+        if (latestShiftDocument != null) {
+            String name = current.getName();
+            String latestName = latestShiftDocument.getName();
+            
+            if (name.equals(latestName)) {
+                SessionUtility.addErrorMessage("Shift Exists", "Cannot create another shift since the current shift already exists.");
+                return null; 
+            }
+        }
+        
         EntityInfo entityInfo = current.getEntityInfo();
         UserInfo createdByUser = entityInfo.getCreatedByUser();
         List<ItemDomainLogbook> logbookSections = current.getLogbookSections();
