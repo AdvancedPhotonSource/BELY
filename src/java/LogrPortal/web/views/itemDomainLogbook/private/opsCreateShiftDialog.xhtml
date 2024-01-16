@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <p:dialog header="Create Operations Shift"
+              id="operationsCreateDialog"
+              widgetVar="operationsCreateDialogWidget"
+              styleClass="viewTransparentBackgroundDialog"                  
+              modal="true">
+
+        <ui:param name="currentItem" 
+                  value="#{itemDomainLogbookController.current}" /> 
+
+        <p:panelGrid columns="2"
+                     rendered="#{currentItem != null}">
+            <h:outputText value="Shift"/>
+            <h:outputText value="#{currentItem.name}"/>
+
+            <h:outputText value="Personnel"/>
+            <p:inputText value="#{currentItem.opsPersonnel}"/>
+
+            <h:outputText value="Shift Type"/>
+            <p:inputText value="#{currentItem.opsShiftType}"/>
+        </p:panelGrid>
+
+        <f:facet name="footer">
+            <p:commandButton value="Create"
+                             icon="fa fa-save"
+                             onclick="PF('loadingDialog').show()"
+                             action="#{itemDomainLogbookController.createOperationsItem()}"
+                             /> 
+
+        </f:facet>
+    </p:dialog>
+
+    <p:remoteCommand name="preapreOperationsCreateDialogWidget"
+                     update="operationsCreateDialog"
+                     oncomplete="PF('operationsCreateDialogWidget').show()"/>
+
+
+</ui:composition>
+
+

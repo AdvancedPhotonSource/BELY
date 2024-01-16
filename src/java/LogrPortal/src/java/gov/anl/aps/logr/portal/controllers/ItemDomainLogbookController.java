@@ -13,6 +13,7 @@ import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookController
 import gov.anl.aps.logr.portal.model.ItemDomainLogbookLazyDataModel;
 import gov.anl.aps.logr.portal.model.db.beans.ItemDomainLogbookFacade;
 import gov.anl.aps.logr.portal.model.db.beans.LogFacade;
+import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
 import gov.anl.aps.logr.portal.model.db.entities.EntityType;
 import gov.anl.aps.logr.portal.model.db.entities.Item;
 import gov.anl.aps.logr.portal.model.db.entities.ItemDomainLogbook;
@@ -24,8 +25,13 @@ import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.utilities.MarkdownParser;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.Month;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
@@ -63,10 +69,22 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private static final String CTL_ENTITY_TYPE_NAME = "ctl";
     private static final String AOP_ENTITY_TYPE_NAME = "aop";
     private static final String OPS_ENTITY_TYPE_NAME = "ops";
-    
-    private static final String LOGBOOK_SETTINGS_PROPERTY_TYPE_NAME = "Logbook Document Settings"; 
-    private static final String LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY = "showTimestamps"; 
 
+    private static final String LOGBOOK_SETTINGS_PROPERTY_TYPE_NAME = "Logbook Document Settings";
+    private static final String LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY = "showTimestamps";
+
+    // Custom operations functionality.. 
+    // <editor-fold defaultstate="collapsed" desc="Operations specific variables.">
+    private static final String OPS_TEMPLATE_NAME = "Operations Shift";
+    private static final String OPS_GENERAL_FIRST_LOG_ENTRY = "Personnel: %s \n\n\n Shift Type: %s";
+
+    private static final DateTimeFormatter hourFormatter = DateTimeFormatter.ofPattern("HH");
+    private static final DateTimeFormatter dayFormatter = DateTimeFormatter.ofPattern("EEEE");
+    private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy");
+    private static final DateTimeFormatter dayNumFormatter = DateTimeFormatter.ofPattern("dd");
+    private static final DateTimeFormatter shortDateFormatter = DateTimeFormatter.ofPattern("MMMM dd");
+
+    // </editor-fold>
     public final static String controllerNamed = "itemDomainLogbookController";
 
     public static ItemDomainLogbookController getInstance() {
@@ -199,51 +217,50 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public boolean entityCanBeCreatedByUsers() {
         return true;
     }
-    
+
     public boolean getLogbookDisplayTimestamps() {
-        return getLogbookSettingValue(true, LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY); 
+        return getLogbookSettingValue(true, LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY);
     }
 
     @Override
     public String getItemElementsListTitle() {
         return "Log Document Sections";
     }
-    
-    
+
     private PropertyValue getLogbookSettingsProperty() {
         ItemDomainLogbook current = getCurrent();
-        
+
         PropertyValue logbookDocumentSettings = current.getLogbookDocumentSettings();
-        
+
         if (logbookDocumentSettings == null) {
             List<PropertyValue> propertyValueList = current.getPropertyValueList();
-            
+
             for (PropertyValue pv : propertyValueList) {
                 PropertyType propertyType = pv.getPropertyType();
                 String propertyTypeName = propertyType.getName();
-                
+
                 if (propertyTypeName.equals(LOGBOOK_SETTINGS_PROPERTY_TYPE_NAME)) {
-                    logbookDocumentSettings = pv; 
-                    break; 
+                    logbookDocumentSettings = pv;
+                    break;
                 }
             }
-            
+
             current.setLogbookDocumentSettings(logbookDocumentSettings);
         }
-        return logbookDocumentSettings; 
+        return logbookDocumentSettings;
     }
-    
+
     private boolean getLogbookSettingValue(boolean defaultValue, String settingKey) {
         PropertyValue logbookSettingsProperty = getLogbookSettingsProperty();
-        
+
         if (logbookSettingsProperty != null) {
             String propertyMetadataValueForKey = logbookSettingsProperty.getPropertyMetadataValueForKey(settingKey);
             if (propertyMetadataValueForKey != null) {
-                return Boolean.parseBoolean(propertyMetadataValueForKey); 
+                return Boolean.parseBoolean(propertyMetadataValueForKey);
             }
         }
-        
-        return defaultValue;         
+
+        return defaultValue;
     }
 
     public void prepareCreateLogbookSection() {
@@ -297,7 +314,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     @Override
     protected void additionalSelectionOfTemplateSteps() {
         ItemDomainLogbook current = getCurrent();
-        
+
         ItemDomainLogbook originalTemplateToCreateNewItem = getTemplateToCreateNewItem();
 
         UserInfo user = SessionUtility.getUser();
@@ -402,7 +419,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         ItemDomainLogbookLazyDataModel itemLazyDataModel = getItemLazyDataModel();
         itemLazyDataModel.setCurrentEntityType(currentEntityType);
-    }
+    }    
 
     @Override
     public void processPreRenderList() {
@@ -476,9 +493,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     @Override
-    // TODO this may not be needed once the property gets its own custom UI. 
+// TODO this may not be needed once the property gets its own custom UI. 
     public String updateEditProperty() {
-        super.updateEditProperty();        
+        super.updateEditProperty();
         return viewForCurrentEntity();
     }
 
@@ -498,19 +515,19 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         if (currentEntityType != null) {
             String entityName = null;
-            
+
             switch (currentEntityType) {
                 case CTL_ENTITY_TYPE_NAME:
-                    entityName = "Controls";                     
+                    entityName = "Controls";
                     break;
                 case OPS_ENTITY_TYPE_NAME:
                     entityName = "Operations";
-                    break; 
+                    break;
                 default:
                     entityName = currentEntityType.toUpperCase();
-                    break; 
+                    break;
             }
-            
+
             itemListPageTitle = entityName + " " + itemListPageTitle;
         }
         return itemListPageTitle;
@@ -573,6 +590,153 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         return MarkdownParser.getMarkdownExampleText();
     }
 
+    // <editor-fold defaultstate="collapsed" desc="Operations functionality.">
+    public void prepareCreateOperationsItem(String onSuccess) {
+        prepareCreate();
+
+        ItemDomainLogbook current = getCurrent();
+        List<ItemDomainLogbook> templatesList = getTemplatesList();
+
+        // Apply template
+        for (ItemDomainLogbook template : templatesList) {
+            if (template.getName().equals(OPS_TEMPLATE_NAME)) {
+                templateToCreateNewItem = template;
+                break;
+            }
+        }
+        if (templateToCreateNewItem == null) {
+            SessionUtility.addErrorMessage("Cannot proceed", "'" + OPS_TEMPLATE_NAME + "' template must be created before proceeding.");
+            return;
+        }
+        completeSelectionOfTemplate();
+
+        // Generate shift name 
+        String shiftName = generateShiftName();
+        current.setName(shiftName);
+
+        SessionUtility.executeRemoteCommand(onSuccess);
+    }
+
+    private String generateShiftName() {
+        LocalDateTime now = LocalDateTime.now();
+
+        String dayPart = "";
+        String datePart = "";
+
+        Integer shiftStart = null;
+        Integer shiftEnd = null;
+
+        String hourStr = hourFormatter.format(now);
+        Integer hour = Integer.valueOf(hourStr);
+
+        if (hour < 6 || hour > 22) {
+            shiftStart = 23;
+            shiftEnd = 7;
+        } else if (hour < 14) {
+            shiftStart = 7;
+            shiftEnd = 15;
+        } else { // if (hour < 22) {
+            shiftStart = 15;
+            shiftEnd = 23;
+        }
+
+        if (shiftStart > shiftEnd) {
+            LocalDateTime dateStart = now;
+            LocalDateTime dateEnd = null;
+
+            if (hour > 0 && hour < 6) {
+                // Shift created on next day
+                dateEnd = dateStart;
+                dateStart = now.minusHours(24);
+            } else {
+                dateEnd = dateStart.plusHours(24);
+            }
+
+            Month startMonth = dateStart.getMonth();
+            Month endMonth = dateEnd.getMonth();
+
+            dayPart = String.format("%s-%s", dayFormatter.format(dateStart), dayFormatter.format(dateEnd));
+
+            if (startMonth == endMonth) {
+                datePart = dateFormatter.format(dateStart);
+                datePart = String.format("%s-%s", datePart, dayNumFormatter.format(dateEnd));
+            } else {
+                // Example: Sunday-Monday, December 31-January 1, 2024 [23:00-07:00] 
+                datePart = shortDateFormatter.format(dateStart);
+                datePart = String.format("%s-%s", datePart, dateFormatter.format(dateEnd));
+            }
+        } else {
+            dayPart = dayFormatter.format(now);
+            datePart = dateFormatter.format(now);
+        }
+
+        String shiftName;
+        shiftName = String.format("%s - %s [%d:00 - %d:00]", dayPart, datePart, shiftStart, shiftEnd);
+        return shiftName;
+    }
+
+    public String createOperationsItem() {
+        List<ItemDomainLogbook> opsLogDocuments = itemDomainLogbookFacade.findByDomainAndEntityTypeAndTopLevel(getDefaultDomainName(), OPS_ENTITY_TYPE_NAME);
+
+        ItemDomainLogbook latestShiftDocument = null;
+        for (int i = opsLogDocuments.size() - 1; i >= 0; i--) {
+            ItemDomainLogbook logbook = opsLogDocuments.get(i);
+
+            Item createdFromTemplate = logbook.getCreatedFromTemplate();
+            if (createdFromTemplate == null) {
+                continue;
+            }
+            if (createdFromTemplate.equals(templateToCreateNewItem)) {
+                // Found latest shift log document. 
+                latestShiftDocument = logbook;
+                break;
+            }
+        }
+
+        ItemDomainLogbook current = getCurrent();
+        EntityInfo entityInfo = current.getEntityInfo();
+        UserInfo createdByUser = entityInfo.getCreatedByUser();
+        List<ItemDomainLogbook> logbookSections = current.getLogbookSections();
+        List<ItemDomainLogbook> lastShiftSections = latestShiftDocument.getLogbookSections();
+
+        if (logbookSections.size() != 6) {
+            SessionUtility.addErrorMessage("Error", "Tempalte '" + OPS_TEMPLATE_NAME + "' must have 6 sections.");
+            return null;
+        }
+
+        // Get first section for personnel and shift type. 
+        ItemDomainLogbook sectionOne = logbookSections.get(0);
+        String opsPersonnel = current.getOpsPersonnel();
+        String opsShiftType = current.getOpsShiftType();
+        String sectionOneContents = String.format(OPS_GENERAL_FIRST_LOG_ENTRY, opsPersonnel, opsShiftType);
+        sectionOne.addLogEntry(sectionOneContents, createdByUser);
+
+        if (latestShiftDocument != null) {
+            // Copy some sections to new shift log.
+            copyLogs(lastShiftSections.get(1), logbookSections.get(1));
+            copyLogs(lastShiftSections.get(4), logbookSections.get(4));
+            copyLogs(lastShiftSections.get(5), logbookSections.get(5));
+        } else {
+            SessionUtility.addInfoMessage("Info", "Created new shift, no previous shift found.");
+        }
+
+        return create();
+    }
+
+    // </editor-fold>
+    private void copyLogs(ItemDomainLogbook oldLogDoc, ItemDomainLogbook newLogDoc) {
+        List<Log> logList = oldLogDoc.getLogList();
+        EntityInfo entityInfo = newLogDoc.getEntityInfo();
+        UserInfo createdByUser = entityInfo.getCreatedByUser();
+
+        for (Log log : logList) {
+            String text = log.getText();
+            newLogDoc.addLogEntry(text, createdByUser);
+
+        }
+    }
+
+    // <editor-fold defaultstate="collapsed" desc="FacesConverter">
     @FacesConverter(forClass = ItemDomainLogbook.class)
     public static class ItemDomainLogbookControllerConverter implements Converter {
 
@@ -616,4 +780,5 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
 
     }
+// </editor-fold>
 }
