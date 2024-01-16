@@ -3,13 +3,11 @@
 Copyright (c) UChicago Argonne, LLC. All rights reserved.
 See LICENSE file.
 -->
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="http://java.sun.com/jsf/html"
-                xmlns:ui="http://java.sun.com/jsf/facelets"
-                xmlns:f="http://java.sun.com/jsf/core"
-                xmlns:p="http://primefaces.org/ui"
-                template="../templates/homeViewTemplate.xhtml">
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:p="http://primefaces.org/ui" template="../templates/homeViewTemplate.xhtml">
 
     <f:metadata>
         <f:viewAction action="#{settingController.updateGlobalSettings()}" />
@@ -20,86 +18,67 @@ See LICENSE file.
         <div class="homePage">
 
             <div class="pageTitle">
-                <h1>About CDB</h1>
+                <h1>About Logr</h1>
             </div>
 
             <div class="sectionText">
-                A major effort in the conceptual design phase of the MBA accelerator is identifying, defining and tracking 
-                component types and component lists necessary to build the new facility. 
-                Reasonable estimates of cost and labor will depend on the thoroughness and accuracy of such lists. 
-                The primary goal of the Component Database is to capture required components and assist 
-                in defining the conceptual design of the new accelerator.
-                <p/>
+                Logr serves as an essential logbook application within ASD APS, flexibly caters to to the specific
+                requirements of various technical groups, including AOP, CTL, and MCR OPS. Its primary purpose is to
+                facilitate the organized recording of logbook entries, with an emphasis on chronological organization
+                and the ability to group entries by task or shift. This approach accommodates the needs of technical
+                group members making occasional entries and operational or physics crews creating a sequence of grouped
+                entries for shifts or studies. Logr offers exceptional flexibility by allowing users to define their own
+                properties, tailoring the logbook to suit their specific requirements. Additionally, it provides robust
+                search features, enhancing the efficiency of logbook entry retrieval and analysis.
+                <p />
                 <ui:fragment rendered="#{!loginController.loggedIn}">
-                    You can browse system pages without any authentication. If you would like to add or modify
-                    CDB data, please <h:link outcome="/views/login" value="login"/>.
+                    You can browse system pages withoug logging in. If you would like to add or modify
+                    Logr data, please
+                    <h:link outcome="/views/login" value="login" />.
                 </ui:fragment>
-                <p/>
+                <p />
             </div>
 
             <div class="sectionTitle">
                 <h2>System At A Glance</h2>
-            </div>    
+            </div>
 
             <h:form id="systemSummaryForm">
                 <p:growl id="messages" showDetail="true">
-                    <p:autoUpdate/> 
+                    <p:autoUpdate />
                 </p:growl>
 
                 <p:panelGrid columns="2">
 
-                    <p:outputLabel for="numberOfUsers" value="Registered Users" styleClass="sectionText"/>
-                    <h:outputText id="numberOfUsers" styleClass="sectionText" 
-                                  value="#{userInfoController.countOfEntity}"/>
+                    <p:outputLabel for="numberOfUsers" value="Registered Users" styleClass="sectionText" />
+                    <h:outputText id="numberOfUsers" styleClass="sectionText"
+                        value="#{userInfoController.countOfEntity}" />
 
-                    <p:outputLabel for="numberOfCatalogItems" value="Catalog Items" styleClass="sectionText"/>
-                    <h:outputText id="numberOfCatalogItems" styleClass="sectionText" 
-                                  value="#{itemDomainCatalogController.countOfEntity}"/>
+                    <p:outputLabel for="numberOfLogDocuments" value="Log Documents" styleClass="sectionText" />
+                    <h:outputText id="numberOfLogDocuments" styleClass="sectionText"
+                        value="#{itemDomainLogbookController.countOfEntity}" />
 
-                    <p:outputLabel for="numberOfInventoryItems" value="Inventory Items" styleClass="sectionText"/>
-                    <h:outputText id="numberOfInventoryItems" styleClass="sectionText" 
-                                  value="#{itemDomainInventoryController.countOfEntity}"/>
-                    
-                    <p:outputLabel for="numberOfMachineElements" value="Machine Elements" styleClass="sectionText"/>
-                    <h:outputText id="numberOfMachineElements" styleClass="sectionText" 
-                                  value="#{itemDomainMachineDesignController.countOfEntity}"/>
-                    
-                    <p:outputLabel for="numberofMAARCItems" value="MAARC Items" styleClass="sectionText"/>
-                    <h:outputText id="numberofMAARCItems" styleClass="sectionText" 
-                                  value="#{itemDomainMAARCController.countOfEntity}"/>
-                    
-                    <p:outputLabel for="numberofCableCatalogItems" value="Cable Catalog Items" styleClass="sectionText"/>
-                    <h:outputText id="numberofCableCatalogItems" styleClass="sectionText" 
-                                  value="#{itemDomainCableCatalogController.countOfEntity}"/>
-                    
-                    <p:outputLabel for="numberofCableInventoryItems" value="Cable Inventory Items" styleClass="sectionText"/>
-                    <h:outputText id="numberofCableInventoryItems" styleClass="sectionText" 
-                                  value="#{itemDomainCableInventoryController.countOfEntity}"/>
-                    
-                    <p:outputLabel for="numberofCableDesignItems" value="Cable Design Items" styleClass="sectionText"/>
-                    <h:outputText id="numberofCableDesignItems" styleClass="sectionText" 
-                                  value="#{itemDomainCableDesignController.countOfEntity}"/>
-
-                    <h:outputText value="Software Version" styleClass="sectionText"/>
+                    <h:outputText value="Software Version" styleClass="sectionText" />
                     <h:outputLink value="#{resources.CdbSoftwareVersionUrl}" target="#{resources.CdbSoftwareVersion}">
-                        <h:outputText id="softwareVersion" value="#{resources.CdbSoftwareVersion}" styleClass="sectionText"/>
-                    </h:outputLink>                        
+                        <h:outputText id="softwareVersion" value="#{resources.CdbSoftwareVersion}"
+                            styleClass="sectionText" />
+                    </h:outputLink>
                 </p:panelGrid>
             </h:form>
         </div>
 
         <ui:fragment>
-            <p/>
+            <p />
             <div class="sectionTitle">
                 <h2>Quick Links</h2>
                 <h:form id="quickLinksForm">
                     <div class="quickLinksDiv">
                         <h:outputLink value="#{resources.CdbCodeRepository}" target="GithubRepository">
-                            <h:outputText value="Github Repository"/>
+                            <h:outputText value="Github Repository" />
                         </h:outputLink>
                         <h:outputLink value="#{resources.CdbBugReportUrl}" target="GithubNewIssue">
-                            <h:outputText value="Request Feature/Report Bug"/>
-                        </h:outputLink>                        
+                            <h:outputText value="Request Feature/Report Bug" />
+                        </h:outputLink>
                         <ui:include src="plugins/private/aboutPagePluginLinks.xhtml" />
                     </div>
                 </h:form>
@@ -108,40 +87,21 @@ See LICENSE file.
         </ui:fragment>
 
         <ui:fragment rendered="#{loginController.loggedInAsAdmin || loginController.loggedInAsMaintainer}">
-            <p/>
+            <p />
             <div class="sectionTitle">
                 <h2>Administrative Tools</h2>
                 <h:form id="adminToolsForm">
                     <p:panelGrid columns="1">
                         <div class="commandLink">
-                            <h:commandLink action="#{loginController.dropAdminRole()}" 
-                                           rendered="#{loginController.loggedInAsAdmin}"
-                                           value="Drop Administrator Role"/>
-                            <h:commandLink action="#{loginController.dropMaintainerRole()}" 
-                                           rendered="#{loginController.loggedInAsMaintainer}"
-                                           value="Drop Maintainer Role"/>
+                            <h:commandLink action="#{loginController.dropAdminRole()}"
+                                rendered="#{loginController.loggedInAsAdmin}" value="Drop Administrator Role" />
+                            <h:commandLink action="#{loginController.dropMaintainerRole()}"
+                                rendered="#{loginController.loggedInAsMaintainer}" value="Drop Maintainer Role" />
                         </div>
                     </p:panelGrid>
                 </h:form>
             </div>
         </ui:fragment>
 
-        <ui:fragment>
-            <div class="sectionTitle">
-                <h2>Mobile App</h2>
-            </div>                            
-            
-            <a href='https://play.google.com/store/apps/details?id=gov.anl.aps.cdb'>
-                <img alt='Get it on Google Play' 
-                     src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png'
-                     style="height: auto; width: 240px;"/>
-            </a>
-            
-            <div class="sectionText">
-                After downloading please configure the app by entering "#{facesUtility.permanentUrl}" for host address.
-            </div>
-        </ui:fragment>
-
     </ui:define>
 </ui:composition>
-
