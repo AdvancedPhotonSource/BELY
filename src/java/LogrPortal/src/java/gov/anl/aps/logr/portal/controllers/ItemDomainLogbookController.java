@@ -419,27 +419,39 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         ItemDomainLogbookLazyDataModel itemLazyDataModel = getItemLazyDataModel();
         itemLazyDataModel.setCurrentEntityType(currentEntityType);
-    }    
+    }
+    
+    private void redirectToEntityTypeList(String entityType) {
+        String redirect = String.format("%s/%sList", getDomainPath(), entityType); 
+        try {
+            SessionUtility.redirectTo(redirect);
+        } catch (IOException ex) {
+            logger.error(ex);
+            SessionUtility.addErrorMessage("Error", ex.getMessage());
+        }
+    }
 
     @Override
     public void processPreRenderList() {
         super.processPreRenderList();
-
-        ItemDomainLogbookLazyDataModel itemLazyDataModel = getItemLazyDataModel();
+        
         String lastEntityType = currentEntityType;
         currentEntityType = SessionUtility.getRequestParameterValue("logbook");
 
-        if (currentEntityType == null) {
-            if (lastEntityType != null) {
-                currentEntityType = lastEntityType;
-            } else {
-                currentEntityType = "ctl";
-            }
-        } else if (currentEntityType.equals("none")) {
+        if (currentEntityType != null && currentEntityType.equals("none")) {
+            ItemDomainLogbookLazyDataModel itemLazyDataModel = getItemLazyDataModel();
             currentEntityType = null;
+            itemLazyDataModel.setCurrentEntityType(currentEntityType);
+        } else {
+            if (currentEntityType == null) {
+                if (lastEntityType != null) {
+                    currentEntityType = lastEntityType;
+                } else {
+                    currentEntityType = CTL_ENTITY_TYPE_NAME; 
+                }
+            }
+            redirectToEntityTypeList(currentEntityType);
         }
-
-        itemLazyDataModel.setCurrentEntityType(currentEntityType);
     }
 
     @Override
