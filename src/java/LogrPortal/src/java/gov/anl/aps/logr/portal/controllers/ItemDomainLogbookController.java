@@ -318,10 +318,24 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         ItemDomainLogbook originalTemplateToCreateNewItem = getTemplateToCreateNewItem();
 
         UserInfo user = SessionUtility.getUser();
+        
+        // Ensure sort order is set. 
+        List<ItemElement> templateElements = templateToCreateNewItem.getItemElementDisplayList();
+        Float sortOrder = 0.0f; 
+        for (ItemElement templateElement : templateElements) {
+            Float elementSortOrder = templateElement.getSortOrder();
+            if (elementSortOrder != null) {
+                sortOrder = elementSortOrder; 
+            }            
+            
+            templateElement.setSortOrder(sortOrder);            
+            sortOrder += 1; 
+        }                
+        
         getControllerUtility().cloneCreateItemElements(current, templateToCreateNewItem, user, true, true, true);
 
-        List<ItemElement> itemElementDisplayList = current.getItemElementDisplayList();
-        for (ItemElement ie : itemElementDisplayList) {
+        List<ItemElement> itemElementDisplayList = current.getItemElementDisplayList();        
+        for (ItemElement ie : itemElementDisplayList) {                       
             ItemDomainLogbook containedItem = (ItemDomainLogbook) ie.getContainedItem();
             ItemDomainLogbook newItem = null;
 
