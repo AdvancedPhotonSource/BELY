@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import gov.anl.aps.logr.portal.constants.ItemDomainName;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
 import gov.anl.aps.logr.portal.model.db.utilities.LogUtility;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.DiscriminatorValue;
@@ -29,6 +30,8 @@ public class ItemDomainLogbook extends Item {
     
     private transient String opsPersonnel; 
     private transient String opsShiftType = "Machine Studies"; 
+    private transient LocalDateTime opsShiftStartTime; 
+    private transient LocalDateTime opsShiftEndTime; 
 
     public ItemDomainLogbook() {
     }
@@ -117,5 +120,21 @@ public class ItemDomainLogbook extends Item {
 
     public void setOpsShiftType(String opsShiftType) {
         this.opsShiftType = opsShiftType;
+    }
+
+    public LocalDateTime getOpsShiftStartTime() {
+        return opsShiftStartTime;
+    }
+
+    public void setOpsShiftStartTime(LocalDateTime opsShiftStartTime) {
+        this.opsShiftStartTime = opsShiftStartTime;
+    }
+
+    public LocalDateTime getOpsShiftEndTime() {
+        return opsShiftEndTime;
+    }
+
+    public void setOpsShiftEndTime(LocalDateTime opsShiftEndTime) {
+        this.opsShiftEndTime = opsShiftEndTime;
     }
 }

@@ -78,11 +78,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     // <editor-fold defaultstate="collapsed" desc="Operations specific variables.">
     private static final String OPS_TEMPLATE_NAME = "Operations Shift";
     private static final String OPS_GENERAL_FIRST_LOG_ENTRY = "Personnel: %s \n\n\n Shift Type: %s";
-    
+
     private static final DateTimeFormatter dayFormatter = DateTimeFormatter.ofPattern("EEEE");
     private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy");
     private static final DateTimeFormatter dayYearNumFormatter = DateTimeFormatter.ofPattern("dd, yyyy");
     private static final DateTimeFormatter shortDateFormatter = DateTimeFormatter.ofPattern("MMMM dd");
+    private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm"); 
 
     // </editor-fold>
     public final static String controllerNamed = "itemDomainLogbookController";
@@ -318,24 +319,24 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         ItemDomainLogbook originalTemplateToCreateNewItem = getTemplateToCreateNewItem();
 
         UserInfo user = SessionUtility.getUser();
-        
+
         // Ensure sort order is set. 
         List<ItemElement> templateElements = templateToCreateNewItem.getItemElementDisplayList();
-        Float sortOrder = 0.0f; 
+        Float sortOrder = 0.0f;
         for (ItemElement templateElement : templateElements) {
             Float elementSortOrder = templateElement.getSortOrder();
             if (elementSortOrder != null) {
-                sortOrder = elementSortOrder; 
-            }            
-            
-            templateElement.setSortOrder(sortOrder);            
-            sortOrder += 1; 
-        }                
-        
+                sortOrder = elementSortOrder;
+            }
+
+            templateElement.setSortOrder(sortOrder);
+            sortOrder += 1;
+        }
+
         getControllerUtility().cloneCreateItemElements(current, templateToCreateNewItem, user, true, true, true);
 
-        List<ItemElement> itemElementDisplayList = current.getItemElementDisplayList();        
-        for (ItemElement ie : itemElementDisplayList) {                       
+        List<ItemElement> itemElementDisplayList = current.getItemElementDisplayList();
+        for (ItemElement ie : itemElementDisplayList) {
             ItemDomainLogbook containedItem = (ItemDomainLogbook) ie.getContainedItem();
             ItemDomainLogbook newItem = null;
 
@@ -434,9 +435,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         ItemDomainLogbookLazyDataModel itemLazyDataModel = getItemLazyDataModel();
         itemLazyDataModel.setCurrentEntityType(currentEntityType);
     }
-    
+
     private void redirectToEntityTypeList(String entityType) {
-        String redirect = String.format("%s/%sList", getDomainPath(), entityType); 
+        String redirect = String.format("%s/%sList", getDomainPath(), entityType);
         try {
             SessionUtility.redirectTo(redirect);
         } catch (IOException ex) {
@@ -448,7 +449,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     @Override
     public void processPreRenderList() {
         super.processPreRenderList();
-        
+
         String lastEntityType = currentEntityType;
         currentEntityType = SessionUtility.getRequestParameterValue("logbook");
 
@@ -461,7 +462,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
                 if (lastEntityType != null) {
                     currentEntityType = lastEntityType;
                 } else {
-                    currentEntityType = CTL_ENTITY_TYPE_NAME; 
+                    currentEntityType = CTL_ENTITY_TYPE_NAME;
                 }
             }
             redirectToEntityTypeList(currentEntityType);
@@ -470,7 +471,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @Override
     public void processPreRenderTemplateList() {
-        super.processPreRenderList(); 
+        super.processPreRenderList();
     }
 
     @Override
@@ -642,30 +643,26 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         completeSelectionOfTemplate();
 
         // Generate shift name 
-        String shiftName = generateShiftName();
-        current.setName(shiftName);
+        generateShiftName(current);        
 
         SessionUtility.executeRemoteCommand(onSuccess);
     }
-    
-    private String generateShiftName() {
+
+    private void generateShifTimes(ItemDomainLogbook shiftItem) {
         LocalDateTime now = LocalDateTime.now();
-                              
-        String dayPart = "";
-        String datePart = "";
 
         Integer shiftStart = null;
         Integer shiftEnd = null;
-        
+
         DayOfWeek dayOfWeek = now.getDayOfWeek();
-        Integer hour = now.getHour();                
+        Integer hour = now.getHour();
 
         if (hour < 6 || hour > 21) {
             shiftStart = 23;
             shiftEnd = 7;
-            if (dayOfWeek == DayOfWeek.FRIDAY) {                
-                shiftEnd = 11; 
-            }            
+            if (dayOfWeek == DayOfWeek.FRIDAY) {
+                shiftEnd = 11;
+            }
         } else if (hour < 14) {
             shiftStart = 7;
             shiftEnd = 15;
@@ -673,56 +670,96 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             shiftStart = 15;
             shiftEnd = 23;
         }
-        
-        if (dayOfWeek == DayOfWeek.SATURDAY 
-                || dayOfWeek == DayOfWeek.SUNDAY) {            
+
+        if (dayOfWeek == DayOfWeek.SATURDAY
+                || dayOfWeek == DayOfWeek.SUNDAY) {
             if (hour > 9 && hour < 22) {
-                shiftStart = 11; 
-                shiftEnd = 23; 
+                shiftStart = 11;
+                shiftEnd = 23;
             } else {
-                shiftStart = 23; 
-                shiftEnd = 11; 
-                
+                shiftStart = 23;
+                shiftEnd = 11;
+
                 if (dayOfWeek == DayOfWeek.SUNDAY) {
-                    shiftEnd = 7; 
+                    shiftEnd = 7;
                 }
-                
-            }            
+
+            }
         }
 
+        LocalDateTime timeStart = now.withHour(shiftStart);
+        LocalDateTime timeEnd = now.withHour(shiftEnd);
+
         if (shiftStart > shiftEnd) {
-            LocalDateTime dateStart = now;
-            LocalDateTime dateEnd = null;
+            timeStart = now;
+            timeEnd = null;
 
             if (hour > 0 && hour < 11) {
                 // Shift created on next day
-                dateEnd = dateStart;
-                dateStart = now.minusHours(24);
+                timeEnd = timeStart;
+                timeStart = now.minusHours(24);
             } else {
-                dateEnd = dateStart.plusHours(24);
+                timeEnd = timeStart.plusHours(24);
             }
 
-            Month startMonth = dateStart.getMonth();
-            Month endMonth = dateEnd.getMonth();
+            // Set the start and end dates. 
+            timeStart = timeStart.withHour(shiftStart); 
+            timeEnd = timeEnd.withHour(shiftEnd);
+        }
+        
+        timeStart = timeStart.withMinute(0);
+        timeEnd = timeEnd.withMinute(0); 
 
-            dayPart = String.format("%s-%s", dayFormatter.format(dateStart), dayFormatter.format(dateEnd));
+        shiftItem.setOpsShiftStartTime(timeStart);
+        shiftItem.setOpsShiftEndTime(timeEnd);
+    }
+
+    private String generateShiftName(ItemDomainLogbook shiftItem) {
+        LocalDateTime timeStart = shiftItem.getOpsShiftStartTime();
+        if (timeStart == null) {
+            generateShifTimes(shiftItem);
+            timeStart = shiftItem.getOpsShiftStartTime();
+        }
+        LocalDateTime timeEnd = shiftItem.getOpsShiftEndTime();
+
+        String dayPart = "";
+        String datePart = "";
+
+        int startMonthDay = timeStart.getDayOfMonth();
+        int endMonthDay = timeEnd.getDayOfMonth();
+
+        if (startMonthDay != endMonthDay) {
+
+            Month startMonth = timeStart.getMonth();
+            Month endMonth = timeEnd.getMonth();
+
+            dayPart = String.format("%s-%s", dayFormatter.format(timeStart), dayFormatter.format(timeEnd));
 
             if (startMonth == endMonth) {
-                datePart = shortDateFormatter.format(dateStart);
-                datePart = String.format("%s-%s", datePart, dayYearNumFormatter.format(dateEnd));
+                datePart = shortDateFormatter.format(timeStart);
+                datePart = String.format("%s-%s", datePart, dayYearNumFormatter.format(timeEnd));
             } else {
                 // Example: Sunday-Monday, December 31-January 1, 2024 [23:00-07:00] 
-                datePart = shortDateFormatter.format(dateStart);
-                datePart = String.format("%s-%s", datePart, dateFormatter.format(dateEnd));
+                datePart = shortDateFormatter.format(timeStart);
+                datePart = String.format("%s-%s", datePart, dateFormatter.format(timeEnd));
             }
         } else {
-            dayPart = dayFormatter.format(now);
-            datePart = dateFormatter.format(now);
+            dayPart = dayFormatter.format(timeStart);
+            datePart = dateFormatter.format(timeStart);
         }
+        
+        String shiftStart = timeFormatter.format(timeStart); 
+        String shiftEnd = timeFormatter.format(timeEnd); 
 
-        String shiftName;
-        shiftName = String.format("%s - %s [%d:00 - %d:00]", dayPart, datePart, shiftStart, shiftEnd);
+        String shiftName = String.format("%s - %s [%s - %s]", dayPart, datePart, shiftStart, shiftEnd);
+        shiftItem.setName(shiftName);
         return shiftName;
+
+    }
+    
+    public void regenOpsShiftName() {
+        ItemDomainLogbook current = getCurrent();
+        generateShiftName(current);
     }
 
     public String createOperationsItem() {
@@ -744,17 +781,17 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
 
         ItemDomainLogbook current = getCurrent();
-        
+
         if (latestShiftDocument != null) {
             String name = current.getName();
             String latestName = latestShiftDocument.getName();
-            
+
             if (name.equals(latestName)) {
                 SessionUtility.addErrorMessage("Shift Exists", "Cannot create another shift since the current shift already exists.");
-                return null; 
+                return null;
             }
         }
-        
+
         EntityInfo entityInfo = current.getEntityInfo();
         UserInfo createdByUser = entityInfo.getCreatedByUser();
         List<ItemDomainLogbook> logbookSections = current.getLogbookSections();
@@ -785,7 +822,6 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     // </editor-fold>
-    
     private void copyLogs(ItemDomainLogbook oldLogDoc, ItemDomainLogbook newLogDoc) {
         List<Log> logList = oldLogDoc.getLogList();
         EntityInfo entityInfo = newLogDoc.getEntityInfo();

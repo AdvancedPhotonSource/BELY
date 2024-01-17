@@ -13,7 +13,7 @@ See LICENSE file.
     <p:dialog header="Create Operations Shift"
               id="operationsCreateDialog"
               widgetVar="operationsCreateDialogWidget"
-              styleClass="viewTransparentBackgroundDialog"                  
+              styleClass="viewTransparentBackgroundDialog"                 
               modal="true">
 
         <ui:param name="currentItem" 
@@ -22,14 +22,37 @@ See LICENSE file.
         <p:panelGrid columns="2"
                      rendered="#{currentItem != null}">
             <h:outputText value="Shift"/>
-            <h:outputText value="#{currentItem.name}"/>
+            <h:outputText id="shiftNameOutputText" value="#{currentItem.name}"/>
 
             <h:outputText value="Personnel"/>
             <p:inputText value="#{currentItem.opsPersonnel}"/>
 
             <h:outputText value="Shift Type"/>
             <p:inputText value="#{currentItem.opsShiftType}"/>
+            
+            <h:outputText value="Shift Start"/>
+            <p:datePicker value="#{currentItem.opsShiftStartTime}">
+                <p:ajax event="close" 
+                        update="@parent"
+                        onstart="PF('loadingDialog').show()"
+                        oncomplete="changeShiftTimes()"/> 
+                
+            </p:datePicker> 
+            
+            <h:outputText value="Shift End"/>
+            <p:datePicker value="#{currentItem.opsShiftEndTime}"> 
+                <p:ajax event="close" 
+                        update="@parent"
+                        onstart="PF('loadingDialog').show()"
+                        oncomplete="changeShiftTimes()"/> 
+            </p:datePicker>
         </p:panelGrid>
+        
+        <p:remoteCommand name="changeShiftTimes"
+                         action="#{itemDomainLogbookController.regenOpsShiftName()}"
+                         update="shiftNameOutputText"
+                         oncomplete="PF('loadingDialog').hide()"/>
+                         
 
         <f:facet name="footer">
             <p:commandButton value="Create"
@@ -40,7 +63,7 @@ See LICENSE file.
                              /> 
 
         </f:facet>
-    </p:dialog>
+    </p:dialog>        
 
     <p:remoteCommand name="preapreOperationsCreateDialogWidget"
                      update="operationsCreateDialog"
