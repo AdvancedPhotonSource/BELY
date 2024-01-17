@@ -26,6 +26,7 @@ import gov.anl.aps.logr.portal.utilities.MarkdownParser;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.io.IOException;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
@@ -77,11 +78,10 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     // <editor-fold defaultstate="collapsed" desc="Operations specific variables.">
     private static final String OPS_TEMPLATE_NAME = "Operations Shift";
     private static final String OPS_GENERAL_FIRST_LOG_ENTRY = "Personnel: %s \n\n\n Shift Type: %s";
-
-    private static final DateTimeFormatter hourFormatter = DateTimeFormatter.ofPattern("HH");
+    
     private static final DateTimeFormatter dayFormatter = DateTimeFormatter.ofPattern("EEEE");
     private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy");
-    private static final DateTimeFormatter dayNumFormatter = DateTimeFormatter.ofPattern("dd");
+    private static final DateTimeFormatter dayYearNumFormatter = DateTimeFormatter.ofPattern("dd, yyyy");
     private static final DateTimeFormatter shortDateFormatter = DateTimeFormatter.ofPattern("MMMM dd");
 
     // </editor-fold>
@@ -647,35 +647,54 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         SessionUtility.executeRemoteCommand(onSuccess);
     }
-
+    
     private String generateShiftName() {
         LocalDateTime now = LocalDateTime.now();
-
+                              
         String dayPart = "";
         String datePart = "";
 
         Integer shiftStart = null;
         Integer shiftEnd = null;
+        
+        DayOfWeek dayOfWeek = now.getDayOfWeek();
+        Integer hour = now.getHour();                
 
-        String hourStr = hourFormatter.format(now);
-        Integer hour = Integer.valueOf(hourStr);
-
-        if (hour < 6 || hour > 22) {
+        if (hour < 6 || hour > 21) {
             shiftStart = 23;
             shiftEnd = 7;
+            if (dayOfWeek == DayOfWeek.FRIDAY) {                
+                shiftEnd = 11; 
+            }            
         } else if (hour < 14) {
             shiftStart = 7;
             shiftEnd = 15;
-        } else { // if (hour < 22) {
+        } else { // if (hour < 22) {            
             shiftStart = 15;
             shiftEnd = 23;
+        }
+        
+        if (dayOfWeek == DayOfWeek.SATURDAY 
+                || dayOfWeek == DayOfWeek.SUNDAY) {            
+            if (hour > 9 && hour < 22) {
+                shiftStart = 11; 
+                shiftEnd = 23; 
+            } else {
+                shiftStart = 23; 
+                shiftEnd = 11; 
+                
+                if (dayOfWeek == DayOfWeek.SUNDAY) {
+                    shiftEnd = 7; 
+                }
+                
+            }            
         }
 
         if (shiftStart > shiftEnd) {
             LocalDateTime dateStart = now;
             LocalDateTime dateEnd = null;
 
-            if (hour > 0 && hour < 6) {
+            if (hour > 0 && hour < 11) {
                 // Shift created on next day
                 dateEnd = dateStart;
                 dateStart = now.minusHours(24);
@@ -689,8 +708,8 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             dayPart = String.format("%s-%s", dayFormatter.format(dateStart), dayFormatter.format(dateEnd));
 
             if (startMonth == endMonth) {
-                datePart = dateFormatter.format(dateStart);
-                datePart = String.format("%s-%s", datePart, dayNumFormatter.format(dateEnd));
+                datePart = shortDateFormatter.format(dateStart);
+                datePart = String.format("%s-%s", datePart, dayYearNumFormatter.format(dateEnd));
             } else {
                 // Example: Sunday-Monday, December 31-January 1, 2024 [23:00-07:00] 
                 datePart = shortDateFormatter.format(dateStart);
@@ -766,6 +785,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     // </editor-fold>
+    
     private void copyLogs(ItemDomainLogbook oldLogDoc, ItemDomainLogbook newLogDoc) {
         List<Log> logList = oldLogDoc.getLogList();
         EntityInfo entityInfo = newLogDoc.getEntityInfo();
