@@ -123,8 +123,7 @@ pre:has(code) {
     margin: 0px; 
 }
 
-.logEntry p {
-    margin-block: 0; 
+.logEntry p {    
 }
 
 .logEntry img {
