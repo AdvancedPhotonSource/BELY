@@ -69,6 +69,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private static final String CTL_ENTITY_TYPE_NAME = "ctl";
     private static final String AOP_ENTITY_TYPE_NAME = "aop";
     private static final String OPS_ENTITY_TYPE_NAME = "ops";
+    private static final String SANDBOX_ENTITY_TYPE_NAME = "sandbox";
 
     private static final String LOGBOOK_SETTINGS_PROPERTY_TYPE_NAME = "Logbook Document Settings";
     private static final String LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY = "showTimestamps";
@@ -430,6 +431,10 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public void processPreRenderAOPList() {
         processPreRenderSpecificList(AOP_ENTITY_TYPE_NAME);
     }
+    
+    public void processPreRenderSandboxList() {
+        processPreRenderSpecificList(SANDBOX_ENTITY_TYPE_NAME);
+    }
 
     private void processPreRenderSpecificList(String entityTypeName) {
         super.processPreRenderList();
@@ -558,6 +563,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
                     break;
                 case OPS_ENTITY_TYPE_NAME:
                     entityName = "Operations";
+                    break;
+                case SANDBOX_ENTITY_TYPE_NAME:
+                    entityName = "Sandbox"; 
                     break;
                 default:
                     entityName = currentEntityType.toUpperCase();
