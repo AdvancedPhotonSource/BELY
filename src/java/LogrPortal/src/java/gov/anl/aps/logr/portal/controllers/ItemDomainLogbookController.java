@@ -32,7 +32,6 @@ import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.regex.Pattern;
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
@@ -77,13 +76,18 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     // Custom operations functionality.. 
     // <editor-fold defaultstate="collapsed" desc="Operations specific variables.">
     private static final String OPS_TEMPLATE_NAME = "Operations Shift";
-    private static final String OPS_GENERAL_FIRST_LOG_ENTRY = "Personnel: %s \n\n\n Shift Type: %s";
+    private static final String OPS_GENERAL_FIRST_LOG_ENTRY = "Personnel: %s \n\n\n Shift Type: %s";        
 
     private static final DateTimeFormatter dayFormatter = DateTimeFormatter.ofPattern("EEEE");
     private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy");
     private static final DateTimeFormatter dayYearNumFormatter = DateTimeFormatter.ofPattern("dd, yyyy");
     private static final DateTimeFormatter shortDateFormatter = DateTimeFormatter.ofPattern("MMMM dd");
     private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm"); 
+    
+    private static final int[] COPY_OPS_SHIFT_SECTIONS_INX = new int[] {1, 4 ,5}; 
+    private boolean initialOpsSelectionReset; 
+    private List<String> opsSectionCopyList = null; 
+    private List<String> opsSelectedCopyList = null; 
 
     // </editor-fold>
     public final static String controllerNamed = "itemDomainLogbookController";
@@ -641,15 +645,33 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             return;
         }
         completeSelectionOfTemplate();
+        
+        List<ItemDomainLogbook> logbookSections = current.getLogbookSections();        
+
+        if (logbookSections.size() != 6) {
+            SessionUtility.addErrorMessage("Error", "Tempalte '" + OPS_TEMPLATE_NAME + "' must have 6 sections.");
+            return;
+        }
+        
+        opsSectionCopyList = new ArrayList<>(); 
+        opsSelectedCopyList = new ArrayList<>();
+        initialOpsSelectionReset = true; 
+        
+        for (int i : COPY_OPS_SHIFT_SECTIONS_INX) {
+            ItemDomainLogbook section = logbookSections.get(i);
+            
+            opsSelectedCopyList.add(section.getName()); 
+            opsSectionCopyList.add(section.getName());
+        }
 
         // Generate shift name 
         generateShiftName(current);        
 
         SessionUtility.executeRemoteCommand(onSuccess);
     }
-
+    
     private void generateShifTimes(ItemDomainLogbook shiftItem) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();        
 
         Integer shiftStart = null;
         Integer shiftEnd = null;
@@ -797,11 +819,6 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         List<ItemDomainLogbook> logbookSections = current.getLogbookSections();
         List<ItemDomainLogbook> lastShiftSections = latestShiftDocument.getLogbookSections();
 
-        if (logbookSections.size() != 6) {
-            SessionUtility.addErrorMessage("Error", "Tempalte '" + OPS_TEMPLATE_NAME + "' must have 6 sections.");
-            return null;
-        }
-
         // Get first section for personnel and shift type. 
         ItemDomainLogbook sectionOne = logbookSections.get(0);
         String opsPersonnel = current.getOpsPersonnel();
@@ -811,14 +828,37 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         if (latestShiftDocument != null) {
             // Copy some sections to new shift log.
-            copyLogs(lastShiftSections.get(1), logbookSections.get(1));
-            copyLogs(lastShiftSections.get(4), logbookSections.get(4));
-            copyLogs(lastShiftSections.get(5), logbookSections.get(5));
+            for (int sectionIndex = 0; sectionIndex < logbookSections.size(); sectionIndex++) {
+                ItemDomainLogbook newSection = logbookSections.get(sectionIndex);                
+                String name = newSection.getName();
+                
+                if (opsSelectedCopyList.contains(name)) {
+                    ItemDomainLogbook lastSection = lastShiftSections.get(sectionIndex);
+                    copyLogs(lastSection, newSection);
+                }
+            }
         } else {
             SessionUtility.addInfoMessage("Info", "Created new shift, no previous shift found.");
         }
 
         return create();
+    }
+
+    public List<String> getOpsSectionCopyList() {
+        return opsSectionCopyList;
+    }
+
+    public List<String> getOpsSelectedCopyList() {
+        return opsSelectedCopyList;
+    }
+
+    public void setOpsSelectedCopyList(List<String> opsSelectedCopyList) {
+        // UI will clear the default list on the initial update of widget. 
+        if (opsSelectedCopyList.size() == 0 && initialOpsSelectionReset) {
+            initialOpsSelectionReset = false; 
+            return; 
+        }
+        this.opsSelectedCopyList = opsSelectedCopyList;
     }
 
     // </editor-fold>
