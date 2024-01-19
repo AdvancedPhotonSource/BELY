@@ -6,15 +6,15 @@ See LICENSE file.
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://java.sun.com/jsf/facelets"
-                xmlns:f="http://xmlns.jcp.org/jsf/core"
-                template="../item/private/templates/itemTemplateListTemplate.xhtml">
+                template="private/templates/itemDomainLogbookListTemplate.xhtml"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
     
-    <ui:param name="entityController" value="#{itemDomainLogbookController}" />
+    <ui:param name="entityController" value="#{itemDomainLogbookController}" />        
     
     <f:metadata>
         <f:viewAction action="#{settingController.updateGlobalSettings()}" />
-        <f:viewAction action="#{itemDomainLogbookController.processPreRenderTemplateList()}" />
-    </f:metadata>
+        <f:viewAction action="#{itemDomainLogbookController.processPreRenderSandboxList()}" />
+    </f:metadata>              
 
 </ui:composition>
 

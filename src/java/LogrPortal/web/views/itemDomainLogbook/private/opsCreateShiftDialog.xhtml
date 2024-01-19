@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <p:dialog header="Create Operations Shift"
+              id="operationsCreateDialog"
+              widgetVar="operationsCreateDialogWidget"
+              styleClass="viewTransparentBackgroundDialog"                 
+              modal="true">
+
+        <ui:param name="currentItem" 
+                  value="#{itemDomainLogbookController.current}" /> 
+
+        <p:panelGrid columns="2"
+                     rendered="#{currentItem != null}">
+            <h:outputText value="Shift"/>
+            <h:outputText id="shiftNameOutputText" value="#{currentItem.name}"/>
+
+            <h:outputText value="Personnel"/>
+            <p:inputText value="#{currentItem.opsPersonnel}"/>
+
+            <h:outputText value="Shift Type"/>
+            <p:inputText value="#{currentItem.opsShiftType}"/>
+            
+            <h:outputText value="Shift Start"/>
+            <p:datePicker value="#{currentItem.opsShiftStartTime}">
+                <p:ajax event="close" 
+                        update="@parent"
+                        onstart="PF('loadingDialog').show()"
+                        oncomplete="changeShiftTimes()"/> 
+                
+            </p:datePicker> 
+            
+            <h:outputText value="Shift End"/>
+            <p:datePicker value="#{currentItem.opsShiftEndTime}"> 
+                <p:ajax event="close" 
+                        update="@parent"
+                        onstart="PF('loadingDialog').show()"
+                        oncomplete="changeShiftTimes()"/> 
+            </p:datePicker>
+            
+            
+            <h:outputText value="Copy from last shift"/>
+            <p:selectCheckboxMenu multiple="true"
+                                  immediate="true"
+                                  value="#{itemDomainLogbookController.opsSelectedCopyList}">
+                <f:selectItems value="#{itemDomainLogbookController.opsSectionCopyList}" />                 
+            </p:selectCheckboxMenu>
+        </p:panelGrid>
+        
+        <p:remoteCommand name="changeShiftTimes"
+                         action="#{itemDomainLogbookController.regenOpsShiftName()}"
+                         update="shiftNameOutputText"
+                         oncomplete="PF('loadingDialog').hide()"/>
+                         
+
+        <f:facet name="footer">
+            <p:commandButton value="Create"
+                             icon="fa fa-save"
+                             onclick="PF('loadingDialog').show()"
+                             oncomplete="PF('loadingDialog').hide()"
+                             action="#{itemDomainLogbookController.createOperationsItem()}"
+                             /> 
+
+        </f:facet>
+    </p:dialog>        
+
+    <p:remoteCommand name="preapreOperationsCreateDialogWidget"
+                     update="operationsCreateDialog"
+                     oncomplete="PF('operationsCreateDialogWidget').show()"/>
+
+
+</ui:composition>
+
+

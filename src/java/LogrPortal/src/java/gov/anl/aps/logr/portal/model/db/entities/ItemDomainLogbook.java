@@ -7,6 +7,8 @@ package gov.anl.aps.logr.portal.model.db.entities;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import gov.anl.aps.logr.portal.constants.ItemDomainName;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
+import gov.anl.aps.logr.portal.model.db.utilities.LogUtility;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.DiscriminatorValue;
@@ -24,6 +26,12 @@ public class ItemDomainLogbook extends Item {
     private transient List<ItemDomainLogbook> logbookSections;
     
     private transient PropertyValue logbookDocumentSettings; 
+    
+    
+    private transient String opsPersonnel; 
+    private transient String opsShiftType = "Machine Studies"; 
+    private transient LocalDateTime opsShiftStartTime; 
+    private transient LocalDateTime opsShiftEndTime; 
 
     public ItemDomainLogbook() {
     }
@@ -56,7 +64,7 @@ public class ItemDomainLogbook extends Item {
 
             if (!itemElementDisplayList.isEmpty()) {
                 List<Log> logList = this.getLogList();
-                if (!logList.isEmpty()) {
+                if (logList != null && !logList.isEmpty()) {
                     // Add standard section only if it has log entries. 
                     logbookSections.add(this);
                 }
@@ -70,6 +78,22 @@ public class ItemDomainLogbook extends Item {
 
         return logbookSections;
     }
+    
+    public Log addLogEntry(String logText, UserInfo userInfo) {
+        List<Log> logList = getLogList();
+        
+        if (logList == null) {
+            logList = new ArrayList<>(); 
+            setLogList(logList);
+        }
+        
+        Log newLog = LogUtility.createLogEntry(userInfo); 
+        newLog.setText(logText);
+        
+        logList.add(newLog); 
+        
+        return newLog; 
+    }
 
     @JsonIgnore
     public PropertyValue getLogbookDocumentSettings() {
@@ -78,5 +102,39 @@ public class ItemDomainLogbook extends Item {
 
     public void setLogbookDocumentSettings(PropertyValue logbookDocumentSettings) {
         this.logbookDocumentSettings = logbookDocumentSettings;
+    }
+
+    @JsonIgnore
+    public String getOpsPersonnel() {
+        return opsPersonnel;
+    }
+
+    public void setOpsPersonnel(String opsPersonnel) {
+        this.opsPersonnel = opsPersonnel;
+    }
+
+    @JsonIgnore
+    public String getOpsShiftType() {
+        return opsShiftType;
+    }
+
+    public void setOpsShiftType(String opsShiftType) {
+        this.opsShiftType = opsShiftType;
+    }
+
+    public LocalDateTime getOpsShiftStartTime() {
+        return opsShiftStartTime;
+    }
+
+    public void setOpsShiftStartTime(LocalDateTime opsShiftStartTime) {
+        this.opsShiftStartTime = opsShiftStartTime;
+    }
+
+    public LocalDateTime getOpsShiftEndTime() {
+        return opsShiftEndTime;
+    }
+
+    public void setOpsShiftEndTime(LocalDateTime opsShiftEndTime) {
+        this.opsShiftEndTime = opsShiftEndTime;
     }
 }

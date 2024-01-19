@@ -37,6 +37,11 @@ See LICENSE file.
                         icon="fa fa-book"                        
                         id="opsLogbookListButton" url="#{request.contextPath}/views/itemDomainLogbook/opsList" 
                         styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainLogbook/opsList') ? 'activeMenuItem' : ''} "/>
+                
+                <p:menuitem value="Sandbox" 
+                        icon="fa fa-book"                        
+                        id="sandboxLogbookListButton" url="#{request.contextPath}/views/itemDomainLogbook/sandboxList" 
+                        styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainLogbook/sandboxList') ? 'activeMenuItem' : ''} "/>
             </p:submenu>
             
 
