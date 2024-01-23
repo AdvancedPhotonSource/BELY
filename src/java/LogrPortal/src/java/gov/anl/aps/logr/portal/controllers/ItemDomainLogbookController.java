@@ -239,6 +239,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         return getLogbookSettingBoolean(true, LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY);
     }
     
+    public void setLogbookDisplayTimestamps(boolean displayTimestamp) {        
+        String value = String.valueOf(displayTimestamp); 
+        setLogbookSettingPropertyKey(LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY, value);
+    }
+    
     public String getLogbookTemplateLogMode() {
         return getLogbookSetting(LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_NONE_VAL, LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY);
     }
