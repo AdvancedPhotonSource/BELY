@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <h:outputText value="Template Log Mode"
+                  rendered="#{itemObject.createdFromTemplate != null or itemDomainLogbookController.currentItemTemplate}"/> 
+
+    <p:inplace id="templateLogModeInplace#{viewName}"
+               widgetVar="templateLogModeInplaceWidget"
+               rendered="#{itemObject.createdFromTemplate != null or itemDomainLogbookController.currentItemTemplate}"
+               editor="#{isEntityWriteable}">
+        <p:ajax event="save" update="@this" oncomplete="inlineSaveEntity()"/>
+        <p:ajax event="cancel" onstart="reloadTemplateLogModeInplace()" />
+
+        <f:facet name="output">
+            <p:outputPanel>
+                <p:commandLink id="templateLogModeInplaceShowButton#{viewName}"
+                               styleClass="fa-link-icon fa-icon fa fa-pencil"
+                               onclick="PF('templateLogModeInplaceWidget').show();"
+                               rendered="#{isEntityWriteable}"/>
+                <h:outputText value="#{itemDomainLogbookController.logbookTemplateLogMode}"/>
+            </p:outputPanel>
+
+        </f:facet>
+
+        <f:facet name="input">
+            <p:remoteCommand name="reloadTemplateLogModeInplace"
+                             update="templateLogModeInplace#{viewName}"
+                             action="#{entityController.reloadCurrent()}"/>
+
+            <p:selectOneMenu value="#{itemDomainLogbookController.logbookTemplateLogMode}">
+                <f:selectItems value="#{itemDomainLogbookController.logbookSettingTemplateLogModes}"/> 
+            </p:selectOneMenu>
+
+        </f:facet>
+    </p:inplace> 
+
+
+</ui:composition>
+
+
