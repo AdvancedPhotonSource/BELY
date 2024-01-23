@@ -15,6 +15,7 @@ See LICENSE file.
 
     <p:inplace id="templateLogModeInplace#{viewName}"
                widgetVar="templateLogModeInplaceWidget"
+               toggleable="false"
                rendered="#{itemObject.createdFromTemplate != null or itemDomainLogbookController.currentItemTemplate}"
                editor="#{isEntityWriteable}">
         <p:ajax event="save" update="@this" oncomplete="inlineSaveEntity()"/>
