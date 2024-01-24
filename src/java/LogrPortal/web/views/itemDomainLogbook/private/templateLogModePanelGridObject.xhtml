@@ -10,7 +10,7 @@ See LICENSE file.
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:h="http://xmlns.jcp.org/jsf/html">
 
-    <h:outputText value="Template Log Mode"
+    <h:outputText value="Template Action"
                   rendered="#{itemObject.createdFromTemplate != null or itemDomainLogbookController.currentItemTemplate}"/> 
 
     <p:inplace id="templateLogModeInplace#{viewName}"
@@ -38,7 +38,16 @@ See LICENSE file.
                              action="#{entityController.reloadCurrent()}"/>
 
             <p:selectOneMenu value="#{itemDomainLogbookController.logbookTemplateLogMode}">
-                <f:selectItems value="#{itemDomainLogbookController.logbookSettingTemplateLogModes}"/> 
+                <f:selectItem itemLabel="#{itemDomainLogbookController.LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_NONE_VAL}"
+                              itemValue="#{itemDomainLogbookController.LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_NONE_VAL}"                              
+                              itemDescription="Log entries on template ignored. All sections and settings copied over to new log document."/>
+                <f:selectItem itemLabel="#{itemDomainLogbookController.LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_COPY_VAL}"
+                              itemValue="#{itemDomainLogbookController.LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_COPY_VAL}"
+                              itemDisabled="#{!itemDomainLogbookController.currentItemTemplate}"
+                              itemDescription="One time copy of all the log entries on the template to the new log document at creation."/>
+                <f:selectItem itemLabel="#{itemDomainLogbookController.LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL}"
+                              itemValue="#{itemDomainLogbookController.LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL}"
+                              itemDescription="The first log entry of each section is used as a log template for each newly added log entry."/>
             </p:selectOneMenu>
 
         </f:facet>

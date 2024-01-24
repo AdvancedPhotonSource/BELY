@@ -78,12 +78,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY = "logMode"; 
     private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_NONE_VAL = "none"; 
     private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_COPY_VAL = "copy"; 
-    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL = "template per entry"; 
-    private static final String[] LOGBOOK_SETTING_TEMPLATE_LOG_MODES = new String[] {
-        LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_NONE_VAL, 
-        LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_COPY_VAL, 
-        LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL
-    }; 
+    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL = "template per entry";     
 
     // Custom operations functionality.. 
     // <editor-fold defaultstate="collapsed" desc="Operations specific variables.">
@@ -258,8 +253,16 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         setLogbookSettingPropertyKey(LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY, logMode);
     }
 
-    public String[] getLogbookSettingTemplateLogModes() {        
-        return LOGBOOK_SETTING_TEMPLATE_LOG_MODES;
+    public String getLOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_NONE_VAL() {
+        return LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_NONE_VAL;
+    }
+
+    public String getLOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_COPY_VAL() {
+        return LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_COPY_VAL;
+    }
+
+    public String getLOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL() {
+        return LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL;
     }
 
     @Override
