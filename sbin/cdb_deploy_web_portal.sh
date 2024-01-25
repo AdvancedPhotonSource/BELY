@@ -43,7 +43,7 @@ else
 fi
 
 LOGR_HOST_ARCH=$(uname -sm | tr -s '[:upper:][:blank:]' '[:lower:][\-]')
-LOGR_CONTEXT_ROOT=${LOGR_CONTEXT_ROOT:=logr}
+LOGR_CONTEXT_ROOT=${LOGR_CONTEXT_ROOT:=bely}
 LOGR_PERM_CONTEXT_ROOT_URL=${LOGR_PERM_CONTEXT_ROOT_URL:=http://localhost:8080/logr}
 LOGR_DATA_DIR=${LOGR_DATA_DIR:=/logr}
 GLASSFISH_DIR=$LOGR_SUPPORT_DIR/payara/$LOGR_HOST_ARCH
