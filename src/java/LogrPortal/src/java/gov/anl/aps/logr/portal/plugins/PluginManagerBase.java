@@ -16,7 +16,7 @@ import java.util.Properties;
  */
 public abstract class PluginManagerBase {
 
-    protected static final String PLUGIN_BASE_PATH = "gov/anl/aps/cdb/portal/plugins/support";
+    protected static final String PLUGIN_BASE_PATH = "gov/anl/aps/logr/portal/plugins/support";
 
     protected PropertyTypeHandlerInterface propertyTypeHandler = null;
 

@@ -15,7 +15,7 @@ import sys
 
 cdb_db_name = sys.argv[1]
 if cdb_db_name == None:
-    cdb_db_name = 'cdb'
+    cdb_db_name = 'bely'
 
 
 plugin_manager = PluginManager(cdb_db_name)
