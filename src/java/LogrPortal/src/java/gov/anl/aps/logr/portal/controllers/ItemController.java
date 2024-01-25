@@ -2076,9 +2076,7 @@ public abstract class ItemController<
             }
         }   
         
-        if (this.templateToCreateNewItem != null) {
-            additionalSelectionOfTemplateSteps(); 
-            
+        if (this.templateToCreateNewItem != null) {                        
             current.setItemCategoryList(templateToCreateNewItem.getItemCategoryList());
             current.setItemTypeList(templateToCreateNewItem.getItemTypeList());
 
@@ -2088,6 +2086,8 @@ public abstract class ItemController<
             current = controllerUtility.cloneProperties(current, templateToCreateNewItem, user);
             current = controllerUtility.cloneSources(current, templateToCreateNewItem);
             addCreatedFromTemplateRelationshipToItem(current);
+            
+            additionalSelectionOfTemplateSteps(); 
         }
     }
     

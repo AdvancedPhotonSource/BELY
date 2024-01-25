@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <h:outputText value="Show Timestamp"/> 
+
+    <p:inplace id="showTimestampsSettingInplace#{viewName}"
+               widgetVar="showTimestampsSettingInplaceWidget"               
+               toggleable="false"
+               editor="#{isEntityWriteable}">
+        <p:ajax event="save" update="@form" oncomplete="saveShowTimestampsSettingInplace()"/>
+        <p:ajax event="cancel" onstart="reloadShowTimestampsSettingInplace()" />
+
+        <f:facet name="output">
+            <p:outputPanel>
+                <p:commandLink id="ShowTimestampsSettingInplaceShowButton#{viewName}"
+                               styleClass="fa-link-icon fa-icon fa fa-pencil"
+                               onclick="PF('showTimestampsSettingInplaceWidget').show();"
+                               rendered="#{isEntityWriteable}"/>
+                <h:outputText value="#{itemDomainLogbookController.logbookDisplayTimestamps}"/>
+            </p:outputPanel>
+
+        </f:facet>
+
+        <f:facet name="input">
+            <p:remoteCommand name="reloadShowTimestampsSettingInplace"
+                             update="showTimestampsSettingInplace#{viewName}"
+                             action="#{entityController.reloadCurrent()}"/>
+            
+            <p:remoteCommand name="saveShowTimestampsSettingInplace"
+                             action="#{itemDomainLogbookController.update()}"/>
+            
+            <p:selectBooleanCheckbox value="#{itemDomainLogbookController.logbookDisplayTimestamps}" />
+        </f:facet>
+    </p:inplace> 
+
+
+</ui:composition>
+
+
