@@ -53,7 +53,7 @@ configure-web-portal: dist
 	$(TOP)/sbin/cdb_configure_web_portal.sh
 
 deploy-cdb-plugin:
-	$(TOP)/tools/developer_tools/logr_plugins/deploy_plugin.py cdb
+	$(TOP)/tools/developer_tools/logr_plugins/deploy_plugin.py bely
 
 deploy-web-portal: dist
 	$(TOP)/sbin/cdb_deploy_web_portal.sh

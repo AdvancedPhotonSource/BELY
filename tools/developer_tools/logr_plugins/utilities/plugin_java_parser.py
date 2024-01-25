@@ -7,7 +7,7 @@ See LICENSE file.
 import os
 from plugin_configuration import PluginConfiguration
 
-JAVA_PLUGIN_PACKAGE="gov.anl.aps.cdb.portal.plugins.support"
+JAVA_PLUGIN_PACKAGE="gov.anl.aps.logr.portal.plugins.support"
 
 JAVA_TEMPLATE_IMPORT_KEY = "PYTHON_IMPORT_INSERT_MARKER"
 JAVA_TEMPLATE_REGISTER_KEY = "PYTHON_REGISTER_INSERT_MARKER"

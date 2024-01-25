@@ -2,7 +2,7 @@
  * Copyright (c) UChicago Argonne, LLC. All rights reserved.
  * See LICENSE file.
  */
-package gov.anl.aps.cdb.portal.plugins.support.orgLinks;
+package gov.anl.aps.logr.portal.plugins.support.orgLinks;
 
 import java.util.List;
 

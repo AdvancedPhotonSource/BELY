@@ -33,7 +33,7 @@ LOGR_JAVA_PLUGIN_PATH = CdbPlugin.get_java_plugin_path(LOGR_DIST_DIRECTORY)
 LOGR_PYTHON_PLUGIN_PATH = CdbPlugin.get_python_plugin_path(LOGR_DIST_DIRECTORY)
 
 LOGR_INSTALL_PLUGIN_DIRECTORY = '%s/plugins' % LOGR_INSTALL_DIRECTORY
-LOGR_DIST_PLUGIN_DIRECTORY = '%s/tools/developer_tools/LOGR_plugins/plugins' % LOGR_DIST_DIRECTORY
+LOGR_DIST_PLUGIN_DIRECTORY = '%s/tools/developer_tools/logr_plugins/plugins' % LOGR_DIST_DIRECTORY
 LOGR_PLUGIN_CONFIGURATION_STORAGE_DIR_BASE = '%s/etc/plugins' % LOGR_INSTALL_DIRECTORY
 
 JAVA_PLUGIN_REGISTRAR_FILE_NAME = 'PluginRegistrar.java'
