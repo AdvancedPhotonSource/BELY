@@ -55,7 +55,7 @@ See LICENSE file.
     </filter-mapping>       
     <session-config>
         <session-timeout>
-            60
+            180
         </session-timeout>
     </session-config>
     <welcome-file-list>
