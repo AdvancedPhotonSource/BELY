@@ -34,6 +34,7 @@ import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
@@ -72,8 +73,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private static final String AOP_ENTITY_TYPE_NAME = "aop";
     private static final String OPS_ENTITY_TYPE_NAME = "ops";
     private static final String SANDBOX_ENTITY_TYPE_NAME = "sandbox";
-
-    private static final String LOGBOOK_SETTINGS_PROPERTY_TYPE_NAME = "Logbook Document Settings";
+   
     private static final String LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY = "showTimestamps";
     private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY = "logMode"; 
     private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_NONE_VAL = "none"; 
@@ -235,6 +235,22 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public boolean entityCanBeCreatedByUsers() {
         return true;
     }
+    
+    public Double getDocumentLockoutHours() {
+        ItemDomainLogbook current = getCurrent();
+        return current.getDocumentLockoutHours(); 
+    }
+    
+    public void setDocumentLockoutHours(Double hours) {
+        if (hours == null) {
+            hours = 0.0; 
+        }
+        String DOC_LOCKOUT_SETTING_KEY = ItemDomainLogbook.DOC_LOCKOUT_SETTING_KEY;
+        
+        ItemDomainLogbook current = getCurrent();
+        current.setDocumentLockoutHours(hours);
+        setLogbookSettingPropertyKey(DOC_LOCKOUT_SETTING_KEY, hours.toString());
+    }
 
     public boolean getLogbookDisplayTimestamps() {
         return getLogbookSettingBoolean(true, LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY);
@@ -278,24 +294,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     private PropertyValue getLogbookSettingsProperty(ItemDomainLogbook logbookItem) {        
-        PropertyValue logbookDocumentSettings = logbookItem.getLogbookDocumentSettings();
-
-        if (logbookDocumentSettings == null) {
-            List<PropertyValue> propertyValueList = logbookItem.getPropertyValueList();
-
-            for (PropertyValue pv : propertyValueList) {
-                PropertyType propertyType = pv.getPropertyType();
-                String propertyTypeName = propertyType.getName();
-
-                if (propertyTypeName.equals(LOGBOOK_SETTINGS_PROPERTY_TYPE_NAME)) {
-                    logbookDocumentSettings = pv;
-                    break;
-                }
-            }
-
-            logbookItem.setLogbookDocumentSettings(logbookDocumentSettings);
-        }
-        return logbookDocumentSettings;
+        return logbookItem.getLogbookDocumentSettings();
     }
     
     private PropertyValue getOrCreateLogbookSettingsProperty() {
@@ -303,6 +302,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         
         if(logbookSettingsProperty == null) {
             try {
+                String LOGBOOK_SETTINGS_PROPERTY_TYPE_NAME = ItemDomainLogbook.LOGBOOK_SETTINGS_PROPERTY_TYPE_NAME;
                 return addSystemPropertyValue(LOGBOOK_SETTINGS_PROPERTY_TYPE_NAME, true, "");
             } catch (CdbException ex) {
                 SessionUtility.addErrorMessage("ERROR", ex.getErrorMessage());
@@ -346,7 +346,26 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     } 
 
     @Override
-    public Log prepareAddLog(ItemDomainLogbook cdbDomainEntity) {
+    public Log prepareAddLog(ItemDomainLogbook cdbDomainEntity) {                
+        EntityInfo entityInfo = cdbDomainEntity.getEntityInfo();
+        boolean isEntityWriteableByTimeout = entityInfo.refreshWriteableByTimeout();
+        
+        if (isEntityWriteableByTimeout == false) {
+            SessionUtility.addErrorMessage("Cannot Add Log Entry", "Log document lockout timer expired.");            
+            
+            try {
+                String domainPath = getDomainPath();
+                String viewForCurrentEntity = viewForCurrentEntity();
+                String url = String.format("%s/%s", domainPath, viewForCurrentEntity);
+                SessionUtility.redirectTo(url);
+            } catch (IOException ex) {
+                SessionUtility.addErrorMessage("Error", ex.getMessage());
+                logger.error(ex);
+            }
+            setNewLogEdit(null);
+            return null; 
+        }
+        
         String logbookTemplateLogMode = getLogbookTemplateLogMode();
         
         Log log = super.prepareAddLog(cdbDomainEntity);                

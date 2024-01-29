@@ -22,16 +22,20 @@ import javax.persistence.Entity;
 @DiscriminatorValue(value = ItemDomainName.LOGBOOK_ID + "")
 public class ItemDomainLogbook extends Item {
 
+    public static final String LOGBOOK_SETTINGS_PROPERTY_TYPE_NAME = "Logbook Document Settings";
+    // System level settings. 
+    public static final String DOC_LOCKOUT_SETTING_KEY = "docLockout";
+
     private transient ItemDomainLogbook newLogbookSection = null;
     private transient List<ItemDomainLogbook> logbookSections;
-    
-    private transient PropertyValue logbookDocumentSettings; 
-    
-    
-    private transient String opsPersonnel; 
-    private transient String opsShiftType = "Machine Studies"; 
-    private transient LocalDateTime opsShiftStartTime; 
-    private transient LocalDateTime opsShiftEndTime; 
+
+    private transient PropertyValue logbookDocumentSettings;
+    private transient Double documentLockoutHours;
+
+    private transient String opsPersonnel;
+    private transient String opsShiftType = "Machine Studies";
+    private transient LocalDateTime opsShiftStartTime;
+    private transient LocalDateTime opsShiftEndTime;
 
     public ItemDomainLogbook() {
     }
@@ -78,25 +82,42 @@ public class ItemDomainLogbook extends Item {
 
         return logbookSections;
     }
-    
+
     public Log addLogEntry(String logText, UserInfo userInfo) {
         List<Log> logList = getLogList();
-        
+
         if (logList == null) {
-            logList = new ArrayList<>(); 
+            logList = new ArrayList<>();
             setLogList(logList);
         }
-        
-        Log newLog = LogUtility.createLogEntry(userInfo); 
+
+        Log newLog = LogUtility.createLogEntry(userInfo);
         newLog.setText(logText);
-        
-        logList.add(newLog); 
-        
-        return newLog; 
+
+        logList.add(newLog);
+
+        return newLog;
     }
 
     @JsonIgnore
     public PropertyValue getLogbookDocumentSettings() {
+        if (logbookDocumentSettings == null) {
+            List<PropertyValue> propertyValueList = this.getPropertyValueList();
+            if (propertyValueList == null) {
+                return null;
+            }
+
+            for (PropertyValue pv : propertyValueList) {
+                PropertyType propertyType = pv.getPropertyType();
+                String propertyTypeName = propertyType.getName();
+
+                if (propertyTypeName.equals(LOGBOOK_SETTINGS_PROPERTY_TYPE_NAME)) {
+                    logbookDocumentSettings = pv;
+                    break;
+                }
+            }
+        }
+
         return logbookDocumentSettings;
     }
 
@@ -136,5 +157,38 @@ public class ItemDomainLogbook extends Item {
 
     public void setOpsShiftEndTime(LocalDateTime opsShiftEndTime) {
         this.opsShiftEndTime = opsShiftEndTime;
+    }
+
+    @Override
+    public EntityInfo getEntityInfo() {
+        EntityInfo result = super.getEntityInfo();
+
+        Boolean isItemTemplate = getIsItemTemplate();
+
+        // Lockout timer is only enforced for non-templates. 
+        if (!isItemTemplate) {
+            Double documentLockoutHours = getDocumentLockoutHours();
+            result.setLockoutTimeInHours(documentLockoutHours);
+        }
+
+        return result;
+    }
+
+    @JsonIgnore
+    public Double getDocumentLockoutHours() {
+        if (documentLockoutHours == null) {
+            PropertyValue settings = getLogbookDocumentSettings();
+            if (settings != null) {
+                String lockoutString = settings.getPropertyMetadataValueForKey(DOC_LOCKOUT_SETTING_KEY);
+                if (lockoutString != null) {
+                    documentLockoutHours = Double.valueOf(lockoutString);
+                }
+            }
+        }
+        return documentLockoutHours;
+    }
+
+    public void setDocumentLockoutHours(Double documentLockoutHours) {
+        this.documentLockoutHours = documentLockoutHours;
     }
 }

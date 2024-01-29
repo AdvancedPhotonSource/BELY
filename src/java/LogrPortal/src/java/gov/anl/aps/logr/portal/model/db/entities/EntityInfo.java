@@ -5,8 +5,11 @@
 package gov.anl.aps.logr.portal.model.db.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.io.Serializable;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
@@ -49,7 +52,6 @@ import javax.xml.bind.annotation.XmlRootElement;
     "createdByUser",
     "obsoletedByUser",
     "lastModifiedByUser",
-    
     "ownerUserDisplayName",
     "createdByDisplayName",
     "lastModifiedByDisplayName",
@@ -97,6 +99,9 @@ public class EntityInfo implements Serializable {
     private UserInfo obsoletedByUser;
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "entityInfo", fetch = FetchType.LAZY)
     private ListTbl list;
+
+    private transient Double lockoutTimeInHours = null;
+    private transient Boolean isEntityWriteableByTimeout = null;
 
     public EntityInfo() {
     }
@@ -169,38 +174,38 @@ public class EntityInfo implements Serializable {
     public void setOwnerUser(UserInfo ownerUser) {
         this.ownerUser = ownerUser;
     }
-    
+
     public String getUserInfoDisplayName(UserInfo userInfo) {
         if (userInfo != null) {
             return "(" + userInfo.getUsername() + ") " + userInfo.getFullNameForSelection();
         }
-        return ""; 
+        return "";
     }
-    
+
     public String getOwnerUserDisplayName() {
         if (ownerUser == null) {
             return "-";
         }
-        return getUserInfoDisplayName(ownerUser); 
+        return getUserInfoDisplayName(ownerUser);
     }
-    
+
     public String getCreatedByDisplayName() {
-        return getUserInfoDisplayName(createdByUser); 
+        return getUserInfoDisplayName(createdByUser);
     }
 
     public String getLastModifiedByDisplayName() {
-        return getUserInfoDisplayName(lastModifiedByUser); 
+        return getUserInfoDisplayName(lastModifiedByUser);
     }
-    
+
     public String getObsoletedByDisplayName() {
-        return getUserInfoDisplayName(obsoletedByUser); 
+        return getUserInfoDisplayName(obsoletedByUser);
     }
-    
+
     public String getOwnerGroupDisplayName() {
         if (ownerUserGroup == null) {
             return "-";
         }
-        return ownerUserGroup.getName(); 
+        return ownerUserGroup.getName();
     }
 
     public UserGroup getOwnerUserGroup() {
@@ -234,7 +239,7 @@ public class EntityInfo implements Serializable {
     public void setObsoletedByUser(UserInfo obsoletedByUser) {
         this.obsoletedByUser = obsoletedByUser;
     }
-    
+
     public ListTbl getList() {
         return list;
     }
@@ -242,40 +247,76 @@ public class EntityInfo implements Serializable {
     public void setList(ListTbl list) {
         this.list = list;
     }
-    
+
     public String getOwnerUsername() {
         if (ownerUser != null) {
             return ownerUser.getUsername();
         }
-        return null; 
+        return null;
     }
-    
+
     public String getOwnerUserGroupName() {
         if (ownerUserGroup != null) {
             return ownerUserGroup.getName();
         }
-        return null; 
+        return null;
     }
-    
+
     public String getCreatedByUsername() {
         if (createdByUser != null) {
             return createdByUser.getUsername();
         }
-        return null; 
+        return null;
     }
-    
+
     public String getObsoletedByUsername() {
         if (obsoletedByUser != null) {
             return obsoletedByUser.getUsername();
         }
         return null;
     }
-    
+
     public String getLastModifiedByUsername() {
         if (lastModifiedByUser != null) {
             return lastModifiedByUser.getUsername();
         }
-        return null; 
+        return null;
+    }
+    
+    public boolean refreshWriteableByTimeout() {
+        isEntityWriteableByTimeout = null; 
+        
+        return isEntityWriteableByTimeout();
+    }
+
+    @JsonIgnore
+    public boolean isEntityWriteableByTimeout() {
+        if (isEntityWriteableByTimeout == null) {
+            if (lockoutTimeInHours != null && lockoutTimeInHours > 0) {
+                Instant createdTime = createdOnDateTime.toInstant();
+                Instant now = Instant.now();
+
+                Duration diff = Duration.between(createdTime, now);
+
+                long minuteSinceCreation = diff.toMinutes();
+                minuteSinceCreation -= 3; 
+                double timoutMinutes = lockoutTimeInHours * 60;
+                
+                isEntityWriteableByTimeout = minuteSinceCreation < timoutMinutes;                
+            } else {
+                isEntityWriteableByTimeout = true; 
+            }
+        }
+        return isEntityWriteableByTimeout;
+    }
+
+    @JsonIgnore
+    public Double getLockoutTimeInHours() {
+        return lockoutTimeInHours;
+    }
+
+    public void setLockoutTimeInHours(Double lockoutTimeInHours) {
+        this.lockoutTimeInHours = lockoutTimeInHours;
     }
 
     @Override
@@ -302,5 +343,5 @@ public class EntityInfo implements Serializable {
     public String toString() {
         return "gov.anl.aps.cdb.portal.model.db.entities.EntityInfo[ id=" + id + " ]";
     }
-    
+
 }
