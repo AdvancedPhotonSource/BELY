@@ -201,13 +201,22 @@ public abstract class ItemFacadeBase<ItemDomainEntity extends Item> extends CdbE
 
         return Long.MIN_VALUE;
     }
-
+    
     public List<ItemDomainEntity> findByDomainAndEntityType(String domainName, String entityTypeName) {
+        return findByDomainAndEntityType(domainName, entityTypeName, null);
+    }
+
+    public List<ItemDomainEntity> findByDomainAndEntityType(String domainName, String entityTypeName, Integer limit) {
         try {
-            return (List<ItemDomainEntity>) em.createNamedQuery("Item.findByDomainNameAndEntityType")
+            Query query = em.createNamedQuery("Item.findByDomainNameAndEntityType")
                     .setParameter("domainName", domainName)
-                    .setParameter("entityTypeName", entityTypeName)
-                    .getResultList();
+                    .setParameter("entityTypeName", entityTypeName);
+            
+            if (limit != null) {
+                query.setMaxResults(limit);
+            }
+            
+            return (List<ItemDomainEntity>) query.getResultList();
         } catch (NoResultException ex) {
 
         }

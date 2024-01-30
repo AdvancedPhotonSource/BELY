@@ -67,7 +67,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private String currentEntityType = null;
     private Log lastLog;
 
-    private List<SearchResult> logResults;
+    private List<SearchResult> logResults;    
 
     private static final String CTL_ENTITY_TYPE_NAME = "ctl";
     private static final String AOP_ENTITY_TYPE_NAME = "aop";
@@ -798,6 +798,24 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         newPropertyValue.setValue(propertyValue);                
         
         return newPropertyValue;
+    }
+    
+    public List<ItemDomainLogbook> getRecentCTLDocuments(Integer limit) {
+        List<ItemDomainLogbook> findByDomainAndEntityType = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), CTL_ENTITY_TYPE_NAME, limit);
+        
+        return findByDomainAndEntityType; 
+    }
+    
+    public List<ItemDomainLogbook> getRecentOPSDocuments(Integer limit) {
+        List<ItemDomainLogbook> findByDomainAndEntityType = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), OPS_ENTITY_TYPE_NAME, limit);
+        
+        return findByDomainAndEntityType; 
+    }
+    
+    public List<ItemDomainLogbook> getRecentAOPDocuments(Integer limit) {
+        List<ItemDomainLogbook> findByDomainAndEntityType = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), AOP_ENTITY_TYPE_NAME , limit);
+        
+        return findByDomainAndEntityType; 
     }
 
     // <editor-fold defaultstate="collapsed" desc="Operations functionality.">

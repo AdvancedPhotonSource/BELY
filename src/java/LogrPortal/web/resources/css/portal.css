@@ -1562,3 +1562,15 @@ body .ui-tree .ui-tree-container .ui-treenode .ui-treenode-content .ui-treenode-
 body .ui-inplace .ui-inplace-display {
     padding: 0;
 }
+
+.homePageDataScroller {
+    width: 100%;    
+}
+
+.homePageDataScroller .ui-datascroller-content {
+    background: rgba(255, 255, 255, 0.5) !important; 
+} 
+
+.homePageDataScroller .ui-panelgrid-cell {
+    vertical-align: top; 
+}

@@ -1,0 +1,72 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" 
+                xmlns:ui="http://java.sun.com/jsf/facelets" 
+                xmlns:f="http://java.sun.com/jsf/core"
+                template="../templates/homeViewTemplate.xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <f:metadata>
+        <f:viewAction action="#{settingController.updateGlobalSettings()}" />
+    </f:metadata>
+
+    <ui:define name="middleCenter">        
+
+        <h1> Recent Log Documents </h1>
+
+        <p:panelGrid columns="3" styleClass="homePageDataScroller">
+            <p:outputPanel>   
+                <h2>
+                    <h:outputLink 
+                        value="itemDomainLogbook/aopList"
+                        title="Navigate to machine studies list page.">
+                        Machine Studies                    
+                    </h:outputLink> 
+                </h2>
+
+                <p:dataScroller value="#{itemDomainLogbookController.getRecentAOPDocuments(10)}" var="logItem" styleClass="logDataScroller">
+
+                    <ui:include src="itemDomainLogbook/private/logDocumentDataScrollerObject.xhtml"/>
+
+                </p:dataScroller>
+            </p:outputPanel>
+
+            <p:outputPanel>
+                <h2>
+                    <h:outputLink value="itemDomainLogbook/ctlList"
+                                  title="Navigate to controls list page.">
+                        Controls
+                    </h:outputLink>
+                </h2>
+
+                <p:dataScroller value="#{itemDomainLogbookController.getRecentCTLDocuments(10)}" var="logItem" styleClass="logDataScroller">
+
+                    <ui:include src="itemDomainLogbook/private/logDocumentDataScrollerObject.xhtml"/>
+
+                </p:dataScroller>
+            </p:outputPanel>
+
+            <p:outputPanel>
+                <h2>
+                    <h:outputLink value="itemDomainLogbook/opsList"
+                                  title="Navigate to operations list page.">
+                        Operations
+                    </h:outputLink>
+                </h2>
+
+                <p:dataScroller value="#{itemDomainLogbookController.getRecentOPSDocuments(10)}" var="logItem" styleClass="logDataScroller">
+
+                    <ui:include src="itemDomainLogbook/private/logDocumentDataScrollerObject.xhtml"/>
+
+                </p:dataScroller>
+            </p:outputPanel>
+        </p:panelGrid>
+
+    </ui:define>
+</ui:composition>
