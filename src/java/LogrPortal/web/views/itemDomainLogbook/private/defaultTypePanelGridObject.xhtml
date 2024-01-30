@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <h:outputText value="Default for type"
+                  rendered="#{itemDomainLogbookController.currentItemTemplate}"/> 
+
+    <p:inplace id="defaultTypeInplace#{viewName}"
+               widgetVar="defaultTypeInplaceWidget"               
+               toggleable="false"
+               editor="#{isEntityWriteable}"
+               rendered="#{itemDomainLogbookController.currentItemTemplate}">
+        <p:ajax event="save" update="@form" oncomplete="saveDefaultTypeInplace()"/>
+        <p:ajax event="cancel" onstart="reloadDefaultTypeInplace()" />
+
+        <f:facet name="output">
+            <p:outputPanel>
+                <p:commandLink id="ShowDefaultTypeInplaceShowButton#{viewName}"
+                               styleClass="fa-link-icon fa-icon fa fa-pencil"
+                               onclick="PF('defaultTypeInplaceWidget').show();"
+                               rendered="#{isEntityWriteable}"/>
+                <h:outputText value="#{itemObject.primaryTemplateEntityTypeString}"/>
+            </p:outputPanel>
+
+        </f:facet>
+
+        <f:facet name="input">
+            <p:remoteCommand name="reloadDefaultTypeInplace"
+                             update="defaultTypeInplace#{viewName}"
+                             action="#{entityController.reloadCurrent()}"/>
+
+            <p:remoteCommand name="saveDefaultTypeInplace"
+                             action="#{itemDomainLogbookController.updateDefaultForType()}"/>
+
+            <p:selectCheckboxMenu id="entityTypeList#{viewName}"                                  
+                                  label="#{itemObject.primaryTemplateEntityTypeString}"
+                                  value="#{itemObject.primaryTemplateEntityTypeList}" 
+                                  onHide="updatePrimaryForTypes()"                                  
+                                  filter="true" filterMatchMode="contains" >
+                <f:selectItems var="primaryForType" value="#{itemDomainLogbookController.logbookEntityTypeList}" itemLabel="#{primaryForType.name}" itemValue="#{primaryForType}"/>
+            </p:selectCheckboxMenu>
+            <p:remoteCommand name="updatePrimaryForTypes#{viewName}"
+                             action="#{itemObject.resetPrimaryTemplateEntityTypeString()}"
+                             update="entityTypeList" />           
+        </f:facet>
+    </p:inplace> 
+
+
+</ui:composition>
+
+

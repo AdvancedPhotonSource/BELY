@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.util.List;
 import javax.persistence.Basic;
 import javax.persistence.Cacheable;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -15,6 +16,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
@@ -60,6 +62,9 @@ public class EntityType extends CdbEntity implements Serializable {
     private List<Item> itemList;
     @ManyToMany(mappedBy = "entityTypeList")
     private List<PropertyType> propertyTypeList;
+    @JoinColumn(name = "primary_template_item_id", referencedColumnName = "id")
+    @ManyToOne(cascade = CascadeType.ALL)
+    private Item primaryTemplateItem;
 
     public EntityType() {
     }
@@ -133,12 +138,21 @@ public class EntityType extends CdbEntity implements Serializable {
         this.propertyTypeList = propertyTypeList;
     }
 
+    @XmlTransient
+    public Item getPrimaryTemplateItem() {
+        return primaryTemplateItem;
+    }
+
+    public void setPrimaryTemplateItem(Item primaryTemplateItem) {
+        this.primaryTemplateItem = primaryTemplateItem;
+    }    
+    
     @Override
     public int hashCode() {
         int hash = 0;
         hash += (id != null ? id.hashCode() : 0);
         return hash;
-    }
+    }   
 
     @Override
     public boolean equals(Object object) {

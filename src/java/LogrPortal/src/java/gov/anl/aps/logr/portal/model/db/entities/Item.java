@@ -83,11 +83,11 @@ import org.primefaces.model.TreeNode;
                 @ColumnResult(name = "parent_relationship_id", type = Integer.class)}
     ),
     @SqlResultSetMapping(
-        name = "logResultList",
-        entities = {
-            @EntityResult(entityClass = Item.class),
-            @EntityResult(entityClass = Log.class)},
-        columns = {
+            name = "logResultList",
+            entities = {
+                @EntityResult(entityClass = Item.class),
+                @EntityResult(entityClass = Log.class)},
+            columns = {
                 @ColumnResult(name = "log_id", type = Integer.class)}
     )
 })
@@ -147,7 +147,7 @@ import org.primefaces.model.TreeNode;
     @NamedQuery(name = "Item.findByDomainNameAndEntityTypeAndTopLevelAfterId",
             query = "SELECT DISTINCT(i) FROM Item i JOIN i.entityTypeList etl WHERE i.domain.name = :domainName and etl.name = :entityTypeName and i.itemElementMemberList IS EMPTY AND i.itemElementMemberList2 IS EMPTY AND i.id > :itemId ORDER BY i.id ASC"),
     @NamedQuery(name = "Item.findByDomainNameAndEntityTypeAndTopLevelBeforeId",
-            query = "SELECT DISTINCT(i) FROM Item i JOIN i.entityTypeList etl WHERE i.domain.name = :domainName and etl.name = :entityTypeName and i.itemElementMemberList IS EMPTY AND i.itemElementMemberList2 IS EMPTY AND i.id < :itemId ORDER BY i.id DESC"),    
+            query = "SELECT DISTINCT(i) FROM Item i JOIN i.entityTypeList etl WHERE i.domain.name = :domainName and etl.name = :entityTypeName and i.itemElementMemberList IS EMPTY AND i.itemElementMemberList2 IS EMPTY AND i.id < :itemId ORDER BY i.id DESC"),
     @NamedQuery(name = "Item.findByDomainNameAndEntityTypeAndTopLevelExcludeEntityType",
             query = "SELECT DISTINCT(i) FROM Item i JOIN i.entityTypeList etl WHERE i.domain.name = :domainName and etl.name = :entityTypeName and (i.id not in (SELECT DISTINCT(i.id) FROM Item i JOIN i.entityTypeList etl WHERE i.domain.name = :domainName and etl.name = :excludeEntityTypeName)) and i.itemElementMemberList IS EMPTY AND i.itemElementMemberList2 IS EMPTY"),
     @NamedQuery(name = "Item.findByDomainNameAndEntityTypeAndTopLevelOrderByDerivedFromItem",
@@ -452,6 +452,7 @@ import org.primefaces.model.TreeNode;
     "fullItemElementList",
     "derivedFromItemList",
     "entityTypeString",
+    "primaryTemplateEntityTypeString",
     "entityTypeDisplayList",
     "listDisplayDescription",
     "primaryImageValue",
@@ -471,8 +472,7 @@ import org.primefaces.model.TreeNode;
 @Schema(name = "Item",
         subTypes
         = {
-            ItemDomainLogbook.class,            
-        }
+            ItemDomainLogbook.class,}
 )
 public class Item extends CdbDomainEntity implements Serializable {
 
@@ -505,6 +505,8 @@ public class Item extends CdbDomainEntity implements Serializable {
     @ManyToMany
     @JsonProperty("entityTypeList")
     private List<EntityType> entityTypeList;
+    @OneToMany(mappedBy = "primaryTemplateItem")
+    private List<EntityType> primaryTemplateEntityTypeList;
     @JoinTable(name = "item_item_category", joinColumns = {
         @JoinColumn(name = "item_id", referencedColumnName = "id")}, inverseJoinColumns = {
         @JoinColumn(name = "item_category_id", referencedColumnName = "id")})
@@ -566,6 +568,7 @@ public class Item extends CdbDomainEntity implements Serializable {
     private transient String qrIdFilter = null;
 
     private transient String entityTypeString = null;
+    private transient String primaryTemplateEntityTypeString = null;
 
     private transient String primaryImageValue = null;
 
@@ -948,6 +951,15 @@ public class Item extends CdbDomainEntity implements Serializable {
     public List<EntityType> getEntityTypeList() {
         return entityTypeList;
     }
+    
+    @XmlTransient
+    public List<EntityType> getPrimaryTemplateEntityTypeList() {
+        return primaryTemplateEntityTypeList;
+    }
+
+    public void setPrimaryTemplateEntityTypeList(List<EntityType> primaryTemplateEntityTypeList) {
+        this.primaryTemplateEntityTypeList = primaryTemplateEntityTypeList;
+    }
 
     public List<EntityType> getEntityTypeDisplayList() {
         if ((entityTypeList == null || entityTypeList.isEmpty()) && derivedFromItem != null) {
@@ -956,23 +968,45 @@ public class Item extends CdbDomainEntity implements Serializable {
         return entityTypeList;
     }
 
+    private String generateEntityTypeString(List<EntityType> entityTypeList) {
+        String entityTypeString = "";
+        
+        if (entityTypeList != null && entityTypeList.size() > 0) {
+            for (int i = 0; i < entityTypeList.size(); i++) {
+                EntityType entityType = entityTypeList.get(i);                
+                if (entityTypeString.length() > 0) {
+                    entityTypeString += " | ";
+                }
+                entityTypeString += entityType.getName();
+            }
+        } else {
+            entityTypeString = "-";
+        }
+        
+        return entityTypeString; 
+
+    }
+
     public String getEntityTypeString() {
         if (entityTypeString == null) {
-            entityTypeString = "";
             List<EntityType> entityTypeDisplayList = getEntityTypeDisplayList();
-            if (entityTypeDisplayList != null) {
-                for (int i = 0; i < entityTypeDisplayList.size(); i++) {
-                    EntityType entityType = entityTypeDisplayList.get(i);
-                    boolean lastIdx = i == entityTypeDisplayList.size() - 1;
-                    if (entityTypeString.length() > 0 && lastIdx) {
-                        entityTypeString += " ";
-                    }
-                    entityTypeString += entityType.getName();
-                }
-            }
+            entityTypeString = generateEntityTypeString(entityTypeDisplayList); 
         }
 
         return entityTypeString;
+    }
+    
+    public void resetPrimaryTemplateEntityTypeString() {
+        primaryTemplateEntityTypeString = null; 
+    }
+
+    public String getPrimaryTemplateEntityTypeString() {
+        if (primaryTemplateEntityTypeString == null) {
+            List<EntityType> primaryTemplateEntityTypeList = getPrimaryTemplateEntityTypeList();
+            primaryTemplateEntityTypeString = generateEntityTypeString(primaryTemplateEntityTypeList); 
+        }
+
+        return primaryTemplateEntityTypeString;
     }
 
     public String getEditEntityTypeString() {
@@ -985,7 +1019,7 @@ public class Item extends CdbDomainEntity implements Serializable {
         }
     }
 
-public void setEntityTypeList(List<EntityType> entityTypeList) throws CdbException {
+    public void setEntityTypeList(List<EntityType> entityTypeList) throws CdbException {
         if (domain != null) {
             List<EntityType> allowedEntityTypeList = domain.getAllowedEntityTypeList();
             for (EntityType entityType : entityTypeList) {
@@ -1237,9 +1271,9 @@ public void setEntityTypeList(List<EntityType> entityTypeList) throws CdbExcepti
     public void resetSelfElement() {
         selfItemElement = null;
     }
-    
+
     public void resetTemplateInfoLoaded() {
-        templateInfoLoaded = false; 
+        templateInfoLoaded = false;
     }
 
     public void updateDynamicProperties(UserInfo enteredByUser, Date enteredOnDateTime) {
@@ -1436,7 +1470,7 @@ public void setEntityTypeList(List<EntityType> entityTypeList) throws CdbExcepti
         }
 
         return null;
-    }   
+    }
 
     @XmlTransient
     public List<ItemSource> getItemSourceList() {
@@ -1576,11 +1610,11 @@ public void setEntityTypeList(List<EntityType> entityTypeList) throws CdbExcepti
         if (getItemElementRelationshipList() != null) {
             for (ItemElementRelationship ier : getItemElementRelationshipList()) {
                 if (ier.getRelationshipType().getName().equals(machineDesignTemplateRelationshipTypeName)) {
-                    return ier; 
+                    return ier;
                 }
             }
         }
-        return null; 
+        return null;
     }
 
     public Item getCreatedFromTemplate() {
@@ -1589,7 +1623,7 @@ public void setEntityTypeList(List<EntityType> entityTypeList) throws CdbExcepti
                 ItemElementRelationship ier = getCreatedFromTemplateRelationship();
                 if (ier != null) {
                     createdFromTemplate = ier.getSecondItemElement().getParentItem();
-                }              
+                }
 
                 templateInfoLoaded = true;
             }
@@ -2006,7 +2040,7 @@ public void setEntityTypeList(List<EntityType> entityTypeList) throws CdbExcepti
             }
         }
         return maxSortOrder;
-    }   
+    }
 
     private ItemConnector cloneInheritedConnector(ItemConnector inheritedConnector) {
 

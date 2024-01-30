@@ -9,6 +9,7 @@ import gov.anl.aps.logr.portal.constants.EntityTypeName;
 import gov.anl.aps.logr.portal.controllers.extensions.ItemCreateWizardController;
 import gov.anl.aps.logr.portal.controllers.extensions.ItemCreateWizardDomainLogbookController;
 import gov.anl.aps.logr.portal.controllers.settings.ItemDomainLogbookSettings;
+import gov.anl.aps.logr.portal.controllers.utilities.EntityTypeControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.PropertyTypeControllerUtility;
 import gov.anl.aps.logr.portal.model.ItemDomainLogbookLazyDataModel;
@@ -34,7 +35,6 @@ import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.regex.Pattern;
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
@@ -67,42 +67,42 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private String currentEntityType = null;
     private Log lastLog;
 
-    private List<SearchResult> logResults;    
+    private List<SearchResult> logResults;
+    private List<EntityType> logbookEntityTypes;
 
     private static final String CTL_ENTITY_TYPE_NAME = "ctl";
     private static final String AOP_ENTITY_TYPE_NAME = "aop";
     private static final String OPS_ENTITY_TYPE_NAME = "ops";
     private static final String SANDBOX_ENTITY_TYPE_NAME = "sandbox";
-   
+
     private static final String LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY = "showTimestamps";
-    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY = "logMode"; 
-    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_NONE_VAL = "none"; 
-    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_COPY_VAL = "copy"; 
-    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL = "template per entry";     
+    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY = "logMode";
+    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_NONE_VAL = "none";
+    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_COPY_VAL = "copy";
+    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL = "template per entry";
 
     // Custom operations functionality.. 
     // <editor-fold defaultstate="collapsed" desc="Operations specific variables.">
     private static final String OPS_TEMPLATE_NAME = "Operations Shift";
-    private static final String OPS_GENERAL_FIRST_LOG_ENTRY = "Personnel: %s \n\n\n Shift Type: %s";      
-    
-    private static final String OPS_SHIFT_START_PROPERTY_TYPE_NAME = "Shift Start"; 
-    private static final String OPS_SHIFT_END_PROPERTY_TYPE_NAME = "Shift End"; 
-    private static final String OPS_PERSONNEL_PROPERTY_TYPE_NAME = "Personnel"; 
-    private static final String OPS_SHIFT_TYPE_PROPERTY_TYPE_NAME = "Shift Type";   
+    private static final String OPS_GENERAL_FIRST_LOG_ENTRY = "Personnel: %s \n\n\n Shift Type: %s";
+
+    private static final String OPS_SHIFT_START_PROPERTY_TYPE_NAME = "Shift Start";
+    private static final String OPS_SHIFT_END_PROPERTY_TYPE_NAME = "Shift End";
+    private static final String OPS_PERSONNEL_PROPERTY_TYPE_NAME = "Personnel";
+    private static final String OPS_SHIFT_TYPE_PROPERTY_TYPE_NAME = "Shift Type";
 
     private static final DateTimeFormatter dayFormatter = DateTimeFormatter.ofPattern("EEEE");
     private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy");
     private static final DateTimeFormatter dayYearNumFormatter = DateTimeFormatter.ofPattern("dd, yyyy");
     private static final DateTimeFormatter shortDateFormatter = DateTimeFormatter.ofPattern("MMMM dd");
-    private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm"); 
-    
-    private static final int[] COPY_OPS_SHIFT_SECTIONS_INX = new int[] {1, 4 ,5}; 
-    private boolean initialOpsSelectionReset; 
-    private List<String> opsSectionCopyList = null; 
-    private List<String> opsSelectedCopyList = null; 
+    private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
+    private static final int[] COPY_OPS_SHIFT_SECTIONS_INX = new int[]{1, 4, 5};
+    private boolean initialOpsSelectionReset;
+    private List<String> opsSectionCopyList = null;
+    private List<String> opsSelectedCopyList = null;
 
     // </editor-fold>
-    
     public final static String controllerNamed = "itemDomainLogbookController";
 
     public static ItemDomainLogbookController getInstance() {
@@ -235,18 +235,18 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public boolean entityCanBeCreatedByUsers() {
         return true;
     }
-    
+
     public Double getDocumentLockoutHours() {
         ItemDomainLogbook current = getCurrent();
-        return current.getDocumentLockoutHours(); 
+        return current.getDocumentLockoutHours();
     }
-    
+
     public void setDocumentLockoutHours(Double hours) {
         if (hours == null) {
-            hours = 0.0; 
+            hours = 0.0;
         }
         String DOC_LOCKOUT_SETTING_KEY = ItemDomainLogbook.DOC_LOCKOUT_SETTING_KEY;
-        
+
         ItemDomainLogbook current = getCurrent();
         current.setDocumentLockoutHours(hours);
         setLogbookSettingPropertyKey(DOC_LOCKOUT_SETTING_KEY, hours.toString());
@@ -255,16 +255,16 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public boolean getLogbookDisplayTimestamps() {
         return getLogbookSettingBoolean(true, LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY);
     }
-    
-    public void setLogbookDisplayTimestamps(boolean displayTimestamp) {        
-        String value = String.valueOf(displayTimestamp); 
+
+    public void setLogbookDisplayTimestamps(boolean displayTimestamp) {
+        String value = String.valueOf(displayTimestamp);
         setLogbookSettingPropertyKey(LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY, value);
     }
-    
+
     public String getLogbookTemplateLogMode() {
         return getLogbookSetting(LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_NONE_VAL, LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY);
     }
-    
+
     public void setLogbookTemplateLogMode(String logMode) {
         setLogbookSettingPropertyKey(LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY, logMode);
     }
@@ -285,22 +285,22 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public String getItemElementsListTitle() {
         return "Log Document Sections";
     }
-    
+
     private PropertyValue getLogbookSettingsProperty() {
         ItemDomainLogbook current = getCurrent();
-        
-        return getLogbookSettingsProperty(current); 
-        
+
+        return getLogbookSettingsProperty(current);
+
     }
 
-    private PropertyValue getLogbookSettingsProperty(ItemDomainLogbook logbookItem) {        
+    private PropertyValue getLogbookSettingsProperty(ItemDomainLogbook logbookItem) {
         return logbookItem.getLogbookDocumentSettings();
     }
-    
+
     private PropertyValue getOrCreateLogbookSettingsProperty() {
         PropertyValue logbookSettingsProperty = getLogbookSettingsProperty();
-        
-        if(logbookSettingsProperty == null) {
+
+        if (logbookSettingsProperty == null) {
             try {
                 String LOGBOOK_SETTINGS_PROPERTY_TYPE_NAME = ItemDomainLogbook.LOGBOOK_SETTINGS_PROPERTY_TYPE_NAME;
                 return addSystemPropertyValue(LOGBOOK_SETTINGS_PROPERTY_TYPE_NAME, true, "");
@@ -308,28 +308,28 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
                 SessionUtility.addErrorMessage("ERROR", ex.getErrorMessage());
             }
         }
-        return logbookSettingsProperty; 
+        return logbookSettingsProperty;
     }
-    
+
     private void setLogbookSettingPropertyKey(String key, String value) {
         PropertyValue logbookSettingsProperty = getOrCreateLogbookSettingsProperty();
-        
+
         if (logbookSettingsProperty == null) {
             SessionUtility.addErrorMessage("ERROR", "Cannot update setting no setting property value exists.");
             return;
         }
-        
+
         logbookSettingsProperty.setPropertyMetadataValue(key, value);
     }
-    
+
     private boolean getLogbookSettingBoolean(boolean defaultValue, String settingKey) {
         String logbookSetting = getLogbookSetting(null, settingKey);
-        
+
         if (logbookSetting != null) {
             return Boolean.parseBoolean(logbookSetting);
         }
-        
-        return defaultValue; 
+
+        return defaultValue;
     }
 
     private String getLogbookSetting(String defaultValue, String settingKey) {
@@ -343,16 +343,16 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
 
         return defaultValue;
-    } 
+    }
 
     @Override
-    public Log prepareAddLog(ItemDomainLogbook cdbDomainEntity) {                
+    public Log prepareAddLog(ItemDomainLogbook cdbDomainEntity) {
         EntityInfo entityInfo = cdbDomainEntity.getEntityInfo();
         boolean isEntityWriteableByTimeout = entityInfo.refreshWriteableByTimeout();
-        
+
         if (isEntityWriteableByTimeout == false) {
-            SessionUtility.addErrorMessage("Cannot Add Log Entry", "Log document lockout timer expired.");            
-            
+            SessionUtility.addErrorMessage("Cannot Add Log Entry", "Log document lockout timer expired.");
+
             try {
                 String domainPath = getDomainPath();
                 String viewForCurrentEntity = viewForCurrentEntity();
@@ -363,27 +363,27 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
                 logger.error(ex);
             }
             setNewLogEdit(null);
-            return null; 
+            return null;
         }
-        
+
         String logbookTemplateLogMode = getLogbookTemplateLogMode();
-        
-        Log log = super.prepareAddLog(cdbDomainEntity);                
-        
-        if (logbookTemplateLogMode.equals(LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL)) { 
+
+        Log log = super.prepareAddLog(cdbDomainEntity);
+
+        if (logbookTemplateLogMode.equals(LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL)) {
             Item createdFromTemplate = cdbDomainEntity.getCreatedFromTemplate();
             if (createdFromTemplate != null) {
                 List<Log> logList = createdFromTemplate.getLogList();
                 if (logList.size() > 0) {
-                    Log templateLog = logList.get(0); 
+                    Log templateLog = logList.get(0);
                     String templateText = templateLog.getText();
-                    log.setText(templateText); 
+                    log.setText(templateText);
                 }
-                
+
             }
-        }        
-        
-        return log; 
+        }
+
+        return log;
     }
 
     public void prepareCreateLogbookSection() {
@@ -432,15 +432,15 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
 
         return viewForCurrentEntity();
-    }    
+    }
 
     @Override
     protected void additionalSelectionOfTemplateSteps() {
         ItemDomainLogbook current = getCurrent();
-        
-        Boolean copyLogs = false; 
-        PropertyValue logbookSettingsProperty = getLogbookSettingsProperty(current); 
-        
+
+        Boolean copyLogs = false;
+        PropertyValue logbookSettingsProperty = getLogbookSettingsProperty(current);
+
         if (logbookSettingsProperty != null) {
             String logMode = logbookSettingsProperty.getPropertyMetadataValueForKey(LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY);
             if (logMode != null) {
@@ -449,9 +449,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
 
         ItemDomainLogbook originalTemplateToCreateNewItem = getTemplateToCreateNewItem();
-        
+
         if (copyLogs) {
-            copyLogs(originalTemplateToCreateNewItem, current); 
+            copyLogs(originalTemplateToCreateNewItem, current);
         }
 
         UserInfo user = SessionUtility.getUser();
@@ -488,9 +488,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
             setTemplateToCreateNewItem(containedItem);
             setCurrent(newItem);
-            
+
             if (copyLogs) {
-                copyLogs(containedItem, newItem); 
+                copyLogs(containedItem, newItem);
             }
 
             completeSelectionOfTemplate();
@@ -566,7 +566,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public void processPreRenderAOPList() {
         processPreRenderSpecificList(AOP_ENTITY_TYPE_NAME);
     }
-    
+
     public void processPreRenderSandboxList() {
         processPreRenderSpecificList(SANDBOX_ENTITY_TYPE_NAME);
     }
@@ -627,6 +627,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
                 entity.setEntityTypeList(new ArrayList<>());
                 EntityType entityType = entityTypeFacade.findByName(currentEntityType);
                 entity.getEntityTypeList().add(entityType);
+                
+                Item primaryTemplateItem = entityType.getPrimaryTemplateItem();
+                if (primaryTemplateItem != null) {
+                    templateToCreateNewItem = (ItemDomainLogbook) primaryTemplateItem; 
+                    completeSelectionOfTemplate();
+                }
             } catch (CdbException ex) {
                 logger.error(ex);
             }
@@ -700,7 +706,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
                     entityName = "Operations";
                     break;
                 case SANDBOX_ENTITY_TYPE_NAME:
-                    entityName = "Sandbox"; 
+                    entityName = "Sandbox";
                     break;
                 default:
                     entityName = currentEntityType.toUpperCase();
@@ -768,54 +774,127 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public String getExampleMarkdown() {
         return MarkdownParser.getMarkdownExampleText();
     }
-    
-    private PropertyType getSystemPropertyType(String propertyTypeName, boolean isInternal) throws CdbException { 
+
+    private PropertyType getSystemPropertyType(String propertyTypeName, boolean isInternal) throws CdbException {
         PropertyType propertyType = propertyTypeFacade.findByName(propertyTypeName);
-        
-        if(propertyType == null) {
-            PropertyTypeControllerUtility propertyTypeUtility = new PropertyTypeControllerUtility();   
-            
-            propertyType = new PropertyType(); 
-            propertyType.setName(propertyTypeName); 
+
+        if (propertyType == null) {
+            PropertyTypeControllerUtility propertyTypeUtility = new PropertyTypeControllerUtility();
+
+            propertyType = new PropertyType();
+            propertyType.setName(propertyTypeName);
             propertyType.setIsInternal(isInternal);
             propertyType.setAllowedDomainList(new ArrayList<>());
             Domain defaultDomain = getDefaultDomain();
-            propertyType.getAllowedDomainList().add(defaultDomain); 
-            
+            propertyType.getAllowedDomainList().add(defaultDomain);
+
             UserInfo user = SessionUtility.getUser();
-            propertyType = propertyTypeUtility.create(propertyType, user); 
+            propertyType = propertyTypeUtility.create(propertyType, user);
         }
-        
-        return propertyType; 
+
+        return propertyType;
     }
-    
-    private PropertyValue addSystemPropertyValue(String propertyTypeName, boolean isInternal, String propertyValue) throws CdbException { 
+
+    private PropertyValue addSystemPropertyValue(String propertyTypeName, boolean isInternal, String propertyValue) throws CdbException {
         ItemDomainLogbook current = getCurrent();
         PropertyType systemPropertyType = getSystemPropertyType(propertyTypeName, isInternal);
-        
+
         ItemDomainLogbookControllerUtility utility = getControllerUtility();
-        PropertyValue newPropertyValue = utility.preparePropertyTypeValueAdd(current, systemPropertyType);                
-        newPropertyValue.setValue(propertyValue);                
-        
+        PropertyValue newPropertyValue = utility.preparePropertyTypeValueAdd(current, systemPropertyType);
+        newPropertyValue.setValue(propertyValue);
+
         return newPropertyValue;
     }
-    
+
+    public String updateDefaultForType() {
+        List<EntityType> entityTypesToUpdate = new ArrayList();
+        ItemDomainLogbook current = getCurrent();
+        List<EntityType> primaryTemplateEntityTypeList = current.getPrimaryTemplateEntityTypeList();
+
+        EntityTypeControllerUtility etUtility = new EntityTypeControllerUtility();
+
+        // Generate entity type update list. 
+        for (EntityType et : getLogbookEntityTypeList()) {
+            EntityType dbEntity = etUtility.findById(et.getId());
+
+            if (primaryTemplateEntityTypeList.contains(et)) {
+                Item primaryTemplateItem = dbEntity.getPrimaryTemplateItem();
+
+                if (!current.equals(primaryTemplateItem)) {
+                    String message = String.format("Updating entity type '%s' to current item.", et.getName());
+                    if (primaryTemplateItem != null) {
+                        message = String.format("%s (from previous item %s)", message, primaryTemplateItem.getName());
+                    }
+
+                    SessionUtility.addInfoMessage("Updating", message);
+                    dbEntity.setPrimaryTemplateItem(current);
+                    entityTypesToUpdate.add(dbEntity);
+                }
+            } else {
+                Item primaryTemplateItem = dbEntity.getPrimaryTemplateItem();
+                if (current.equals(primaryTemplateItem)) {
+                    String message = String.format("Removing %s from %s", et.getName(), current.getName());
+                    SessionUtility.addInfoMessage("Clearing", message);
+
+                    dbEntity.setPrimaryTemplateItem(null);
+                    entityTypesToUpdate.add(dbEntity);
+                }
+            }
+
+        }
+
+        if (!entityTypesToUpdate.isEmpty()) {
+            UserInfo user = SessionUtility.getUser();
+
+            try {
+                etUtility.updateList(entityTypesToUpdate, user);
+            } catch (CdbException ex) {
+                SessionUtility.addErrorMessage("ERROR", ex.getMessage());
+                logger.error(ex);
+            } catch (RuntimeException ex) {
+                SessionUtility.addErrorMessage("ERROR", ex.getMessage());
+                logger.error(ex);
+            }
+        }
+
+        return viewForCurrentEntity();
+    }
+
+    public List<EntityType> getLogbookEntityTypeList() {
+        if (logbookEntityTypes == null) {
+            Domain defaultDomain = getDefaultDomain();
+            List<EntityType> allowedEntityTypeList = defaultDomain.getAllowedEntityTypeList();
+            String excludedType = EntityTypeName.template.getValue();
+
+            logbookEntityTypes = new ArrayList<>();
+
+            for (EntityType entityType : allowedEntityTypeList) {
+                String name = entityType.getName();
+                if (name.equals(excludedType)) {
+                    continue;
+                }
+                logbookEntityTypes.add(entityType);
+            }
+        }
+        return logbookEntityTypes;
+    }
+
     public List<ItemDomainLogbook> getRecentCTLDocuments(Integer limit) {
         List<ItemDomainLogbook> findByDomainAndEntityType = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), CTL_ENTITY_TYPE_NAME, limit);
-        
-        return findByDomainAndEntityType; 
+
+        return findByDomainAndEntityType;
     }
-    
+
     public List<ItemDomainLogbook> getRecentOPSDocuments(Integer limit) {
         List<ItemDomainLogbook> findByDomainAndEntityType = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), OPS_ENTITY_TYPE_NAME, limit);
-        
-        return findByDomainAndEntityType; 
+
+        return findByDomainAndEntityType;
     }
-    
+
     public List<ItemDomainLogbook> getRecentAOPDocuments(Integer limit) {
-        List<ItemDomainLogbook> findByDomainAndEntityType = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), AOP_ENTITY_TYPE_NAME , limit);
-        
-        return findByDomainAndEntityType; 
+        List<ItemDomainLogbook> findByDomainAndEntityType = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), AOP_ENTITY_TYPE_NAME, limit);
+
+        return findByDomainAndEntityType;
     }
 
     // <editor-fold defaultstate="collapsed" desc="Operations functionality.">
@@ -837,33 +916,33 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             return;
         }
         completeSelectionOfTemplate();
-        
-        List<ItemDomainLogbook> logbookSections = current.getLogbookSections();        
+
+        List<ItemDomainLogbook> logbookSections = current.getLogbookSections();
 
         if (logbookSections.size() != 6) {
             SessionUtility.addErrorMessage("Error", "Tempalte '" + OPS_TEMPLATE_NAME + "' must have 6 sections.");
             return;
         }
-        
-        opsSectionCopyList = new ArrayList<>(); 
+
+        opsSectionCopyList = new ArrayList<>();
         opsSelectedCopyList = new ArrayList<>();
-        initialOpsSelectionReset = true; 
-        
+        initialOpsSelectionReset = true;
+
         for (int i : COPY_OPS_SHIFT_SECTIONS_INX) {
             ItemDomainLogbook section = logbookSections.get(i);
-            
-            opsSelectedCopyList.add(section.getName()); 
+
+            opsSelectedCopyList.add(section.getName());
             opsSectionCopyList.add(section.getName());
         }
 
         // Generate shift name 
-        generateShiftName(current);        
+        generateShiftName(current);
 
         SessionUtility.executeRemoteCommand(onSuccess);
     }
-    
+
     private void generateShifTimes(ItemDomainLogbook shiftItem) {
-        LocalDateTime now = LocalDateTime.now();        
+        LocalDateTime now = LocalDateTime.now();
 
         Integer shiftStart = null;
         Integer shiftEnd = null;
@@ -917,12 +996,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             }
 
             // Set the start and end dates. 
-            timeStart = timeStart.withHour(shiftStart); 
+            timeStart = timeStart.withHour(shiftStart);
             timeEnd = timeEnd.withHour(shiftEnd);
         }
-        
+
         timeStart = timeStart.withMinute(0);
-        timeEnd = timeEnd.withMinute(0); 
+        timeEnd = timeEnd.withMinute(0);
 
         shiftItem.setOpsShiftStartTime(timeStart);
         shiftItem.setOpsShiftEndTime(timeEnd);
@@ -961,16 +1040,16 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             dayPart = dayFormatter.format(timeStart);
             datePart = dateFormatter.format(timeStart);
         }
-        
-        String shiftStart = timeFormatter.format(timeStart); 
-        String shiftEnd = timeFormatter.format(timeEnd); 
+
+        String shiftStart = timeFormatter.format(timeStart);
+        String shiftEnd = timeFormatter.format(timeEnd);
 
         String shiftName = String.format("%s - %s [%s - %s]", dayPart, datePart, shiftStart, shiftEnd);
         shiftItem.setName(shiftName);
         return shiftName;
 
     }
-    
+
     public void regenOpsShiftName() {
         ItemDomainLogbook current = getCurrent();
         generateShiftName(current);
@@ -1017,10 +1096,10 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         String opsShiftType = current.getOpsShiftType();
         LocalDateTime opsShiftStartTime = current.getOpsShiftStartTime();
         LocalDateTime opsShiftEndTime = current.getOpsShiftEndTime();
-        String shiftStartValue = DateTimeFormatter.ISO_DATE_TIME.format(opsShiftStartTime); 
+        String shiftStartValue = DateTimeFormatter.ISO_DATE_TIME.format(opsShiftStartTime);
         String shiftEndValue = DateTimeFormatter.ISO_DATE_TIME.format(opsShiftEndTime);
-                
-        try {                        
+
+        try {
             // Add properties
             addSystemPropertyValue(OPS_PERSONNEL_PROPERTY_TYPE_NAME, false, opsPersonnel);
             addSystemPropertyValue(OPS_SHIFT_TYPE_PROPERTY_TYPE_NAME, false, opsShiftType);
@@ -1030,16 +1109,16 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             SessionUtility.addErrorMessage("Error", ex.getErrorMessage());
             return null;
         }
-        
+
         String sectionOneContents = String.format(OPS_GENERAL_FIRST_LOG_ENTRY, opsPersonnel, opsShiftType);
         sectionOne.addLogEntry(sectionOneContents, createdByUser);
 
         if (latestShiftDocument != null) {
             // Copy some sections to new shift log.
             for (int sectionIndex = 0; sectionIndex < logbookSections.size(); sectionIndex++) {
-                ItemDomainLogbook newSection = logbookSections.get(sectionIndex);                
+                ItemDomainLogbook newSection = logbookSections.get(sectionIndex);
                 String name = newSection.getName();
-                
+
                 if (opsSelectedCopyList.contains(name)) {
                     ItemDomainLogbook lastSection = lastShiftSections.get(sectionIndex);
                     copyLogs(lastSection, newSection);
@@ -1047,7 +1126,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             }
         } else {
             SessionUtility.addInfoMessage("Info", "Created new shift, no previous shift found.");
-        }                
+        }
 
         return create();
     }
@@ -1063,14 +1142,13 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public void setOpsSelectedCopyList(List<String> opsSelectedCopyList) {
         // UI will clear the default list on the initial update of widget. 
         if (opsSelectedCopyList.size() == 0 && initialOpsSelectionReset) {
-            initialOpsSelectionReset = false; 
-            return; 
+            initialOpsSelectionReset = false;
+            return;
         }
         this.opsSelectedCopyList = opsSelectedCopyList;
     }
 
     // </editor-fold>
-    
     private void copyLogs(ItemDomainLogbook oldLogDoc, ItemDomainLogbook newLogDoc) {
         List<Log> logList = oldLogDoc.getLogList();
         EntityInfo entityInfo = newLogDoc.getEntityInfo();
