@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <h:outputText value="Log Lockout (hours)"/> 
+
+    <p:inplace id="logLockoutDurationSettingInplace#{viewName}"
+               widgetVar="logLockoutDurationSettingInplaceWidget"               
+               toggleable="false"
+               editor="#{isEntityWriteable}">
+        <p:ajax event="save" update="@form" oncomplete="saveLogLockoutSettingInplace()"/>
+        <p:ajax event="cancel" onstart="reloadLogLockoutSettingInplace()" />
+
+        <f:facet name="output">
+            <p:outputPanel>
+                <p:commandLink id="showLogkLockoutInplaceShowButton#{viewName}"
+                               styleClass="fa-link-icon fa-icon fa fa-pencil"
+                               onclick="PF('logLockoutDurationSettingInplaceWidget').show();"
+                               rendered="#{isEntityWriteable}"/>
+                <h:outputText id="logLockoutHoursOutput#{viewName}"
+                              value="#{itemDomainLogbookController.logLockoutHours}"/>
+            </p:outputPanel>
+
+        </f:facet>
+
+        <f:facet name="input">
+            <p:remoteCommand name="reloadLogLockoutSettingInplace"
+                             update="logLockoutDurationSettingInplace#{viewName}"
+                             action="#{entityController.reloadCurrent()}"/>
+            
+            <p:remoteCommand name="saveLogLockoutSettingInplace"
+                             action="#{itemDomainLogbookController.update()}"/>
+            
+            <p:inputNumber id="logLockoutHoursInput#{viewName}"
+                           value="#{itemDomainLogbookController.logLockoutHours}"
+                           decimalPlaces="1">
+                <p:tooltip for="logLockoutHoursInput#{viewName}"
+                           value="Time in hours to lockout editing of the log log. 0 is disabled lockout."
+                           />
+            </p:inputNumber>
+        </f:facet>
+    </p:inplace> 
+
+
+</ui:composition>
+
+
