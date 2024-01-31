@@ -34,45 +34,42 @@ See LICENSE file.
 
     </ui:define>
 
-    <ui:define name="additionalItemInformation">        
-        <ui:include src="private/templateLogModePanelGridObject.xhtml" />
-        <ui:include src="private/showTimestampSettingGridObject.xhtml" />
-        <ui:include src="private/documentLockoutTimePanelGridObject.xhtml" />
-        <ui:include src="private/defaultTypePanelGridObject.xhtml" />
-
-        <h:outputLabel for="parentName#{viewName}" value="Parent Item" 
-                       styleClass="entityDataEmphasizedLabel"/>
-
-        <ui:fragment>
-
-            <ui:param name="parentItem"
-                      value="#{itemDomainLogbookController.getParentItem(itemObject)}" /> 
-            <ui:param name="displayString"
-                      value="#{displayString != null 
-                               ? displayString 
-                               : parentItem.name}" />
-            <h:outputLink value="../item/view.xhtml?id=#{parentItem.id}" 
-                          styleClass="#{styleClass}"
-                          rendered="#{parentItem != null}"
-                          title="View #{entityTypeName} details"> 
-                <h:outputText value="#{displayString}"/>
-            </h:outputLink>
-            <h:outputText rendered="#{parentItem == null}"
-                          value="Top level"/>
-        </ui:fragment>
-
-    </ui:define>                
-
     <ui:define name="additionalTopRightItemPanels">                       
         <p:commandButton id="showDetails" icon="fa fa-info" value="Log Document Info"/>
         <p:overlayPanel for="showDetails"
                         showCloseIcon="true"
-                        dismissable="false">            
-            <ui:insert name="viewPanelGrid" /> 
+                        dismissable="false">      
 
+            <ui:decorate template="../item/private/templates/itemViewPanelGridTemplate.xhtml">
+                <ui:define name="additionalItemInformation">        
+                    <ui:include src="private/templateLogModePanelGridObject.xhtml" />
+                    <ui:include src="private/showTimestampSettingGridObject.xhtml" />
+                    <ui:include src="private/documentLockoutTimePanelGridObject.xhtml" />
+                    <ui:include src="private/defaultTypePanelGridObject.xhtml" />
 
+                    <h:outputLabel for="parentName#{viewName}" value="Parent Item" 
+                                   styleClass="entityDataEmphasizedLabel"/>
 
+                    <ui:fragment>
 
+                        <ui:param name="parentItem"
+                                  value="#{itemDomainLogbookController.getParentItem(itemObject)}" /> 
+                        <ui:param name="displayString"
+                                  value="#{displayString != null 
+                                           ? displayString 
+                                           : parentItem.name}" />
+                        <h:outputLink value="../item/view.xhtml?id=#{parentItem.id}" 
+                                      styleClass="#{styleClass}"
+                                      rendered="#{parentItem != null}"
+                                      title="View #{entityTypeName} details"> 
+                            <h:outputText value="#{displayString}"/>
+                        </h:outputLink>
+                        <h:outputText rendered="#{parentItem == null}"
+                                      value="Top level"/>
+                    </ui:fragment>
+
+                </ui:define>                
+            </ui:decorate>
 
             <p/>
             <p/>
