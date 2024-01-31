@@ -25,6 +25,7 @@ import gov.anl.aps.logr.portal.model.db.entities.Log;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.utilities.AuthorizationUtility;
 import gov.anl.aps.logr.portal.utilities.MarkdownParser;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
@@ -34,6 +35,7 @@ import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.ejb.EJB;
@@ -235,6 +237,22 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public boolean entityCanBeCreatedByUsers() {
         return true;
     }
+    
+    public Double getLogLockoutHours() {
+        ItemDomainLogbook current = getCurrent();
+        return current.getLogLockoutHours();
+    }
+
+    public void setLogLockoutHours(Double hours) {
+        if (hours == null) {
+            hours = 0.0;
+        }
+        String LOG_LOCKOUT_SETTING_KEY = ItemDomainLogbook.LOG_LOCKOUT_SETTING_KEY;
+
+        ItemDomainLogbook current = getCurrent();
+        current.setLogLockoutHours(hours);
+        setLogbookSettingPropertyKey(LOG_LOCKOUT_SETTING_KEY, hours.toString());
+    }
 
     public Double getDocumentLockoutHours() {
         ItemDomainLogbook current = getCurrent();
@@ -345,26 +363,54 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         return defaultValue;
     }
 
-    @Override
-    public Log prepareAddLog(ItemDomainLogbook cdbDomainEntity) {
+    private void displayMessageAndRefreshCurrent(String summary, String message) {
+        SessionUtility.addErrorMessage(summary, message);
+
+        try {
+            String domainPath = getDomainPath();
+            String viewForCurrentEntity = viewForCurrentEntity();
+            String url = String.format("%s/%s", domainPath, viewForCurrentEntity);
+            SessionUtility.redirectTo(url);
+        } catch (IOException ex) {
+            SessionUtility.addErrorMessage("Error", ex.getMessage());
+            logger.error(ex);
+        }        
+    }
+
+    private boolean isSaveLogLockoutsForCurrent() {
+        return isSaveLogLockoutsForCurrent(null);
+    }
+
+    private boolean isSaveLogLockoutsForCurrent(Log log) {
         // Use current for the lockout timeout especially for documents with sections. 
         ItemDomainLogbook current = getCurrent();
-        EntityInfo entityInfo = current.getEntityInfo();        
+        EntityInfo entityInfo = current.getEntityInfo();
         boolean isEntityWriteableByTimeout = entityInfo.refreshWriteableByTimeout();
 
         if (isEntityWriteableByTimeout == false) {
-            SessionUtility.addErrorMessage("Cannot Add Log Entry", "Log document lockout timer expired.");
-
-            try {
-                String domainPath = getDomainPath();
-                String viewForCurrentEntity = viewForCurrentEntity();
-                String url = String.format("%s/%s", domainPath, viewForCurrentEntity);
-                SessionUtility.redirectTo(url);
-            } catch (IOException ex) {
-                SessionUtility.addErrorMessage("Error", ex.getMessage());
-                logger.error(ex);
-            }
+            displayMessageAndRefreshCurrent("Cannot change log entries", "Log document is locked by lockout time.");           
             setNewLogEdit(null);
+            return false;
+        }
+
+        if (log != null) {
+            Double logLockoutHours = current.getLogLockoutHours();
+            Date enteredOnDateTime = log.getEnteredOnDateTime();
+
+            boolean isWriteable = AuthorizationUtility.isEntityWriteableByTimeout(logLockoutHours, enteredOnDateTime);
+            if (!isWriteable) {
+                displayMessageAndRefreshCurrent("Cannot change log entry", "Log entry is locked by lockout time.");
+                setNewLogEdit(null);
+                return isWriteable; 
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    public Log prepareAddLog(ItemDomainLogbook cdbDomainEntity) {
+        if (!isSaveLogLockoutsForCurrent()) {
             return null;
         }
 
@@ -507,7 +553,16 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     public void prepareEditLogEntry(Log entry) {
-        setNewLogEdit(entry);
+        if (isSaveLogLockoutsForCurrent(entry)) {
+            setNewLogEdit(entry);
+        }
+    }
+
+    public void destroyLogEntry(Log entry) {
+        if (isSaveLogLockoutsForCurrent(entry)) {
+            LogController instance = LogController.getInstance();
+            instance.destroy(entry);
+        }
     }
 
     @Override
@@ -629,10 +684,10 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
                 entity.setEntityTypeList(new ArrayList<>());
                 EntityType entityType = entityTypeFacade.findByName(currentEntityType);
                 entity.getEntityTypeList().add(entityType);
-                
+
                 Item primaryTemplateItem = entityType.getPrimaryTemplateItem();
                 if (primaryTemplateItem != null) {
-                    templateToCreateNewItem = (ItemDomainLogbook) primaryTemplateItem; 
+                    templateToCreateNewItem = (ItemDomainLogbook) primaryTemplateItem;
                     completeSelectionOfTemplate();
                 }
             } catch (CdbException ex) {
