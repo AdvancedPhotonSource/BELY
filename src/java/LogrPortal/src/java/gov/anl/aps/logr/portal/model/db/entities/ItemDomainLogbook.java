@@ -25,12 +25,14 @@ public class ItemDomainLogbook extends Item {
     public static final String LOGBOOK_SETTINGS_PROPERTY_TYPE_NAME = "Logbook Document Settings";
     // System level settings. 
     public static final String DOC_LOCKOUT_SETTING_KEY = "docLockout";
+    public static final String LOG_LOCKOUT_SETTING_KEY = "logLockout";
 
     private transient ItemDomainLogbook newLogbookSection = null;
     private transient List<ItemDomainLogbook> logbookSections;
 
     private transient PropertyValue logbookDocumentSettings;
     private transient Double documentLockoutHours;
+    private transient Double logLockoutHours;
 
     private transient String opsPersonnel;
     private transient String opsShiftType = "Machine Studies";
@@ -174,16 +176,33 @@ public class ItemDomainLogbook extends Item {
         return result;
     }
 
+    private Double getSettingValueAsDouble(String key) {
+        PropertyValue settings = getLogbookDocumentSettings();
+        if (settings != null) {
+            String lockoutString = settings.getPropertyMetadataValueForKey(key);
+            if (lockoutString != null) {
+                return Double.valueOf(lockoutString);
+            }
+        }
+        return null;
+
+    }
+
+    public Double getLogLockoutHours() {
+        if (logLockoutHours == null) {
+            logLockoutHours = getSettingValueAsDouble(LOG_LOCKOUT_SETTING_KEY);
+        }
+        return logLockoutHours;
+    }
+
+    public void setLogLockoutHours(Double logLockoutHours) {
+        this.logLockoutHours = logLockoutHours;
+    }
+
     @JsonIgnore
     public Double getDocumentLockoutHours() {
         if (documentLockoutHours == null) {
-            PropertyValue settings = getLogbookDocumentSettings();
-            if (settings != null) {
-                String lockoutString = settings.getPropertyMetadataValueForKey(DOC_LOCKOUT_SETTING_KEY);
-                if (lockoutString != null) {
-                    documentLockoutHours = Double.valueOf(lockoutString);
-                }
-            }
+            documentLockoutHours = getSettingValueAsDouble(DOC_LOCKOUT_SETTING_KEY);
         }
         return documentLockoutHours;
     }
