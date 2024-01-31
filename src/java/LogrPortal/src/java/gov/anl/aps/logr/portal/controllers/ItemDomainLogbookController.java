@@ -347,7 +347,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @Override
     public Log prepareAddLog(ItemDomainLogbook cdbDomainEntity) {
-        EntityInfo entityInfo = cdbDomainEntity.getEntityInfo();
+        // Use current for the lockout timeout especially for documents with sections. 
+        ItemDomainLogbook current = getCurrent();
+        EntityInfo entityInfo = current.getEntityInfo();        
         boolean isEntityWriteableByTimeout = entityInfo.refreshWriteableByTimeout();
 
         if (isEntityWriteableByTimeout == false) {
