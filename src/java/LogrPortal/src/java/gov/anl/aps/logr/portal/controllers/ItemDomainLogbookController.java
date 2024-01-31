@@ -920,7 +920,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         List<ItemDomainLogbook> logbookSections = current.getLogbookSections();
 
         if (logbookSections.size() != 6) {
-            SessionUtility.addErrorMessage("Error", "Tempalte '" + OPS_TEMPLATE_NAME + "' must have 6 sections.");
+            SessionUtility.addErrorMessage("Error", "Template'" + OPS_TEMPLATE_NAME + "' must have 6 sections.");
             return;
         }
 
