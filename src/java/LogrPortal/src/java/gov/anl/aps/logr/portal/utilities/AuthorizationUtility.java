@@ -8,6 +8,9 @@ import gov.anl.aps.logr.portal.model.db.entities.CdbEntity;
 import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
 import gov.anl.aps.logr.portal.model.db.entities.UserGroup;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
 
 /**
  * Utility for handling user authorization for manipulating CDB entities.
@@ -15,13 +18,13 @@ import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 public class AuthorizationUtility {
 
     public static boolean isEntityWriteableByUser(EntityInfo entityInfo, UserInfo userInfo) {
-        boolean entityWriteableByUserBase = isEntityWriteableByUserBase(entityInfo, userInfo); 
-        
+        boolean entityWriteableByUserBase = isEntityWriteableByUserBase(entityInfo, userInfo);
+
         if (!entityWriteableByUserBase) {
-            return entityWriteableByUserBase; 
+            return entityWriteableByUserBase;
         }
-                
-        return entityInfo.isEntityWriteableByTimeout(); 
+
+        return entityInfo.isEntityWriteableByTimeout();
     }
 
     private static boolean isEntityWriteableByUserBase(EntityInfo entityInfo, UserInfo userInfo) {
@@ -61,6 +64,23 @@ public class AuthorizationUtility {
             return isEntityWriteableByUser((EntityInfo) entityInfo, userInfo);
         }
         return false;
+    }
+
+    public static boolean isEntityWriteableByTimeout(Double lockoutTimeInHours, Date createdOnDateTime) {
+        if (lockoutTimeInHours != null && lockoutTimeInHours > 0) {
+            Instant createdTime = createdOnDateTime.toInstant();
+            Instant now = Instant.now();
+
+            Duration diff = Duration.between(createdTime, now);
+
+            long minuteSinceCreation = diff.toMinutes();
+            minuteSinceCreation -= 3;
+            double timoutMinutes = lockoutTimeInHours * 60;
+
+            return minuteSinceCreation < timoutMinutes;
+        }
+        
+        return true; 
     }
 
 }

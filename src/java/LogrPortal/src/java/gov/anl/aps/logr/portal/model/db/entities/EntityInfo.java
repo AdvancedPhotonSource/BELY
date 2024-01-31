@@ -7,6 +7,7 @@ package gov.anl.aps.logr.portal.model.db.entities;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import gov.anl.aps.logr.portal.utilities.AuthorizationUtility;
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
@@ -292,20 +293,7 @@ public class EntityInfo implements Serializable {
     @JsonIgnore
     public boolean isEntityWriteableByTimeout() {
         if (isEntityWriteableByTimeout == null) {
-            if (lockoutTimeInHours != null && lockoutTimeInHours > 0) {
-                Instant createdTime = createdOnDateTime.toInstant();
-                Instant now = Instant.now();
-
-                Duration diff = Duration.between(createdTime, now);
-
-                long minuteSinceCreation = diff.toMinutes();
-                minuteSinceCreation -= 3; 
-                double timoutMinutes = lockoutTimeInHours * 60;
-                
-                isEntityWriteableByTimeout = minuteSinceCreation < timoutMinutes;                
-            } else {
-                isEntityWriteableByTimeout = true; 
-            }
+            isEntityWriteableByTimeout = AuthorizationUtility.isEntityWriteableByTimeout(lockoutTimeInHours, createdOnDateTime);           
         }
         return isEntityWriteableByTimeout;
     }
