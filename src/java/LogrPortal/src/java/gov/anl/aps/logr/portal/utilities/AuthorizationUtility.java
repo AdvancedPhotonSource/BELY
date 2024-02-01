@@ -8,7 +8,9 @@ import gov.anl.aps.logr.portal.model.db.entities.CdbEntity;
 import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
 import gov.anl.aps.logr.portal.model.db.entities.UserGroup;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
-import gov.anl.aps.logr.common.utilities.ObjectUtility;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
 
 /**
  * Utility for handling user authorization for manipulating CDB entities.
@@ -16,6 +18,16 @@ import gov.anl.aps.logr.common.utilities.ObjectUtility;
 public class AuthorizationUtility {
 
     public static boolean isEntityWriteableByUser(EntityInfo entityInfo, UserInfo userInfo) {
+        boolean entityWriteableByUserBase = isEntityWriteableByUserBase(entityInfo, userInfo);
+
+        if (!entityWriteableByUserBase) {
+            return entityWriteableByUserBase;
+        }
+
+        return entityInfo.isEntityWriteableByTimeout();
+    }
+
+    private static boolean isEntityWriteableByUserBase(EntityInfo entityInfo, UserInfo userInfo) {
         // Users can write object if entityInfo != null and:
         // current user is owner, or the object is writeable by owner group
         // and current user is member of that group
@@ -49,9 +61,26 @@ public class AuthorizationUtility {
     public static <EntityType extends CdbEntity> boolean isEntityWriteableByUser(EntityType entity, UserInfo userInfo) {
         Object entityInfo = entity.getEntityInfo();
         if (entityInfo instanceof EntityInfo) {
-            return isEntityWriteableByUser((EntityInfo) entityInfo, userInfo); 
+            return isEntityWriteableByUser((EntityInfo) entityInfo, userInfo);
         }
-        return false; 
+        return false;
+    }
+
+    public static boolean isEntityWriteableByTimeout(Double lockoutTimeInHours, Date createdOnDateTime) {
+        if (lockoutTimeInHours != null && lockoutTimeInHours > 0) {
+            Instant createdTime = createdOnDateTime.toInstant();
+            Instant now = Instant.now();
+
+            Duration diff = Duration.between(createdTime, now);
+
+            long minuteSinceCreation = diff.toMinutes();
+            
+            double timoutMinutes = lockoutTimeInHours * 60;
+
+            return minuteSinceCreation < timoutMinutes;
+        }
+        
+        return true; 
     }
 
 }

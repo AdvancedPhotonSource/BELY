@@ -201,13 +201,22 @@ public abstract class ItemFacadeBase<ItemDomainEntity extends Item> extends CdbE
 
         return Long.MIN_VALUE;
     }
-
+    
     public List<ItemDomainEntity> findByDomainAndEntityType(String domainName, String entityTypeName) {
+        return findByDomainAndEntityType(domainName, entityTypeName, null);
+    }
+
+    public List<ItemDomainEntity> findByDomainAndEntityType(String domainName, String entityTypeName, Integer limit) {
         try {
-            return (List<ItemDomainEntity>) em.createNamedQuery("Item.findByDomainNameAndEntityType")
+            Query query = em.createNamedQuery("Item.findByDomainNameAndEntityType")
                     .setParameter("domainName", domainName)
-                    .setParameter("entityTypeName", entityTypeName)
-                    .getResultList();
+                    .setParameter("entityTypeName", entityTypeName);
+            
+            if (limit != null) {
+                query.setMaxResults(limit);
+            }
+            
+            return (List<ItemDomainEntity>) query.getResultList();
         } catch (NoResultException ex) {
 
         }
@@ -945,6 +954,21 @@ public abstract class ItemFacadeBase<ItemDomainEntity extends Item> extends CdbE
             searchString = convertWildcards(searchString);
             ItemDomainName domain = getDomain();
             return (List<ItemDomainEntity>) em.createNamedStoredProcedureQuery("item.searchItems")
+                    .setParameter("domain_id", domain.getId())
+                    .setParameter("search_string", searchString)
+                    .setParameter("limit_row", SEARCH_RESULT_LIMIT)
+                    .getResultList();
+        } catch (NoResultException ex) {
+
+        }
+        return null;
+    }
+    
+    public List<ItemDomainEntity> searchEntitiesNoParent(String searchString) {
+        try {
+            searchString = convertWildcards(searchString);
+            ItemDomainName domain = getDomain();
+            return (List<ItemDomainEntity>) em.createNamedStoredProcedureQuery("item.searchItemsNoParent")
                     .setParameter("domain_id", domain.getId())
                     .setParameter("search_string", searchString)
                     .setParameter("limit_row", SEARCH_RESULT_LIMIT)

@@ -550,8 +550,11 @@ CREATE TABLE `entity_type` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(64) NOT NULL,
   `description` varchar(256) DEFAULT NULL,
+  `primary_template_item_id` int(11) unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `entity_type_u1` (`name`)
+  UNIQUE KEY `entity_type_u1` (`name`),
+  KEY `primary_template_item_entity_type_k1` (`primary_template_item_id`),
+  CONSTRAINT `primary_template_item_entity_type_fk1` FOREIGN KEY (`primary_template_item_id`) REFERENCES `item` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 --

@@ -34,43 +34,43 @@ See LICENSE file.
 
     </ui:define>
 
-    <ui:define name="additionalItemInformation">        
-        <ui:include src="private/templateLogModePanelGridObject.xhtml" /> 
-        <ui:include src="private/showTimestampSettingGridObject.xhtml" /> 
-
-        <h:outputLabel for="parentName#{viewName}" value="Parent Item" 
-                       styleClass="entityDataEmphasizedLabel"/>
-
-        <ui:fragment>
-
-            <ui:param name="parentItem"
-                      value="#{itemDomainLogbookController.getParentItem(itemObject)}" /> 
-            <ui:param name="displayString"
-                      value="#{displayString != null 
-                               ? displayString 
-                               : parentItem.name}" />
-            <h:outputLink value="../item/view.xhtml?id=#{parentItem.id}" 
-                          styleClass="#{styleClass}"
-                          rendered="#{parentItem != null}"
-                          title="View #{entityTypeName} details"> 
-                <h:outputText value="#{displayString}"/>
-            </h:outputLink>
-            <h:outputText rendered="#{parentItem == null}"
-                          value="Top level"/>
-        </ui:fragment>
-
-    </ui:define>                
-
     <ui:define name="additionalTopRightItemPanels">                       
         <p:commandButton id="showDetails" icon="fa fa-info" value="Log Document Info"/>
         <p:overlayPanel for="showDetails"
                         showCloseIcon="true"
-                        dismissable="false">            
-            <ui:insert name="viewPanelGrid" /> 
+                        dismissable="false">      
 
+            <ui:decorate template="../item/private/templates/itemViewPanelGridTemplate.xhtml">
+                <ui:define name="additionalItemInformation">        
+                    <ui:include src="private/templateLogModePanelGridObject.xhtml" />
+                    <ui:include src="private/showTimestampSettingGridObject.xhtml" />
+                    <ui:include src="private/documentLockoutTimePanelGridObject.xhtml" />
+                    <ui:include src="private/logLockoutTimePanelGridObject.xhtml" />
+                    <ui:include src="private/defaultTypePanelGridObject.xhtml" />                    
 
+                    <h:outputLabel for="parentName#{viewName}" value="Parent Item" 
+                                   styleClass="entityDataEmphasizedLabel"/>
 
+                    <ui:fragment>
 
+                        <ui:param name="parentItem"
+                                  value="#{itemDomainLogbookController.getParentItem(itemObject)}" /> 
+                        <ui:param name="displayString"
+                                  value="#{displayString != null 
+                                           ? displayString 
+                                           : parentItem.name}" />
+                        <h:outputLink value="../item/view.xhtml?id=#{parentItem.id}" 
+                                      styleClass="#{styleClass}"
+                                      rendered="#{parentItem != null}"
+                                      title="View #{entityTypeName} details"> 
+                            <h:outputText value="#{displayString}"/>
+                        </h:outputLink>
+                        <h:outputText rendered="#{parentItem == null}"
+                                      value="Top level"/>
+                    </ui:fragment>
+
+                </ui:define>                
+            </ui:decorate>
 
             <p/>
             <p/>
@@ -104,6 +104,21 @@ See LICENSE file.
                 </p:dataTable>
             </p:panel>
         </p:overlayPanel>
+
+        <p:commandButton style="float: right" id="backDocumentList" icon="fa fa-arrow-up" ajax="false"
+                action="#{itemDomainLogbookController.navigateToLogDocumentList}">
+        <p:tooltip for="backDocumentList" value="Navigate to Log Document List" />
+        </p:commandButton>
+
+        <p:commandButton id="nextDoc" style="float: right" icon="fa fa-arrow-right" ajax="false" disabled="#{itemDomainLogbookController.nextPageButtonDisabled}"
+                action="#{itemDomainLogbookController.navigateToNextDoc}">
+            <p:tooltip for="nextDoc" value="Navigate to next log document" /> 
+        </p:commandButton>
+
+        <p:commandButton id="prevDoc" style="float: right" icon="fa fa-arrow-left" ajax="false" disabled="#{itemDomainLogbookController.prevPageButtonDisabled}"
+                action="#{itemDomainLogbookController.navigateToPrevDoc}">
+            <p:tooltip for="prevDoc" value="Navigate to previous log document" /> 
+        </p:commandButton>
 
         <p:commandButton id="toggleTimestamp" style="float: right" icon="fa fa-clock-o"
                          ajax="true"                        
