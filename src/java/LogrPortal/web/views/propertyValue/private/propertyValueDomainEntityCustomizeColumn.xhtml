@@ -15,9 +15,6 @@ See LICENSE file.
     <ui:param name="entitySettingObject" value="#{entityController.settingObject}" />
     <ui:param name="allPropertyTypes" value="#{propertyTypeController.availableItems}" />
 
-    <p:selectBooleanCheckbox rendered="#{filterable}" id="#{entityTypeName}AutoLoadProperty" value="#{entitySettingObject.filterByPropertiesAutoLoad}"/>  
-    <h:outputLabel rendered="#{filterable}" for="#{entityTypeName}AutoLoadProperty" value="Automatically Load Property Filter Values*" styleClass="dialogDataLabel"/>
-
     <p:selectOneMenu id="#{entityTypeName}DisplayPropertyType1" value="#{entitySettingObject.displayPropertyTypeId1}" 
                      styleClass="entityDataSelectOne">
         <f:selectItem itemLabel="None" noSelectionOption="true"/>

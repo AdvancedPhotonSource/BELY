@@ -749,6 +749,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     @Override
+    public boolean isDisplayRowExpansionAssembly(Item item) {
+        return false; 
+    }
+
+    @Override
     public String getItemListPageTitle() {
         String itemListPageTitle = super.getItemListPageTitle();
 
