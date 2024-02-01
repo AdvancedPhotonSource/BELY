@@ -12,6 +12,7 @@ import gov.anl.aps.logr.portal.model.db.entities.Domain;
 import java.util.HashMap;
 import java.util.Map;
 import org.primefaces.model.FilterMeta;
+import org.primefaces.model.SortMeta;
 import org.primefaces.model.SortOrder;
 
 /**
@@ -22,6 +23,18 @@ public class ItemDomainLogbookLazyDataModel extends ItemLazyDataModel<ItemDomain
 
     public ItemDomainLogbookLazyDataModel(ItemDomainLogbookFacade facade, Domain itemDomain, ItemSettings settings) {
         super(facade, itemDomain, settings);
+        
+        addDefaultSortOrder();
+    }
+    
+    private void addDefaultSortOrder() {
+        Map sortBy = new HashMap();
+        String idKey = ItemQueryBuilder.QueryTranslator.id.getValue();        
+        SortMeta sortMeta = new SortMeta(); 
+        sortMeta.setOrder(SortOrder.DESCENDING);
+        sortBy.put(idKey, sortMeta); 
+        
+        setDefaultSortOrderMap(sortBy); 
     }
 
     @Override
