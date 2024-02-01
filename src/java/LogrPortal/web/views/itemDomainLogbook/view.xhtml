@@ -105,6 +105,21 @@ See LICENSE file.
             </p:panel>
         </p:overlayPanel>
 
+        <p:commandButton style="float: right" id="backDocumentList" icon="fa fa-arrow-up" ajax="false"
+                action="#{itemDomainLogbookController.navigateToLogDocumentList}">
+        <p:tooltip for="backDocumentList" value="Navigate to Log Document List" />
+        </p:commandButton>
+
+        <p:commandButton id="nextDoc" style="float: right" icon="fa fa-arrow-right" ajax="false" disabled="#{itemDomainLogbookController.nextPageButtonDisabled}"
+                action="#{itemDomainLogbookController.navigateToNextDoc}">
+            <p:tooltip for="nextDoc" value="Navigate to next log document" /> 
+        </p:commandButton>
+
+        <p:commandButton id="prevDoc" style="float: right" icon="fa fa-arrow-left" ajax="false" disabled="#{itemDomainLogbookController.prevPageButtonDisabled}"
+                action="#{itemDomainLogbookController.navigateToPrevDoc}">
+            <p:tooltip for="prevDoc" value="Navigate to previous log document" /> 
+        </p:commandButton>
+
         <p:commandButton id="toggleTimestamp" style="float: right" icon="fa fa-clock-o"
                          ajax="true"                        
                          onclick="toggleTimestamps()">

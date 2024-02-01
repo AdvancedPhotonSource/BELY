@@ -775,6 +775,48 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         return itemListPageTitle;
     }
 
+    public String navigateToLogDocumentList(){
+        EntityType entityType = getCurrent().getEntityTypeList().get(0);
+        switch (entityType.getName()) {
+            case AOP_ENTITY_TYPE_NAME:
+                return "aopList";
+            case CTL_ENTITY_TYPE_NAME:
+                return "ctlList";
+            case OPS_ENTITY_TYPE_NAME:
+                return "opsList";
+            default:
+                return "sandboxList";
+        }
+    }
+
+    public String navigateToNextDoc() {
+        ItemDomainLogbook currentDoc = getCurrent();  
+        ItemDomainLogbook nextDoc = currentDoc.getNextDoc(itemDomainLogbookFacade);  
+        String nextId = nextDoc.getId().toString();
+        return "view?id=" + nextId+ "&faces-redirect=true";
+    }
+
+    public Boolean getNextPageButtonDisabled() {
+        ItemDomainLogbook currentDoc = getCurrent();    
+        ItemDomainLogbook nextDoc = currentDoc.getNextDoc(itemDomainLogbookFacade);  
+        boolean nextPageButtonDisabled = (nextDoc == null) ? true : false;
+        return nextPageButtonDisabled;
+    }
+
+    public String navigateToPrevDoc() {
+        ItemDomainLogbook currentDoc = getCurrent();  
+        ItemDomainLogbook prevDoc = currentDoc.getPrevDoc(itemDomainLogbookFacade);  
+        String prevId = prevDoc.getId().toString();
+        return "view?id=" + prevId+ "&faces-redirect=true";
+    }
+
+    public Boolean getPrevPageButtonDisabled() {
+        ItemDomainLogbook currentDoc = getCurrent();  
+        ItemDomainLogbook prevDoc = currentDoc.getPrevDoc(itemDomainLogbookFacade); 
+        boolean prevPageButtonDisabled = (prevDoc == null) ? true : false;
+        return prevPageButtonDisabled;
+    }
+
     @Override
     public void performEntitySearch(String searchString, boolean caseInsensitive) {
         super.performEntitySearch(searchString, caseInsensitive);
