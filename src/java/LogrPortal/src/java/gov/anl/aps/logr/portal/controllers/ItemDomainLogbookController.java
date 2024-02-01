@@ -789,32 +789,56 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
     }
 
-    public String navigateToNextDoc() {
+    public ItemDomainLogbook getNextLogDocument() {
+        ItemDomainLogbook nextDoc;
         ItemDomainLogbook currentDoc = getCurrent();  
-        ItemDomainLogbook nextDoc = currentDoc.getNextDoc(itemDomainLogbookFacade);  
-        String nextId = nextDoc.getId().toString();
+        boolean nextDocLoaded = currentDoc.getNextDocLoaded();
+        if (!nextDocLoaded) {
+            Integer logId =  currentDoc.getId();
+            String entityTypeName =  currentDoc.getEntityTypeList().get(0).getName();
+            nextDoc = itemDomainLogbookFacade.getNextLogDocument(entityTypeName, logId);
+            currentDoc.setNextDoc(nextDoc);
+            currentDoc.setNextDocLoaded(true);
+        } else {
+            nextDoc = currentDoc.getNextDoc();
+        }
+        return nextDoc;
+    }
+
+    public ItemDomainLogbook getPrevLogDocument() {
+        ItemDomainLogbook prevDoc;
+        ItemDomainLogbook currentDoc = getCurrent();  
+        boolean prevDocLoaded = currentDoc.getPrevDocLoaded();
+        if (!prevDocLoaded) {
+            Integer logId =  currentDoc.getId();
+            String entityTypeName =  currentDoc.getEntityTypeList().get(0).getName();
+            prevDoc = itemDomainLogbookFacade.getPreviousLogDocument(entityTypeName, logId);
+            currentDoc.setPrevDoc(prevDoc);
+            currentDoc.setPrevDocLoaded(true);
+        } else {
+            prevDoc = currentDoc.getPrevDoc();
+        }
+        return prevDoc;
+    }
+
+    public String navigateToNextDoc() {
+        String nextId = getNextLogDocument().getId().toString();
         return "view?id=" + nextId+ "&faces-redirect=true";
     }
 
-    public Boolean getNextPageButtonDisabled() {
-        ItemDomainLogbook currentDoc = getCurrent();    
-        ItemDomainLogbook nextDoc = currentDoc.getNextDoc(itemDomainLogbookFacade);  
-        boolean nextPageButtonDisabled = (nextDoc == null) ? true : false;
-        return nextPageButtonDisabled;
+    public Boolean getNextPageButtonDisabled() { 
+        ItemDomainLogbook nextDoc = getNextLogDocument();
+        return nextDoc == null;
     }
 
     public String navigateToPrevDoc() {
-        ItemDomainLogbook currentDoc = getCurrent();  
-        ItemDomainLogbook prevDoc = currentDoc.getPrevDoc(itemDomainLogbookFacade);  
-        String prevId = prevDoc.getId().toString();
+        String prevId = getPrevLogDocument().getId().toString();
         return "view?id=" + prevId+ "&faces-redirect=true";
     }
 
-    public Boolean getPrevPageButtonDisabled() {
-        ItemDomainLogbook currentDoc = getCurrent();  
-        ItemDomainLogbook prevDoc = currentDoc.getPrevDoc(itemDomainLogbookFacade); 
-        boolean prevPageButtonDisabled = (prevDoc == null) ? true : false;
-        return prevPageButtonDisabled;
+    public Boolean getPrevPageButtonDisabled() { 
+        ItemDomainLogbook prevDoc = getPrevLogDocument();
+        return prevDoc == null;
     }
 
     @Override

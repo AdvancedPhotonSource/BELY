@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import gov.anl.aps.logr.portal.model.db.beans.ItemDomainLogbookFacade;
 
 /**
  *
@@ -217,23 +216,35 @@ public class ItemDomainLogbook extends Item {
     private transient boolean nextDocLoaded;
     private transient boolean prevDocLoaded;
 
-    public ItemDomainLogbook getNextDoc(ItemDomainLogbookFacade itemDomainLogbookFacade) {
-        if (nextDocLoaded == false) {
-            Integer logId = getId();
-            String entityTypeName = getEntityTypeList().get(0).getName();
-            nextDoc = itemDomainLogbookFacade.getNextLogDocument(entityTypeName, logId);
-            nextDocLoaded = true;
-        }
-        return nextDoc;
+    public void setNextDoc(ItemDomainLogbook nextDoc){
+        this.nextDoc = nextDoc;
     }
 
-    public ItemDomainLogbook getPrevDoc(ItemDomainLogbookFacade itemDomainLogbookFacade) {
-        if (prevDocLoaded == false) {
-            Integer logId = getId();
-            String entityTypeName = getEntityTypeList().get(0).getName();
-            prevDoc = itemDomainLogbookFacade.getPreviousLogDocument(entityTypeName, logId);
-            prevDocLoaded = true;
-        }
-        return prevDoc;
+    public void setPrevDoc(ItemDomainLogbook prevDoc){
+        this.prevDoc = prevDoc;
+    }
+
+    public ItemDomainLogbook getNextDoc(){
+        return this.nextDoc;
+    }
+
+    public ItemDomainLogbook getPrevDoc(){
+        return this.prevDoc;
+    }
+
+    public void setNextDocLoaded(boolean nextDocLoaded){
+        this.nextDocLoaded = nextDocLoaded;
+    }
+
+    public void setPrevDocLoaded(boolean prevDocLoaded){
+        this.prevDocLoaded = prevDocLoaded;
+    }
+
+    public boolean getNextDocLoaded(){
+        return this.nextDocLoaded;
+    }
+
+    public boolean getPrevDocLoaded(){
+        return this.prevDocLoaded;
     }
 }
