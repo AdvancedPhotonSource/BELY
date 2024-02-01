@@ -31,17 +31,7 @@ See LICENSE file.
             <ui:include src="reusedParts/listAddButton.xhtml" />
         </ui:insert>
         
-        <ui:insert name="additonalListButtons"/>
-
-        <p:commandButton id="#{entityTypeName}LoadPropertyValuesButton" 
-                         rendered="#{displayLoadPropertiesFilterValuesButton}" 
-                         value="Load Property Filters" alt="Load property value filters"
-                         onstart="PF('loadingDialog').show()"
-                         oncomplete="PF('loadingDialog').hide()"
-                         action="#{entityController.loadPreProcessPropertyValueInformationColumns()}"
-                         update="#{entityTypeName}ListDataTable @parent">
-            <p:tooltip for="#{entityTypeName}LoadPropertyValuesButton" value="Load property value filters."/>
-        </p:commandButton>
+        <ui:insert name="additonalListButtons"/>       
 
         <ui:include src="reusedParts/listExportButtons.xhtml"/>
         

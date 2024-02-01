@@ -10,11 +10,16 @@ See LICENSE file.
                 template="../item/private/templates/itemTemplateListTemplate.xhtml">
     
     <ui:param name="entityController" value="#{itemDomainLogbookController}" />
+    <ui:param name="listExportable" value="#{false}"/>
     
     <f:metadata>
         <f:viewAction action="#{settingController.updateGlobalSettings()}" />
         <f:viewAction action="#{itemDomainLogbookController.processPreRenderTemplateList()}" />
     </f:metadata>
+    
+    <ui:define name="actionsColumn">
+        
+    </ui:define>
 
 </ui:composition>
 

@@ -17,12 +17,7 @@ See LICENSE file.
     <ui:param name="displayMultiEditButtons"
               value="#{displayMultiEditButtons != null 
                        ? displayMultiEditButtons 
-                       : true}" />
-    
-    <ui:param name="templateIcon"
-              value="#{templateIcon == null 
-                       ? 'ui-icon-template' 
-                       : templateIcon }" />
+                       : true}" />        
 
     <ui:define name="additonalListButtons" >
         
@@ -51,16 +46,16 @@ See LICENSE file.
         
         <ui:insert name="additionalListTypeCategoryActionButtons"/> 
         
-        <p:commandButton id="#{entityTypeName}#{viewName}ViewItemProperties" 
+<!--        <p:commandButton id="#{entityTypeName}#{viewName}ViewItemProperties" 
                          alt="View #{entityController.entityEntityTypeName}s" 
                          action="#{propertyTypeController.prepareItemPropertyList(entityController.defaultDomainName)}"
                          rendered="#{entityController.entityDisplayItemProperties}"
                          icon="fa fa-product-hunt" styleClass="actionButtonRight">
             <p:tooltip for="#{entityTypeName}ViewItemProperties" value="View Available Properties."/>
-        </p:commandButton>
+        </p:commandButton>-->
         
         <p:commandButton id="#{entityTypeName}#{viewName}ViewItemTemplates"
-                         icon="ui-icon #{templateIcon}"
+                         icon="fa fa-puzzle-piece"
                          styleClass="actionButtonRight"
                          action="#{entityController.prepareTemplateList()}"
                          rendered="#{displayAvailableTemplatesButton}">
