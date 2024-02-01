@@ -11,6 +11,7 @@ import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
 import gov.anl.aps.logr.portal.model.db.entities.Log;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -80,5 +81,9 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
         return log; 
     }
 
-    
+    @Override
+    public List<ItemDomainLogbook> searchEntities(String searchString) {
+        return getEntityDbFacade().searchEntitiesNoParent(searchString);
+    }
+   
 }

@@ -246,6 +246,28 @@ import org.primefaces.model.TreeNode;
             }
     ),
     @NamedStoredProcedureQuery(
+            name = "item.searchItemsNoParent",
+            procedureName = "search_items_no_parent",
+            resultClasses = Item.class,
+            parameters = {
+                @StoredProcedureParameter(
+                        name = "limit_row",
+                        mode = ParameterMode.IN,
+                        type = Integer.class
+                ),
+                @StoredProcedureParameter(
+                        name = "domain_id",
+                        mode = ParameterMode.IN,
+                        type = Integer.class
+                ),
+                @StoredProcedureParameter(
+                        name = "search_string",
+                        mode = ParameterMode.IN,
+                        type = String.class
+                )
+            }
+    ),
+    @NamedStoredProcedureQuery(
             name = "item.search_item_logs",
             procedureName = "search_item_logs",
             resultSetMappings = "logResultList",
