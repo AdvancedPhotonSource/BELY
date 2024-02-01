@@ -20,7 +20,22 @@ See LICENSE file.
 
         <h1> Recent Log Documents </h1>
 
-        <p:panelGrid columns="3" styleClass="homePageDataScroller">
+        <p:panelGrid columns="3" styleClass="homePageDataScroller">            
+            <p:outputPanel>
+                <h2>
+                    <h:outputLink value="itemDomainLogbook/opsList"
+                                  title="Navigate to operations list page.">
+                        Operations
+                    </h:outputLink>
+                </h2>
+
+                <p:dataScroller value="#{itemDomainLogbookController.getRecentOPSDocuments(10)}" var="logItem" styleClass="logDataScroller">
+
+                    <ui:include src="itemDomainLogbook/private/logDocumentDataScrollerObject.xhtml"/>
+
+                </p:dataScroller>
+            </p:outputPanel>
+            
             <p:outputPanel>   
                 <h2>
                     <h:outputLink 
@@ -50,22 +65,7 @@ See LICENSE file.
                     <ui:include src="itemDomainLogbook/private/logDocumentDataScrollerObject.xhtml"/>
 
                 </p:dataScroller>
-            </p:outputPanel>
-
-            <p:outputPanel>
-                <h2>
-                    <h:outputLink value="itemDomainLogbook/opsList"
-                                  title="Navigate to operations list page.">
-                        Operations
-                    </h:outputLink>
-                </h2>
-
-                <p:dataScroller value="#{itemDomainLogbookController.getRecentOPSDocuments(10)}" var="logItem" styleClass="logDataScroller">
-
-                    <ui:include src="itemDomainLogbook/private/logDocumentDataScrollerObject.xhtml"/>
-
-                </p:dataScroller>
-            </p:outputPanel>
+            </p:outputPanel>          
         </p:panelGrid>
 
     </ui:define>
