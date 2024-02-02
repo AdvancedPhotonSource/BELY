@@ -762,6 +762,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             String entityName = null;
 
             switch (currentEntityType) {
+                case AOP_ENTITY_TYPE_NAME:
+                    entityName = "Machine Studies"; 
+                    break;
                 case CTL_ENTITY_TYPE_NAME:
                     entityName = "Controls";
                     break;
