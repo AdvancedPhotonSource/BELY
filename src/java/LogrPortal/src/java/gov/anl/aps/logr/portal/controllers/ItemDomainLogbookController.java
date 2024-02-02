@@ -76,6 +76,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private static final String AOP_ENTITY_TYPE_NAME = "aop";
     private static final String OPS_ENTITY_TYPE_NAME = "ops";
     private static final String SANDBOX_ENTITY_TYPE_NAME = "sandbox";
+    private static final String TEMPLATE_ENTITY_TYPE_NAME = "Template";
 
     private static final String LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY = "showTimestamps";
     private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY = "logMode";
@@ -777,15 +778,18 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     public String navigateToLogDocumentList(){
         EntityType entityType = getCurrent().getEntityTypeList().get(0);
+        System.out.println(entityType.getName());
         switch (entityType.getName()) {
             case AOP_ENTITY_TYPE_NAME:
-                return "aopList";
+                return "aopList?faces-redirect=true";
             case CTL_ENTITY_TYPE_NAME:
-                return "ctlList";
+                return "ctlList?faces-redirect=true";
             case OPS_ENTITY_TYPE_NAME:
-                return "opsList";
+                return "opsList?faces-redirect=true";
+            case TEMPLATE_ENTITY_TYPE_NAME:
+                return "templateList?faces-redirect=true";
             default:
-                return "sandboxList";
+                return "sandboxList?faces-redirect=true";
         }
     }
 
