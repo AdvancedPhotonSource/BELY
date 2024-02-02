@@ -210,6 +210,10 @@ public class ItemDomainLogbook extends Item {
     public void setDocumentLockoutHours(Double documentLockoutHours) {
         this.documentLockoutHours = documentLockoutHours;
     }
+    
+    public boolean isDocumentWriteableByTimeout() {
+        return getEntityInfo().isEntityWriteableByTimeout(); 
+    }
 
     private transient ItemDomainLogbook nextDoc;
     private transient ItemDomainLogbook prevDoc;

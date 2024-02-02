@@ -158,3 +158,9 @@ div.logbookSection {
     width: 300px;
     height: 680px;     
 }
+
+.lockedDocumentMessage {
+    color: red;
+    font-size: 15px;
+    font-weight: bold;
+}

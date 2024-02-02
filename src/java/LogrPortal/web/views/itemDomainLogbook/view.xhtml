@@ -105,6 +105,10 @@ See LICENSE file.
             </p:panel>
         </p:overlayPanel>
 
+        <ui:fragment rendered="#{!itemObject.documentWriteableByTimeout}">
+            <span class="lockedDocumentMessage">Document locked by lockout time</span>
+        </ui:fragment>
+        
         <p:commandButton style="float: right" id="backDocumentList" icon="fa fa-arrow-up" ajax="false"
                 action="#{itemDomainLogbookController.navigateToLogDocumentList}">
         <p:tooltip for="backDocumentList" value="Navigate to Log Document List" />
