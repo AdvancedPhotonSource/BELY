@@ -93,6 +93,7 @@ html, body {
 
 .logAction {
     float: right; 
+    margin-left: 10px;
 }
 
 pre:has(code) {    
@@ -123,7 +124,8 @@ pre:has(code) {
     margin: 0px; 
 }
 
-.logEntry p {    
+.logEntry p, li {    
+    font-size: 15px;
 }
 
 .logEntry img {
