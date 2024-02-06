@@ -24,7 +24,7 @@ See LICENSE file.
                              styleClass="entityDataText"
                              id="templateTitleOutputText"                                                          
                              filter="true" filterMatchMode="startsWith">   
-                
+
                 <p:ajax event="valueChange" update="@this"/>
                 <p:ajax event="itemSelect" onstart="finalizeTemplateSelection()" />
 
@@ -34,9 +34,12 @@ See LICENSE file.
                                itemLabel="#{templateItem.name}" 
                                itemValue="#{templateItem}"/>               
             </p:selectOneMenu>
-            
+
         </p:outputPanel>        
     </ui:define>
+
+    <ui:define name="itemDescriptionLabel" />
+    <ui:define name="itemDescriptionValue" />
 
     <ui:define name="additionalItemCreateContent">                
         <p:remoteCommand name="finalizeTemplateSelection"                         
