@@ -999,7 +999,7 @@ public class Item extends CdbDomainEntity implements Serializable {
                 if (entityTypeString.length() > 0) {
                     entityTypeString += " | ";
                 }
-                entityTypeString += entityType.getName();
+                entityTypeString += entityType.getDisplayName();
             }
         } else {
             entityTypeString = "-";
