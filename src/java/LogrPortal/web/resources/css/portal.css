@@ -705,7 +705,7 @@ h2 {
 
 }
 
-.mainMenuBar .activeSubMenuParentItem .ui-submenu-link, 
+.mainMenuBar .activeSubMenuParentItem > .ui-submenu-link, 
 .mainMenuBar .activeMenuItem {
     background-color: rgba(255, 255, 255, 0.7) !important;
 }
