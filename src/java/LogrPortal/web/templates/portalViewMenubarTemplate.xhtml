@@ -8,46 +8,58 @@ See LICENSE file.
                 xmlns:ui="http://java.sun.com/jsf/facelets"
                 xmlns:fn="http://java.sun.com/jsp/jstl/functions"
                 xmlns:p="http://primefaces.org/ui"
-                xmlns:f="http://xmlns.jcp.org/jsf/core">
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
     <p:outputPanel styleClass="mainMenuBar">
-        <p:menubar>              
-            
-            
+        <p:menubar>
             <p:submenu label="Logbook"
                        id="browseByDropdownButton"
-                       icon="fa fa-book"
-                       styleClass="wideSubMenu #{(fn:startsWith(view.viewId, '/views/itemDomainLogbook/')) ? 'activeSubMenuParentItem' : ''} ">
-                <p:menuitem value="All" 
-                        icon="fa fa-book"
-                        rendered="false"
-                        id="maarcMenubarButton" url="#{request.contextPath}/views/itemDomainLogbook/list" 
-                        styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainLogbook/') ? 'activeMenuItem' : ''} "/>
-                
-                <p:menuitem value="Machine Studies" 
-                        icon="fa fa-book"                        
-                        id="aopLogbookListButton" url="#{request.contextPath}/views/itemDomainLogbook/aopList"                         
-                        styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainLogbook/aopList') ? 'activeMenuItem' : ''} "/>
-                
-                <p:menuitem value="Controls" 
-                        icon="fa fa-book"                        
-                        id="ctlLogbookListButton" url="#{request.contextPath}/views/itemDomainLogbook/ctlList"                         
-                        styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainLogbook/ctlList') ? 'activeMenuItem' : ''} "/>
-                
-                <p:menuitem value="Operations" 
-                        icon="fa fa-book"                        
-                        id="opsLogbookListButton" url="#{request.contextPath}/views/itemDomainLogbook/opsList" 
-                        styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainLogbook/opsList') ? 'activeMenuItem' : ''} "/>
-                
-                <p:menuitem value="Sandbox" 
-                        icon="fa fa-book"                        
-                        id="sandboxLogbookListButton" url="#{request.contextPath}/views/itemDomainLogbook/sandboxList" 
-                        styleClass="#{fn:startsWith(view.viewId, '/views/itemDomainLogbook/sandboxList') ? 'activeMenuItem' : ''} "/>
+                       icon="fa fa-list"
+                       styleClass="wideSubMenu #{(fn:startsWith(view.viewId, '/views/itemDomainLogbook/')) ? 'activeSubMenuParentItem' : ''} ">               
+
+                <c:forEach items="#{itemDomainLogbookController.topLevelEntityTypeList}"
+                           var="et">
+
+                    <c:if test="#{!et.hasChildren}">
+
+                        <p:menuitem id="generatedLogbookMenuItem#{et.id}" 
+                                    value="#{et.displayName}"
+                                    icon="fa fa-book"
+                                    url="#{request.contextPath}/views/itemDomainLogbook/#{et.listUrl}"
+                                    styleClass="#{(fn:startsWith(view.viewId, '/views/itemDomainLogbook/')) ? 
+                                                  (itemDomainLogbookController.isActivePage(et.id) ? 'activeMenuItem' : '') 
+                                                  : ''}"                                    
+                                    />
+
+                    </c:if>
+
+                    <c:if test="#{et.hasChildren}">
+                        <p:submenu id="generatedLogbookSubMenuItem#{et.id}" 
+                                   label="#{et.displayName}"
+                                   icon="fa fa-list"
+                                   styleClass="#{(fn:startsWith(view.viewId, '/views/itemDomainLogbook/')) ? 
+                                                 (itemDomainLogbookController.isActiveParentPage(et.id) ? 'activeSubMenuParentItem' : '')
+                                                 : ''}">
+                            <c:forEach items="#{et.entityTypeChildren}"
+                                       var="etChild">
+
+                                <p:menuitem id="generatedLogbookMenuItem#{etChild.id}" 
+                                            value="#{etChild.displayName}"
+                                            icon="fa fa-book"
+                                            url="#{request.contextPath}/views/itemDomainLogbook/#{etChild.listUrl}"
+                                            styleClass="#{(fn:startsWith(view.viewId, '/views/itemDomainLogbook/')) ? 
+                                                          (itemDomainLogbookController.isActivePage(etChild.id) ? 'activeMenuItem' : '') 
+                                                          : ''}"/>                                
+                            </c:forEach>                  
+                        </p:submenu>
+                    </c:if>                                        
+                </c:forEach>              
             </p:submenu>
-            
+
 
             <f:facet name="options">
                 <p:menubar styleClass="menuBarSupportingItems"> 
-                    
+
                     <p:menuitem styleClass="noButtonMenuItem"
                                 id="searchMenuItem">
                         <p:inputText id="menuBarSearchInput" placeholder="Search"
@@ -73,6 +85,6 @@ See LICENSE file.
                 </p:menubar>
             </f:facet>
         </p:menubar>
-        
+
     </p:outputPanel>
 </ui:composition>

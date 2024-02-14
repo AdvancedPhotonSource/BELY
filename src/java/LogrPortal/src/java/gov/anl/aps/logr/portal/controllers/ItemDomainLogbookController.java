@@ -71,6 +71,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     private List<SearchResult> logResults;
     private List<EntityType> logbookEntityTypes;
+    private List<EntityType> topLevelEntityTypeList;
 
     private static final String CTL_ENTITY_TYPE_NAME = "ctl";
     private static final String AOP_ENTITY_TYPE_NAME = "aop";
@@ -1030,6 +1031,31 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         List<ItemDomainLogbook> findByDomainAndEntityType = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), AOP_ENTITY_TYPE_NAME, limit);
 
         return findByDomainAndEntityType;
+    }
+
+    public List<EntityType> getTopLevelEntityTypeList() {
+        if (topLevelEntityTypeList == null) {
+            topLevelEntityTypeList = entityTypeFacade.findTopLevelByDomain(getDefaultDomain().getId());
+        }
+
+        return topLevelEntityTypeList;
+    }
+
+    public boolean isActivePage(Integer entityTypeId) {
+        if (currentEntityType != null) {
+            return Objects.equals(currentEntityType.getId(), entityTypeId);
+        }
+        return false;
+    }
+
+    public boolean isActiveParentPage(Integer parentEntityTypeId) {
+        if (currentEntityType != null) {
+            EntityType parentEntityType = currentEntityType.getParentEntityType();
+            if (parentEntityType != null) {
+                return Objects.equals(parentEntityType.getId(), parentEntityTypeId);
+            }
+        }
+        return false;
     }
 
     // <editor-fold defaultstate="collapsed" desc="Operations functionality.">
