@@ -37,6 +37,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
@@ -66,18 +67,14 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     @EJB
     LogFacade logFacade;
 
-    private String currentEntityType = null;
+    private EntityType currentEntityType = null;
     private Log lastLog;
 
     private List<SearchResult> logResults;
     private List<EntityType> logbookEntityTypes;
     private List<EntityType> topLevelEntityTypeList;
 
-    private static final String CTL_ENTITY_TYPE_NAME = "ctl";
-    private static final String AOP_ENTITY_TYPE_NAME = "aop";
     private static final String OPS_ENTITY_TYPE_NAME = "ops";
-    private static final String SANDBOX_ENTITY_TYPE_NAME = "sandbox";
-    private static final String TEMPLATE_ENTITY_TYPE_NAME = "Template";
 
     private static final String LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY = "showTimestamps";
     private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY = "logMode";
@@ -239,7 +236,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public boolean entityCanBeCreatedByUsers() {
         return true;
     }
-    
+
     public Double getLogLockoutHours() {
         ItemDomainLogbook current = getCurrent();
         return current.getLogLockoutHours();
@@ -376,7 +373,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         } catch (IOException ex) {
             SessionUtility.addErrorMessage("Error", ex.getMessage());
             logger.error(ex);
-        }        
+        }
     }
 
     private boolean isSaveLogLockoutsForCurrent() {
@@ -390,7 +387,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         boolean isEntityWriteableByTimeout = entityInfo.refreshWriteableByTimeout();
 
         if (isEntityWriteableByTimeout == false) {
-            displayMessageAndRefreshCurrent("Cannot change log entries", "Log document is locked by lockout time.");           
+            displayMessageAndRefreshCurrent("Cannot change log entries", "Log document is locked by lockout time.");
             setNewLogEdit(null);
             return false;
         }
@@ -403,7 +400,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             if (!isWriteable) {
                 displayMessageAndRefreshCurrent("Cannot change log entry", "Log entry is locked by lockout time.");
                 setNewLogEdit(null);
-                return isWriteable; 
+                return isWriteable;
             }
         }
 
@@ -614,33 +611,39 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
     }
 
-    public void processPreRenderCTLList() {
-        processPreRenderSpecificList(CTL_ENTITY_TYPE_NAME);
-    }
-
     public void processPreRenderOPSList() {
-        processPreRenderSpecificList(OPS_ENTITY_TYPE_NAME);
+        if (currentEntityType != null) {
+            String name = currentEntityType.getName();
+            if (name.equals(OPS_ENTITY_TYPE_NAME)) {
+                return;
+            }
+        }
+
+        EntityType opsET = entityTypeFacade.findByName(OPS_ENTITY_TYPE_NAME);
+        redirectToEntityTypeList(opsET);
     }
 
-    public void processPreRenderAOPList() {
-        processPreRenderSpecificList(AOP_ENTITY_TYPE_NAME);
-    }
+    private void redirectToEntityTypeList(EntityType entityType) {
+        // Prevent redirect to a parent entity type. 
+        List<EntityType> entityTypeChildren = entityType.getEntityTypeChildren();
+        if (!entityTypeChildren.isEmpty()) {
+            EntityType childET = entityTypeChildren.get(0);
+            SessionUtility.addWarningMessage("Cannot load parent type.", "Redirecting to first child of type.");
+            redirectToEntityTypeList(childET);
+            return;
+        }
 
-    public void processPreRenderSandboxList() {
-        processPreRenderSpecificList(SANDBOX_ENTITY_TYPE_NAME);
-    }
-
-    private void processPreRenderSpecificList(String entityTypeName) {
-        super.processPreRenderList();
-
-        currentEntityType = entityTypeName;
-
+        currentEntityType = entityType;
         ItemDomainLogbookLazyDataModel itemLazyDataModel = getItemLazyDataModel();
-        itemLazyDataModel.setCurrentEntityType(currentEntityType);
-    }
+        String entityTypeName = entityType.getName();
+        itemLazyDataModel.setCurrentEntityType(entityTypeName);
 
-    private void redirectToEntityTypeList(String entityType) {
-        String redirect = String.format("%s/%sList", getDomainPath(), entityType);
+        String listUrl = entityType.getCustomListUrl();
+        if (listUrl == null) {
+            listUrl = "list";
+        }
+
+        String redirect = String.format("%s/%s", getDomainPath(), listUrl);
         try {
             SessionUtility.redirectTo(redirect);
         } catch (IOException ex) {
@@ -653,23 +656,26 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public void processPreRenderList() {
         super.processPreRenderList();
 
-        String lastEntityType = currentEntityType;
-        currentEntityType = SessionUtility.getRequestParameterValue("logbook");
+        EntityType lastEntityType = currentEntityType;
+        String currentEntityTypeIdStr = SessionUtility.getRequestParameterValue("et");
 
-        if (currentEntityType != null && currentEntityType.equals("none")) {
-            ItemDomainLogbookLazyDataModel itemLazyDataModel = getItemLazyDataModel();
-            currentEntityType = null;
-            itemLazyDataModel.setCurrentEntityType(currentEntityType);
-        } else {
-            if (currentEntityType == null) {
-                if (lastEntityType != null) {
-                    currentEntityType = lastEntityType;
-                } else {
-                    currentEntityType = CTL_ENTITY_TYPE_NAME;
-                }
-            }
-            redirectToEntityTypeList(currentEntityType);
+        if (currentEntityTypeIdStr != null) {
+            int etId = Integer.parseInt(currentEntityTypeIdStr);
+            EntityType et = entityTypeFacade.find(etId);
+            redirectToEntityTypeList(et);
         }
+
+        if (currentEntityType == null) {
+            if (lastEntityType != null) {
+                currentEntityType = lastEntityType;
+            } else {
+                List<EntityType> topLevelEntityTypeList = getTopLevelEntityTypeList();
+                SessionUtility.addWarningMessage("No list selected", "Redirecting to first list.");
+                EntityType et = topLevelEntityTypeList.get(0);
+                redirectToEntityTypeList(et);
+            }
+        }
+
     }
 
     @Override
@@ -684,7 +690,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         if (currentEntityType != null) {
             try {
                 entity.setEntityTypeList(new ArrayList<>());
-                EntityType entityType = entityTypeFacade.findByName(currentEntityType);
+                EntityType entityType = currentEntityType;
                 entity.getEntityTypeList().add(entityType);
 
                 Item primaryTemplateItem = entityType.getPrimaryTemplateItem();
@@ -752,7 +758,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @Override
     public boolean isDisplayRowExpansionAssembly(Item item) {
-        return false; 
+        return false;
     }
 
     @Override
@@ -760,55 +766,30 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         String itemListPageTitle = super.getItemListPageTitle();
 
         if (currentEntityType != null) {
-            String entityName = null;
+            String displayName = currentEntityType.getLongDisplayName();;
 
-            switch (currentEntityType) {
-                case AOP_ENTITY_TYPE_NAME:
-                    entityName = "Machine Studies"; 
-                    break;
-                case CTL_ENTITY_TYPE_NAME:
-                    entityName = "Controls";
-                    break;
-                case OPS_ENTITY_TYPE_NAME:
-                    entityName = "Operations";
-                    break;
-                case SANDBOX_ENTITY_TYPE_NAME:
-                    entityName = "Sandbox";
-                    break;
-                default:
-                    entityName = currentEntityType.toUpperCase();
-                    break;
+            if (displayName == null || displayName.isBlank()) {
+                displayName = currentEntityType.getDisplayName();
             }
 
-            itemListPageTitle = entityName + " " + itemListPageTitle;
+            itemListPageTitle = displayName + " " + itemListPageTitle;
         }
         return itemListPageTitle;
     }
 
-    public String navigateToLogDocumentList(){
+    public void navigateToLogDocumentList() {
         EntityType entityType = getCurrent().getEntityTypeList().get(0);
-        System.out.println(entityType.getName());
-        switch (entityType.getName()) {
-            case AOP_ENTITY_TYPE_NAME:
-                return "aopList?faces-redirect=true";
-            case CTL_ENTITY_TYPE_NAME:
-                return "ctlList?faces-redirect=true";
-            case OPS_ENTITY_TYPE_NAME:
-                return "opsList?faces-redirect=true";
-            case TEMPLATE_ENTITY_TYPE_NAME:
-                return "templateList?faces-redirect=true";
-            default:
-                return "sandboxList?faces-redirect=true";
-        }
+
+        redirectToEntityTypeList(entityType);
     }
 
     public ItemDomainLogbook getNextLogDocument() {
         ItemDomainLogbook nextDoc;
-        ItemDomainLogbook currentDoc = getCurrent();  
+        ItemDomainLogbook currentDoc = getCurrent();
         boolean nextDocLoaded = currentDoc.getNextDocLoaded();
         if (!nextDocLoaded) {
-            Integer logId =  currentDoc.getId();
-            String entityTypeName =  currentDoc.getEntityTypeList().get(0).getName();
+            Integer logId = currentDoc.getId();
+            String entityTypeName = currentDoc.getEntityTypeList().get(0).getName();
             nextDoc = itemDomainLogbookFacade.getNextLogDocument(entityTypeName, logId);
             currentDoc.setNextDoc(nextDoc);
             currentDoc.setNextDocLoaded(true);
@@ -820,11 +801,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     public ItemDomainLogbook getPrevLogDocument() {
         ItemDomainLogbook prevDoc;
-        ItemDomainLogbook currentDoc = getCurrent();  
+        ItemDomainLogbook currentDoc = getCurrent();
         boolean prevDocLoaded = currentDoc.getPrevDocLoaded();
         if (!prevDocLoaded) {
-            Integer logId =  currentDoc.getId();
-            String entityTypeName =  currentDoc.getEntityTypeList().get(0).getName();
+            Integer logId = currentDoc.getId();
+            String entityTypeName = currentDoc.getEntityTypeList().get(0).getName();
             prevDoc = itemDomainLogbookFacade.getPreviousLogDocument(entityTypeName, logId);
             currentDoc.setPrevDoc(prevDoc);
             currentDoc.setPrevDocLoaded(true);
@@ -836,20 +817,20 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     public String navigateToNextDoc() {
         String nextId = getNextLogDocument().getId().toString();
-        return "view?id=" + nextId+ "&faces-redirect=true";
+        return "view?id=" + nextId + "&faces-redirect=true";
     }
 
-    public Boolean getNextPageButtonDisabled() { 
+    public Boolean getNextPageButtonDisabled() {
         ItemDomainLogbook nextDoc = getNextLogDocument();
         return nextDoc == null;
     }
 
     public String navigateToPrevDoc() {
         String prevId = getPrevLogDocument().getId().toString();
-        return "view?id=" + prevId+ "&faces-redirect=true";
+        return "view?id=" + prevId + "&faces-redirect=true";
     }
 
-    public Boolean getPrevPageButtonDisabled() { 
+    public Boolean getPrevPageButtonDisabled() {
         ItemDomainLogbook prevDoc = getPrevLogDocument();
         return prevDoc == null;
     }
@@ -998,25 +979,23 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     public List<EntityType> getLogbookEntityTypeList() {
         if (logbookEntityTypes == null) {
-            Domain defaultDomain = getDefaultDomain();
-            List<EntityType> allowedEntityTypeList = defaultDomain.getAllowedEntityTypeList();
-            String excludedType = EntityTypeName.template.getValue();
-
+            List<EntityType> topLevelEntityTypeList = getTopLevelEntityTypeList();
             logbookEntityTypes = new ArrayList<>();
 
-            for (EntityType entityType : allowedEntityTypeList) {
-                String name = entityType.getName();
-                if (name.equals(excludedType)) {
-                    continue;
+            for (EntityType topLevelEntityType : topLevelEntityTypeList) {
+                List<EntityType> entityTypeChildren = topLevelEntityType.getEntityTypeChildren();
+                if (entityTypeChildren != null && !entityTypeChildren.isEmpty()) {
+                    logbookEntityTypes.addAll(entityTypeChildren);
+                } else {
+                    logbookEntityTypes.add(topLevelEntityType);
                 }
-                logbookEntityTypes.add(entityType);
             }
         }
         return logbookEntityTypes;
     }
 
     public List<ItemDomainLogbook> getRecentCTLDocuments(Integer limit) {
-        List<ItemDomainLogbook> findByDomainAndEntityType = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), CTL_ENTITY_TYPE_NAME, limit);
+        List<ItemDomainLogbook> findByDomainAndEntityType = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), "ctl", limit);
 
         return findByDomainAndEntityType;
     }
@@ -1028,7 +1007,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     public List<ItemDomainLogbook> getRecentAOPDocuments(Integer limit) {
-        List<ItemDomainLogbook> findByDomainAndEntityType = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), AOP_ENTITY_TYPE_NAME, limit);
+        List<ItemDomainLogbook> findByDomainAndEntityType = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), "studies-sr", limit);
 
         return findByDomainAndEntityType;
     }
