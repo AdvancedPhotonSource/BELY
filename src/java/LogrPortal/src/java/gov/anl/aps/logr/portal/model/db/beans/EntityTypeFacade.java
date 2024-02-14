@@ -6,6 +6,7 @@ package gov.anl.aps.logr.portal.model.db.beans;
 
 import gov.anl.aps.logr.portal.model.db.entities.EntityType;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
+import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -40,6 +41,20 @@ public class EntityTypeFacade extends CdbEntityFacade<EntityType> {
         }
         return null;
     }
+    
+    public List<EntityType> findTopLevelByDomain(Integer domainId) { 
+        try{
+            return (List<EntityType>) em.createNamedQuery("EntityType.findTopLevelByDomain")
+                    .setParameter("allowedDomainId", domainId)
+                    .getResultList();
+        } catch (NoResultException ex) {
+            
+        }
+        return null;
+        
+    }
+    
+    
     
     public static EntityTypeFacade getInstance() {
         return (EntityTypeFacade) SessionUtility.findFacade(EntityTypeFacade.class.getSimpleName()); 
