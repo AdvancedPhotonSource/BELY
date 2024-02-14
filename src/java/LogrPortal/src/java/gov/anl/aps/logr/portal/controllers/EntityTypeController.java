@@ -39,7 +39,7 @@ import org.primefaces.model.TreeNode;
 public class EntityTypeController extends CdbEntityController<EntityTypeControllerUtility, EntityType, EntityTypeFacade, EntityTypeSettings> implements Serializable {
 
     private static final Logger logger = LogManager.getLogger(EntityTypeController.class.getName());
-    
+
     @EJB
     EntityTypeFacade entityTypeFacade;
 
@@ -51,16 +51,16 @@ public class EntityTypeController extends CdbEntityController<EntityTypeControll
 
     private TreeNode entityTypeTreeNode = null;
     private TreeNode selectedEntityType = null;
-    
-    private List<EntityType> sortableEntityTypeList = null; 
-    private List<EntityType> parentCandidateEntityTypeList; 
+
+    private List<EntityType> sortableEntityTypeList = null;
+    private List<EntityType> parentCandidateEntityTypeList;
 
     private boolean renderEditDialog = false;
     private boolean renderCreateDialog = false;
 
     // May be selectable in the future if more domains are added. 
     private final Integer selectedDomainId = ItemDomainName.LOGBOOK_ID;
-    private final String selectedDomainName = ItemDomainName.logbook.getValue(); 
+    private final String selectedDomainName = ItemDomainName.logbook.getValue();
 
     public static final String CONTROLLER_NAMED = "entityTypeController";
 
@@ -84,33 +84,33 @@ public class EntityTypeController extends CdbEntityController<EntityTypeControll
 
     private void resetUIVariables() {
         renderCreateDialog = false;
-        renderEditDialog = false;        
+        renderEditDialog = false;
         sortableEntityTypeList = null;
-        parentCandidateEntityTypeList = null; 
+        parentCandidateEntityTypeList = null;
     }
 
     public void prepareEdit() {
         resetUIVariables();
         renderEditDialog = true;
-        
-        parentCandidateEntityTypeList = new ArrayList<>(); 
+
+        parentCandidateEntityTypeList = new ArrayList<>();
         List<EntityType> topLevelEntityTypes = getTopLevelEntityTypes();
-        
+
         for (EntityType topLevel : topLevelEntityTypes) {
             List<Item> itemList = topLevel.getItemList();
             if (itemList.isEmpty()) {
-                parentCandidateEntityTypeList.add(topLevel); 
+                parentCandidateEntityTypeList.add(topLevel);
             }
         }
     }
 
     @Override
     public void processPreRenderList() {
-        resetUIVariables(); 
+        resetUIVariables();
 
         super.processPreRenderList();
     }
-    
+
     private List<EntityType> getTopLevelEntityTypes() {
         return entityTypeFacade.findTopLevelByDomain(selectedDomainId);
     }
@@ -189,7 +189,7 @@ public class EntityTypeController extends CdbEntityController<EntityTypeControll
     public String prepareCreateEntityType() {
         return prepareCreateEntityType(false);
     }
-    
+
     public String prepareCreateTopLevelEntityType() {
         return prepareCreateEntityType(true);
     }
@@ -284,16 +284,19 @@ public class EntityTypeController extends CdbEntityController<EntityTypeControll
 
         return update;
     }
-    
+
     @Override
     public void updateList(List<EntityType> entities) throws CdbException, RuntimeException {
-        super.updateList(entities); 
-        
+        super.updateList(entities);
+
         clearEntityTypeCache();
     }
-    
+
     public String getListPageTitle() {
-       return String.format("%s Domain %s List", selectedDomainName, getDisplayEntityTypeName()); 
+        if (selectedDomainId == ItemDomainName.LOGBOOK_ID) {
+            return "Logbook Type List";
+        }
+        return String.format("%s Domain %s List", selectedDomainName, getDisplayEntityTypeName());
     }
 
     private void clearEntityTypeCache() {
@@ -301,45 +304,45 @@ public class EntityTypeController extends CdbEntityController<EntityTypeControll
         Cache cache = entityManagerFactory.getCache();
         cache.evict(EntityType.class);
     }
-    
+
     public String prepareReorderTopLevelEntityTypes() {
         List<EntityType> topLevelEntityTypes = getTopLevelEntityTypes();
         setSortableEntityTypeList(topLevelEntityTypes);
-        
-        return null; 
+
+        return null;
     }
-    
+
     public String prepareReorderEntityTypesForSelection() {
         EntityType selectedEntityTypeObj = getSelectedEntityTypeObj();
-        
+
         if (selectedEntityTypeObj == null) {
             SessionUtility.addErrorMessage("ERROR", "No selection.");
-            return list(); 
-        } 
+            return list();
+        }
 
         List<EntityType> children = selectedEntityTypeObj.getEntityTypeChildren();
-        
+
         if (children == null || children.size() <= 1) {
             SessionUtility.addWarningMessage("Cannot proceed", "Selected entity type has nothing to sort.");
-            return list(); 
+            return list();
         }
-        
+
         // Load the sort list. 
         List<EntityType> entityTypes = new ArrayList<>();
-        entityTypes.addAll(children); 
-        setSortableEntityTypeList(entityTypes);        
-        return null; 
+        entityTypes.addAll(children);
+        setSortableEntityTypeList(entityTypes);
+        return null;
     }
-    
+
     public String saveNewSortOrder() {
         if (sortableEntityTypeList != null) {
             float sortOrder = 0;
             for (EntityType et : sortableEntityTypeList) {
                 et.setSortOrder(sortOrder);
-                sortOrder += 1; 
+                sortOrder += 1;
             }
         }
-        
+
         try {
             updateList(sortableEntityTypeList);
         } catch (CdbException ex) {
@@ -348,11 +351,11 @@ public class EntityTypeController extends CdbEntityController<EntityTypeControll
         } catch (RuntimeException ex) {
             logger.error(ex);
             SessionUtility.addErrorMessage("Error", ex.getMessage());
-            
+
         }
-        
-        return list(); 
-    }    
+
+        return list();
+    }
 
     public List<EntityType> getSortableEntityTypeList() {
         return sortableEntityTypeList;
