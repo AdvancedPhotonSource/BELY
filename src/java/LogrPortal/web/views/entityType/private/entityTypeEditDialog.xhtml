@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">         
+
+
+    <p:dialog id="entityTypeEditDialog"
+              widgetVar="entityTypeEditDialogWidget"
+              header="Edit Entity Type"
+              styleClass="viewTransparentBackgroundDialog"
+              closable="false"
+              modal="true">
+        <p:outputPanel id="entityTypeEditPanel">            
+            <p:outputPanel rendered="#{entityTypeController.renderEditDialog}">
+                <ui:decorate template="entityTypeEditPanelGrid.xhtml" > 
+                    <ui:param name="entityType" value="#{entityTypeController.selectedEntityType.data}"/>
+                    
+                    <ui:define name="additionalPanelGridItems">
+                        <h:outputLabel for="parentItem#{viewName}" value="Parent Item" />                        
+                        <p:selectOneMenu id="parentItem#{viewName}"
+                                         value="#{entityType.parentEntityType}">
+                            <f:selectItem noSelectionOption="true"
+                                          itemLabel="No parent" /> 
+                            <f:selectItems var="topET"
+                                           value="#{entityTypeController.parentCandidateEntityTypeList}" 
+                                           itemLabel="#{topET.displayName}"
+                                           itemValue="#{topET}"/>                                                    
+                        </p:selectOneMenu>
+                    </ui:define>
+                    
+                    
+                </ui:decorate>
+            </p:outputPanel>
+        </p:outputPanel>
+
+
+        <f:facet name="footer">
+            <p:commandButton value="save"
+                             icon="pi pi-save"
+                             action="#{entityTypeController.saveSelectedEntityType()}" />
+
+            <p:commandButton value="close"
+                             icon="pi pi-times"
+                             immediate="true"
+                             action="#{entityTypeController.list()}" />
+        </f:facet>                                        
+    </p:dialog>
+
+
+</ui:composition>
