@@ -45,7 +45,7 @@ See LICENSE file.
                                   value="#{itemObject.primaryTemplateEntityTypeList}" 
                                   onHide="updatePrimaryForTypes()"                                  
                                   filter="true" filterMatchMode="contains" >
-                <f:selectItems var="primaryForType" value="#{itemDomainLogbookController.logbookEntityTypeList}" itemLabel="#{primaryForType.name}" itemValue="#{primaryForType}"/>
+                <f:selectItems var="primaryForType" value="#{itemDomainLogbookController.logbookEntityTypeList}" itemLabel="#{primaryForType.displayName}" itemValue="#{primaryForType}"/>
             </p:selectCheckboxMenu>
             <p:remoteCommand name="updatePrimaryForTypes#{viewName}"
                              action="#{itemObject.resetPrimaryTemplateEntityTypeString()}"
