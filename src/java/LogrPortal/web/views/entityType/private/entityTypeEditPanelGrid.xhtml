@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">  
+    
+    <ui:param name="nameEditable"
+              value="#{nameEditable != null ? nameEditable : false}" />
+
+    <p:panelGrid  columns="2" rendered="#{entityType != null}">
+        <h:outputLabel for="editName#{viewName}" value="Name" />
+        <p:inputText id="editName#{viewName}" value="#{entityType.name}" disabled="#{!nameEditable}">
+            <p:ajax event="valueChange" process="@this" update="@this" /> 
+            <p:tooltip for="editName#{viewName}" value="Short identifier for the entity (used internally)." /> 
+        </p:inputText>
+
+        <h:outputLabel for="editDisplayName#{viewName}" value="Display Name" />
+        <p:inputText id="editDisplayName#{viewName}" value="#{entityType.displayName}">
+            <p:tooltip for="editDisplayName#{viewName}" value="Short display name, displayed to user in menu and other places." /> 
+        </p:inputText>
+        
+        <h:outputLabel for="editLongDisplayName#{viewName}" value="Long display name" />
+        <p:inputText id="editLongDisplayName#{viewName}" value="#{entityType.longDisplayName}">
+            <p:tooltip for="editLongDisplayName#{viewName}" value="(Optional) Longer display name to provide more details. Displayed on list page title." /> 
+        </p:inputText>
+
+        <h:outputLabel for="editDescription#{viewName}" value="Description" />
+        <p:inputText id="editDescription#{viewName}" value="#{entityType.description}">
+            <p:tooltip for="editDescription#{viewName}" value="(Optional) Description of entity type." /> 
+        </p:inputText>
+
+        <h:outputLabel for="editCustomListUrl#{viewName}" value="Custom List" />
+        <p:inputText id="editCustomListUrl#{viewName}" value="#{entityType.customListUrl}">
+            <p:tooltip for="editCustomListUrl#{viewName}" value="(Optional) Special list URL for entity type. Usually left blank." /> 
+        </p:inputText>
+        
+        <ui:insert name="additionalPanelGridItems" /> 
+    </p:panelGrid>
+
+
+
+</ui:composition>

@@ -192,9 +192,7 @@ STATIC_DB_SCRIPTS_DIR="$LOGR_SQL_DIR/static"
 cd $CURRENT_DIR && cd $STATIC_DB_SCRIPTS_DIR
 STATIC_LOGR_DB_TABLES="\
     setting_type \
-    domain \
-    entity_type \
-    allowed_entity_type_domain \
+    domain \    
     relationship_type_handler \
     relationship_type \
 "
@@ -204,6 +202,8 @@ executePopulateScripts "$STATIC_LOGR_DB_TABLES"
 # populate db
 cd $CURRENT_DIR && cd $LOGR_DB_SCRIPTS_DIR
 LOGR_DB_TABLES="\
+    entity_type \
+    allowed_entity_type_domain \
     user_info \
     user_group \
     user_user_group \

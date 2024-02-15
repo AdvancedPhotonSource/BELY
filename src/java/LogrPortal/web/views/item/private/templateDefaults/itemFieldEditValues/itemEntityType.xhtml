@@ -15,7 +15,7 @@ See LICENSE file.
         <p:outputPanel rendered="#{entityController.entityTypeEditable}">
             <p:selectCheckboxMenu id="entityTypeSelectCB#{viewName}"
                                   label="#{itemObject.editEntityTypeString}"                              
-                                  value="#{itemObject.entityTypeList}" converter="entityTypeConverter"
+                                  value="#{itemObject.entityTypeList}"
                                   onHide="entityTypeSelectCBUpdate#{viewName}()"
                                   filter="true" filterMatchMode="contains" >
                 <f:selectItems value="#{entityController.domainAllowedEnityTypes}" /> 

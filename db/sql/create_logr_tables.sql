@@ -549,11 +549,19 @@ DROP TABLE IF EXISTS `entity_type`;
 CREATE TABLE `entity_type` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(64) NOT NULL,
+  `display_name` varchar(128) NOT NULL,
+  `long_display_name` varchar(256) DEFAULT NULL,
   `description` varchar(256) DEFAULT NULL,
+  `custom_list_url` varchar(64) DEFAULT NULL,
+  `parent_entity_type_id` int(11) unsigned DEFAULT NULL,
   `primary_template_item_id` int(11) unsigned DEFAULT NULL,
+  `sort_order` float(10,2) unsigned DEFAULT NULL,
+  `is_internal` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `entity_type_u1` (`name`),
   KEY `primary_template_item_entity_type_k1` (`primary_template_item_id`),
+  KEY `parent_entity_type_id_k2` (`parent_entity_type_id`),
+  CONSTRAINT `parent_entity_type_id_fk2` FOREIGN KEY (`parent_entity_type_id`) REFERENCES `entity_type` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `primary_template_item_entity_type_fk1` FOREIGN KEY (`primary_template_item_id`) REFERENCES `item` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 

@@ -33,6 +33,12 @@ See LICENSE file.
                     rendered="#{isAdminVersion}"
                     styleClass="#{fn:startsWith(view.viewId, '/views/system/') ? 'activeMenuItem' : ''} "
                     url="#{request.contextPath}/views/system/browseSystemSessions" /> 
+        
+        <p:menuitem value="Logbook Types" 
+                    icon="fa fa-indent"
+                    rendered="#{isAdminVersion}"
+                    styleClass="#{fn:startsWith(view.viewId, '/views/entityType/') ? 'activeMenuItem' : ''} "
+                    url="#{request.contextPath}/views/entityType/list" />
 
         <p:menuitem value="Property Types" 
                     id="adminPropertyTypesButton"
