@@ -637,19 +637,30 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         ItemDomainLogbookLazyDataModel itemLazyDataModel = getItemLazyDataModel();
         String entityTypeName = entityType.getName();
         itemLazyDataModel.setCurrentEntityType(entityTypeName);
-
-        String listUrl = entityType.getCustomListUrl();
-        if (listUrl == null) {
-            listUrl = "list";
-        }
-
-        String redirect = String.format("%s/%s", getDomainPath(), listUrl);
+       
+        String redirect = getListRedirectForEntityType(entityType, false);
         try {
             SessionUtility.redirectTo(redirect);
         } catch (IOException ex) {
             logger.error(ex);
             SessionUtility.addErrorMessage("Error", ex.getMessage());
         }
+    }
+    
+    private String getListRedirectForEntityType(EntityType entityType, boolean includeETURLParam) {
+        String listUrl = entityType.getCustomListUrl();
+        if (listUrl == null) {
+            listUrl = "list";
+            if (includeETURLParam) {
+                listUrl += String.format("?et=%d", entityType.getId());
+            }
+        }
+
+        String redirect = String.format("%s/%s", getDomainPath(), listUrl);
+        
+        
+        return redirect; 
+        
     }
 
     @Override
@@ -1010,6 +1021,15 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         List<ItemDomainLogbook> findByDomainAndEntityType = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), "studies-sr", limit);
 
         return findByDomainAndEntityType;
+    }
+            
+    public final String getCurrentListPermalink() {                
+        if (currentEntityType != null) {
+            String redirect = getListRedirectForEntityType(currentEntityType, true); 
+            String viewPath = String.format("%s%s", contextRootPermanentUrl, redirect);
+            return viewPath;
+        }
+        return null;
     }
 
     public List<EntityType> getTopLevelEntityTypeList() {
