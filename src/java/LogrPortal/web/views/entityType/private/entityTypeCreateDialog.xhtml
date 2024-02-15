@@ -25,6 +25,9 @@ See LICENSE file.
                     <ui:param name="entityType" 
                               value="#{entityTypeController.current}"/>
 
+                    <ui:param name="nameEditable"
+                              value="#{true}" />
+
                     <ui:define name="additionalPanelGridItems">
                         <h:outputLabel for="parent#{viewName}" value="Parent" />
                         <h:outputText id="parent#{viewName}" value="#{entityType.parentEntityType.displayName}"/>
