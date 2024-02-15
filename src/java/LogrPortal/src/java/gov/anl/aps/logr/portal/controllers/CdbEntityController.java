@@ -232,6 +232,16 @@ public abstract class CdbEntityController<ControllerUtility extends CdbEntityCon
     public String getDisplayEntityTypeName() {
         return getControllerUtility().getDisplayEntityTypeName(); 
     }
+    
+    /**
+     * Defaults to display entity type name but should be overridden in derived
+     * controllers that allow creating different types of items. 
+     * 
+     * @return entity type name to display on create page. 
+     */
+    public String getCreateDisplayEntityTypeName() {
+        return getDisplayEntityTypeName(); 
+    }
 
     /**
      * Get current entity instance name.

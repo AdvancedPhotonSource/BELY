@@ -131,6 +131,16 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     @Override
+    public String getCreateDisplayEntityTypeName() {
+        if (currentEntityType != null) {
+            String displayName = currentEntityType.getDisplayName();
+            return String.format("%s %s", displayName, getDisplayEntityTypeName()); 
+        }
+        
+        return super.getCreateDisplayEntityTypeName(); 
+    }
+
+    @Override
     public List<ItemDomainLogbook> getTemplatesList() {
         if (templatesList == null) {
             templatesList = getEntityDbFacade().findByDomainAndEntityTypeAndTopLevel(getDefaultDomainName(), EntityTypeName.template.getValue());
