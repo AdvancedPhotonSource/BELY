@@ -34,6 +34,12 @@ import org.apache.logging.log4j.Logger;
 import org.primefaces.model.DefaultTreeNode;
 import org.primefaces.model.TreeNode;
 
+/**
+ * Controller that provides functionality to create, edit, delete, and view
+ * entity types. 
+ * 
+ * Entity type is also known as Logbook Type in the case of the logbook domain.  
+ */
 @Named("entityTypeController")
 @SessionScoped
 public class EntityTypeController extends CdbEntityController<EntityTypeControllerUtility, EntityType, EntityTypeFacade, EntityTypeSettings> implements Serializable {

@@ -52,7 +52,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- *
+ * Controller that provides functionality to create, edit, delete, and view
+ * logbook documents and its related data such as log entries. 
+ * 
  * @author djarosz
  */
 @Named(ItemDomainLogbookController.controllerNamed)
