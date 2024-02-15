@@ -95,8 +95,13 @@ public class EntityTypeController extends CdbEntityController<EntityTypeControll
 
         parentCandidateEntityTypeList = new ArrayList<>();
         List<EntityType> topLevelEntityTypes = getTopLevelEntityTypes();
+        
+        EntityType selectedEntityTypeObj = getSelectedEntityTypeObj();
 
         for (EntityType topLevel : topLevelEntityTypes) {
+            if (topLevel.equals(selectedEntityTypeObj)) {
+                continue;
+            }
             List<Item> itemList = topLevel.getItemList();
             if (itemList.isEmpty()) {
                 parentCandidateEntityTypeList.add(topLevel);
