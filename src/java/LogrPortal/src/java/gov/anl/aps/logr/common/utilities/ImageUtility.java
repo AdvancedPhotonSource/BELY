@@ -31,6 +31,8 @@ public class ImageUtility {
      * Default image format.
      */
     public static final String DEFAULT_IMAGE_FORMAT = "jpg";
+    // 3MB max image size for smooth scaling 
+    private static final float MAX_SIZE_FOR_SMOOTH_SCALING = 3000000;
 
     private static final Logger logger = LogManager.getLogger(ImageUtility.class.getName());
 
@@ -80,10 +82,20 @@ public class ImageUtility {
             }
 
             int scaledW = (int) (scale * origWidth);
-            int scaledH = (int) (scale * origHeight);
+            int scaledH = (int) (scale * origHeight);           
 
-            return transformImage(imageData, scaledW, scaledH, imageFormat);
+            // If set, old fast algorithm will be used. 
+            AffineTransform tx = null;
 
+            // Use old algorithm for large images 
+            if (imageData.length > MAX_SIZE_FOR_SMOOTH_SCALING) {
+                tx = new AffineTransform();
+                if (scale < 1.0d) {
+                    tx.scale(scale, scale);
+                }
+            }
+            
+            return transformImage(imageData, tx, scaledW, scaledH, imageFormat);           
         } catch (IOException ex) {
             logger.error("Could not process image: " + ex.getMessage());
             throw new ImageProcessingFailed(ex);
@@ -210,7 +222,7 @@ public class ImageUtility {
             g2d.drawImage(imageIo, transformation, null);
             g2d.dispose();
         }
-        
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(outImage, imageFormat, baos);
         byte[] bytesOut = baos.toByteArray();
