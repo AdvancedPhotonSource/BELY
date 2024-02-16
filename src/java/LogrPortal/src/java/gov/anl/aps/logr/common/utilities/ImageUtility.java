@@ -10,12 +10,12 @@ import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import gov.anl.aps.logr.common.exceptions.ImageProcessingFailed;
 import java.awt.AlphaComposite;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;
 import java.awt.Image;
-import java.io.IOException;
 import java.awt.geom.AffineTransform;
-import java.awt.Graphics2D;
+import java.io.IOException;
 import java.io.ByteArrayInputStream;
 import javax.imageio.ImageIO;
 import java.io.ByteArrayOutputStream;
@@ -71,8 +71,6 @@ public class ImageUtility {
             ByteArrayInputStream data = new ByteArrayInputStream(imageData);
             BufferedImage imageIo = ImageIO.read(data);
 
-            ImageIO.createImageInputStream(data);
-
             int origWidth = imageIo.getWidth();
             int origHeight = imageIo.getHeight();
 
@@ -84,13 +82,7 @@ public class ImageUtility {
             int scaledW = (int) (scale * origWidth);
             int scaledH = (int) (scale * origHeight);
 
-            AffineTransform tx = new AffineTransform();
-
-            if (scale < 1.0d) {
-                tx.scale(scale, scale);
-            }
-
-            return transformImage(imageData, tx, scaledW, scaledH, imageFormat);
+            return transformImage(imageData, scaledW, scaledH, imageFormat);
 
         } catch (IOException ex) {
             logger.error("Could not process image: " + ex.getMessage());
@@ -111,9 +103,9 @@ public class ImageUtility {
             orientation = exifD0.getInt(ExifIFD0Directory.TAG_ORIENTATION);
         } catch (Exception ex) {
             logger.error(ex);
-            
+
             // Continue with original image data. 
-            return imageData; 
+            return imageData;
         }
 
         ByteArrayInputStream data = new ByteArrayInputStream(imageData);
@@ -122,8 +114,6 @@ public class ImageUtility {
         int height = imageIo.getHeight();
 
         AffineTransform tx = new AffineTransform();
-
-        boolean flipAxes = false;
 
         switch (orientation) {
             case 1:
@@ -142,7 +132,7 @@ public class ImageUtility {
                 break;
             case 5: // - PI/2 and Flip X
                 tx.rotate(-Math.PI / 2);
-                tx.scale(-1.0, 1.0);                
+                tx.scale(-1.0, 1.0);
                 break;
             case 6: // -PI/2 and -width
                 tx.translate(height, 0);
@@ -172,6 +162,10 @@ public class ImageUtility {
 
     }
 
+    private static byte[] transformImage(byte[] imageBytes, int width, int height, String imageFormat) throws IOException {
+        return transformImage(imageBytes, null, width, height, imageFormat);
+    }
+
     private static byte[] transformImage(byte[] imageBytes, AffineTransform transformation, int width, int height, String imageFormat) throws IOException {
         ByteArrayInputStream data = new ByteArrayInputStream(imageBytes);
         BufferedImage imageIo = ImageIO.read(data);
@@ -189,26 +183,34 @@ public class ImageUtility {
             }
         }
 
-        BufferedImage outImage = new BufferedImage(width, height, imageType);
-        Graphics2D g2d = outImage.createGraphics();
+        BufferedImage outImage = null;
 
-        // Prepare output image based on incoming image format.
-        switch (imageFormat.toLowerCase()) {
-            case "png": {
-                g2d.setComposite(AlphaComposite.Clear);
-                g2d.fillRect(0, 0, width, height);
-                g2d.setComposite(AlphaComposite.Src);
-                break;
+        if (transformation == null) {
+            Image scaled = imageIo.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            outImage = new BufferedImage(width, height, imageType);
+            outImage.getGraphics().drawImage(scaled, 0, 0, null);
+        } else {
+            outImage = new BufferedImage(width, height, imageType);
+            Graphics2D g2d = outImage.createGraphics();
+
+            // Prepare output image based on incoming image format.
+            switch (imageFormat.toLowerCase()) {
+                case "png": {
+                    g2d.setComposite(AlphaComposite.Clear);
+                    g2d.fillRect(0, 0, width, height);
+                    g2d.setComposite(AlphaComposite.Src);
+                    break;
+                }
+                default: {
+                    // Do nothing
+                    break;
+                }
             }
-            default: {
-                // Do nothing
-                break;
-            }
+
+            g2d.drawImage(imageIo, transformation, null);
+            g2d.dispose();
         }
-
-        g2d.drawImage(imageIo, transformation, null);
-        g2d.dispose();
-
+        
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(outImage, imageFormat, baos);
         byte[] bytesOut = baos.toByteArray();
