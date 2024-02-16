@@ -47,6 +47,7 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.EntityResult;
+import javax.persistence.FieldResult;
 import javax.persistence.ManyToOne;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
@@ -86,7 +87,9 @@ import org.primefaces.model.TreeNode;
             name = "logResultList",
             entities = {
                 @EntityResult(entityClass = Item.class),
-                @EntityResult(entityClass = Log.class)},
+                @EntityResult(entityClass = Log.class, fields = {
+                    @FieldResult(name = "id", column = "log_id")
+                })},
             columns = {
                 @ColumnResult(name = "log_id", type = Integer.class)}
     )
