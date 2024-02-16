@@ -17,6 +17,8 @@ See LICENSE file.
             <h:outputText value="#{searchResultObject.objectName}"/>
         </h:outputLink>
     </p:column>
+    
+    <ui:insert name="additionalSearchResultInformation"/>
 
     <p:column sortBy="#{searchResultObject.display}" headerText="Match Description">
         <h:outputText value="#{searchResultObject.display}"/>

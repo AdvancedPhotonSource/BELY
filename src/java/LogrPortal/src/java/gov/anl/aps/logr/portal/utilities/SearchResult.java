@@ -6,6 +6,7 @@ package gov.anl.aps.logr.portal.utilities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import gov.anl.aps.logr.portal.model.db.entities.CdbEntity;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.regex.Pattern;
 
@@ -98,6 +99,16 @@ public class SearchResult {
             addAttributeMatch(key, value);
         }
         return searchResult;
+    }
+    
+    public ArrayList<String> getShortDisplayList() {
+        ArrayList<String> stringList = new ArrayList<>(); 
+        
+        for (String key : objectAttributeMatchMap.keySet()) {
+            stringList.add(objectAttributeMatchMap.get(key));                             
+        }
+        
+        return stringList; 
     }
 
     public String getDisplay() {
