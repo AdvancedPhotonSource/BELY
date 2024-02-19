@@ -30,10 +30,21 @@ See LICENSE file.
                              toggleSpeed="100"
                              id="timestampPanel"
                              widgetVar="timestampPanelWidget#{logObject.id}">
-                        <span>#{logObject.enteredOnDateTime}</span>
-                        <span style="float: right">#{logObject.enteredByUser}</span>
+                        <span>#{logObject.lastModifiedOnDateTime}</span>
+                        <span style="float: right">#{logObject.lastModifiedByUser}</span>
+                        <p:tooltip for="timestampPanel">                            
+                            <div>
+                                <h:outputLabel value="Created by "/>
+                                <h:outputText value="#{logObject.enteredByUser}" />
+                            </div>
+                            <div>
+                                <h:outputLabel value="Created on "/>
+                                <h:outputText value="#{logObject.enteredOnDateTime}" />
+                            </div>
+
+                        </p:tooltip>
                     </p:panel>
-                    
+
                     <div class="logEntry">
                         <h:outputText escape="false" value="#{logObject.htmlText}"/>
                     </div>
