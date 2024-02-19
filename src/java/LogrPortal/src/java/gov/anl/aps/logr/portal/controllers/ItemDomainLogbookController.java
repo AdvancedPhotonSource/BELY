@@ -418,9 +418,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         if (log != null) {
             Double logLockoutHours = current.getLogLockoutHours();
-            Date enteredOnDateTime = log.getEnteredOnDateTime();
+            Date lastModifiedOnDateTime = log.getLastModifiedOnDateTime();
 
-            boolean isWriteable = AuthorizationUtility.isEntityWriteableByTimeout(logLockoutHours, enteredOnDateTime);
+            boolean isWriteable = AuthorizationUtility.isEntityWriteableByTimeout(logLockoutHours, lastModifiedOnDateTime);
             if (!isWriteable) {
                 displayMessageAndRefreshCurrent("Cannot change log entry", "Log entry is locked by lockout time.");
                 setNewLogEdit(null);
