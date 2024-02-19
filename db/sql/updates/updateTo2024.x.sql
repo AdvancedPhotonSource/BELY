@@ -7,6 +7,14 @@ ALTER TABLE entity_type ADD KEY `parent_entity_type_id_k2` (`parent_entity_type_
 ALTER TABLE entity_type ADD CONSTRAINT `parent_entity_type_id_fk2` FOREIGN KEY (`parent_entity_type_id`) REFERENCES `entity_type` (`id`) ON UPDATE CASCADE;
 ALTER TABLE entity_type ADD column `is_internal` bool NOT NULL DEFAULT 0 AFTER sort_order; 
 
+ALTER TABLE log ADD column `last_modified_on_date_time` datetime NOT NULL AFTER `entered_on_date_time`; 
+ALTER TABLE log ADD column `last_modified_by_user_id` int(11) unsigned NOT NULL AFTER `last_modified_on_date_time`;  
+ALTER TABLE log ADD KEY `log_k3` (`last_modified_by_user_id`);
+-- Copy over the entered and modified user and date. 
+update log set last_modified_on_date_time = entered_on_date_time;
+update log set last_modified_by_user_id  = entered_by_user_id;
+ALTER TABLE log ADD CONSTRAINT `log_fk3` FOREIGN KEY (`last_modified_by_user_id`) REFERENCES `user_info` (`id`) ON UPDATE CASCADE; 
+
 -- TODO update 
 -- (1,'Template'),
 -- (2,'aop'),
