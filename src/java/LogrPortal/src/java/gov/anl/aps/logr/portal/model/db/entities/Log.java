@@ -64,12 +64,17 @@ public class Log extends CdbEntity implements Serializable {
     @Column(name = "entered_on_date_time")
     @Temporal(TemporalType.TIMESTAMP)
     private Date enteredOnDateTime;
+    @Basic(optional = false)
+    @NotNull
+    @Column(name = "last_modified_on_date_time")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date lastModifiedOnDateTime;    
     @Column(name = "effective_from_date_time")
     @Temporal(TemporalType.TIMESTAMP)
     private Date effectiveFromDateTime;
     @Column(name = "effective_to_date_time")
     @Temporal(TemporalType.TIMESTAMP)
-    private Date effectiveToDateTime;
+    private Date effectiveToDateTime;    
     @JoinTable(name = "log_attachment", joinColumns = {
         @JoinColumn(name = "log_id", referencedColumnName = "id")}, inverseJoinColumns = {
         @JoinColumn(name = "attachment_id", referencedColumnName = "id")})
@@ -88,6 +93,9 @@ public class Log extends CdbEntity implements Serializable {
     @JoinColumn(name = "entered_by_user_id", referencedColumnName = "id")
     @ManyToOne(optional = false)
     private UserInfo enteredByUser;
+    @JoinColumn(name = "last_modified_by_user_id", referencedColumnName = "id")
+    @ManyToOne(optional = false)
+    private UserInfo lastModifiedByUser;    
     @JoinColumn(name = "log_topic_id", referencedColumnName = "id")
     @ManyToOne
     private LogTopic logTopic;
@@ -106,6 +114,7 @@ public class Log extends CdbEntity implements Serializable {
         this.id = id;
         this.text = text;
         this.enteredOnDateTime = enteredOnDateTime;
+        this.lastModifiedOnDateTime = enteredOnDateTime;
         this.effectiveFromDateTime = enteredOnDateTime; 
     }
 
@@ -145,6 +154,22 @@ public class Log extends CdbEntity implements Serializable {
     
     public String getEnteredByUsername() {
         return this.enteredByUser.getUsername(); 
+    }
+
+    public Date getLastModifiedOnDateTime() {
+        return lastModifiedOnDateTime;
+    }
+
+    public void setLastModifiedOnDateTime(Date lastModifiedOnDateTime) {
+        this.lastModifiedOnDateTime = lastModifiedOnDateTime;
+    }
+
+    public UserInfo getLastModifiedByUser() {
+        return lastModifiedByUser;
+    }
+
+    public void setLastModifiedByUser(UserInfo lastModifiedByUser) {
+        this.lastModifiedByUser = lastModifiedByUser;
     }
 
     @JsonIgnore
