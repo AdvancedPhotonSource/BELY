@@ -9,6 +9,7 @@ import gov.anl.aps.logr.portal.constants.EntityTypeName;
 import gov.anl.aps.logr.portal.controllers.extensions.ItemCreateWizardController;
 import gov.anl.aps.logr.portal.controllers.extensions.ItemCreateWizardDomainLogbookController;
 import gov.anl.aps.logr.portal.controllers.settings.ItemDomainLogbookSettings;
+import gov.anl.aps.logr.portal.controllers.utilities.EntityInfoControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.EntityTypeControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.PropertyTypeControllerUtility;
@@ -25,6 +26,7 @@ import gov.anl.aps.logr.portal.model.db.entities.Log;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.model.db.utilities.EntityInfoUtility;
 import gov.anl.aps.logr.portal.utilities.AuthorizationUtility;
 import gov.anl.aps.logr.portal.utilities.MarkdownParser;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
@@ -64,7 +66,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private static final Logger logger = LogManager.getLogger(ItemDomainLogbookController.class.getName());
 
     @EJB
-    ItemDomainLogbookFacade itemDomainLogbookFacade;
+    ItemDomainLogbookFacade itemDomainLogbookFacade;    
 
     @EJB
     LogFacade logFacade;
@@ -75,6 +77,8 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private List<SearchResult> logResults;
     private List<EntityType> logbookEntityTypes;
     private List<EntityType> topLevelEntityTypeList;
+    
+    private EntityInfoControllerUtility entityInfoControllerUtility; 
 
     private static final String OPS_ENTITY_TYPE_NAME = "ops";
 
@@ -227,6 +231,14 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     @Override
     public String getStyleName() {
         return "logbook";
+    }
+
+    private EntityInfoControllerUtility getEntityInfoControllerUtility() {
+        if (entityInfoControllerUtility == null) {
+            entityInfoControllerUtility = new EntityInfoControllerUtility(); 
+        }
+        
+        return entityInfoControllerUtility;
     }
 
     @Override
@@ -581,6 +593,22 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         List<ItemElement> itemElementList = newLogEdit.getItemElementList();
         ItemDomainLogbook parentItem = (ItemDomainLogbook) itemElementList.get(0).getParentItem();
         newLogEdit = null;
+        
+        
+        ItemDomainLogbook current = getCurrent();
+        EntityInfo entityInfo = current.getEntityInfo();
+        UserInfo user = SessionUtility.getUser();
+        EntityInfoUtility.updateEntityInfo(entityInfo, user);          
+        EntityInfoControllerUtility eicu = getEntityInfoControllerUtility();
+        try { 
+            eicu.update(entityInfo, user);
+        } catch (CdbException ex) {
+            logger.error(ex);
+            SessionUtility.addErrorMessage("Error saving modified information", ex.getMessage());
+        } catch (RuntimeException ex) {
+            logger.error(ex);
+            SessionUtility.addErrorMessage("Error saving modified information", ex.getMessage());
+        }
 
         parentItem = (ItemDomainLogbook) getItem(parentItem.getId());
         List<Log> logList = parentItem.getLogList();
