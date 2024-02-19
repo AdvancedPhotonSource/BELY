@@ -13,7 +13,6 @@ import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
-import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,10 +22,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * Controller utility provides unified functionality for managing entities
+ * to be used from view controllers as well as API endpoints. 
  *
  * @author darek
- * @param <EntityType>
- * @param <FacadeType>
+ * @param <EntityType> Database mapped class of the entity. 
+ * @param <FacadeType> Database facade provides communication to database. 
  */
 public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, FacadeType extends CdbEntityFacade<EntityType>> {
     
