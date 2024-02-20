@@ -105,7 +105,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private static final DateTimeFormatter shortDateFormatter = DateTimeFormatter.ofPattern("MMMM dd");
     private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
-    private static final int[] COPY_OPS_SHIFT_SECTIONS_INX = new int[]{1, 4, 5};
+    private static final int[] COPY_OPS_SHIFT_SECTIONS_INX = new int[]{5};
     private boolean initialOpsSelectionReset;
     private List<String> opsSectionCopyList = null;
     private List<String> opsSelectedCopyList = null;
