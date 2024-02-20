@@ -580,21 +580,8 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             setNewLogEdit(entry);
         }
     }
-
-    public void destroyLogEntry(Log entry) {
-        if (isSaveLogLockoutsForCurrent(entry)) {
-            LogController instance = LogController.getInstance();
-            instance.destroy(entry);
-        }
-    }
-
-    @Override
-    public String saveLogList() {
-        List<ItemElement> itemElementList = newLogEdit.getItemElementList();
-        ItemDomainLogbook parentItem = (ItemDomainLogbook) itemElementList.get(0).getParentItem();
-        newLogEdit = null;
-        
-        
+    
+    private void updateModifiedDateForCurrent() {
         ItemDomainLogbook current = getCurrent();
         EntityInfo entityInfo = current.getEntityInfo();
         UserInfo user = SessionUtility.getUser();
@@ -608,7 +595,25 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         } catch (RuntimeException ex) {
             logger.error(ex);
             SessionUtility.addErrorMessage("Error saving modified information", ex.getMessage());
+        }        
+    }
+
+    public void destroyLogEntry(Log entry) {
+        if (isSaveLogLockoutsForCurrent(entry)) {
+            LogController instance = LogController.getInstance();
+            instance.destroy(entry);
         }
+        
+        updateModifiedDateForCurrent();
+    }
+
+    @Override
+    public String saveLogList() {
+        List<ItemElement> itemElementList = newLogEdit.getItemElementList();
+        ItemDomainLogbook parentItem = (ItemDomainLogbook) itemElementList.get(0).getParentItem();
+        newLogEdit = null;
+        
+        updateModifiedDateForCurrent(); 
 
         parentItem = (ItemDomainLogbook) getItem(parentItem.getId());
         List<Log> logList = parentItem.getLogList();
