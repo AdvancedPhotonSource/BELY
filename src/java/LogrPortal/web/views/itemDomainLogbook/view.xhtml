@@ -35,8 +35,11 @@ See LICENSE file.
     </ui:define>
 
     <ui:define name="additionalTopRightItemPanels">                       
-        <p:commandButton id="showDetails" icon="fa fa-info" value="Log Document Info"/>
-        <p:overlayPanel for="showDetails"
+        <p:commandButton id="showDetailsButton" icon="fa fa-info" style="float: right">       
+            <p:tooltip for="showDetailsButton"
+                       value="Log Document Info" /> 
+        </p:commandButton>
+        <p:overlayPanel for="showDetailsButton"
                         showCloseIcon="true"
                         dismissable="false">      
 
@@ -109,22 +112,23 @@ See LICENSE file.
             <span class="lockedDocumentMessage">Document locked by lockout time</span>
         </ui:fragment>
         
-        <p:commandButton style="float: right" id="backDocumentList" icon="fa fa-arrow-up" ajax="false"
+        <p:commandButton id="backDocumentList" icon="fa fa-arrow-up" ajax="false"
                 action="#{itemDomainLogbookController.navigateToLogDocumentList}">
         <p:tooltip for="backDocumentList" value="Navigate to Log Document List" />
         </p:commandButton>
-
-        <p:commandButton id="nextDoc" style="float: right" icon="fa fa-arrow-right" ajax="false" disabled="#{itemDomainLogbookController.nextPageButtonDisabled}"
-                action="#{itemDomainLogbookController.navigateToNextDoc}">
-            <p:tooltip for="nextDoc" value="Navigate to next log document" /> 
-        </p:commandButton>
-
-        <p:commandButton id="prevDoc" style="float: right" icon="fa fa-arrow-left" ajax="false" disabled="#{itemDomainLogbookController.prevPageButtonDisabled}"
+        
+        <p:commandButton id="prevDoc" icon="fa fa-arrow-left" ajax="false" disabled="#{itemDomainLogbookController.prevPageButtonDisabled}"
                 action="#{itemDomainLogbookController.navigateToPrevDoc}">
             <p:tooltip for="prevDoc" value="Navigate to previous log document" /> 
         </p:commandButton>
 
-        <p:commandButton id="toggleTimestamp" style="float: right" icon="fa fa-clock-o"
+        <p:commandButton id="nextDoc" icon="fa fa-arrow-right" ajax="false" disabled="#{itemDomainLogbookController.nextPageButtonDisabled}"
+                action="#{itemDomainLogbookController.navigateToNextDoc}">
+            <p:tooltip for="nextDoc" value="Navigate to next log document" /> 
+        </p:commandButton>       
+
+        <p:commandButton id="toggleTimestamp" icon="fa fa-clock-o"
+                         style="float: right"
                          ajax="true"                        
                          onclick="toggleTimestamps()">
             <p:tooltip for="toggleTimestamp" value="Click to show/hide the timestamp on each log entry." /> 
