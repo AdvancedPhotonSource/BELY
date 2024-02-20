@@ -56,8 +56,8 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * Controller that provides functionality to create, edit, delete, and view
- * logbook documents and its related data such as log entries. 
- * 
+ * logbook documents and its related data such as log entries.
+ *
  * @author djarosz
  */
 @Named(ItemDomainLogbookController.controllerNamed)
@@ -67,7 +67,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private static final Logger logger = LogManager.getLogger(ItemDomainLogbookController.class.getName());
 
     @EJB
-    ItemDomainLogbookFacade itemDomainLogbookFacade;    
+    ItemDomainLogbookFacade itemDomainLogbookFacade;
 
     @EJB
     LogFacade logFacade;
@@ -78,8 +78,8 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private List<SearchResult> logResults;
     private List<EntityType> logbookEntityTypes;
     private List<EntityType> topLevelEntityTypeList;
-    
-    private EntityInfoControllerUtility entityInfoControllerUtility; 
+
+    private EntityInfoControllerUtility entityInfoControllerUtility;
 
     private static final String OPS_ENTITY_TYPE_NAME = "ops";
 
@@ -141,10 +141,10 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public String getCreateDisplayEntityTypeName() {
         if (currentEntityType != null) {
             String displayName = currentEntityType.getDisplayName();
-            return String.format("%s %s", displayName, getDisplayEntityTypeName()); 
+            return String.format("%s %s", displayName, getDisplayEntityTypeName());
         }
-        
-        return super.getCreateDisplayEntityTypeName(); 
+
+        return super.getCreateDisplayEntityTypeName();
     }
 
     @Override
@@ -236,9 +236,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     private EntityInfoControllerUtility getEntityInfoControllerUtility() {
         if (entityInfoControllerUtility == null) {
-            entityInfoControllerUtility = new EntityInfoControllerUtility(); 
+            entityInfoControllerUtility = new EntityInfoControllerUtility();
         }
-        
+
         return entityInfoControllerUtility;
     }
 
@@ -581,14 +581,14 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             setNewLogEdit(entry);
         }
     }
-    
+
     private void updateModifiedDateForCurrent() {
         ItemDomainLogbook current = getCurrent();
         EntityInfo entityInfo = current.getEntityInfo();
         UserInfo user = SessionUtility.getUser();
-        EntityInfoUtility.updateEntityInfo(entityInfo, user);          
+        EntityInfoUtility.updateEntityInfo(entityInfo, user);
         EntityInfoControllerUtility eicu = getEntityInfoControllerUtility();
-        try { 
+        try {
             eicu.update(entityInfo, user);
         } catch (CdbException ex) {
             logger.error(ex);
@@ -596,7 +596,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         } catch (RuntimeException ex) {
             logger.error(ex);
             SessionUtility.addErrorMessage("Error saving modified information", ex.getMessage());
-        }        
+        }
     }
 
     public void destroyLogEntry(Log entry) {
@@ -604,21 +604,24 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             LogController instance = LogController.getInstance();
             instance.destroy(entry);
         }
-        
+
         updateModifiedDateForCurrent();
     }
 
     @Override
     public String saveLogList() {
-        List<ItemElement> itemElementList = newLogEdit.getItemElementList();
-        ItemDomainLogbook parentItem = (ItemDomainLogbook) itemElementList.get(0).getParentItem();
-        newLogEdit = null;
-        
-        updateModifiedDateForCurrent(); 
+        lastLog = newLogEdit; 
+        if (newLogEdit.getId() == null) {
+            List<ItemElement> itemElementList = newLogEdit.getItemElementList();
+            ItemDomainLogbook parentItem = (ItemDomainLogbook) itemElementList.get(0).getParentItem();
+            newLogEdit = null;
+            
+            parentItem = (ItemDomainLogbook) getItem(parentItem.getId());
+            List<Log> logList = parentItem.getLogList();
+            lastLog = logList.get(logList.size() - 1);
+        }
 
-        parentItem = (ItemDomainLogbook) getItem(parentItem.getId());
-        List<Log> logList = parentItem.getLogList();
-        lastLog = logList.get(logList.size() - 1);
+        updateModifiedDateForCurrent();
 
         return viewForCurrentEntity();
     }
@@ -683,7 +686,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         ItemDomainLogbookLazyDataModel itemLazyDataModel = getItemLazyDataModel();
         String entityTypeName = entityType.getName();
         itemLazyDataModel.setCurrentEntityType(entityTypeName);
-       
+
         String redirect = getListRedirectForEntityType(entityType, false);
         try {
             SessionUtility.redirectTo(redirect);
@@ -692,7 +695,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             SessionUtility.addErrorMessage("Error", ex.getMessage());
         }
     }
-    
+
     private String getListRedirectForEntityType(EntityType entityType, boolean includeETURLParam) {
         String listUrl = entityType.getCustomListUrl();
         if (listUrl == null) {
@@ -703,10 +706,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
 
         String redirect = String.format("%s/%s", getDomainPath(), listUrl);
-        
-        
-        return redirect; 
-        
+
+        return redirect;
+
     }
 
     @Override
@@ -1068,10 +1070,10 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         return findByDomainAndEntityType;
     }
-            
-    public final String getCurrentListPermalink() {                
+
+    public final String getCurrentListPermalink() {
         if (currentEntityType != null) {
-            String redirect = getListRedirectForEntityType(currentEntityType, true); 
+            String redirect = getListRedirectForEntityType(currentEntityType, true);
             String viewPath = String.format("%s%s", contextRootPermanentUrl, redirect);
             return viewPath;
         }
@@ -1359,17 +1361,17 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         List<Log> logList = oldLogDoc.getLogList();
         EntityInfo entityInfo = newLogDoc.getEntityInfo();
         UserInfo createdByUser = entityInfo.getCreatedByUser();
-                
+
         Calendar calendar = Calendar.getInstance();
 
         for (Log log : logList) {
             String text = log.getText();
             Log newLog = newLogDoc.addLogEntry(text, createdByUser);
-            
+
             // Specify creation date to maintain order. 
             calendar.add(Calendar.SECOND, 1);
             Date enteredTime = calendar.getTime();
-            newLog.setEnteredOnDateTime(enteredTime);                        
+            newLog.setEnteredOnDateTime(enteredTime);
         }
     }
 
