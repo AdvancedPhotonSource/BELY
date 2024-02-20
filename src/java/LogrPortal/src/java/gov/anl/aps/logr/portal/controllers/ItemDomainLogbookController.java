@@ -92,7 +92,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     // Custom operations functionality.. 
     // <editor-fold defaultstate="collapsed" desc="Operations specific variables.">
     private static final String OPS_TEMPLATE_NAME = "Operations Shift";
-    private static final String OPS_GENERAL_FIRST_LOG_ENTRY = "Personnel: %s \n\n\n Shift Type: %s";
+    private static final String OPS_GENERAL_FIRST_LOG_ENTRY = "Personnel: %s\n\nShift Type: %s";
 
     private static final String OPS_SHIFT_START_PROPERTY_TYPE_NAME = "Shift Start";
     private static final String OPS_SHIFT_END_PROPERTY_TYPE_NAME = "Shift End";
