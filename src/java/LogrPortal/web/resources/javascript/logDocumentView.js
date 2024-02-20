@@ -23,3 +23,15 @@ function toggleTimestamps() {
         PF(widgetVar).toggle();
     }
 }
+
+$('.logEntry').dblclick(function (event) {
+    console.log("Log Entry Double Clicked"); 
+    var logEntryPanel = event.delegateTarget;
+    var logObjectPanel = logEntryPanel.parentElement;
+    var logEditButtons = logObjectPanel.getElementsByClassName('logEditButton');
+    
+    if (logEditButtons.length == 1) {
+        var editButton = logEditButtons[0];        
+        editButton.click();        
+    }
+});

@@ -45,9 +45,10 @@ See LICENSE file.
                         </p:tooltip>
                     </p:panel>
 
-                    <div class="logEntry">
+                    <p:outputPanel styleClass="logEntry">                        
+                        
                         <h:outputText escape="false" value="#{logObject.htmlText}"/>
-                    </div>
+                    </p:outputPanel>
                     <p:outputPanel rendered="#{logObject.attachmentList.size() > 0 and false}"
                                    styleClass="logAttachment">
                         <p:galleria value="#{logObject.attachmentList}"
@@ -65,14 +66,18 @@ See LICENSE file.
                         </p:galleria>
                     </p:outputPanel>
                     <div class="logFooter">                                                                        
-                        <p:commandLink styleClass="logAction fa fa-link-icon fa-pencil"
+                        <p:commandLink styleClass="logAction fa fa-link-icon fa-pencil logEditButton"
                                        onclick="PF('loadingDialog').show()"
                                        rendered="#{isEntityWriteable}"
                                        action="#{itemDomainLogbookController.prepareEditLogEntry(logObject)}"
                                        update="@form:#{entityTypeName}LogbookLogAddDialog"
                                        oncomplete="PF('loadingDialog').hide(); 
-                                       PF('#{entityTypeName}LogbookLogAddDialogWidget').show()"
-                                       /> 
+                                       PF('#{entityTypeName}LogbookLogAddDialogWidget').show()"> 
+                            <p:tooltip for="@parent"> 
+                                Edit log entry. <br/>
+                                Tip: Double clicking the log entry will also start log edit. 
+                            </p:tooltip>
+                        </p:commandLink>
 
                         <p:commandLink id="#{entityTypeName}LogDestroyButton"
                                        rendered="#{isEntityWriteable}"
@@ -97,7 +102,7 @@ See LICENSE file.
                 </div>
             </p:dataScroller>
         </ui:fragment>
-    </div>
+    </div>        
 
     <p:commandButton icon="fa fa-plus"
                      value="Add Log Entry"
