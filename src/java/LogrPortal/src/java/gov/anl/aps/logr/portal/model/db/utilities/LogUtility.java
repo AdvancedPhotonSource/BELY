@@ -32,7 +32,9 @@ public class LogUtility {
         Date enteredOnDateTime = new Date();
         Log logEntry = new Log();
         logEntry.setEnteredByUser(enteredByUser);
-        logEntry.setEnteredOnDateTime(enteredOnDateTime);
+        logEntry.setEnteredOnDateTime(enteredOnDateTime);        
+        logEntry.setLastModifiedByUser(enteredByUser);
+        logEntry.setLastModifiedOnDateTime(enteredOnDateTime);
         logEntry.setEffectiveFromDateTime(enteredOnDateTime);
         return logEntry;
     }
@@ -44,6 +46,8 @@ public class LogUtility {
         logEntry.setText(logText);
         logEntry.setEnteredByUser(enteredByUser);
         logEntry.setEnteredOnDateTime(enteredOnDateTime);
+        logEntry.setLastModifiedByUser(enteredByUser);
+        logEntry.setLastModifiedOnDateTime(enteredOnDateTime);
         return logEntry;
     }
 
