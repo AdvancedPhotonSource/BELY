@@ -166,30 +166,9 @@ See LICENSE file.
         <ui:include src="private/addLogbookSectionDialog.xhtml" /> 
         <ui:include src="private/addLogbookEntryDialog.xhtml" />   
         <ui:include src="private/markdownExampleDialog.xhtml" />        
-
-        <script type="text/javascript">
-            function ScrollToLog(logId) {
-                if (logId) {
-                    var location = 'log-' + logId;
-                    window.location.hash = location;
-
-                    element = document.getElementById(location);
-                    if (element) {
-                        element.classList.add("activeLogEntry");
-                    }
-                }
-            }
-
-            function toggleTimestamps() {
-                var timestampPanels = document.getElementsByClassName('logTimestamp');
-
-                for (var i = 0; i &lt; timestampPanels.length; i++) {
-                    var widgetVar = timestampPanels[i].getAttribute('data-widget');
-                    PF(widgetVar).toggle();
-                }
-            }
-        </script>
-
+        
+        <h:outputScript library="javascript" name="logDocumentView.js"/>
+        
         <p:remoteCommand autoRun="true"
                          oncomplete="ScrollToLog(#{itemDomainLogbookController.lastLog.id});" /> 
     </ui:define>
