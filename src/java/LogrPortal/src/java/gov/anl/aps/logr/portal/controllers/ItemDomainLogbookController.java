@@ -37,6 +37,7 @@ import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -1358,11 +1359,17 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         List<Log> logList = oldLogDoc.getLogList();
         EntityInfo entityInfo = newLogDoc.getEntityInfo();
         UserInfo createdByUser = entityInfo.getCreatedByUser();
+                
+        Calendar calendar = Calendar.getInstance();
 
         for (Log log : logList) {
             String text = log.getText();
-            newLogDoc.addLogEntry(text, createdByUser);
-
+            Log newLog = newLogDoc.addLogEntry(text, createdByUser);
+            
+            // Specify creation date to maintain order. 
+            calendar.add(Calendar.SECOND, 1);
+            Date enteredTime = calendar.getTime();
+            newLog.setEnteredOnDateTime(enteredTime);                        
         }
     }
 
