@@ -124,7 +124,7 @@ public abstract class ItemController<
     
     private int currentItemEntityHashCode;
 
-    private LazyDataModel itemLazyDataModel;
+    protected LazyDataModel itemLazyDataModel;
     protected DataModel scopedListDataModel = null;
     protected List<String> displayListDataModelScopeSelectionList = null;
 

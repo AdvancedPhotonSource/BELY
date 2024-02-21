@@ -717,13 +717,18 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         EntityType lastEntityType = currentEntityType;
         String currentEntityTypeIdStr = SessionUtility.getRequestParameterValue("et");
-
+        
         if (currentEntityTypeIdStr != null) {
+            // Load up entityTypeId that was specified. 
             int etId = Integer.parseInt(currentEntityTypeIdStr);
             EntityType et = entityTypeFacade.find(etId);
             redirectToEntityTypeList(et);
+        } else if (itemLazyDataModel == null) {
+            // EntitytypeId was not specified and list was reset. 
+            redirectToEntityTypeList(lastEntityType);
         }
 
+        // no entity type has been selected. 
         if (currentEntityType == null) {
             if (lastEntityType != null) {
                 currentEntityType = lastEntityType;
