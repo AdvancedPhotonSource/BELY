@@ -110,23 +110,17 @@ pre:has([class^="language-"]) {
 }
 
 .logEntry h1 {
-    color: #495057; 
-    padding-left: 0px;
-    padding-bottom: 1em;
-    margin: 0px; 
+    color: #495057;     
+    padding: 0; 
 }
 
 .logEntry h2 {
-    color: #495057; 
-    padding-left: 0px;
-    padding-bottom: 1em;
-    margin: 0px; 
+    color: #495057;     
+    padding: 0; 
 }
 
-.logEntry h3 {
-    padding-left: 0px;
-    padding-bottom: 1em;
-    margin: 0px; 
+.logEntry h3 {    
+    padding: 0; 
 }
 
 .logEntry p, li {    
