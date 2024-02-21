@@ -51,10 +51,15 @@ public class MarkdownParser {
             + "- **bold** text\n"
             + "- _italicized_ text\n"
             + "\n\n"
-            + "### Link\n"
+            + "## Link\n"
+            + "\nMarkdown\n"
+            + "[help](https://www.markdownguide.org/basic-syntax/)\n"
             + "\n\n"
-            + "- [CDB](https://cdb.aps.anl.gov)\n"
-            + "\n"
+            + "### Code Block\n\n"
+            + "```\n"
+            + "monospaced code content goes here\n"
+            + "```\n"
+            + "\n\n"
             + "# Heading Levels:\n"
             + "# Level 1 Heading\n"
             + "## Level 2 Heading\n"
@@ -62,6 +67,7 @@ public class MarkdownParser {
             + "#### Level 4 Heading\n"
             + "##### Level 5 Heading\n"
             + "###### Level 6 Heading\n";
+            
 
     private static String contextRoot = null;
 
