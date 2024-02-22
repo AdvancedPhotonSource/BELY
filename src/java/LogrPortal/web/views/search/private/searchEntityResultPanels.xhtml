@@ -12,9 +12,18 @@ See LICENSE file.
     <ui:param name="entitySettingObject" value="#{searchController.searchSettings}" />
 
     <p:panel header="#{itemDomainLogbookController.displayEntityTypeName}s">
-        <ui:include src="../../item/private/itemSearchDataTable.xhtml">
+        <ui:decorate template="../../item/private/itemSearchDataTable.xhtml">
             <ui:param name="itemDomainController" value="#{itemDomainLogbookController}" />
-        </ui:include>
+
+            <ui:define name="additionalSearchResultInformation">
+                <ui:param name="item" value="#{searchResultObject.cdbEntity}" /> 
+                <p:column headerText="Type" 
+                          sortBy="#{item.entityTypeString}"
+                          filterBy="#{item.entityTypeString}">
+                    #{item.entityTypeString}
+                </p:column>
+            </ui:define>
+        </ui:decorate>
 
         <h2>Log Entries</h2>
 
@@ -37,8 +46,20 @@ See LICENSE file.
                 </h:outputLink>
             </p:column>
 
-            <p:column sortBy="#{searchResultObject.display}" headerText="Match Description">
-                <h:outputText value="#{searchResultObject.display}"/>
+            <ui:param name="item" value="#{searchResultObject.cdbEntity}" /> 
+
+            <p:column headerText="Type" 
+                      sortBy="#{item.entityTypeString}"
+                      filterBy="#{item.entityTypeString}">
+                #{item.entityTypeString}
+            </p:column>
+
+            <p:column sortBy="#{searchResultObject.display}" headerText="Log Line Match Description">
+                <ui:repeat value="#{searchResultObject.shortDisplayList}"
+                           var="shortDisplay">
+                    <h:outputText value="#{shortDisplay}"/>
+                    <br/>
+                </ui:repeat>                
             </p:column>
 
             <p:column sortBy="#{searchResultObject.objectId}" headerText="Id">

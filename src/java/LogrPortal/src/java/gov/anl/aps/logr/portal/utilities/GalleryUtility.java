@@ -87,12 +87,20 @@ public class GalleryUtility {
 
         return false;
     }
-
+    
     public static void storeImagePreviews(File originalFile) {
-        storeImagePreviews(originalFile, null);
+        storeImagePreviews(originalFile, null,true);
     }
 
+    public static void storeImagePreviews(File originalFile, boolean storeThumbnail) {
+        storeImagePreviews(originalFile, null, storeThumbnail);
+    }
+    
     public static void storeImagePreviews(File originalFile, String imageFormat) {
+        storeImagePreviews(originalFile, imageFormat, true);
+    }
+
+    public static void storeImagePreviews(File originalFile, String imageFormat, boolean storeThumbnail) {
         String originalName = originalFile.getName();
         boolean viewable;
         if (imageFormat == null) {
@@ -128,7 +136,7 @@ public class GalleryUtility {
             }
 
             String basePath = originalFile.getParentFile().getAbsolutePath();
-            storePreviewsFromViewableData(originalData, imageFormat, basePath, originalName);
+            storePreviewsFromViewableData(originalData, imageFormat, basePath, originalName, storeThumbnail);
         } catch (IOException ex) {
             logger.error(ex);
             // Check allows this class to run as a utility without server running. 
@@ -141,17 +149,19 @@ public class GalleryUtility {
         }
     }
 
-    public static void storePreviewsFromViewableData(byte[] data, String imageFormat, String basePath, String fileName) {
+    public static void storePreviewsFromViewableData(byte[] data, String imageFormat, String basePath, String fileName, boolean storeThumbnail) {
         try {
-            byte[] thumbData = ImageUtility.resizeImage(data, StorageUtility.THUMBNAIL_IMAGE_SIZE, imageFormat);
+            if (storeThumbnail) {
+                byte[] thumbData = ImageUtility.resizeImage(data, StorageUtility.THUMBNAIL_IMAGE_SIZE, imageFormat);
 
-            String thumbnailName = fileName + CdbPropertyValue.THUMBNAIL_IMAGE_EXTENSION;
-            String thumbFilePath = basePath + "/" + thumbnailName;
-            //String thumbFileName = originalFile.getAbsolutePath().replace(originalName, originalName + CdbPropertyValue.THUMBNAIL_IMAGE_EXTENSION);
-            thumbFilePath = thumbFilePath.replace(CdbPropertyValue.ORIGINAL_IMAGE_EXTENSION, "");
-            Path thumbPath = Paths.get(thumbFilePath);
-            Files.write(thumbPath, thumbData);
-            logger.debug("Saved File: " + thumbFilePath);
+                String thumbnailName = fileName + CdbPropertyValue.THUMBNAIL_IMAGE_EXTENSION;
+                String thumbFilePath = basePath + "/" + thumbnailName;
+                //String thumbFileName = originalFile.getAbsolutePath().replace(originalName, originalName + CdbPropertyValue.THUMBNAIL_IMAGE_EXTENSION);
+                thumbFilePath = thumbFilePath.replace(CdbPropertyValue.ORIGINAL_IMAGE_EXTENSION, "");
+                Path thumbPath = Paths.get(thumbFilePath);
+                Files.write(thumbPath, thumbData);
+                logger.debug("Saved File: " + thumbFilePath);
+            }
 
             byte[] scaledData;
             if (ImageUtility.verifyImageSizeBigger(data, StorageUtility.SCALED_IMAGE_SIZE)) {

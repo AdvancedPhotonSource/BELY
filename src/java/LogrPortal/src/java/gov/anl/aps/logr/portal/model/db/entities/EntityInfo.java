@@ -9,8 +9,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import gov.anl.aps.logr.portal.utilities.AuthorizationUtility;
 import java.io.Serializable;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Date;
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
@@ -59,7 +57,7 @@ import javax.xml.bind.annotation.XmlRootElement;
     "obsoletedByDisplayName",
     "ownerGroupDisplayName"
 })
-public class EntityInfo implements Serializable {
+public class EntityInfo extends CdbEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
     @Id

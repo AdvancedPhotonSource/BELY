@@ -5,6 +5,7 @@
 package gov.anl.aps.logr.portal.model.db.beans;
 
 import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
+import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -26,6 +27,10 @@ public class EntityInfoFacade extends CdbEntityFacade<EntityInfo> {
 
     public EntityInfoFacade() {
         super(EntityInfo.class);
+    }
+    
+    public static EntityInfoFacade getInstance() {
+        return (EntityInfoFacade) SessionUtility.findFacade(EntityInfoFacade.class.getSimpleName()); 
     }
     
 }

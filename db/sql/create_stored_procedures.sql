@@ -57,6 +57,7 @@ BEGIN
 		OR creatoru.username LIKE search_string
 		OR updateu.username LIKE search_string
 	)
+	ORDER BY item.id DESC
 	LIMIT limit_row;
 END //
 
@@ -83,6 +84,7 @@ BEGIN
 		parent_item.id = item.id
 		)
 	) 
+	ORDER BY parent_item.id DESC
 	LIMIT limit_row;
 END //
 

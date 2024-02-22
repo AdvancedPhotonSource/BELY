@@ -243,6 +243,8 @@ CREATE TABLE `log` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `text` text NOT NULL,
   `entered_on_date_time` datetime NOT NULL,
+  `last_modified_on_date_time` datetime NOT NULL,
+  `last_modified_by_user_id` int(11) unsigned NOT NULL,
   `entered_by_user_id` int(11) unsigned NOT NULL,
   `effective_from_date_time` datetime NULL,
   `effective_to_date_time` datetime NULL,
@@ -250,8 +252,10 @@ CREATE TABLE `log` (
   PRIMARY KEY (`id`),
   KEY `log_k1` (`entered_by_user_id`),
   KEY `log_k2` (`log_topic_id`),
+  KEY `log_k3` (`last_modified_by_user_id`),
   CONSTRAINT `log_fk1` FOREIGN KEY (`entered_by_user_id`) REFERENCES `user_info` (`id`) ON UPDATE CASCADE,
-  CONSTRAINT `log_fk2` FOREIGN KEY (`log_topic_id`) REFERENCES `log_topic` (`id`) ON UPDATE CASCADE
+  CONSTRAINT `log_fk2` FOREIGN KEY (`log_topic_id`) REFERENCES `log_topic` (`id`) ON UPDATE CASCADE,
+  CONSTRAINT `log_fk3` FOREIGN KEY (`last_modified_by_user_id`) REFERENCES `user_info` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 --

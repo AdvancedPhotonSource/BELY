@@ -79,14 +79,38 @@ public class LogControllerUtility extends CdbEntityControllerUtility<Log, LogFac
         newSystemLog.setText(logMessage);
         newSystemLog.setEnteredOnDateTime(enteredOnDateTime);
         newSystemLog.setEnteredByUser(enteredByUser);
-        
+                
         create(newSystemLog, enteredByUser);
+    }
+
+    @Override
+    protected void prepareEntityUpdate(Log entity, UserInfo updatedByUser) throws CdbException {
+        super.prepareEntityUpdate(entity, updatedByUser);
+        
+        Date lastModifiedOnDate = new Date();
+        entity.setLastModifiedOnDateTime(lastModifiedOnDate);
+        entity.setLastModifiedByUser(updatedByUser);         
+    }
+
+    @Override
+    protected void prepareEntityInsert(Log entity, UserInfo userInfo) throws CdbException {
+        super.prepareEntityInsert(entity, userInfo);
+        
+        Date enteredOnDateTime = entity.getEnteredOnDateTime();
+        entity.setLastModifiedOnDateTime(enteredOnDateTime);
+        entity.setLastModifiedByUser(userInfo);
     }
     
     protected Log createEntityInstance() {
         return new Log();
     }
 
+    @Override
+    protected void addCdbEntitySystemLog(SystemLogLevel logLevel, String message, UserInfo sessionUser) throws CdbException {
+        // No need to create system logs. 
+        return;
+    }
+    
     @Override
     protected void addCreatedSystemLog(Log entity, UserInfo createdByUserInfo) {
         // No need to create a system log when creating a log. 
