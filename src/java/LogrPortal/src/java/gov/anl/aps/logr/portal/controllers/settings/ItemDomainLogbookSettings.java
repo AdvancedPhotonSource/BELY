@@ -30,6 +30,15 @@ public class ItemDomainLogbookSettings extends ItemSettings<ItemDomainLogbookCon
     private static final String DisplayPropertyTypeId3SettingTypeKey = "ItemDomainLogbook.List.Display.PropertyTypeId3";
     private static final String DisplayPropertyTypeId4SettingTypeKey = "ItemDomainLogbook.List.Display.PropertyTypeId4";
     private static final String DisplayPropertyTypeId5SettingTypeKey = "ItemDomainLogbook.List.Display.PropertyTypeId5";
+    
+    // Home page settings
+    public static final String DisplayLogbookTypeId1Key = "ItemDomainLogbook.Home.EntityTypeId1";    
+    public static final String DisplayLogbookTypeId2Key = "ItemDomainLogbook.Home.EntityTypeId2";    
+    public static final String DisplayLogbookTypeId3Key = "ItemDomainLogbook.Home.EntityTypeId3";  
+    
+    protected Integer displayHomeLogbookTypeId1 = null;
+    protected Integer displayHomeLogbookTypeId2 = null;
+    protected Integer displayHomeLogbookTypeId3 = null;
 
     public ItemDomainLogbookSettings(ItemDomainLogbookController parentController) {
         super(parentController);
@@ -54,6 +63,10 @@ public class ItemDomainLogbookSettings extends ItemSettings<ItemDomainLogbookCon
         displayPropertyTypeId3 = parseSettingValueAsInteger(settingTypeMap.get(DisplayPropertyTypeId3SettingTypeKey).getDefaultValue());
         displayPropertyTypeId4 = parseSettingValueAsInteger(settingTypeMap.get(DisplayPropertyTypeId4SettingTypeKey).getDefaultValue());
         displayPropertyTypeId5 = parseSettingValueAsInteger(settingTypeMap.get(DisplayPropertyTypeId5SettingTypeKey).getDefaultValue());
+        
+        displayHomeLogbookTypeId1 = parseSettingValueAsInteger(settingTypeMap.get(DisplayLogbookTypeId1Key).getDefaultValue());        
+        displayHomeLogbookTypeId2 = parseSettingValueAsInteger(settingTypeMap.get(DisplayLogbookTypeId2Key).getDefaultValue());        
+        displayHomeLogbookTypeId3 = parseSettingValueAsInteger(settingTypeMap.get(DisplayLogbookTypeId3Key).getDefaultValue());        
     }
 
     @Override
@@ -75,6 +88,10 @@ public class ItemDomainLogbookSettings extends ItemSettings<ItemDomainLogbookCon
         displayPropertyTypeId3 = settingEntity.getSettingValueAsInteger(DisplayPropertyTypeId3SettingTypeKey, displayPropertyTypeId3);
         displayPropertyTypeId4 = settingEntity.getSettingValueAsInteger(DisplayPropertyTypeId4SettingTypeKey, displayPropertyTypeId4);
         displayPropertyTypeId5 = settingEntity.getSettingValueAsInteger(DisplayPropertyTypeId5SettingTypeKey, displayPropertyTypeId5);            
+        
+        displayHomeLogbookTypeId1 = settingEntity.getSettingValueAsInteger(DisplayLogbookTypeId1Key, displayHomeLogbookTypeId1);
+        displayHomeLogbookTypeId2 = settingEntity.getSettingValueAsInteger(DisplayLogbookTypeId2Key, displayHomeLogbookTypeId2);
+        displayHomeLogbookTypeId3 = settingEntity.getSettingValueAsInteger(DisplayLogbookTypeId3Key, displayHomeLogbookTypeId3);
     }
 
     @Override
@@ -96,6 +113,34 @@ public class ItemDomainLogbookSettings extends ItemSettings<ItemDomainLogbookCon
         settingEntity.setSettingValue(DisplayPropertyTypeId3SettingTypeKey, displayPropertyTypeId3);
         settingEntity.setSettingValue(DisplayPropertyTypeId4SettingTypeKey, displayPropertyTypeId4);
         settingEntity.setSettingValue(DisplayPropertyTypeId5SettingTypeKey, displayPropertyTypeId5);  
+        
+        settingEntity.setSettingValue(DisplayLogbookTypeId1Key, displayHomeLogbookTypeId1);
+        settingEntity.setSettingValue(DisplayLogbookTypeId2Key, displayHomeLogbookTypeId2);
+        settingEntity.setSettingValue(DisplayLogbookTypeId3Key, displayHomeLogbookTypeId3);
+    }
+
+    public Integer getDisplayHomeLogbookTypeId1() {
+        return displayHomeLogbookTypeId1;
+    }
+
+    public void setDisplayHomeLogbookTypeId1(Integer displayHomeLogbookTypeId1) {
+        this.displayHomeLogbookTypeId1 = displayHomeLogbookTypeId1;
+    }
+
+    public Integer getDisplayHomeLogbookTypeId2() {
+        return displayHomeLogbookTypeId2;
+    }
+
+    public void setDisplayHomeLogbookTypeId2(Integer displayHomeLogbookTypeId2) {
+        this.displayHomeLogbookTypeId2 = displayHomeLogbookTypeId2;
+    }
+
+    public Integer getDisplayHomeLogbookTypeId3() {
+        return displayHomeLogbookTypeId3;
+    }
+
+    public void setDisplayHomeLogbookTypeId3(Integer displayHomeLogbookTypeId3) {
+        this.displayHomeLogbookTypeId3 = displayHomeLogbookTypeId3;
     }
 
 }
