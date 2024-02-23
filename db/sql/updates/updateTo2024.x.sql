@@ -15,13 +15,12 @@ update log set last_modified_on_date_time = entered_on_date_time;
 update log set last_modified_by_user_id  = entered_by_user_id;
 ALTER TABLE log ADD CONSTRAINT `log_fk3` FOREIGN KEY (`last_modified_by_user_id`) REFERENCES `user_info` (`id`) ON UPDATE CASCADE; 
 
--- TODO update 
--- (1,'Template'),
--- (2,'aop'),
--- (3,'ctl'),
--- (4,'ops'),
--- (5,'sandbox') ,  
--- Columns: id name display_name long_display_name description custom_list_url parent_entity_type_id primary_template_item_id sort_order is_internal
+INSERT INTO `setting_type` VALUES
+(16,'ItemDomainLogbook.Home.EntityTypeId1','1st entityType Id to show up on the home page.',''),
+(17,'ItemDomainLogbook.Home.EntityTypeId2','2nd entityType Id to show up on the home page.',''),
+(18,'ItemDomainLogbook.Home.EntityTypeId3','3rd entityType Id to show up on the home page.','');
+
+-- Prepare entity_type changes for next version. 
 UPDATE entity_type SET is_internal = 1, display_name="Template" WHERE id=1;
 UPDATE entity_type SET name='studies', display_name = "Machine Studies", sort_order = 1.0 WHERE id = 2; 
 UPDATE entity_type SET name='maintanance', display_name = "Maintanance", sort_order = 2.0 WHERE id = 3; 
