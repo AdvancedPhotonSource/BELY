@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"                
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"> 
+
+    <p:dialog id="editHomePageDialog"
+              widgetVar="editHomePageDialogWidget"
+              header="Edit Home Page"
+              styleClass="viewTransparentBackgroundDialog">
+        <p:panelGrid columns="2" id="editHomePageDialogPanelGrid">
+            <p:outputLabel value="Logbook Type 1"/> 
+            <ui:include src="itemDomainLogboookSelectOneTypeMenu.xhtml">
+                <ui:param name="logbookTypeValue"
+                          value="#{itemDomainLogbookController.logbookHomeType1}" /> 
+            </ui:include>
+
+            <p:outputLabel value="Logbook Type 2"/> 
+            <ui:include src="itemDomainLogboookSelectOneTypeMenu.xhtml">
+                <ui:param name="logbookTypeValue"
+                          value="#{itemDomainLogbookController.logbookHomeType2}" /> 
+            </ui:include>
+
+            <p:outputLabel value="Logbook Type 3"/> 
+            <ui:include src="itemDomainLogboookSelectOneTypeMenu.xhtml">
+                <ui:param name="logbookTypeValue"
+                          value="#{itemDomainLogbookController.logbookHomeType3}" /> 
+            </ui:include>
+        </p:panelGrid>
+        
+        
+        <f:facet name="footer">
+            <p:commandButton rendered="#{loginController.loggedInAsAdmin}"
+                             update="editHomePageDialogPanelGrid"
+                             action="#{itemDomainLogbookController.saveLogbookHomeForAll()}"
+                             value="Save New Default"
+                             icon="fa fa-save">
+                <p:tooltip for="@parent">
+                    This will save a new default setting for all users. <br/>
+                    Setting type defaults are part of static db records they will be cleared if database is restored.
+                </p:tooltip>
+            </p:commandButton>
+            <p:commandButton update="editHomePageDialogPanelGrid"
+                             action="#{itemDomainLogbookController.saveLogbookHome()}"
+                             value="Save"
+                             icon="fa fa-save">
+                <p:tooltip for="@parent">
+                    This will save a new default setting current user.                    
+                </p:tooltip>
+            </p:commandButton>
+        </f:facet>
+    </p:dialog>
+
+</ui:composition>
+
+
