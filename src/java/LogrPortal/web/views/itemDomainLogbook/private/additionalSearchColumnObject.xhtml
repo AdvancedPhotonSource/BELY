@@ -11,16 +11,16 @@ See LICENSE file.
 
     <ui:param name="item" value="#{searchResultObject.cdbEntity}" /> 
     <ui:param name="entityInfo" value="#{item.entityInfo}" />
-    
+
     <p:column headerText="Logbook" 
-              sortBy="#{item.entityTypeString}"
-              filterBy="#{item.entityTypeString}" filterMatchMode="contains">
-        #{item.entityTypeString}
+              sortBy="#{item.longEntityTypeString}"
+              filterBy="#{item.longEntityTypeString}" filterMatchMode="contains">        
+        #{item.longEntityTypeString}
     </p:column>            
-    
-     <p:column headerText="Modified On"
-               sortBy="#{entityInfo.lastModifiedOnDateTime}" 
-               filterBy="#{entityInfo.lastModifiedOnDateTime}" filterMatchMode="contains">
+
+    <p:column headerText="Modified On"
+              sortBy="#{entityInfo.lastModifiedOnDateTime}" 
+              filterBy="#{entityInfo.lastModifiedOnDateTime}" filterMatchMode="contains">
         <h:outputText value="#{entityInfo.lastModifiedOnDateTime}"/>
     </p:column>
 
