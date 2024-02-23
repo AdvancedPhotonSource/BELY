@@ -13,6 +13,7 @@ import gov.anl.aps.logr.portal.controllers.utilities.EntityInfoControllerUtility
 import gov.anl.aps.logr.portal.controllers.utilities.EntityTypeControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.PropertyTypeControllerUtility;
+import gov.anl.aps.logr.portal.controllers.utilities.SettingTypeControllerUtility;
 import gov.anl.aps.logr.portal.model.ItemDomainLogbookLazyDataModel;
 import gov.anl.aps.logr.portal.model.db.beans.ItemDomainLogbookFacade;
 import gov.anl.aps.logr.portal.model.db.beans.LogFacade;
@@ -25,12 +26,14 @@ import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
 import gov.anl.aps.logr.portal.model.db.entities.Log;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
+import gov.anl.aps.logr.portal.model.db.entities.SettingType;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.model.db.utilities.EntityInfoUtility;
 import gov.anl.aps.logr.portal.utilities.AuthorizationUtility;
 import gov.anl.aps.logr.portal.utilities.MarkdownParser;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.portal.view.objects.ItemDomainLogbookHomeObject;
 import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
@@ -78,6 +81,14 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private List<SearchResult> logResults;
     private List<EntityType> logbookEntityTypes;
     private List<EntityType> topLevelEntityTypeList;
+
+    // <editor-fold defaultstate="collapsed" desc="Home Page">
+    private List<ItemDomainLogbookHomeObject> logbookHome;
+    private List<EntityType> logbookHomeTypeCandidateList;
+    private EntityType logbookHomeType1 = null;
+    private EntityType logbookHomeType2 = null;
+    private EntityType logbookHomeType3 = null;
+    // </editor-fold>
 
     private EntityInfoControllerUtility entityInfoControllerUtility;
 
@@ -610,12 +621,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @Override
     public String saveLogList() {
-        lastLog = newLogEdit; 
+        lastLog = newLogEdit;
         if (newLogEdit.getId() == null) {
             List<ItemElement> itemElementList = newLogEdit.getItemElementList();
             ItemDomainLogbook parentItem = (ItemDomainLogbook) itemElementList.get(0).getParentItem();
             newLogEdit = null;
-            
+
             parentItem = (ItemDomainLogbook) getItem(parentItem.getId());
             List<Log> logList = parentItem.getLogList();
             lastLog = logList.get(logList.size() - 1);
@@ -717,7 +728,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         EntityType lastEntityType = currentEntityType;
         String currentEntityTypeIdStr = SessionUtility.getRequestParameterValue("et");
-        
+
         if (currentEntityTypeIdStr != null) {
             // Load up entityTypeId that was specified. 
             int etId = Integer.parseInt(currentEntityTypeIdStr);
@@ -786,12 +797,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         List<PropertyValue> propertyValueList = entity.getPropertyValueList();
         for (int i = 0; i < propertyValueList.size(); i++) {
             PropertyValue pv = propertyValueList.get(i);
-            
+
             if (pv.getId() == null) {
-                propertyValueList.remove(i); 
+                propertyValueList.remove(i);
             }
         }
-        
+
         if (entity.getIsItemTemplate()) {
             List<Item> itemsCreatedFromThisTemplateItem = entity.getItemsCreatedFromThisTemplateItem();
 
@@ -1068,24 +1079,180 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
         return logbookEntityTypes;
     }
+    
+    // <editor-fold defaultstate="collapsed" desc="Home Page">
+    public void processPreRenderLogbookHome() {
+        settingObject.updateSettings(); 
+        
+        // Fetch latest logbook home data. 
+        logbookHome = null;
+        logbookHomeType1 = null;
+        logbookHomeType2 = null;
+        logbookHomeType3 = null;                 
 
-    public List<ItemDomainLogbook> getRecentCTLDocuments(Integer limit) {
-        List<ItemDomainLogbook> findByDomainAndEntityType = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), "ctl", limit);
+        // Load up the entity type settings.         
+        Integer type1Id = settingObject.getDisplayHomeLogbookTypeId1();
+        if (type1Id != null && type1Id != -1) {
+            logbookHomeType1 = entityTypeFacade.find(type1Id);
+        }
 
-        return findByDomainAndEntityType;
+        Integer type2Id = settingObject.getDisplayHomeLogbookTypeId2();
+        if (type2Id != null && type2Id != -1) {
+            logbookHomeType2 = entityTypeFacade.find(type2Id);
+        }
+
+        Integer type3Id = settingObject.getDisplayHomeLogbookTypeId3();
+        if (type3Id != null && type3Id != -1) {
+            logbookHomeType3 = entityTypeFacade.find(type3Id);
+        }
     }
 
-    public List<ItemDomainLogbook> getRecentOPSDocuments(Integer limit) {
-        List<ItemDomainLogbook> findByDomainAndEntityType = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), OPS_ENTITY_TYPE_NAME, limit);
+    public List<ItemDomainLogbookHomeObject> getLogbookHome(Integer limit) {
+        if (logbookHome == null) {
+            logbookHome = new ArrayList<>();
+            List<EntityType> etl = new ArrayList<>();
+            if (logbookHomeType1 != null) {
+                etl.add(logbookHomeType1);
+            }
+            if (logbookHomeType2 != null) {
+                etl.add(logbookHomeType2);
+            }
+            if (logbookHomeType3 != null) {
+                etl.add(logbookHomeType3);
+            }
 
-        return findByDomainAndEntityType;
+            for (EntityType et : etl) {
+                List<ItemDomainLogbook> items; 
+                if (!et.getEntityTypeChildren().isEmpty()) {
+                    items = itemDomainLogbookFacade.findByDomainAndParentEntityType(getDefaultDomainName(), et.getName(), limit); 
+                } else {
+                    items = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), et.getName(), limit);
+                }                
+
+                ItemDomainLogbookHomeObject homeObject = new ItemDomainLogbookHomeObject(et, items);
+                logbookHome.add(homeObject);
+            }
+        }
+
+        return logbookHome;
+
     }
 
-    public List<ItemDomainLogbook> getRecentAOPDocuments(Integer limit) {
-        List<ItemDomainLogbook> findByDomainAndEntityType = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), "studies-sr", limit);
+    public List<EntityType> getLogbookHomeTypeCandidateList() {
+        if (logbookHomeTypeCandidateList == null) {
+            logbookHomeTypeCandidateList = new ArrayList<>();
+            List<EntityType> topLevelEntityTypes = getTopLevelEntityTypeList();
 
-        return findByDomainAndEntityType;
+            for (EntityType et : topLevelEntityTypes) {
+                logbookHomeTypeCandidateList.add(et);
+                logbookHomeTypeCandidateList.addAll(et.getEntityTypeChildren());
+            }
+        }
+        return logbookHomeTypeCandidateList;
     }
+
+    public EntityType getLogbookHomeType1() {
+        return logbookHomeType1;
+    }
+
+    public void setLogbookHomeType1(EntityType logbookHomeType1) {
+        this.logbookHomeType1 = logbookHomeType1;
+    }
+
+    public EntityType getLogbookHomeType2() {
+        return logbookHomeType2;
+    }
+
+    public void setLogbookHomeType2(EntityType logbookHomeType2) {
+        this.logbookHomeType2 = logbookHomeType2;
+    }
+
+    public EntityType getLogbookHomeType3() {
+        return logbookHomeType3;
+    }
+
+    public void setLogbookHomeType3(EntityType logbookHomeType3) {
+        this.logbookHomeType3 = logbookHomeType3;
+    }
+
+    private void setLogbookHomeSettings() {
+        settingObject.setDisplayHomeLogbookTypeId1(-1);
+        settingObject.setDisplayHomeLogbookTypeId2(-1);
+        settingObject.setDisplayHomeLogbookTypeId3(-1);
+
+        if (logbookHomeType1 != null) {
+            settingObject.setDisplayHomeLogbookTypeId1(logbookHomeType1.getId());
+        }
+        if (logbookHomeType2 != null) {
+            settingObject.setDisplayHomeLogbookTypeId2(logbookHomeType2.getId());
+        }
+        if (logbookHomeType3 != null) {
+            settingObject.setDisplayHomeLogbookTypeId3(logbookHomeType3.getId());
+        }
+               
+    }
+    
+    private String homeRedirect() {
+        return "home?faces-redirect=true";
+    }
+    
+    public String saveLogbookHome() {
+        setLogbookHomeSettings();         
+        settingObject.saveListSettingsForSessionSettingEntityActionListener(null);
+        
+        SettingController settingController = getSettingController();        
+        settingController.saveSettingListForSettingEntity();
+        
+        return homeRedirect(); 
+    }
+
+    public String saveLogbookHomeForAll() {
+        LoginController instance = LoginController.getInstance();
+        if (!instance.isLoggedInAsAdmin()) {
+            SessionUtility.addErrorMessage("Error", "Only admins can save defaults for all.");
+            return null;
+        }
+
+        // Update currently shown home page for logged in admin. 
+        setLogbookHomeSettings();
+
+        String DisplayLogbookType1Key = ItemDomainLogbookSettings.DisplayLogbookTypeId1Key;
+        String DisplayLogbookType2Key = ItemDomainLogbookSettings.DisplayLogbookTypeId2Key;
+        String DisplayLogbookType3Key = ItemDomainLogbookSettings.DisplayLogbookTypeId3Key;
+
+        SettingTypeControllerUtility stcu = new SettingTypeControllerUtility();
+        List<SettingType> settingList = new ArrayList<>();
+
+        updateLogbookSettingDefaultValue(stcu, DisplayLogbookType1Key, logbookHomeType1, settingList);
+        updateLogbookSettingDefaultValue(stcu, DisplayLogbookType2Key, logbookHomeType2, settingList);
+        updateLogbookSettingDefaultValue(stcu, DisplayLogbookType3Key, logbookHomeType3, settingList);
+
+        UserInfo user = SessionUtility.getUser();
+        try {
+            stcu.updateList(settingList, user);
+        } catch (CdbException ex) {
+            SessionUtility.addErrorMessage("ERROR", ex.getErrorMessage());
+        } catch (RuntimeException ex) {
+            SessionUtility.addErrorMessage("ERROR", ex.getMessage());
+        }
+
+        return homeRedirect(); 
+    }
+
+    private void updateLogbookSettingDefaultValue(SettingTypeControllerUtility stcu, String settingKey, EntityType selectedSetting, List<SettingType> settingTypeList) {
+        SettingType setting = stcu.findByName(settingKey);
+
+        if (selectedSetting == null) {
+            setting.setDefaultValue(null);
+        } else {
+            Integer id = selectedSetting.getId();
+            setting.setDefaultValue(id + "");
+        }
+
+        settingTypeList.add(setting);
+    }
+    
+    // </editor-fold>
 
     public final String getCurrentListPermalink() {
         if (currentEntityType != null) {
