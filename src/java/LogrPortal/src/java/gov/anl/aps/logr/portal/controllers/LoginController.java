@@ -81,6 +81,13 @@ public class LoginController implements Serializable {
     public void setUsername(String username) {
         this.username = username;
     }
+    
+    /**
+     * Function used to ensure user stays logged in after a session reset.  
+     */
+    public void preRenderLogin() {
+        isLoggedIn();         
+    }
 
     public boolean isLoggedIn() {
         if (!checkedSession) {
@@ -365,7 +372,7 @@ public class LoginController implements Serializable {
 
         if (currentUsername != null) {
             SessionUtility.setLastUsername(currentUsername);
-        }
+        }                
 
         return "/index?faces-redirect=true";
     }
