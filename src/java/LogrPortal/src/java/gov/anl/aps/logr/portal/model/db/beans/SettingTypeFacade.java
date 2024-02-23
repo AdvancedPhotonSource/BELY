@@ -6,8 +6,10 @@ package gov.anl.aps.logr.portal.model.db.beans;
 
 import gov.anl.aps.logr.portal.model.db.entities.SettingType;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
+import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
 /**
@@ -28,9 +30,20 @@ public class SettingTypeFacade extends CdbEntityFacade<SettingType> {
     public SettingTypeFacade() {
         super(SettingType.class);
     }
-    
-    public static SettingTypeFacade getInstance() {
-        return (SettingTypeFacade) SessionUtility.findFacade(SettingTypeFacade.class.getSimpleName()); 
+
+    public SettingType findByName(String name) {
+        try {
+            return (SettingType) em.createNamedQuery("SettingType.findByName")
+                    .setParameter("name", name)
+                    .getSingleResult();
+        } catch (NoResultException ex) {
+
+        }
+        return null;
     }
-    
+
+    public static SettingTypeFacade getInstance() {
+        return (SettingTypeFacade) SessionUtility.findFacade(SettingTypeFacade.class.getSimpleName());
+    }
+
 }
