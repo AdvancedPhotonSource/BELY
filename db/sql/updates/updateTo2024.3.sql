@@ -23,7 +23,7 @@ INSERT INTO `setting_type` VALUES
 -- Prepare entity_type changes for next version. 
 UPDATE entity_type SET is_internal = 1, display_name="Template" WHERE id=1;
 UPDATE entity_type SET name='studies', display_name = "Machine Studies", sort_order = 1.0 WHERE id = 2; 
-UPDATE entity_type SET name='maintanance', display_name = "Maintanance", sort_order = 2.0 WHERE id = 3; 
+UPDATE entity_type SET name='maintenance', display_name = "Maintenance", sort_order = 2.0 WHERE id = 3; 
 UPDATE entity_type SET display_name = "Operations", sort_order = 3.0, custom_list_url = 'opsList' WHERE id = 4; 
 UPDATE entity_type SET display_name = "Sandbox", sort_order = 999.0 WHERE id = 5; 
 
