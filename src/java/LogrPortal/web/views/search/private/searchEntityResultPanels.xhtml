@@ -16,12 +16,7 @@ See LICENSE file.
             <ui:param name="itemDomainController" value="#{itemDomainLogbookController}" />
 
             <ui:define name="additionalSearchResultInformation">
-                <ui:param name="item" value="#{searchResultObject.cdbEntity}" /> 
-                <p:column headerText="Type" 
-                          sortBy="#{item.entityTypeString}"
-                          filterBy="#{item.entityTypeString}">
-                    #{item.entityTypeString}
-                </p:column>
+                <ui:include src="../../itemDomainLogbook/private/additionalSearchColumnObject.xhtml" /> 
             </ui:define>
         </ui:decorate>
 
@@ -34,8 +29,11 @@ See LICENSE file.
                      stripedRows="true"
                      paginator="true" 
                      paginatorAlwaysVisible="false" 
-                     rows="#{searchController.searchSettings.displayNumberOfItemsPerPage}" 
-                     emptyMessage="No items match.">
+                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                     currentPageReportTemplate="{startRecord}-{endRecord} of {totalRecords} records"
+                     rowsPerPageTemplate="10,25,50,{ShowAll|'All'}"
+                     rows="25"
+                     emptyMessage="No items match.">                        
 
             <p:column sortBy="#{searchResultObject.objectName}" 
                       filterBy="#{searchResultObject.objectName}"
@@ -46,13 +44,7 @@ See LICENSE file.
                 </h:outputLink>
             </p:column>
 
-            <ui:param name="item" value="#{searchResultObject.cdbEntity}" /> 
-
-            <p:column headerText="Type" 
-                      sortBy="#{item.entityTypeString}"
-                      filterBy="#{item.entityTypeString}">
-                #{item.entityTypeString}
-            </p:column>
+            <ui:include src="../../itemDomainLogbook/private/additionalSearchColumnObject.xhtml" /> 
 
             <p:column sortBy="#{searchResultObject.display}" headerText="Log Line Match Description">
                 <ui:repeat value="#{searchResultObject.shortDisplayList}"
@@ -60,10 +52,6 @@ See LICENSE file.
                     <h:outputText value="#{shortDisplay}"/>
                     <br/>
                 </ui:repeat>                
-            </p:column>
-
-            <p:column sortBy="#{searchResultObject.objectId}" headerText="Id">
-                <h:outputText value="#{searchResultObject.objectId}"/>
             </p:column>
         </p:dataTable>
 

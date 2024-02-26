@@ -37,7 +37,7 @@ import javax.xml.bind.annotation.XmlTransient;
     @NamedQuery(name = "SettingType.findByName", query = "SELECT s FROM SettingType s WHERE s.name = :name"),
     @NamedQuery(name = "SettingType.findByDescription", query = "SELECT s FROM SettingType s WHERE s.description = :description"),
     @NamedQuery(name = "SettingType.findByDefaultValue", query = "SELECT s FROM SettingType s WHERE s.defaultValue = :defaultValue")})
-public class SettingType implements Serializable {
+public class SettingType extends CdbEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
     @Id

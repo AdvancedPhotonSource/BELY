@@ -10,63 +10,75 @@ See LICENSE file.
                 xmlns:f="http://java.sun.com/jsf/core"
                 template="../templates/homeViewTemplate.xhtml"
                 xmlns:p="http://primefaces.org/ui"
-                xmlns:h="http://xmlns.jcp.org/jsf/html">
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
 
-    <f:metadata>
+    <f:metadata>        
+        <f:viewAction action="#{loginController.preRenderLogin()}" />
         <f:viewAction action="#{settingController.updateGlobalSettings()}" />
+        <f:viewAction action="#{itemDomainLogbookController.processPreRenderLogbookHome()}"/> 
     </f:metadata>
 
     <ui:define name="middleCenter">        
 
-        <h1> Recent Log Documents </h1>
+        <h:form>
+            <h1> Recent Log Documents 
+                <p:commandLink  id="editHomePage" 
+                                styleClass="fa fa-link-icon fa-pencil"
+                                update="editHomePageDialog"
+                                oncomplete="PF('editHomePageDialogWidget').show()"
+                                rendered="#{loginController.loggedIn}">
+                    <p:tooltip for="editHomePage" value="Edit Recent Log Documents Home Page"/>
+                </p:commandLink>
+            </h1>                
 
-        <p:panelGrid columns="3" styleClass="homePageDataScroller">            
-            <p:outputPanel>
-                <h2>
-                    <h:outputLink value="itemDomainLogbook/opsList"
-                                  title="Navigate to operations list page.">
-                        Operations
-                    </h:outputLink>
-                </h2>
+            <ui:param name="homeObjectList"
+                      value="#{itemDomainLogbookController.getLogbookHome(10)}" /> 
 
-                <p:dataScroller value="#{itemDomainLogbookController.getRecentOPSDocuments(10)}" var="logItem" styleClass="logDataScroller">
+            <ui:param name="homeHasContents"
+                      value="#{homeObjectList.size() > 0}"/>
 
-                    <ui:include src="itemDomainLogbook/private/logDocumentDataScrollerObject.xhtml"/>
+            <p:panelGrid columns="#{homeObjectList.size()}" styleClass="homePageDataScroller"
+                         rendered="#{homeHasContents}">
 
-                </p:dataScroller>
+                <c:forEach items="#{homeObjectList}"
+                           var="homeObject">        
+                    <p:column>
+                        <p:outputPanel>
+                            <ui:param name="logbookType"
+                                      value="#{homeObject.logbookType}"/> 
+                            <ui:param name="logbookList"
+                                      value="#{homeObject.logbookList}"/>
+                            <h2>
+                                <ui:param name="renderLink"
+                                          value="#{logbookType.entityTypeChildren.size() == 0}" /> 
+                                
+                                <h:outputLink rendered="#{renderLink}"
+                                              value="itemDomainLogbook/#{logbookType.listUrl}"
+                                              title="Navigate to operations list page.">
+                                    #{logbookType.availableLongDisplayName}
+                                </h:outputLink>
+                                <h:outputText rendered="#{!renderLink}"
+                                              value="#{logbookType.availableLongDisplayName}" /> 
+                            </h2>
+
+                            <p:dataScroller value="#{logbookList}" var="logItem" styleClass="logDataScroller">
+
+                                <ui:include src="itemDomainLogbook/private/home/logDocumentDataScrollerObject.xhtml"/>
+
+                            </p:dataScroller>
+                        </p:outputPanel>                                        
+                    </p:column>
+                </c:forEach>
+            </p:panelGrid>
+
+            <p:outputPanel rendered="#{!homeHasContents}">
+                No logbooks defined to show
             </p:outputPanel>
-            
-            <p:outputPanel>   
-                <h2>
-                    <h:outputLink 
-                        value="itemDomainLogbook/aopList"
-                        title="Navigate to machine studies list page.">
-                        Machine Studies                    
-                    </h:outputLink> 
-                </h2>
 
-                <p:dataScroller value="#{itemDomainLogbookController.getRecentAOPDocuments(10)}" var="logItem" styleClass="logDataScroller">
 
-                    <ui:include src="itemDomainLogbook/private/logDocumentDataScrollerObject.xhtml"/>
-
-                </p:dataScroller>
-            </p:outputPanel>
-
-            <p:outputPanel>
-                <h2>
-                    <h:outputLink value="itemDomainLogbook/ctlList"
-                                  title="Navigate to controls list page.">
-                        Controls
-                    </h:outputLink>
-                </h2>
-
-                <p:dataScroller value="#{itemDomainLogbookController.getRecentCTLDocuments(10)}" var="logItem" styleClass="logDataScroller">
-
-                    <ui:include src="itemDomainLogbook/private/logDocumentDataScrollerObject.xhtml"/>
-
-                </p:dataScroller>
-            </p:outputPanel>          
-        </p:panelGrid>
+            <ui:include src="itemDomainLogbook/private/home/editHomepageDialog.xhtml"/> 
+        </h:form>
 
     </ui:define>
 </ui:composition>

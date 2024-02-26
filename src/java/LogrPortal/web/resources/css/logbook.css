@@ -96,32 +96,31 @@ html, body {
     margin-left: 10px;
 }
 
-pre:has(code) {    
-    background: #273647;
-    color: white; 
+pre:has(code) {
     overflow: auto;
     font-family: 'Monaco', monospace;
     padding: 1em;
+    border: 1px solid #cfcfcf;
+}
+
+pre:has([class^="language-"]) {
+    border: none; 
+    background: #273647;
+    color: white;
 }
 
 .logEntry h1 {
-    color: #495057; 
-    padding-left: 0px;
-    padding-bottom: 1em;
-    margin: 0px; 
+    color: #495057;     
+    padding: 0; 
 }
 
 .logEntry h2 {
-    color: #495057; 
-    padding-left: 0px;
-    padding-bottom: 1em;
-    margin: 0px; 
+    color: #495057;     
+    padding: 0; 
 }
 
-.logEntry h3 {
-    padding-left: 0px;
-    padding-bottom: 1em;
-    margin: 0px; 
+.logEntry h3 {    
+    padding: 0; 
 }
 
 .logEntry p, li {    
@@ -155,8 +154,8 @@ div.logbookSection {
 
 .markdown-example-field {
     background: white;
-    width: 300px;
-    height: 680px;     
+    width: 400px;
+    height: 700px;
 }
 
 .lockedDocumentMessage {

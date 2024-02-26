@@ -192,6 +192,14 @@ public class EntityType extends CdbEntity implements Serializable {
     public void setLongDisplayName(String longDisplayName) {
         this.longDisplayName = longDisplayName;
     }
+    
+    @JsonIgnore
+    public String getAvailableLongDisplayName() {
+        if (longDisplayName != null && !longDisplayName.isBlank()) {
+            return longDisplayName; 
+        }
+        return displayName; 
+    }
 
     @XmlTransient
     public String getCustomListUrl() {

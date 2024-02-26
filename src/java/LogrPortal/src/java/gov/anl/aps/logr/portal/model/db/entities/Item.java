@@ -144,7 +144,9 @@ import org.primefaces.model.TreeNode;
     @NamedQuery(name = "Item.findByDomainNameAndProjectOrderByDerivedFromItem",
             query = "SELECT DISTINCT(i) FROM Item i JOIN i.itemProjectList ipl WHERE i.domain.name = :domainName and ipl.name = :projectName ORDER BY i.derivedFromItem DESC"),
     @NamedQuery(name = "Item.findByDomainNameAndEntityType",
-            query = "SELECT DISTINCT(i) FROM Item i JOIN i.entityTypeList etl WHERE i.domain.name = :domainName and etl.name = :entityTypeName ORDER BY i.id DESC"),
+            query = "SELECT DISTINCT(i) FROM Item i JOIN i.entityTypeList etl WHERE i.domain.name = :domainName and etl.name = :entityTypeName ORDER BY i.id DESC"),    
+    @NamedQuery(name = "Item.findByDomainNameAndParentEntityType",
+            query = "SELECT DISTINCT(i) FROM Item i JOIN i.entityTypeList etl WHERE i.domain.name = :domainName and etl.parentEntityType.name = :entityTypeName ORDER BY i.id DESC"),    
     @NamedQuery(name = "Item.findByDomainNameAndEntityTypeAndTopLevel",
             query = "SELECT DISTINCT(i) FROM Item i JOIN i.entityTypeList etl WHERE i.domain.name = :domainName and etl.name = :entityTypeName and i.itemElementMemberList IS EMPTY AND i.itemElementMemberList2 IS EMPTY"),
     @NamedQuery(name = "Item.findByDomainNameAndEntityTypeAndTopLevelAfterId",
@@ -477,6 +479,7 @@ import org.primefaces.model.TreeNode;
     "fullItemElementList",
     "derivedFromItemList",
     "entityTypeString",
+    "longEntityTypeString",
     "primaryTemplateEntityTypeString",
     "entityTypeDisplayList",
     "listDisplayDescription",
@@ -593,6 +596,7 @@ public class Item extends CdbDomainEntity implements Serializable {
     private transient String qrIdFilter = null;
 
     private transient String entityTypeString = null;
+    private transient String longEntityTypeString = null;
     private transient String primaryTemplateEntityTypeString = null;
 
     private transient String primaryImageValue = null;
@@ -992,8 +996,12 @@ public class Item extends CdbDomainEntity implements Serializable {
         }
         return entityTypeList;
     }
-
+    
     private String generateEntityTypeString(List<EntityType> entityTypeList) {
+        return generateEntityTypeString(entityTypeList, false); 
+    }
+
+    private String generateEntityTypeString(List<EntityType> entityTypeList, boolean longDisplayName) {
         String entityTypeString = "";
         
         if (entityTypeList != null && entityTypeList.size() > 0) {
@@ -1002,7 +1010,11 @@ public class Item extends CdbDomainEntity implements Serializable {
                 if (entityTypeString.length() > 0) {
                     entityTypeString += " | ";
                 }
-                entityTypeString += entityType.getDisplayName();
+                if (longDisplayName) {
+                    entityTypeString += entityType.getAvailableLongDisplayName(); 
+                } else {
+                    entityTypeString += entityType.getDisplayName();
+                }                
             }
         } else {
             entityTypeString = "-";
@@ -1019,6 +1031,14 @@ public class Item extends CdbDomainEntity implements Serializable {
         }
 
         return entityTypeString;
+    }
+
+    public String getLongEntityTypeString() {
+        if (longEntityTypeString == null) {
+            List<EntityType> entityTypeDisplayList = getEntityTypeDisplayList();
+            longEntityTypeString = generateEntityTypeString(entityTypeDisplayList, true); 
+        }
+        return longEntityTypeString;
     }
     
     public void resetPrimaryTemplateEntityTypeString() {
