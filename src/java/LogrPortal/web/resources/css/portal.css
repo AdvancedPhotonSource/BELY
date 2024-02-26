@@ -1567,6 +1567,10 @@ body .ui-inplace .ui-inplace-display {
     width: 100%;    
 }
 
+.homePageDataScroller .ui-panelgrid-cell {
+    width: 33.3%; 
+}
+
 .homePageDataScroller .ui-datascroller-content {
     background: rgba(255, 255, 255, 0.5) !important; 
 } 
