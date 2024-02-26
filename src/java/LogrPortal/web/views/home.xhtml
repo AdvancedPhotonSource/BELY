@@ -22,15 +22,17 @@ See LICENSE file.
     <ui:define name="middleCenter">        
 
         <h:form>
-            <h1> Recent Log Documents 
-                <p:commandLink  id="editHomePage" 
-                                styleClass="fa fa-link-icon fa-pencil"
-                                update="editHomePageDialog"
-                                oncomplete="PF('editHomePageDialogWidget').show()"
-                                rendered="#{loginController.loggedIn}">
-                    <p:tooltip for="editHomePage" value="Edit Recent Log Documents Home Page"/>
-                </p:commandLink>
-            </h1>                
+            <p:outputPanel rendered="#{loginController.loggedInAsAdmin}">
+                <h1> Recent Log Documents 
+                    <p:commandLink  id="editHomePage" 
+                                    styleClass="fa fa-link-icon fa-pencil"
+                                    update="editHomePageDialog"
+                                    oncomplete="PF('editHomePageDialogWidget').show()"
+                                    rendered="#{loginController.loggedIn}">
+                        <p:tooltip for="editHomePage" value="Edit Recent Log Documents Home Page"/>
+                    </p:commandLink>
+                </h1>          
+            </p:outputPanel>
 
             <ui:param name="homeObjectList"
                       value="#{itemDomainLogbookController.getLogbookHome(10)}" /> 
@@ -52,7 +54,7 @@ See LICENSE file.
                             <h2>
                                 <ui:param name="renderLink"
                                           value="#{logbookType.entityTypeChildren.size() == 0}" /> 
-                                
+
                                 <h:outputLink rendered="#{renderLink}"
                                               value="itemDomainLogbook/#{logbookType.listUrl}"
                                               title="Navigate to operations list page.">
