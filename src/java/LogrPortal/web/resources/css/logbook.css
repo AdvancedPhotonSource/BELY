@@ -62,7 +62,7 @@ html, body {
 }
 
 .logEntry {
-    padding: 10px;
+    margin: 1em;
     border-bottom-left-radius: 3px;
     border-bottom-right-radius: 3px; 
     /*white-space: pre;*/ 
@@ -160,7 +160,11 @@ div.logbookSection {
 .markdown-example-field {
     background: white;
     width: 400px;
-    height: 700px;
+    height: 700px;    
+}
+
+.markdown-example-field > pre {
+    margin: 1em 0px !important;    
 }
 
 .lockedDocumentMessage {
