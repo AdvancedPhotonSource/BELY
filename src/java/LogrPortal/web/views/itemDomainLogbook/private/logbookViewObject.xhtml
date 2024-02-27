@@ -66,7 +66,7 @@ See LICENSE file.
                         </p:galleria>
                     </p:outputPanel>
                     <div class="logFooter">                                                                        
-                        <p:commandLink styleClass="logAction fa fa-link-icon fa-pencil logEditButton"
+                        <p:commandLink styleClass="logAction-left fa fa-link-icon fa-pencil logEditButton"
                                        onclick="PF('loadingDialog').show()"
                                        rendered="#{isEntityWriteable}"
                                        action="#{itemDomainLogbookController.prepareEditLogEntry(logObject)}"
@@ -81,7 +81,7 @@ See LICENSE file.
 
                         <p:commandLink id="#{entityTypeName}LogDestroyButton"
                                        rendered="#{isEntityWriteable}"
-                                       styleClass="logAction fa fa-link-icon fa-trash" title="Delete"
+                                       styleClass="logAction-right fa fa-link-icon fa-trash" title="Delete"
                                        onstart="PF('confirmDeleteLog#{logObject.viewUUID}Widget').show();">
                             <p:tooltip for="#{entityTypeName}LogDestroyButton" value="Delete #{entityTypeName} log entry."/>
                         </p:commandLink>

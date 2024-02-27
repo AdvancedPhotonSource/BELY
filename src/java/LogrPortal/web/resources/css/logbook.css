@@ -91,7 +91,12 @@ html, body {
     display: flow-root;
 }
 
-.logAction {
+.logAction-left {
+    float: left; 
+    margin-right: 10px;
+}
+
+.logAction-right {
     float: right; 
     margin-left: 10px;
 }
