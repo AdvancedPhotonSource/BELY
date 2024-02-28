@@ -672,7 +672,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     public void processPreRenderOPSList() {
-        if (currentEntityType != null) {
+        if (currentEntityType != null && itemLazyDataModel != null) {
             String name = currentEntityType.getName();
             if (name.equals(OPS_ENTITY_TYPE_NAME)) {
                 return;
