@@ -6,8 +6,6 @@
 
 const VERIFY_VIEW_MAX_ATTEMPTS = 6;
 
-var sessionTimeout = false;
-
 window.onload = function () {
     var thisPageId = document.getElementById('viewCurrentPageIdHiddenText').value;
     var singleTabKey = document.getElementById('singleTabViewKeyHiddenText').innerHTML;
@@ -40,11 +38,7 @@ function startPageVerify(includeTabCheck = true) {
     var failureCount = 0;
 
     function verifyView() {
-        setTimeout(function () {
-            if (sessionTimeout) {
-                invalidateCurrentSession();
-                return;
-            }
+        setTimeout(function () {            
             verifyViewOpenPageIdHiddenText();
             var newTimeHash = document.getElementById('currentTimeHashHiddenText').innerHTML;
             if (newTimeHash != timeHash) {
@@ -66,11 +60,6 @@ function startPageVerify(includeTabCheck = true) {
     if (includeTabCheck) {
         verifyViewOpenPageIdHiddenText();
 }
-}
-
-function sessionTimedOutEvent() {
-    PF('sessionTimeoutDialogWidget').show();
-    sessionTimeout = true;
 }
 
 function testExistingPageId() {
@@ -121,11 +110,11 @@ function loadLastViewedPage(pathContextRoot)
             formId = $("#middleCenter > form").attr("id");
             htmlIdEntityId = formId + ":id";
             htmlId = document.getElementById(htmlIdEntityId);
-            
+
             if (lastPage.includes("edit")) {
-                lastPage = lastPage.replace("edit","view"); 
+                lastPage = lastPage.replace("edit", "view");
             }
-            
+
             if (htmlId !== null) {
                 entityId = htmlId.innerHTML
                 lastPage += "?id=" + entityId;
