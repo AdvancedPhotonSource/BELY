@@ -117,6 +117,15 @@ See LICENSE file.
             <div id="bottom" class="bottomContent">
                 <ui:insert name="bottom">
                     <h:form prependId="false">
+                        <!--Ping server after 30 minutes and refresh user token expiration-->
+                        <p:poll interval="1800"
+                                update="@this"
+                                autoStart="true"
+                                oncomplete="refreshToken()"/> 
+                        
+                        <p:remoteCommand name="refreshToken"
+                                         action="#{loginController.refreshToken()}" />
+                        
                         <ui:param name="singleTabViewKey" value="#{singleTabViewKey != null ? singleTabViewKey : null}"/> 
 
                         <h:outputText style="display: none" id="singleTabViewKeyHiddenText"
