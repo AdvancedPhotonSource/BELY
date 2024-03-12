@@ -168,6 +168,20 @@ BEGIN
 	LIMIT limit_row;
 END //
 
+DROP PROCEDURE IF EXISTS cleanup_sessions;//
+CREATE PROCEDURE `cleanup_sessions` () 
+BEGIN
+	DELETE FROM user_session WHERE expiration_date_time < CURRENT_TIMESTAMP();
+END //
+
+-- Ensure that event_scheduler is on
+-- https://mariadb.com/docs/server/ref/mdb/system-variables/event_scheduler/
+DROP EVENT IF EXISTS session_clean_event;//
+CREATE EVENT session_clean_event 
+ON SCHEDULE EVERY 1 HOUR STARTS CURRENT_TIMESTAMP
+DO
+  CALL cleanup_sessions(); // 
+
 DROP PROCEDURE IF EXISTS fetch_relationship_children_items;//
 CREATE PROCEDURE `fetch_relationship_children_items` (IN item_id INT, IN relationship_type_id INT, IN parent_relationship_id INT) 
 BEGIN
