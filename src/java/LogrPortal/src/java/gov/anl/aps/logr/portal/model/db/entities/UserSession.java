@@ -24,6 +24,7 @@ import javax.validation.constraints.Size;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
+ * User Session entity class represents the user_session database table. 
  *
  * @author djarosz
  */
@@ -35,7 +36,7 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "UserSession.findById", query = "SELECT u FROM UserSession u WHERE u.id = :id"),
     @NamedQuery(name = "UserSession.findBySessionName", query = "SELECT u FROM UserSession u WHERE u.sessionName = :sessionName"),
     @NamedQuery(name = "UserSession.findByExpirationDateTime", query = "SELECT u FROM UserSession u WHERE u.expirationDateTime = :expirationDateTime"),
-    @NamedQuery(name = "UserSession.findBySessionKey", query = "SELECT u FROM UserSession u WHERE u.sessionKey = :sessionKey")})
+    @NamedQuery(name = "UserSession.findBySessionKey", query = "SELECT u FROM UserSession u WHERE u.sessionKey = :sessionKey and u.expirationDateTime > CURRENT_TIMESTAMP")})
 public class UserSession implements Serializable {
 
     private static final long serialVersionUID = 1L;
