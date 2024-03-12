@@ -22,7 +22,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Named;
@@ -242,10 +241,6 @@ public class LoginController implements Serializable {
         return validCredentials;
     }
 
-    private String generateSessionToken() {
-        return String.valueOf(System.currentTimeMillis()).substring(8, 13) + UUID.randomUUID().toString();
-    }
-
     private Date generateSessionExpiration(long expirationSecondOffset) {
         Date now = new Date();
         Instant future = now.toInstant();
@@ -323,7 +318,7 @@ public class LoginController implements Serializable {
         if (userSession != null) {
             token = userSession.getSessionKey();
         } else {
-            token = generateSessionToken();
+            token = CryptUtility.generateSessionToken(); 
             String remoteAddress = SessionUtility.getRemoteAddress();
 
             userSession = new UserSession();
