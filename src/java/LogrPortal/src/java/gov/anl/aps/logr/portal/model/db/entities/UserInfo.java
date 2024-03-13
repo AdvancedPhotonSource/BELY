@@ -57,10 +57,12 @@ public class UserInfo extends SettingEntity implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
+    @Column(name = "id")
     private Integer id;
     @Basic(optional = false)
     @NotNull
     @Size(min = 1, max = 16)
+    @Column(name = "username")
     private String username;
     @Basic(optional = false)
     @NotNull
@@ -82,6 +84,8 @@ public class UserInfo extends SettingEntity implements Serializable {
     private String password;
     @Size(max = 256)
     private String description;
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "userInfo")
+    private List<UserSession> userSessions;
     @JoinTable(name = "user_list", joinColumns = {
         @JoinColumn(name = "user_id", referencedColumnName = "id")}, inverseJoinColumns = {
         @JoinColumn(name = "list_id", referencedColumnName = "id")})
@@ -301,6 +305,14 @@ public class UserInfo extends SettingEntity implements Serializable {
         this.userSettingList = userSettingList;
     }
 
+    public List<UserSession> getUserSessions() {
+        return userSessions;
+    }
+
+    public void setUserSessions(List<UserSession> userSessions) {
+        this.userSessions = userSessions;
+    }
+
     @XmlTransient
     @JsonIgnore
     public List<PropertyValueHistory> getPropertyValueHistoryList() {
@@ -510,5 +522,5 @@ public class UserInfo extends SettingEntity implements Serializable {
     public EntitySetting createNewEntitySetting() {
         return new UserSetting();
     }
-    
+
 }

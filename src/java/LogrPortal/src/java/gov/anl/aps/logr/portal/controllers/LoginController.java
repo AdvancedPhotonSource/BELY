@@ -14,8 +14,13 @@ import gov.anl.aps.logr.common.utilities.LdapUtility;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import gov.anl.aps.logr.common.utilities.CryptUtility;
 import gov.anl.aps.logr.portal.constants.SystemLogLevel;
+import gov.anl.aps.logr.portal.model.db.beans.UserSessionFacade;
+import gov.anl.aps.logr.portal.model.db.entities.UserSession;
 import gov.anl.aps.logr.portal.model.db.utilities.LogUtility;
 import java.io.Serializable;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
@@ -34,14 +39,21 @@ public class LoginController implements Serializable {
     private static final int MilisecondsInSecond = 1000;
     private static final int SessionTimeoutDecreaseInSeconds = 10;
 
+    // Whenever a session is saved it will get updated with the offset. 
+    // 7 day offset
+    private static final int SESSION_EXPIRATION_OFFSET = 604800;
+
     @EJB
     private UserInfoFacade userFacade;
+
+    @EJB
+    private UserSessionFacade userSessionFacade;
 
     private String username = null;
     private String password = null;
     private boolean loggedInAsAdmin = false;
     private boolean loggedInAsMaintainer = false;
-    private boolean loggedInAsAdvancedUser = false; 
+    private boolean loggedInAsAdvancedUser = false;
     private boolean loggedInAsUser = false;
     private boolean checkedSession = false;
     private boolean registeredSession = false;
@@ -55,7 +67,7 @@ public class LoginController implements Serializable {
     private static final String MaintainerGroupListPropertyName = "cdb.portal.maintainerGroupList";
     private static final String AdvancedGroupListPropertyName = "cdb.portal.advancedGroupList";
     private static final List<String> maintainerGroupNameList = ConfigurationUtility.getPortalPropertyList(MaintainerGroupListPropertyName);
-    private static final List<String> advancedGroupNameList = ConfigurationUtility.getPortalPropertyList(AdvancedGroupListPropertyName); 
+    private static final List<String> advancedGroupNameList = ConfigurationUtility.getPortalPropertyList(AdvancedGroupListPropertyName);
     private static final List<String> adminGroupNameList = ConfigurationUtility.getPortalPropertyList(AdminGroupListPropertyName);
     private static final Logger logger = LogManager.getLogger(LoginController.class.getName());
 
@@ -81,30 +93,34 @@ public class LoginController implements Serializable {
     public void setUsername(String username) {
         this.username = username;
     }
-    
+
     /**
-     * Function used to ensure user stays logged in after a session reset.  
+     * Function used to ensure user stays logged in after a session reset.
      */
     public void preRenderLogin() {
-        isLoggedIn();         
+        isLoggedIn();
     }
 
     public boolean isLoggedIn() {
         if (!checkedSession) {
             checkedSession = true;
-            String lastUsername = SessionUtility.getLastUsername();
-            if (lastUsername != null) {
-                username = lastUsername;
-                user = userFacade.findByUsername(username);
-                loadAuthenticatedUser();
+            String sessionKey = SessionUtility.getSessionCookie();
+            if (sessionKey != null) {
+                UserSession session = userSessionFacade.findBySessionKey(sessionKey);
+
+                if (session != null) {
+                    user = session.getUserInfo();
+                    username = user.getUsername();
+                    loadAuthenticatedUser(true, session);
+                }
             }
 
         }
-        return (loggedInAsAdmin || loggedInAsUser || loggedInAsMaintainer || loggedInAsAdvancedUser );
+        return (loggedInAsAdmin || loggedInAsUser || loggedInAsMaintainer || loggedInAsAdvancedUser);
     }
-    
+
     public boolean isLoggedInForImport() {
-        return (loggedInAsAdmin || loggedInAsMaintainer || loggedInAsAdvancedUser );
+        return (loggedInAsAdmin || loggedInAsMaintainer || loggedInAsAdvancedUser);
     }
 
     public boolean isLoggedInAsAdmin() {
@@ -146,7 +162,7 @@ public class LoginController implements Serializable {
     private boolean isMaintainer(String username) {
         return isMaintainer(username, userFacade);
     }
-    
+
     private boolean isAdvanced(String username) {
         return isAdvanced(username, userFacade);
     }
@@ -166,7 +182,7 @@ public class LoginController implements Serializable {
         }
         return false;
     }
-    
+
     public static boolean isAdvanced(String username, UserInfoFacade userFacade) {
         UserInfo findByUsername = userFacade.findByUsername(username);
         if (findByUsername != null) {
@@ -225,34 +241,96 @@ public class LoginController implements Serializable {
         return validCredentials;
     }
 
+    private Date generateSessionExpiration(long expirationSecondOffset) {
+        Date now = new Date();
+        Instant future = now.toInstant();
+        future = future.plus(Duration.ofSeconds(expirationSecondOffset));
+
+        return Date.from(future);
+    }
+
+    private void saveSession(UserSession session) {
+        if (session.getId() == null) {
+            userSessionFacade.create(session);
+        } else {
+            userSessionFacade.edit(session);
+        }
+
+    }
+
     private void loadAuthenticatedUser() {
+        loadAuthenticatedUser(false, null);
+    }
+
+    private void loadAuthenticatedUser(boolean quiet, UserSession userSession) {
         if (settingController == null) {
             settingController = (SettingController) SessionUtility.findBean(SETTING_CONTROLLER_NAME);
         }
         settingController.loadSessionUser(user);
 
+        refreshToken(userSession);
         SessionUtility.setUser(user);
+
         boolean isAdminUser = isAdmin(username);
         boolean isMaintainer = isMaintainer(username);
-        boolean isAdvanced = isAdvanced(username); 
+        boolean isAdvanced = isAdvanced(username);
         if (isAdminUser) {
             loggedInAsAdmin = true;
             SessionUtility.setRole(CdbRole.ADMIN);
-            SessionUtility.addInfoMessage("Successful Login", "Administrator " + username + " is logged in.");
+            if (!quiet) {
+                SessionUtility.addInfoMessage("Successful Login", "Administrator " + username + " is logged in.");
+            }
         } else if (isMaintainer) {
             loggedInAsMaintainer = true;
             SessionUtility.setRole(CdbRole.MAINTAINER);
-            SessionUtility.addInfoMessage("Successful Login", "Maintainer " + username + " is logged in.");
+            if (!quiet) {
+                SessionUtility.addInfoMessage("Successful Login", "Maintainer " + username + " is logged in.");
+            }
         } else if (isAdvanced) {
-            loggedInAsAdvancedUser = true; 
+            loggedInAsAdvancedUser = true;
             SessionUtility.setRole(CdbRole.ADVANCED);
-            SessionUtility.addInfoMessage("Successful Login", "Advanced user " + username + " is logged in.");
-        }else {
+            if (!quiet) {
+                SessionUtility.addInfoMessage("Successful Login", "Advanced user " + username + " is logged in.");
+            }
+        } else {
             loggedInAsUser = true;
             SessionUtility.setRole(CdbRole.USER);
-            SessionUtility.addInfoMessage("Successful Login", "User " + username + " is logged in.");
+            if (!quiet) {
+                SessionUtility.addInfoMessage("Successful Login", "User " + username + " is logged in.");
+            }
         }
         LogUtility.addSystemLog(SystemLogLevel.loginInfo, "Authentication Succeeded: " + username);
+    }
+
+    public void refreshToken() {
+        String sessionKey = SessionUtility.getSessionCookie();
+        if (sessionKey != null) {
+            UserSession session = userSessionFacade.findBySessionKey(sessionKey);
+
+            if (session != null) {
+                refreshToken(session); 
+            }
+        }
+    }
+
+    private void refreshToken(UserSession userSession) {
+        String token;
+        if (userSession != null) {
+            token = userSession.getSessionKey();
+        } else {
+            token = CryptUtility.generateSessionToken(); 
+            String remoteAddress = SessionUtility.getRemoteAddress();
+
+            userSession = new UserSession();
+            userSession.setSessionKey(token);
+            userSession.setUserInfo(user);
+            userSession.setSessionName(remoteAddress);
+        }
+
+        Date expiration = generateSessionExpiration(SESSION_EXPIRATION_OFFSET);
+        userSession.setExpirationDateTime(expiration);
+        saveSession(userSession);
+        SessionUtility.setSessionCookie(token, SESSION_EXPIRATION_OFFSET);
     }
 
     public String reloadPage() {
@@ -261,15 +339,15 @@ public class LoginController implements Serializable {
             landingPage = SessionUtility.popViewFromStack();
             if (landingPage == null) {
                 landingPage = "/index";
-            } 
-            
-            landingPage = SessionUtility.addRedirectToViewId(landingPage); 
+            }
+
+            landingPage = SessionUtility.addRedirectToViewId(landingPage);
         }
 
         logger.debug("Landing page: " + landingPage);
         return landingPage;
     }
-    
+
     public String dropMaintainerRole() {
         loggedInAsAdmin = false;
         loggedInAsMaintainer = false;
@@ -303,7 +381,7 @@ public class LoginController implements Serializable {
             return "Maintainer";
         } else if (isLoggedInAsAdvancedUser()) {
             return "Advanced user";
-        }else {
+        } else {
             return "User";
         }
     }
@@ -349,6 +427,10 @@ public class LoginController implements Serializable {
         SessionUtility.navigateTo("/views/index?faces-redirect=true");
     }
 
+    public void removeSession(UserSession session) {
+        userSessionFacade.remove(session);
+    }
+
     /**
      * Logout action.
      *
@@ -358,7 +440,18 @@ public class LoginController implements Serializable {
         logger.debug("Logging out user: " + user);
         SessionUtility.clearSession();
         SessionUtility.invalidateSession();
+        SessionUtility.setSessionCookie(null, 0);
         resetLoginInfo();
+
+        // Remove session upon logout. 
+        String sessionKey = SessionUtility.getSessionCookie();
+        if (sessionKey != null) {
+            UserSession session = userSessionFacade.findBySessionKey(sessionKey);
+            if (session != null) {
+                removeSession(session);
+            }
+        }
+
         return "/index?faces-redirect=true";
     }
 
@@ -369,10 +462,6 @@ public class LoginController implements Serializable {
         }
 
         SessionUtility.clearSession();
-
-        if (currentUsername != null) {
-            SessionUtility.setLastUsername(currentUsername);
-        }                
 
         return "/index?faces-redirect=true";
     }

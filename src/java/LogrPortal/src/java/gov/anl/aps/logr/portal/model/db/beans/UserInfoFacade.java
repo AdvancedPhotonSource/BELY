@@ -5,7 +5,6 @@
 package gov.anl.aps.logr.portal.model.db.beans;
 
 import gov.anl.aps.logr.common.exceptions.CdbException;
-import gov.anl.aps.logr.portal.model.db.entities.UserGroup;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.util.List;

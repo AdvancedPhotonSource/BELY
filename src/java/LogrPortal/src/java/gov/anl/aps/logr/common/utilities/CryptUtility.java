@@ -27,6 +27,9 @@ public class CryptUtility {
     private static final String SaltDelimiter = "$";
 
     private static final Logger logger = LogManager.getLogger(CryptUtility.class.getName());
+    
+    private static final SecureRandom secureRandom = new SecureRandom(); 
+    private static final Base64.Encoder base64Encoder = Base64.getUrlEncoder(); 
 
     /**
      * Generate random string.
@@ -44,6 +47,12 @@ public class CryptUtility {
             result[i] = characterSet[randomCharIndex];
         }
         return new String(result);
+    }
+    
+    public static String generateSessionToken() {
+        byte[] randomBytes = new byte[24];
+        secureRandom.nextBytes(randomBytes);
+        return base64Encoder.encodeToString(randomBytes);
     }
 
     /**

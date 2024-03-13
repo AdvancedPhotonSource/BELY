@@ -6,8 +6,14 @@ package gov.anl.aps.logr.portal.utilities;
 
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
+import java.util.logging.Level;
 import javax.faces.application.FacesMessage;
 import javax.faces.application.NavigationHandler;
 import javax.faces.application.ViewHandler;
@@ -17,6 +23,8 @@ import javax.faces.context.FacesContext;
 import javax.faces.context.Flash;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,20 +40,21 @@ public class SessionUtility {
      */
     public static final String MESSAGES_KEY = "messages";
     public static final String USER_KEY = "user";
-    public static final String LAST_USERNAME_KEY = "lastUsername";
     public static final String VIEW_STACK_KEY = "viewStack";
     public static final String LAST_SESSION_ERROR_KEY = "lastSessionError";
-    public static final String ROLE_KEY = "role";    
-    private static final String SAFE_TRANSFER_CURRENT_KEY = "safeTransferCurrent"; 
+    public static final String ROLE_KEY = "role";
+    private static final String SAFE_TRANSFER_CURRENT_KEY = "safeTransferCurrent";
     private static final String MODULE_NAME_LOOKUP = "java:module/ModuleName";
     private static final String JAVA_LOOKUP_START = "java:global/";
-    private static String FACADE_LOOKUP_STRING_START = null;    
+    private static String FACADE_LOOKUP_STRING_START = null;
+
+    private static final String USER_SESSION_COOKIE_KEY = "USERSESSIONID";
 
     private static final Logger logger = LogManager.getLogger(SessionUtility.class.getName());
 
     public SessionUtility() {
     }
-    
+
     public static void addErrorMessage(String summary, String detail) {
         addErrorMessage(summary, detail, false);
     }
@@ -57,11 +66,11 @@ public class SessionUtility {
     public static void addWarningMessage(String summary, String detail) {
         addWarningMessage(summary, detail, false);
     }
-    
+
     public static void addWarningMessage(String summary, String detail, boolean isAjax) {
         addMessage(MESSAGES_KEY, new FacesMessage(FacesMessage.SEVERITY_WARN, summary, detail), isAjax);
     }
-    
+
     public static void addInfoMessage(String summary, String detail) {
         addInfoMessage(summary, detail, false);
     }
@@ -72,22 +81,22 @@ public class SessionUtility {
 
     private static void addMessage(String clientId, FacesMessage message, boolean isAjax) {
         FacesContext context = FacesContext.getCurrentInstance();
-        
+
         if (!isAjax) {
             context.getExternalContext().getFlash().setKeepMessages(true);
         }
-        
+
         context.addMessage(clientId, message);
         PrimeFaces.current().ajax().update(clientId);
     }
-    
+
     private static Flash getFlash() {
         FacesContext currentInstance = FacesContext.getCurrentInstance();
         ExternalContext externalContext = currentInstance.getExternalContext();
         Flash flash = externalContext.getFlash();
         return flash;
     }
-    
+
     public static void setFlashValueIfSafe(String key, Object value) {
         Boolean sessionKey = (Boolean) getSessionKey(SAFE_TRANSFER_CURRENT_KEY);
         if (sessionKey != null && sessionKey) {
@@ -95,15 +104,15 @@ public class SessionUtility {
             setSessionKey(SAFE_TRANSFER_CURRENT_KEY, false);
         }
     }
-    
+
     public static void setFlashValue(String key, Object value) {
         Flash flash = getFlash();
-        flash.put(key, value); 
+        flash.put(key, value);
     }
-    
+
     public static Object getFlashValue(String key) {
         Flash flash = getFlash();
-        return flash.get(key); 
+        return flash.get(key);
     }
 
     public static String getRequestParameterValue(String parameterName) {
@@ -117,16 +126,45 @@ public class SessionUtility {
 
     public static UserInfo getUser() {
         Object user = getSessionKey(USER_KEY);
-        
+
         return (UserInfo) user;
     }
-    
+
+    public static String getRemoteAddress() {
+        HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
+
+        return request.getRemoteAddr();                                     
+    }
+
+    public static String getSessionCookie() {
+        Map<String, Object> cookieMap = FacesContext.getCurrentInstance().getExternalContext().getRequestCookieMap();
+
+        Cookie cookie = (Cookie) cookieMap.get(USER_SESSION_COOKIE_KEY);
+
+        if (cookie != null) { 
+            String value = cookie.getValue();
+            
+            return value; 
+        }
+
+        return null;
+    }
+
+    public static void setSessionCookie(String sessionToken, int secondsAge) {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("maxAge", secondsAge);
+        properties.put("secure", true);
+        properties.put("httpOnly", true);
+        properties.put("path", getContextRoot());
+        FacesContext.getCurrentInstance().getExternalContext().addResponseCookie(USER_SESSION_COOKIE_KEY, sessionToken, properties);
+    }
+
     private static void setSessionKey(String key, Object value) {
         Map<String, Object> sessionMap = FacesContext.getCurrentInstance().getExternalContext().getSessionMap();
         sessionMap.remove(key);
-        sessionMap.put(key, value); 
+        sessionMap.put(key, value);
     }
-    
+
     private static Object getSessionKey(String key) {
         Map<String, Object> sessionMap = FacesContext.getCurrentInstance().getExternalContext().getSessionMap();
         return sessionMap.get(key);
@@ -154,9 +192,9 @@ public class SessionUtility {
 
     public static String getRedirectToCurrentView() {
         String currentView = getCurrentViewId();
-        return addRedirectToViewId(currentView); 
+        return addRedirectToViewId(currentView);
     }
-    
+
     public static String addRedirectToViewId(String viewId) {
         if (viewId.contains("?")) {
             viewId += "&";
@@ -167,18 +205,18 @@ public class SessionUtility {
 
         return viewId;
     }
-    
+
     public static String getRedirectToCurrentViewWithHandlerTransfer() {
         FacesContext context = FacesContext.getCurrentInstance();
         String viewId = context.getViewRoot().getViewId();
         ViewHandler handler = context.getApplication().getViewHandler();
         UIViewRoot root = handler.createView(context, viewId);
         root.setViewId(viewId);
-        
+
         setSessionKey(SAFE_TRANSFER_CURRENT_KEY, true);
         context.setViewRoot(root);
-        
-        return addRedirectToViewId(viewId); 
+
+        return addRedirectToViewId(viewId);
     }
 
     public static String getCurrentViewId() {
@@ -267,16 +305,6 @@ public class SessionUtility {
     public static Object getRole() {
         Map sessionMap = FacesContext.getCurrentInstance().getExternalContext().getSessionMap();
         return sessionMap.get(ROLE_KEY);
-    }
-
-    public static void setLastUsername(String lastUsername) {
-        Map sessionMap = FacesContext.getCurrentInstance().getExternalContext().getSessionMap();
-        sessionMap.put(LAST_USERNAME_KEY, (Object) lastUsername);
-    }
-
-    public static String getLastUsername() {
-        Map sessionMap = FacesContext.getCurrentInstance().getExternalContext().getSessionMap();
-        return (String) sessionMap.get(LAST_USERNAME_KEY);
     }
 
     public static void executeRemoteCommand(String commandName) {

@@ -116,7 +116,16 @@ See LICENSE file.
         <ui:fragment>
             <div id="bottom" class="bottomContent">
                 <ui:insert name="bottom">
-                    <h:form prependId="false">                        
+                    <h:form prependId="false">
+                        <!--Ping server after 30 minutes and refresh user token expiration-->
+                        <p:poll interval="1800"
+                                update="@this"
+                                autoStart="true"
+                                oncomplete="refreshToken()"/> 
+                        
+                        <p:remoteCommand name="refreshToken"
+                                         action="#{loginController.refreshToken()}" />
+                        
                         <ui:param name="singleTabViewKey" value="#{singleTabViewKey != null ? singleTabViewKey : null}"/> 
 
                         <h:outputText style="display: none" id="singleTabViewKeyHiddenText"
@@ -153,9 +162,6 @@ See LICENSE file.
                         <p:growl id="messages"
                                  showDetail="true"
                                  life="7000"/>
-
-                        <p:idleMonitor timeout="#{loginController.sessionTimeoutInMiliseconds}"
-                                       onidle="sessionTimedOutEvent()"/>                                             
 
                         <p:remoteCommand name="invalidateCurrentSession"
                                          action="#{loginController.sessionIdleListener}" /> 
@@ -218,24 +224,7 @@ See LICENSE file.
                                                  onclick="handleSessionTimeout('#{pathContextRoot}');" />
                             </f:facet>
                         </p:dialog>
-
-                        <p:dialog widgetVar="sessionTimeoutDialogWidget"
-                                  modal="true"
-                                  resizable="false"
-                                  closable="false"
-                                  header="Session Expired"
-                                  draggable="false"
-                                  styleClass="viewTransparentBackgroundDialog">
-                            <p:outputLabel value="Your session has expired due to inactivity." />
-                            <f:facet name="footer">
-                                <p:commandButton value="Try last viewed page" 
-                                                 icon="fa fa-undo"
-                                                 onclick="loadLastViewedPage('#{pathContextRoot}');" />
-                                <p:commandButton value="Go back to home" 
-                                                 icon="fa fa-home"
-                                                 onclick="handleSessionTimeout('#{pathContextRoot}');" />
-                            </f:facet>
-                        </p:dialog>                       
+                        
                         <h:outputScript library="javascript" name="sessionTimeout.js"/>
                         <h:outputScript library="javascript" name="portal.js"/>
                     </h:form>

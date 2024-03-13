@@ -182,13 +182,14 @@ public class UserInfoController extends CdbEntityController<UserInfoControllerUt
         return result;
     }
 
-    public String prepareSessionUserEdit(String viewPath) {
-        UserInfo sessionUser = (UserInfo) SessionUtility.getUser();
+    public String prepareSessionUserEdit() {
+        UserInfo sessionUser = (UserInfo) SessionUtility.getUser();        
         if (sessionUser == null) {
             return null;
         }
+        sessionUser = findById(sessionUser.getId()); 
         prepareEdit(sessionUser);
-        return viewPath + "?faces-redirect=true";
+        return "/views/userInfo/edit?faces-redirect=true";
     }
 
     @Override

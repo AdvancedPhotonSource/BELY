@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui">
+
+    <p:dataTable value="#{userInfoObject.userSessions}"
+                 var="userSessionObject">
+        <p:column headerText="Session">
+            #{userSessionObject.sessionName}
+        </p:column>
+
+        <p:column headerText="Expiration">
+            #{userSessionObject.expirationDateTime}
+        </p:column>
+
+        <p:column headerText="Actions">
+            <p:commandLink styleClass="fa fa-link-icon fa-trash"
+                           actionListener="#{loginController.removeSession(userSessionObject)}"
+                           action="#{userInfoController.prepareSessionUserEdit()}" 
+                           update="@form">
+                <p:tooltip for="@parent"
+                           value="Remove Session" /> 
+            </p:commandLink>
+        </p:column>
+
+    </p:dataTable>
+</ui:composition>
+
+
