@@ -39,6 +39,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -414,7 +415,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     private boolean isSaveLogLockoutsForCurrent() {
         return isSaveLogLockoutsForCurrent(null);
-    }
+    }   
 
     private boolean isSaveLogLockoutsForCurrent(Log log) {
         // Use current for the lockout timeout especially for documents with sections. 
@@ -422,21 +423,26 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         EntityInfo entityInfo = current.getEntityInfo();
         boolean isEntityWriteableByTimeout = entityInfo.refreshWriteableByTimeout();
 
-        if (isEntityWriteableByTimeout == false) {
-            displayMessageAndRefreshCurrent("Cannot change log entries", "Log document is locked by lockout time.");
-            setNewLogEdit(null);
-            return false;
-        }
+        UserInfo user = SessionUtility.getUser();
+        boolean skipLockouts = (user.isUserAdmin() || user.isUserMaintainer());
 
-        if (log != null) {
-            Double logLockoutHours = current.getLogLockoutHours();
-            Date lastModifiedOnDateTime = log.getLastModifiedOnDateTime();
-
-            boolean isWriteable = AuthorizationUtility.isEntityWriteableByTimeout(logLockoutHours, lastModifiedOnDateTime);
-            if (!isWriteable) {
-                displayMessageAndRefreshCurrent("Cannot change log entry", "Log entry is locked by lockout time.");
+        if (!skipLockouts) {
+            if (isEntityWriteableByTimeout == false) {
+                displayMessageAndRefreshCurrent("Cannot change log entries", "Log document is locked by lockout time.");
                 setNewLogEdit(null);
-                return isWriteable;
+                return false;
+            }
+
+            if (log != null) {
+                Double logLockoutHours = current.getLogLockoutHours();
+                Date lastModifiedOnDateTime = log.getLastModifiedOnDateTime();
+
+                boolean isWriteable = AuthorizationUtility.isEntityWriteableByTimeout(logLockoutHours, lastModifiedOnDateTime);
+                if (!isWriteable) {
+                    displayMessageAndRefreshCurrent("Cannot change log entry", "Log entry is locked by lockout time.");
+                    setNewLogEdit(null);
+                    return isWriteable;
+                }
             }
         }
 
@@ -1079,16 +1085,16 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
         return logbookEntityTypes;
     }
-    
+
     // <editor-fold defaultstate="collapsed" desc="Home Page">
     public void processPreRenderLogbookHome() {
-        settingObject.updateSettings(); 
-        
+        settingObject.updateSettings();
+
         // Fetch latest logbook home data. 
         logbookHome = null;
         logbookHomeType1 = null;
         logbookHomeType2 = null;
-        logbookHomeType3 = null;                 
+        logbookHomeType3 = null;
 
         // Load up the entity type settings.         
         Integer type1Id = settingObject.getDisplayHomeLogbookTypeId1();
@@ -1122,12 +1128,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             }
 
             for (EntityType et : etl) {
-                List<ItemDomainLogbook> items; 
+                List<ItemDomainLogbook> items;
                 if (!et.getEntityTypeChildren().isEmpty()) {
-                    items = itemDomainLogbookFacade.findByDomainAndParentEntityType(getDefaultDomainName(), et.getName(), limit); 
+                    items = itemDomainLogbookFacade.findByDomainAndParentEntityType(getDefaultDomainName(), et.getName(), limit);
                 } else {
                     items = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), et.getName(), limit);
-                }                
+                }
 
                 ItemDomainLogbookHomeObject homeObject = new ItemDomainLogbookHomeObject(et, items);
                 logbookHome.add(homeObject);
@@ -1189,21 +1195,21 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         if (logbookHomeType3 != null) {
             settingObject.setDisplayHomeLogbookTypeId3(logbookHomeType3.getId());
         }
-               
+
     }
-    
+
     private String homeRedirect() {
         return "home?faces-redirect=true";
     }
-    
+
     public String saveLogbookHome() {
-        setLogbookHomeSettings();         
+        setLogbookHomeSettings();
         settingObject.saveListSettingsForSessionSettingEntityActionListener(null);
-        
-        SettingController settingController = getSettingController();        
+
+        SettingController settingController = getSettingController();
         settingController.saveSettingListForSettingEntity();
-        
-        return homeRedirect(); 
+
+        return homeRedirect();
     }
 
     public String saveLogbookHomeForAll() {
@@ -1236,7 +1242,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             SessionUtility.addErrorMessage("ERROR", ex.getMessage());
         }
 
-        return homeRedirect(); 
+        return homeRedirect();
     }
 
     private void updateLogbookSettingDefaultValue(SettingTypeControllerUtility stcu, String settingKey, EntityType selectedSetting, List<SettingType> settingTypeList) {
@@ -1251,9 +1257,8 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         settingTypeList.add(setting);
     }
-    
-    // </editor-fold>
 
+    // </editor-fold>
     public final String getCurrentListPermalink() {
         if (currentEntityType != null) {
             String redirect = getListRedirectForEntityType(currentEntityType, true);
@@ -1489,6 +1494,13 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         LocalDateTime opsShiftEndTime = current.getOpsShiftEndTime();
         String shiftStartValue = DateTimeFormatter.ISO_DATE_TIME.format(opsShiftStartTime);
         String shiftEndValue = DateTimeFormatter.ISO_DATE_TIME.format(opsShiftEndTime);
+
+        // Find shift length. 
+        long minutes = ChronoUnit.MINUTES.between(opsShiftStartTime, opsShiftEndTime);
+        double hours = minutes / 60.0;
+        // Additional time that is defined in template.
+        hours += getDocumentLockoutHours();
+        setDocumentLockoutHours(hours);
 
         try {
             // Add properties
