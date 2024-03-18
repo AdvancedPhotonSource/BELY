@@ -1112,6 +1112,17 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             logbookHomeType3 = entityTypeFacade.find(type3Id);
         }
     }
+    
+    public List<ItemDomainLogbook> getLogbookHomeListByType(ItemDomainLogbookHomeObject homeObject, Integer limit) {
+        List<ItemDomainLogbook> logbookList = homeObject.getLogbookList();
+        if (logbookList == null) {
+            EntityType et = homeObject.getLogbookType();
+            logbookList = itemDomainLogbookFacade.findByDomainNameAndEntityTypeOrderByLastModifiedDate(getDefaultDomainName(), et.getName(), limit);
+            homeObject.setLogbookList(logbookList);
+        }
+        
+       return logbookList; 
+    }
 
     public List<ItemDomainLogbookHomeObject> getLogbookHome(Integer limit) {
         if (logbookHome == null) {
@@ -1128,14 +1139,15 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             }
 
             for (EntityType et : etl) {
-                List<ItemDomainLogbook> items;
-                if (!et.getEntityTypeChildren().isEmpty()) {
-                    items = itemDomainLogbookFacade.findByDomainAndParentEntityType(getDefaultDomainName(), et.getName(), limit);
+                List<ItemDomainLogbook> items = null;
+                ItemDomainLogbookHomeObject homeObject; 
+                if (et.getEntityTypeChildren().isEmpty()) {                    
+                    items = itemDomainLogbookFacade.findByDomainNameAndEntityTypeOrderByLastModifiedDate(getDefaultDomainName(), et.getName(), limit);
+                    homeObject = new ItemDomainLogbookHomeObject(et, items);
                 } else {
-                    items = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), et.getName(), limit);
+                    homeObject = new ItemDomainLogbookHomeObject(et);
                 }
-
-                ItemDomainLogbookHomeObject homeObject = new ItemDomainLogbookHomeObject(et, items);
+                
                 logbookHome.add(homeObject);
             }
         }

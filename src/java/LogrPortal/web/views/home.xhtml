@@ -52,19 +52,47 @@ See LICENSE file.
                             <ui:param name="logbookList"
                                       value="#{homeObject.logbookList}"/>
                             <h2>
-                                <ui:param name="renderLink"
+                                <ui:param name="noTypeChildren"
                                           value="#{logbookType.entityTypeChildren.size() == 0}" /> 
 
-                                <h:outputLink rendered="#{renderLink}"
+                                <h:outputLink rendered="#{noTypeChildren}"
                                               value="itemDomainLogbook/#{logbookType.listUrl}"
                                               title="Navigate to operations list page.">
                                     #{logbookType.availableLongDisplayName}
                                 </h:outputLink>
-                                <h:outputText rendered="#{!renderLink}"
+                                <h:outputText rendered="#{!noTypeChildren}"
                                               value="#{logbookType.availableLongDisplayName}" /> 
                             </h2>
 
-                            <p:dataScroller value="#{logbookList}" var="logItem" styleClass="logDataScroller">
+                            <p:accordionPanel value="#{homeObject.homeChildren}"
+                                              rendered="#{!noTypeChildren}"
+                                              var="homeChild"
+                                              dynamic="true">
+                                
+                                <ui:param name="childType"
+                                          value="#{homeChild.logbookType}" />                                 
+                                <ui:param name="etName"
+                                          value="#{childType.name}" />
+                                <ui:param name="logbooks"
+                                          value="#{itemDomainLogbookController.getLogbookHomeListByType(homeChild, 6)}" /> 
+                                
+                                <p:tab title="#{childType.availableLongDisplayName}">                                    
+                                    <p:dataScroller value="#{logbooks}" 
+                                                    var="logItem" 
+                                                    styleClass="logDataScroller">
+
+                                        <ui:include src="itemDomainLogbook/private/home/logDocumentDataScrollerObject.xhtml"/>
+
+                                    </p:dataScroller>
+
+
+                                </p:tab>
+                            </p:accordionPanel>
+
+                            <p:dataScroller value="#{logbookList}" 
+                                            var="logItem" 
+                                            styleClass="logDataScroller"
+                                            rendered="#{noTypeChildren}">
 
                                 <ui:include src="itemDomainLogbook/private/home/logDocumentDataScrollerObject.xhtml"/>
 
