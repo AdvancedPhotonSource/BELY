@@ -145,6 +145,8 @@ import org.primefaces.model.TreeNode;
             query = "SELECT DISTINCT(i) FROM Item i JOIN i.itemProjectList ipl WHERE i.domain.name = :domainName and ipl.name = :projectName ORDER BY i.derivedFromItem DESC"),
     @NamedQuery(name = "Item.findByDomainNameAndEntityType",
             query = "SELECT DISTINCT(i) FROM Item i JOIN i.entityTypeList etl WHERE i.domain.name = :domainName and etl.name = :entityTypeName ORDER BY i.id DESC"),    
+    @NamedQuery(name = "Item.findByDomainNameAndEntityTypeOrderByLastModifiedDate",
+            query = "SELECT DISTINCT(i) FROM Item i JOIN i.fullItemElementList fiel JOIN i.entityTypeList etl WHERE fiel.name is NULL and fiel.derivedFromItemElement is NULL AND i.domain.name = :domainName and etl.name = :entityTypeName ORDER BY fiel.entityInfo.lastModifiedOnDateTime DESC"),
     @NamedQuery(name = "Item.findByDomainNameAndParentEntityType",
             query = "SELECT DISTINCT(i) FROM Item i JOIN i.entityTypeList etl WHERE i.domain.name = :domainName and etl.parentEntityType.name = :entityTypeName ORDER BY i.id DESC"),    
     @NamedQuery(name = "Item.findByDomainNameAndEntityTypeAndTopLevel",

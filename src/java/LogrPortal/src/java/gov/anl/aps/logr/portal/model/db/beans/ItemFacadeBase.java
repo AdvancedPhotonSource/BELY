@@ -223,6 +223,23 @@ public abstract class ItemFacadeBase<ItemDomainEntity extends Item> extends CdbE
         return null;
     }
     
+    public List<ItemDomainEntity> findByDomainNameAndEntityTypeOrderByLastModifiedDate(String domainName, String entityTypeName, Integer limit) {
+        try {
+            Query query = em.createNamedQuery("Item.findByDomainNameAndEntityTypeOrderByLastModifiedDate")
+                    .setParameter("domainName", domainName)
+                    .setParameter("entityTypeName", entityTypeName);
+            
+            if (limit != null) {
+                query.setMaxResults(limit);
+            }
+            
+            return (List<ItemDomainEntity>) query.getResultList();
+        } catch (NoResultException ex) {
+
+        }
+        return null;
+    }
+    
     public List<ItemDomainEntity> findByDomainAndParentEntityType(String domainName, String entityTypeName, Integer limit) {
         try {
             Query query = em.createNamedQuery("Item.findByDomainNameAndParentEntityType")
