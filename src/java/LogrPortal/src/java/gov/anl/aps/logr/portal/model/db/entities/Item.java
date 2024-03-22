@@ -268,6 +268,26 @@ import org.primefaces.model.TreeNode;
                         type = Integer.class
                 ),
                 @StoredProcedureParameter(
+                        name = "entity_type_id",
+                        mode = ParameterMode.IN,
+                        type = Integer.class
+                ),
+                @StoredProcedureParameter(
+                        name = "item_type_id",
+                        mode = ParameterMode.IN,
+                        type = Integer.class
+                ),                
+                @StoredProcedureParameter(
+                        name = "start_time",
+                        mode = ParameterMode.IN,
+                        type = Date.class
+                ),                
+                @StoredProcedureParameter(
+                        name = "end_time",
+                        mode = ParameterMode.IN,
+                        type = Date.class
+                ),
+                @StoredProcedureParameter(
                         name = "search_string",
                         mode = ParameterMode.IN,
                         type = String.class
@@ -288,6 +308,26 @@ import org.primefaces.model.TreeNode;
                         name = "domain_id",
                         mode = ParameterMode.IN,
                         type = Integer.class
+                ),                                
+                @StoredProcedureParameter(
+                        name = "entity_type_id",
+                        mode = ParameterMode.IN,
+                        type = Integer.class
+                ),
+                @StoredProcedureParameter(
+                        name = "item_type_id",
+                        mode = ParameterMode.IN,
+                        type = Integer.class
+                ),                
+                @StoredProcedureParameter(
+                        name = "start_time",
+                        mode = ParameterMode.IN,
+                        type = Date.class
+                ),                
+                @StoredProcedureParameter(
+                        name = "end_time",
+                        mode = ParameterMode.IN,
+                        type = Date.class
                 ),
                 @StoredProcedureParameter(
                         name = "search_string",

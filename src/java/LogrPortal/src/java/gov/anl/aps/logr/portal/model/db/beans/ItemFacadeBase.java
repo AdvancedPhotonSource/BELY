@@ -22,6 +22,7 @@ import gov.anl.aps.logr.portal.model.db.entities.UserGroup;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.view.objects.AdvancedFilter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import javax.persistence.EntityManager;
@@ -999,11 +1000,19 @@ public abstract class ItemFacadeBase<ItemDomainEntity extends Item> extends CdbE
     }
     
     public List<ItemDomainEntity> searchEntitiesNoParent(String searchString) {
+        return searchEntitiesNoParent(searchString, null, null, null, null); 
+    }
+    
+    public List<ItemDomainEntity> searchEntitiesNoParent(String searchString, Integer itemTypeId, Integer entityTypeId, Date startTime, Date endTime) {
         try {
             searchString = convertWildcards(searchString);
             ItemDomainName domain = getDomain();
             return (List<ItemDomainEntity>) em.createNamedStoredProcedureQuery("item.searchItemsNoParent")
                     .setParameter("domain_id", domain.getId())
+                    .setParameter("item_type_id", itemTypeId)
+                    .setParameter("entity_type_id", entityTypeId)
+                    .setParameter("start_time", startTime)
+                    .setParameter("end_time", endTime)
                     .setParameter("search_string", searchString)
                     .setParameter("limit_row", SEARCH_RESULT_LIMIT)
                     .getResultList();
@@ -1013,12 +1022,19 @@ public abstract class ItemFacadeBase<ItemDomainEntity extends Item> extends CdbE
         return null;
     }
     
-    public List<Object[]> searchEntityLogs(String searchString) {
+    public List<Object[]> searchEntityLogs(String searchString, Integer itemTypeId, Integer entityTypeId, Date startTime, Date endTime) {
+        /**
+         * Optional Parameters: item_type_id, entity_type_id, start_time, end_time
+         */
         try {
             searchString = convertWildcards(searchString);
             ItemDomainName domain = getDomain();
             return em.createNamedStoredProcedureQuery("item.search_item_logs")
                     .setParameter("domain_id", domain.getId())
+                    .setParameter("item_type_id", itemTypeId)
+                    .setParameter("entity_type_id", entityTypeId)
+                    .setParameter("start_time", startTime)
+                    .setParameter("end_time", endTime)
                     .setParameter("search_string", searchString)
                     .setParameter("limit_row", SEARCH_RESULT_LIMIT)
                     .getResultList();
