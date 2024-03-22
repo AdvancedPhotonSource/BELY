@@ -7,36 +7,15 @@ See LICENSE file.
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://java.sun.com/jsf/facelets"                
                 xmlns:p="http://primefaces.org/ui"
-                xmlns:f="http://xmlns.jcp.org/jsf/core"
-                xmlns:h="http://xmlns.jcp.org/jsf/html"> 
+                xmlns:f="http://xmlns.jcp.org/jsf/core"> 
 
-    <p:selectOneMenu value="#{logbookTypeValue}"
+    <p:selectOneMenu value="#{logbookTypeValue}"                     
                      var="type"> 
         
         <f:selectItem noSelectionOption="true"
                       itemLabel="None" /> 
 
-        <f:selectItems value="#{itemDomainLogbookController.logbookHomeTypeCandidateList}"
-                       var="et"
-                       itemLabel="#{et.availableLongDisplayName}"/> 
-
-        <ui:param name="parentType" value="#{type.parentEntityType}" /> 
-
-        <p:column>
-            <ui:fragment rendered="#{parentType != null}">
-                <p:outputLabel value="#{parentType.availableLongDisplayName}"
-                               style="font-weight: bold;"/>
-                
-                <br/>
-                <p:outputLabel value="#{type.availableLongDisplayName}"
-                               style="margin-left: 1em"/> 
-            </ui:fragment>
-            
-            <ui:fragment rendered="#{parentType == null}">
-                <p:outputLabel value="#{type.availableLongDisplayName}"
-                               style="font-weight: bold;"/>
-            </ui:fragment>            
-        </p:column>
+        <ui:include src="../itemDomainLogboookSelectOneTypeMenuItems.xhtml" /> 
 
     </p:selectOneMenu>
 
