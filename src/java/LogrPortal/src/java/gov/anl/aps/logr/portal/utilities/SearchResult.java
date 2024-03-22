@@ -18,16 +18,25 @@ public class SearchResult {
     public static final String SEARCH_RESULT_ROW_STYLE = "searchResultRow"; 
     
     private final CdbEntity cdbEntity;
+    private final CdbEntity additionalEntity; 
     private final Integer objectId;
-    private final String objectName;
+    private final String objectName;    
     private String additionalAttribute; 
     private String rowStyle; 
     private HashMap<String, String> objectAttributeMatchMap = new HashMap();
-
+    
     public SearchResult(CdbEntity cdbEntity, Integer objectId, String objectName) {
         this.cdbEntity = cdbEntity; 
         this.objectId = objectId;
         this.objectName = objectName;
+        this.additionalEntity = null; 
+    }
+
+    public SearchResult(CdbEntity cdbEntity, Integer objectId, String objectName, CdbEntity additionalEntity) {
+        this.cdbEntity = cdbEntity; 
+        this.objectId = objectId;
+        this.objectName = objectName;
+        this.additionalEntity = additionalEntity; 
     }
 
     public SearchResult(SearchResult result) {
@@ -35,11 +44,16 @@ public class SearchResult {
         this.objectId = result.objectId;
         this.objectName = result.objectName; 
         this.objectAttributeMatchMap = result.objectAttributeMatchMap; 
+        this.additionalEntity = null; 
     }
 
     @JsonIgnore
     public CdbEntity getCdbEntity() {
         return cdbEntity;
+    }
+
+    public CdbEntity getAdditionalEntity() {
+        return additionalEntity;
     }
 
     public Integer getObjectId() {

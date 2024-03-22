@@ -11,6 +11,7 @@ See LICENSE file.
 
     <ui:param name="item" value="#{searchResultObject.cdbEntity}" /> 
     <ui:param name="entityInfo" value="#{item.entityInfo}" />
+    <ui:param name="renderModifiedDate" value="#{renderModifiedDate != null ? renderModifiedDate : true}"/> 
 
     <p:column headerText="Logbook" 
               sortBy="#{item.longEntityTypeString}"
@@ -19,6 +20,7 @@ See LICENSE file.
     </p:column>            
 
     <p:column headerText="Modified On"
+              rendered="#{renderModifiedDate}"
               sortBy="#{entityInfo.lastModifiedOnDateTime}" 
               filterBy="#{entityInfo.lastModifiedOnDateTime}" filterMatchMode="contains">
         <h:outputText value="#{entityInfo.lastModifiedOnDateTime}"/>
