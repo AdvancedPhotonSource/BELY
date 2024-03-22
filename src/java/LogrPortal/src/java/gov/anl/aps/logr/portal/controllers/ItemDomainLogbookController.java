@@ -9,6 +9,7 @@ import gov.anl.aps.logr.portal.constants.EntityTypeName;
 import gov.anl.aps.logr.portal.controllers.extensions.ItemCreateWizardController;
 import gov.anl.aps.logr.portal.controllers.extensions.ItemCreateWizardDomainLogbookController;
 import gov.anl.aps.logr.portal.controllers.settings.ItemDomainLogbookSettings;
+import gov.anl.aps.logr.portal.controllers.settings.SearchSettings;
 import gov.anl.aps.logr.portal.controllers.utilities.EntityInfoControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.EntityTypeControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
@@ -23,6 +24,7 @@ import gov.anl.aps.logr.portal.model.db.entities.EntityType;
 import gov.anl.aps.logr.portal.model.db.entities.Item;
 import gov.anl.aps.logr.portal.model.db.entities.ItemDomainLogbook;
 import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
+import gov.anl.aps.logr.portal.model.db.entities.ItemType;
 import gov.anl.aps.logr.portal.model.db.entities.Log;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
@@ -36,6 +38,7 @@ import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import gov.anl.aps.logr.portal.view.objects.ItemDomainLogbookHomeObject;
 import java.io.IOException;
 import java.time.DayOfWeek;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
@@ -44,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import javax.ejb.EJB;
@@ -89,6 +93,13 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private EntityType logbookHomeType1 = null;
     private EntityType logbookHomeType2 = null;
     private EntityType logbookHomeType3 = null;
+    // </editor-fold>
+    
+    // <editor-fold defaultstate="collapsed" desc="Advanced Search">
+    private EntityType searchLogbookType = null;
+    private ItemType searchSystem = null; 
+    private Date searchStartDate = null; 
+    private Date searchEndDate = null; 
     // </editor-fold>
 
     private EntityInfoControllerUtility entityInfoControllerUtility;
@@ -929,10 +940,44 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @Override
     public void performEntitySearch(String searchString, boolean caseInsensitive) {
-        super.performEntitySearch(searchString, caseInsensitive);
+        SearchController searchCtrl = SearchController.getInstance();
+        SearchSettings searchSettings = searchCtrl.getSearchSettings();
+        Boolean advancedSearch = searchSettings.getAdvancedSearch();
+        
+        Integer itemTypeId = null;
+        Integer entityTypeId = null;
+        Date startTime = null;
+        Date endTime = null;                
+                
+        if (advancedSearch) {
+            if (searchSystem != null) {
+                itemTypeId = searchSystem.getId(); 
+            }
+            if (searchLogbookType != null) {
+                entityTypeId = searchLogbookType.getId(); 
+            }
+            startTime = searchStartDate; 
+            endTime = searchEndDate; 
+            if (endTime != null) {
+                // Add offset to the end of the selected date. 
+                Calendar endDateCal = Calendar.getInstance();
+                endDateCal.setTime(endTime);
+                endDateCal.set(Calendar.HOUR, 23); 
+                endDateCal.set(Calendar.MINUTE, 59);
+                endDateCal.set(Calendar.SECOND, 59);
+                endTime = endDateCal.getTime(); 
+            }
+        }
+        
+        resetSearchVariables();
+        
+        ItemDomainLogbookControllerUtility utility = getControllerUtility();
+        Map searchArgs = utility.createAdvancedSearchMap(entityTypeId, itemTypeId, startTime, endTime); 
+        
+        super.performEntitySearch(searchString, searchArgs, caseInsensitive);
 
         // Search log entries. 
-        List<Object[]> results = itemDomainLogbookFacade.searchEntityLogs(searchString);
+        List<Object[]> results = itemDomainLogbookFacade.searchEntityLogs(searchString, itemTypeId, entityTypeId, startTime, endTime);                
 
         ItemDomainLogbookControllerUtility controllerUtility1 = getControllerUtility();
         String patternString = controllerUtility1.generatePatternString(searchString);
@@ -945,7 +990,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             Log log = (Log) result[1];
             Long logId = (Long) result[2];
 
-            SearchResult searchResult = new SearchResult(logbook, logbook.getId(), logbook.getName());
+            SearchResult searchResult = new SearchResult(logbook, logbook.getId(), logbook.getName(), log);
             searchResult.setAdditionalAttribute("" + logId);
 
             String text = log.getText();
@@ -1304,6 +1349,40 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
         return false;
     }
+    
+    // <editor-fold defaultstate="collapsed" desc="Advanced Search">
+    public EntityType getSearchLogbookType() {
+        return searchLogbookType;
+    }
+
+    public void setSearchLogbookType(EntityType searchLogbookType) {
+        this.searchLogbookType = searchLogbookType;
+    }
+
+    public ItemType getSearchSystem() {
+        return searchSystem;
+    }
+
+    public void setSearchSystem(ItemType searchSystem) {
+        this.searchSystem = searchSystem;
+    }
+
+    public Date getSearchStartDate() {
+        return searchStartDate;
+    }
+
+    public void setSearchStartDate(Date searchStartDate) {
+        this.searchStartDate = searchStartDate;
+    }
+
+    public Date getSearchEndDate() {
+        return searchEndDate;
+    }
+
+    public void setSearchEndDate(Date searchEndDate) {
+        this.searchEndDate = searchEndDate;
+    }    
+    // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Operations functionality.">
     public void prepareCreateOperationsItem(String onSuccess) {
