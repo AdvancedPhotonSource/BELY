@@ -16,6 +16,7 @@ import gov.anl.aps.logr.portal.utilities.SearchResult;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
@@ -369,6 +370,10 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
         return getEntityDbFacade().findAll();
     }
     
+    public List<EntityType> searchEntities(String searchString, Map searchOpts) {
+        return searchEntities(searchString); 
+    }
+    
     public List<EntityType> searchEntities(String searchString) {
         return getEntityDbFacade().searchEntities(searchString); 
     }
@@ -395,6 +400,10 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
         return searchPattern; 
     }
     
+    public LinkedList<SearchResult> performEntitySearch(String searchString, boolean caseInsensitive) {
+        return performEntitySearch(searchString, null, caseInsensitive); 
+    }
+    
     /**
      * Search all entities for a given string.
      *
@@ -402,7 +411,7 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
      * @param caseInsensitive use case insensitive search
      * @return 
      */
-    public LinkedList<SearchResult> performEntitySearch(String searchString, boolean caseInsensitive) {
+    public LinkedList<SearchResult> performEntitySearch(String searchString, Map searchOpts, boolean caseInsensitive) {
         LinkedList<SearchResult> searchResultList = new LinkedList<>(); 
         if (searchString == null || searchString.isEmpty()) {            
             return searchResultList;
@@ -412,9 +421,9 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
         String patternString = generatePatternString(searchString);
         Pattern searchPattern = getSearchPattern(patternString, caseInsensitive); 
         
-        
-        List<EntityType> allObjectList = searchEntities(searchString);
-        for (EntityType entity : allObjectList) {            
+       
+        List<EntityType> allObjectList = searchEntities(searchString, searchOpts);
+        for (EntityType entity : allObjectList) {
             try {
                 SearchResult searchResult = entity.createSearchResultInfo(searchPattern);
                 if (!searchResult.isEmpty()) {                    
