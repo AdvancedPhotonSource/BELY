@@ -42,27 +42,25 @@ See LICENSE file.
                         <p:tooltip for="advancedToggle" value="Toggle advanced search mode."/> 
 
                         <h:outputLabel for="logbookSelection" rendered="#{advancedMode}" value="Logbook" styleClass="entityDataLabel"/>
-                        <p:selectOneMenu id="logbookSelection" value="#{itemDomainLogbookController.searchLogbookType}"     
-                                         rendered="#{advancedMode}"
-                                         var="type"> 
-                            <f:selectItem noSelectionOption="true"
-                                          itemLabel="All" /> 
-                            <ui:include src="../itemDomainLogbook/private/itemDomainLogboookSelectOneTypeMenuItems.xhtml" /> 
-                        </p:selectOneMenu>                        
+                        <p:selectCheckboxMenu id="logbookSelection" 
+                                              value="#{itemDomainLogbookController.searchLogbookTypeList}"                                                
+                                              label="All" 
+                                              multiple="true" 
+                                              converter="entityTypeConverter"
+                                              rendered="#{advancedMode}">                             
+                            <f:selectItems value="#{itemDomainLogbookController.searchLogbookTypeSelectItemList}" />                             
+                        </p:selectCheckboxMenu>                        
                         <p:tooltip for="logbookSelection" rendered="#{advancedMode}" value="Logbook of log document"/> 
 
                         <h:outputLabel for="systemSelection" rendered="#{advancedMode}" value="System" styleClass="entityDataLabel"/>
-                        <p:selectOneMenu id="systemSelection"
-                                         value="#{itemDomainLogbookController.searchSystem}" 
-                                         converter="itemTypeConverter"
-                                         rendered="#{advancedMode}"> 
-
-                            <f:selectItem noSelectionOption="true"
-                                          itemValue="#{null}"
-                                          itemLabel="All" />                  
-
+                        <p:selectCheckboxMenu id="systemSelection"
+                                          value="#{itemDomainLogbookController.searchSystemList}" 
+                                          multiple="true"                                          
+                                          label="All"
+                                          converter="itemTypeConverter"
+                                          rendered="#{advancedMode}">       
                             <f:selectItems value="#{itemDomainLogbookController.domainItemTypeList}"/> 
-                        </p:selectOneMenu>
+                        </p:selectCheckboxMenu>
                         <p:tooltip for="systemSelection" rendered="#{advancedMode}" value="System assignment to log document"/> 
 
                         <h:outputLabel for="startTime" rendered="#{advancedMode}" value="Start Date" styleClass="entityDataLabel"/>
