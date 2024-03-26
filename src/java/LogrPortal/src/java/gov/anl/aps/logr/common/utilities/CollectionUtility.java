@@ -4,6 +4,7 @@
  */
 package gov.anl.aps.logr.common.utilities;
 
+import gov.anl.aps.logr.portal.model.db.entities.CdbEntity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
@@ -33,6 +34,27 @@ public class CollectionUtility {
             items[i++] = new SelectItem(x, x.toString());
         }
         return items;
+    }
+    
+    /**
+     * Generate a string representation of ids in the cdb entity list. 
+     * 
+     * @param entityList
+     * @return 
+     */
+    public static String generateIdListString(List<? extends CdbEntity> entityList) {
+        String idList = ""; 
+        
+        if (entityList != null && !entityList.isEmpty()) {
+            for (CdbEntity entity : entityList) {
+                int id = (int) entity.getId();
+                
+                idList += id + ","; 
+            }
+            idList = idList.substring(0, idList.length() - 1); 
+        }
+        
+        return idList; 
     }
 
     /**
