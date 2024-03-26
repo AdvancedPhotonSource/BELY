@@ -5,6 +5,7 @@
 package gov.anl.aps.logr.portal.controllers;
 
 import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.utilities.CollectionUtility;
 import gov.anl.aps.logr.portal.constants.EntityTypeName;
 import gov.anl.aps.logr.portal.controllers.extensions.ItemCreateWizardController;
 import gov.anl.aps.logr.portal.controllers.extensions.ItemCreateWizardDomainLogbookController;
@@ -38,7 +39,6 @@ import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import gov.anl.aps.logr.portal.view.objects.ItemDomainLogbookHomeObject;
 import java.io.IOException;
 import java.time.DayOfWeek;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
@@ -58,6 +58,8 @@ import javax.faces.convert.Converter;
 import javax.faces.convert.FacesConverter;
 import javax.faces.model.DataModel;
 import javax.faces.model.ListDataModel;
+import javax.faces.model.SelectItem;
+import javax.faces.model.SelectItemGroup;
 import javax.inject.Named;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -96,8 +98,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     // </editor-fold>
     
     // <editor-fold defaultstate="collapsed" desc="Advanced Search">
-    private EntityType searchLogbookType = null;
-    private ItemType searchSystem = null; 
+    private List<SelectItem> searchLogbookTypeSelectItemList = null; 
+    private List<EntityType> searchLogbookTypeList = null;
+    private List<ItemType> searchSystemList = null; 
     private Date searchStartDate = null; 
     private Date searchEndDate = null; 
     // </editor-fold>
@@ -944,18 +947,15 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         SearchSettings searchSettings = searchCtrl.getSearchSettings();
         Boolean advancedSearch = searchSettings.getAdvancedSearch();
         
-        Integer itemTypeId = null;
-        Integer entityTypeId = null;
+        String entityTypeIdList = null;
+        String itemTypeIdList = null; 
         Date startTime = null;
         Date endTime = null;                
                 
-        if (advancedSearch) {
-            if (searchSystem != null) {
-                itemTypeId = searchSystem.getId(); 
-            }
-            if (searchLogbookType != null) {
-                entityTypeId = searchLogbookType.getId(); 
-            }
+        if (advancedSearch) {            
+            entityTypeIdList = CollectionUtility.generateIdListString(searchLogbookTypeList); 
+            itemTypeIdList = CollectionUtility.generateIdListString(searchSystemList); 
+            
             startTime = searchStartDate; 
             endTime = searchEndDate; 
             if (endTime != null) {
@@ -972,12 +972,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         resetSearchVariables();
         
         ItemDomainLogbookControllerUtility utility = getControllerUtility();
-        Map searchArgs = utility.createAdvancedSearchMap(entityTypeId, itemTypeId, startTime, endTime); 
+        Map searchArgs = utility.createAdvancedSearchMap(entityTypeIdList, itemTypeIdList, startTime, endTime); 
         
         super.performEntitySearch(searchString, searchArgs, caseInsensitive);
 
         // Search log entries. 
-        List<Object[]> results = itemDomainLogbookFacade.searchEntityLogs(searchString, itemTypeId, entityTypeId, startTime, endTime);                
+        List<Object[]> results = itemDomainLogbookFacade.searchEntityLogs(searchString, itemTypeIdList, entityTypeIdList, startTime, endTime);                
 
         ItemDomainLogbookControllerUtility controllerUtility1 = getControllerUtility();
         String patternString = controllerUtility1.generatePatternString(searchString);
@@ -1350,22 +1350,54 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         return false;
     }
     
-    // <editor-fold defaultstate="collapsed" desc="Advanced Search">
-    public EntityType getSearchLogbookType() {
-        return searchLogbookType;
+    // <editor-fold defaultstate="collapsed" desc="Advanced Search">    
+
+    public List<SelectItem> getSearchLogbookTypeSelectItemList() {
+        if (searchLogbookTypeSelectItemList == null) {
+            searchLogbookTypeSelectItemList = new ArrayList<>(); 
+            List<EntityType> topLevelEntityTypeList = getTopLevelEntityTypeList();
+            
+            for (EntityType et : topLevelEntityTypeList) { 
+                if (et.getEntityTypeChildren().isEmpty()) {
+                    SelectItem si = createSelectItemFromEntityType(et);
+                    searchLogbookTypeSelectItemList.add(0, si); 
+                } else {
+                    String groupName = et.getAvailableLongDisplayName();
+                    SelectItemGroup group = new SelectItemGroup(groupName);
+                    SelectItem[] groupList = new SelectItem[et.getEntityTypeChildren().size()];  
+                    group.setSelectItems(groupList);
+                    
+                    for (int i = 0; i < groupList.length; i++) {
+                        EntityType childEt = et.getEntityTypeChildren().get(i); 
+                        SelectItem selectItemEt = createSelectItemFromEntityType(childEt);
+                        groupList[i] = selectItemEt; 
+                    }
+                    searchLogbookTypeSelectItemList.add(group); 
+                }                
+            }                
+        }
+        return searchLogbookTypeSelectItemList;
+    }
+    
+    private SelectItem createSelectItemFromEntityType(EntityType entityType) {
+        return new SelectItem(entityType, entityType.getAvailableLongDisplayName()); 
+    }    
+
+    public List<EntityType> getSearchLogbookTypeList() {
+        return searchLogbookTypeList;
     }
 
-    public void setSearchLogbookType(EntityType searchLogbookType) {
-        this.searchLogbookType = searchLogbookType;
+    public void setSearchLogbookTypeList(List<EntityType> searchLogbookTypeList) {
+        this.searchLogbookTypeList = searchLogbookTypeList;
     }
 
-    public ItemType getSearchSystem() {
-        return searchSystem;
+    public List<ItemType> getSearchSystemList() {
+        return searchSystemList;
     }
 
-    public void setSearchSystem(ItemType searchSystem) {
-        this.searchSystem = searchSystem;
-    }
+    public void setSearchSystemList(List<ItemType> searchSystemList) {
+        this.searchSystemList = searchSystemList;
+    }        
 
     public Date getSearchStartDate() {
         return searchStartDate;

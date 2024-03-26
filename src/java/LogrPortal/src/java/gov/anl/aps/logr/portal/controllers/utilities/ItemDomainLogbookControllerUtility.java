@@ -22,8 +22,8 @@ import java.util.Map;
  */
 public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<ItemDomainLogbook, ItemDomainLogbookFacade> {
     
-    public final String SEARCH_OPT_KEY_ENTITY_TYPE_ID = "entity_type_id";
-    public final String SEARCH_OPT_KEY_ITEM_TYPE_ID = "item_type_id";
+    public final String SEARCH_OPT_KEY_ENTITY_TYPE_ID_LIST = "entity_type_id_list";
+    public final String SEARCH_OPT_KEY_ITEM_TYPE_ID_LIST = "item_type_id_list";
     public final String SEARCH_OPT_KEY_START_TIME = "start_time";
     public final String SEARCH_OPT_KEY_END_TIME = "ent_time";                
 
@@ -89,14 +89,14 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
         return log; 
     }
     
-    public Map createAdvancedSearchMap(Integer entityTypeId, Integer itemTypeId, Date startTime, Date endTime) {
+    public Map createAdvancedSearchMap(String entityTypeIdList, String itemTypeIdList, Date startTime, Date endTime) {
         /**
          * Generates the searchOpts for the searchEntities functionality. Can also be used with CdbEntityController.performEntitySearch(); 
          */
         Map searchOpts = new HashMap<>(); 
         
-        searchOpts.put(SEARCH_OPT_KEY_ENTITY_TYPE_ID, entityTypeId); 
-        searchOpts.put(SEARCH_OPT_KEY_ITEM_TYPE_ID, itemTypeId);
+        searchOpts.put(SEARCH_OPT_KEY_ENTITY_TYPE_ID_LIST, entityTypeIdList); 
+        searchOpts.put(SEARCH_OPT_KEY_ITEM_TYPE_ID_LIST, itemTypeIdList);
         searchOpts.put(SEARCH_OPT_KEY_START_TIME, startTime); 
         searchOpts.put(SEARCH_OPT_KEY_END_TIME, endTime); 
         
@@ -116,12 +116,12 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
             return searchEntities(searchString); 
         }
         
-        Integer entity_type_id = (Integer) searchOpts.get(SEARCH_OPT_KEY_ENTITY_TYPE_ID);        
-        Integer item_type_id = (Integer) searchOpts.get(SEARCH_OPT_KEY_ITEM_TYPE_ID);
+        String entity_type_id_list = (String) searchOpts.get(SEARCH_OPT_KEY_ENTITY_TYPE_ID_LIST);        
+        String item_type_id_list = (String) searchOpts.get(SEARCH_OPT_KEY_ITEM_TYPE_ID_LIST);
         Date start_time = (Date) searchOpts.get(SEARCH_OPT_KEY_START_TIME); 
         Date end_time = (Date) searchOpts.get(SEARCH_OPT_KEY_END_TIME); 
         
-        return getEntityDbFacade().searchEntitiesNoParent(searchString, item_type_id, entity_type_id, start_time, end_time);
+        return getEntityDbFacade().searchEntitiesNoParent(searchString, item_type_id_list, entity_type_id_list, start_time, end_time);
     }
 
     @Override
