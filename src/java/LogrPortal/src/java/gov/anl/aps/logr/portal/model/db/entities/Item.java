@@ -268,14 +268,14 @@ import org.primefaces.model.TreeNode;
                         type = Integer.class
                 ),
                 @StoredProcedureParameter(
-                        name = "entity_type_id",
+                        name = "entity_type_id_list",
                         mode = ParameterMode.IN,
-                        type = Integer.class
+                        type = String.class
                 ),
                 @StoredProcedureParameter(
-                        name = "item_type_id",
+                        name = "item_type_id_list",
                         mode = ParameterMode.IN,
-                        type = Integer.class
+                        type = String.class
                 ),                
                 @StoredProcedureParameter(
                         name = "start_time",
@@ -310,14 +310,14 @@ import org.primefaces.model.TreeNode;
                         type = Integer.class
                 ),                                
                 @StoredProcedureParameter(
-                        name = "entity_type_id",
+                        name = "entity_type_id_list",
                         mode = ParameterMode.IN,
-                        type = Integer.class
+                        type = String.class
                 ),
                 @StoredProcedureParameter(
-                        name = "item_type_id",
+                        name = "item_type_id_list",
                         mode = ParameterMode.IN,
-                        type = Integer.class
+                        type = String.class
                 ),                
                 @StoredProcedureParameter(
                         name = "start_time",
