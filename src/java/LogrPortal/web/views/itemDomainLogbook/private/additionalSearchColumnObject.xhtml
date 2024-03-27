@@ -18,6 +18,12 @@ See LICENSE file.
               filterBy="#{item.longEntityTypeString}" filterMatchMode="contains">        
         #{item.longEntityTypeString}
     </p:column>            
+    
+    <p:column headerText="System" 
+              sortBy="#{item.itemTypeString}"
+              filterBy="#{item.itemTypeString}" filterMatchMode="contains">        
+        #{item.itemTypeString}
+    </p:column>            
 
     <p:column headerText="Modified On"
               rendered="#{renderModifiedDate}"
