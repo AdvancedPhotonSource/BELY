@@ -36,7 +36,7 @@ CREATE PROCEDURE `search_items_no_parent` (IN limit_row int, IN domain_id int, I
 BEGIN
 	SET search_string = CONCAT('"%', search_string, '%"'); 
 
-	SET @select_stmt = "SELECT item.* from item ";
+	SET @select_stmt = "SELECT DISTINCT item.* from item ";
 	SET @from_stmt = "
 	INNER JOIN v_item_self_element ise ON item.id = ise.item_id 
 	INNER JOIN item_element ie ON ise.self_element_id = ie.id
@@ -93,7 +93,7 @@ BEGIN
 	");
 
 	SET @sql_stmt = CONCAT(@select_stmt, @from_stmt, @where_stmt, "
-		ORDER BY item.id DESC 
+		ORDER BY ei.last_modified_on_date_time DESC 
 		LIMIT ", limit_row);
 
 	prepare stmt from @sql_stmt; 
@@ -107,7 +107,7 @@ CREATE PROCEDURE `search_item_logs` (IN limit_row int, IN domain_id int, IN enti
 BEGIN
 	SET search_string = CONCAT('%', search_string, '%'); 
 
-	SET @select_stmt = "SELECT parent_item.*, log.*, log.id as log_id ";
+	SET @select_stmt = "SELECT DISTINCT parent_item.*, log.*, log.id as log_id ";
 	SET @from_stmt = "FROM item 
 	INNER JOIN v_item_self_element ise ON item.id = ise.item_id 
 	INNER JOIN item_element ie ON ise.self_element_id = ie.id
@@ -155,7 +155,7 @@ BEGIN
 	SET @from_stmt = CONCAT(@from_stmt, @from_tbls, " "); 
 		
 	SET @sql_stmt = CONCAT(@select_stmt, @from_stmt, @where_stmt, "
-		ORDER BY parent_item.id DESC 
+		ORDER BY log.last_modified_on_date_time DESC 
 		LIMIT ", limit_row);
 
 	prepare stmt from @sql_stmt; 
