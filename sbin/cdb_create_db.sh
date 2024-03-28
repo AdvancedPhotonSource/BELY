@@ -209,6 +209,7 @@ LOGR_DB_TABLES="\
     user_user_group \
     user_group_setting \
     user_setting \
+    user_session \
     entity_info \
     role_type \
     user_role \
