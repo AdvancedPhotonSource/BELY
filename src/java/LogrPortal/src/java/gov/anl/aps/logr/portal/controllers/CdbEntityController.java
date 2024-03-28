@@ -86,9 +86,9 @@ public abstract class CdbEntityController<ControllerUtility extends CdbEntityCon
     protected String breadcrumbViewParam = null;
     protected String breadcrumbObjectIdViewParam = null;
 
-    private String searchString = null;
-    private boolean caseInsensitive = true;
-    private LinkedList<SearchResult> searchResultList;
+    protected String searchString = null;
+    protected boolean caseInsensitive = true;
+    protected LinkedList<SearchResult> searchResultList;
 
     protected String contextRootPermanentUrl;
 
@@ -1599,7 +1599,7 @@ public abstract class CdbEntityController<ControllerUtility extends CdbEntityCon
         String itemDelimiter = ", ";
         return CollectionUtility.displayItemListWithoutOutsideDelimiters(entityList, itemDelimiter);
     }
-
+    
     /**
      * Search all entities for a given string.
      *
@@ -1607,6 +1607,16 @@ public abstract class CdbEntityController<ControllerUtility extends CdbEntityCon
      * @param caseInsensitive use case insensitive search
      */
     public void performEntitySearch(String searchString, boolean caseInsensitive) {        
+        performEntitySearch(searchString, null, caseInsensitive); 
+    }
+
+    /**
+     * Search all entities for a given string.
+     *
+     * @param searchString search string
+     * @param caseInsensitive use case insensitive search
+     */
+    public void performEntitySearch(String searchString, Map searchOpts, boolean caseInsensitive) {        
         if (searchString.equals(this.searchString) && caseInsensitive == this.caseInsensitive) {
             // Return old results
             return;
@@ -1615,11 +1625,12 @@ public abstract class CdbEntityController<ControllerUtility extends CdbEntityCon
         this.caseInsensitive = caseInsensitive;
         resetSearchVariables();
         
-        searchResultList = getControllerUtility().performEntitySearch(searchString, caseInsensitive); 
+        searchResultList = getControllerUtility().performEntitySearch(searchString, searchOpts, caseInsensitive); 
     }
 
     public void resetSearchVariables() {
         searchResultList = new LinkedList<>();
+        searchString = ""; 
     }
 
     public LinkedList<SearchResult> getSearchResultList() {

@@ -44,7 +44,19 @@ See LICENSE file.
                 </h:outputLink>
             </p:column>
 
-            <ui:include src="../../itemDomainLogbook/private/additionalSearchColumnObject.xhtml" /> 
+            <ui:include src="../../itemDomainLogbook/private/additionalSearchColumnObject.xhtml" > 
+                <ui:param name="renderModifiedDate"
+                          value="#{false}"/>                 
+            </ui:include>
+
+            <ui:param name="logEntry"
+                      value="#{searchResultObject.additionalEntity}" /> 
+            <p:column headerText="Modified On"                    
+                      sortBy="#{logEntry.lastModifiedOnDateTime}" 
+                      filterBy="#{logEntry.lastModifiedOnDateTime}" filterMatchMode="contains">
+                <h:outputText value="#{logEntry.lastModifiedOnDateTime}"/>
+            </p:column>
+
 
             <p:column sortBy="#{searchResultObject.display}" headerText="Log Line Match Description">
                 <ui:repeat value="#{searchResultObject.shortDisplayList}"

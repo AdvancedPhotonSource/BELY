@@ -5,10 +5,12 @@
 package gov.anl.aps.logr.portal.controllers;
 
 import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.utilities.CollectionUtility;
 import gov.anl.aps.logr.portal.constants.EntityTypeName;
 import gov.anl.aps.logr.portal.controllers.extensions.ItemCreateWizardController;
 import gov.anl.aps.logr.portal.controllers.extensions.ItemCreateWizardDomainLogbookController;
 import gov.anl.aps.logr.portal.controllers.settings.ItemDomainLogbookSettings;
+import gov.anl.aps.logr.portal.controllers.settings.SearchSettings;
 import gov.anl.aps.logr.portal.controllers.utilities.EntityInfoControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.EntityTypeControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
@@ -23,6 +25,7 @@ import gov.anl.aps.logr.portal.model.db.entities.EntityType;
 import gov.anl.aps.logr.portal.model.db.entities.Item;
 import gov.anl.aps.logr.portal.model.db.entities.ItemDomainLogbook;
 import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
+import gov.anl.aps.logr.portal.model.db.entities.ItemType;
 import gov.anl.aps.logr.portal.model.db.entities.Log;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
@@ -39,10 +42,12 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import javax.ejb.EJB;
@@ -53,6 +58,8 @@ import javax.faces.convert.Converter;
 import javax.faces.convert.FacesConverter;
 import javax.faces.model.DataModel;
 import javax.faces.model.ListDataModel;
+import javax.faces.model.SelectItem;
+import javax.faces.model.SelectItemGroup;
 import javax.inject.Named;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -88,6 +95,14 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private EntityType logbookHomeType1 = null;
     private EntityType logbookHomeType2 = null;
     private EntityType logbookHomeType3 = null;
+    // </editor-fold>
+    
+    // <editor-fold defaultstate="collapsed" desc="Advanced Search">
+    private List<SelectItem> searchLogbookTypeSelectItemList = null; 
+    private List<EntityType> searchLogbookTypeList = null;
+    private List<ItemType> searchSystemList = null; 
+    private Date searchStartDate = null; 
+    private Date searchEndDate = null; 
     // </editor-fold>
 
     private EntityInfoControllerUtility entityInfoControllerUtility;
@@ -414,7 +429,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     private boolean isSaveLogLockoutsForCurrent() {
         return isSaveLogLockoutsForCurrent(null);
-    }
+    }   
 
     private boolean isSaveLogLockoutsForCurrent(Log log) {
         // Use current for the lockout timeout especially for documents with sections. 
@@ -422,21 +437,26 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         EntityInfo entityInfo = current.getEntityInfo();
         boolean isEntityWriteableByTimeout = entityInfo.refreshWriteableByTimeout();
 
-        if (isEntityWriteableByTimeout == false) {
-            displayMessageAndRefreshCurrent("Cannot change log entries", "Log document is locked by lockout time.");
-            setNewLogEdit(null);
-            return false;
-        }
+        UserInfo user = SessionUtility.getUser();
+        boolean skipLockouts = (user.isUserAdmin() || user.isUserMaintainer());
 
-        if (log != null) {
-            Double logLockoutHours = current.getLogLockoutHours();
-            Date lastModifiedOnDateTime = log.getLastModifiedOnDateTime();
-
-            boolean isWriteable = AuthorizationUtility.isEntityWriteableByTimeout(logLockoutHours, lastModifiedOnDateTime);
-            if (!isWriteable) {
-                displayMessageAndRefreshCurrent("Cannot change log entry", "Log entry is locked by lockout time.");
+        if (!skipLockouts) {
+            if (isEntityWriteableByTimeout == false) {
+                displayMessageAndRefreshCurrent("Cannot change log entries", "Log document is locked by lockout time.");
                 setNewLogEdit(null);
-                return isWriteable;
+                return false;
+            }
+
+            if (log != null) {
+                Double logLockoutHours = current.getLogLockoutHours();
+                Date lastModifiedOnDateTime = log.getLastModifiedOnDateTime();
+
+                boolean isWriteable = AuthorizationUtility.isEntityWriteableByTimeout(logLockoutHours, lastModifiedOnDateTime);
+                if (!isWriteable) {
+                    displayMessageAndRefreshCurrent("Cannot change log entry", "Log entry is locked by lockout time.");
+                    setNewLogEdit(null);
+                    return isWriteable;
+                }
             }
         }
 
@@ -923,10 +943,41 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @Override
     public void performEntitySearch(String searchString, boolean caseInsensitive) {
-        super.performEntitySearch(searchString, caseInsensitive);
+        SearchController searchCtrl = SearchController.getInstance();
+        SearchSettings searchSettings = searchCtrl.getSearchSettings();
+        Boolean advancedSearch = searchSettings.getAdvancedSearch();
+        
+        String entityTypeIdList = null;
+        String itemTypeIdList = null; 
+        Date startTime = null;
+        Date endTime = null;                
+                
+        if (advancedSearch) {            
+            entityTypeIdList = CollectionUtility.generateIdListString(searchLogbookTypeList); 
+            itemTypeIdList = CollectionUtility.generateIdListString(searchSystemList); 
+            
+            startTime = searchStartDate; 
+            endTime = searchEndDate; 
+            if (endTime != null) {
+                // Add offset to the end of the selected date. 
+                Calendar endDateCal = Calendar.getInstance();
+                endDateCal.setTime(endTime);
+                endDateCal.set(Calendar.HOUR, 23); 
+                endDateCal.set(Calendar.MINUTE, 59);
+                endDateCal.set(Calendar.SECOND, 59);
+                endTime = endDateCal.getTime(); 
+            }
+        }
+        
+        resetSearchVariables();
+        
+        ItemDomainLogbookControllerUtility utility = getControllerUtility();
+        Map searchArgs = utility.createAdvancedSearchMap(entityTypeIdList, itemTypeIdList, startTime, endTime); 
+        
+        super.performEntitySearch(searchString, searchArgs, caseInsensitive);
 
         // Search log entries. 
-        List<Object[]> results = itemDomainLogbookFacade.searchEntityLogs(searchString);
+        List<Object[]> results = itemDomainLogbookFacade.searchEntityLogs(searchString, itemTypeIdList, entityTypeIdList, startTime, endTime);                
 
         ItemDomainLogbookControllerUtility controllerUtility1 = getControllerUtility();
         String patternString = controllerUtility1.generatePatternString(searchString);
@@ -939,7 +990,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             Log log = (Log) result[1];
             Long logId = (Long) result[2];
 
-            SearchResult searchResult = new SearchResult(logbook, logbook.getId(), logbook.getName());
+            SearchResult searchResult = new SearchResult(logbook, logbook.getId(), logbook.getName(), log);
             searchResult.setAdditionalAttribute("" + logId);
 
             String text = log.getText();
@@ -1079,16 +1130,16 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
         return logbookEntityTypes;
     }
-    
+
     // <editor-fold defaultstate="collapsed" desc="Home Page">
     public void processPreRenderLogbookHome() {
-        settingObject.updateSettings(); 
-        
+        settingObject.updateSettings();
+
         // Fetch latest logbook home data. 
         logbookHome = null;
         logbookHomeType1 = null;
         logbookHomeType2 = null;
-        logbookHomeType3 = null;                 
+        logbookHomeType3 = null;
 
         // Load up the entity type settings.         
         Integer type1Id = settingObject.getDisplayHomeLogbookTypeId1();
@@ -1106,6 +1157,17 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             logbookHomeType3 = entityTypeFacade.find(type3Id);
         }
     }
+    
+    public List<ItemDomainLogbook> getLogbookHomeListByType(ItemDomainLogbookHomeObject homeObject, Integer limit) {
+        List<ItemDomainLogbook> logbookList = homeObject.getLogbookList();
+        if (logbookList == null) {
+            EntityType et = homeObject.getLogbookType();
+            logbookList = itemDomainLogbookFacade.findByDomainNameAndEntityTypeOrderByLastModifiedDate(getDefaultDomainName(), et.getName(), limit);
+            homeObject.setLogbookList(logbookList);
+        }
+        
+       return logbookList; 
+    }
 
     public List<ItemDomainLogbookHomeObject> getLogbookHome(Integer limit) {
         if (logbookHome == null) {
@@ -1122,14 +1184,15 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             }
 
             for (EntityType et : etl) {
-                List<ItemDomainLogbook> items; 
-                if (!et.getEntityTypeChildren().isEmpty()) {
-                    items = itemDomainLogbookFacade.findByDomainAndParentEntityType(getDefaultDomainName(), et.getName(), limit); 
+                List<ItemDomainLogbook> items = null;
+                ItemDomainLogbookHomeObject homeObject; 
+                if (et.getEntityTypeChildren().isEmpty()) {                    
+                    items = itemDomainLogbookFacade.findByDomainNameAndEntityTypeOrderByLastModifiedDate(getDefaultDomainName(), et.getName(), limit);
+                    homeObject = new ItemDomainLogbookHomeObject(et, items);
                 } else {
-                    items = itemDomainLogbookFacade.findByDomainAndEntityType(getDefaultDomainName(), et.getName(), limit);
-                }                
-
-                ItemDomainLogbookHomeObject homeObject = new ItemDomainLogbookHomeObject(et, items);
+                    homeObject = new ItemDomainLogbookHomeObject(et);
+                }
+                
                 logbookHome.add(homeObject);
             }
         }
@@ -1189,21 +1252,21 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         if (logbookHomeType3 != null) {
             settingObject.setDisplayHomeLogbookTypeId3(logbookHomeType3.getId());
         }
-               
+
     }
-    
+
     private String homeRedirect() {
         return "home?faces-redirect=true";
     }
-    
+
     public String saveLogbookHome() {
-        setLogbookHomeSettings();         
+        setLogbookHomeSettings();
         settingObject.saveListSettingsForSessionSettingEntityActionListener(null);
-        
-        SettingController settingController = getSettingController();        
+
+        SettingController settingController = getSettingController();
         settingController.saveSettingListForSettingEntity();
-        
-        return homeRedirect(); 
+
+        return homeRedirect();
     }
 
     public String saveLogbookHomeForAll() {
@@ -1236,7 +1299,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             SessionUtility.addErrorMessage("ERROR", ex.getMessage());
         }
 
-        return homeRedirect(); 
+        return homeRedirect();
     }
 
     private void updateLogbookSettingDefaultValue(SettingTypeControllerUtility stcu, String settingKey, EntityType selectedSetting, List<SettingType> settingTypeList) {
@@ -1251,9 +1314,8 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         settingTypeList.add(setting);
     }
-    
-    // </editor-fold>
 
+    // </editor-fold>
     public final String getCurrentListPermalink() {
         if (currentEntityType != null) {
             String redirect = getListRedirectForEntityType(currentEntityType, true);
@@ -1287,6 +1349,72 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
         return false;
     }
+    
+    // <editor-fold defaultstate="collapsed" desc="Advanced Search">    
+
+    public List<SelectItem> getSearchLogbookTypeSelectItemList() {
+        if (searchLogbookTypeSelectItemList == null) {
+            searchLogbookTypeSelectItemList = new ArrayList<>(); 
+            List<EntityType> topLevelEntityTypeList = getTopLevelEntityTypeList();
+            
+            for (EntityType et : topLevelEntityTypeList) { 
+                if (et.getEntityTypeChildren().isEmpty()) {
+                    SelectItem si = createSelectItemFromEntityType(et);
+                    searchLogbookTypeSelectItemList.add(0, si); 
+                } else {
+                    String groupName = et.getAvailableLongDisplayName();
+                    SelectItemGroup group = new SelectItemGroup(groupName);
+                    SelectItem[] groupList = new SelectItem[et.getEntityTypeChildren().size()];  
+                    group.setSelectItems(groupList);
+                    
+                    for (int i = 0; i < groupList.length; i++) {
+                        EntityType childEt = et.getEntityTypeChildren().get(i); 
+                        SelectItem selectItemEt = createSelectItemFromEntityType(childEt);
+                        groupList[i] = selectItemEt; 
+                    }
+                    searchLogbookTypeSelectItemList.add(group); 
+                }                
+            }                
+        }
+        return searchLogbookTypeSelectItemList;
+    }
+    
+    private SelectItem createSelectItemFromEntityType(EntityType entityType) {
+        return new SelectItem(entityType, entityType.getAvailableLongDisplayName()); 
+    }    
+
+    public List<EntityType> getSearchLogbookTypeList() {
+        return searchLogbookTypeList;
+    }
+
+    public void setSearchLogbookTypeList(List<EntityType> searchLogbookTypeList) {
+        this.searchLogbookTypeList = searchLogbookTypeList;
+    }
+
+    public List<ItemType> getSearchSystemList() {
+        return searchSystemList;
+    }
+
+    public void setSearchSystemList(List<ItemType> searchSystemList) {
+        this.searchSystemList = searchSystemList;
+    }        
+
+    public Date getSearchStartDate() {
+        return searchStartDate;
+    }
+
+    public void setSearchStartDate(Date searchStartDate) {
+        this.searchStartDate = searchStartDate;
+    }
+
+    public Date getSearchEndDate() {
+        return searchEndDate;
+    }
+
+    public void setSearchEndDate(Date searchEndDate) {
+        this.searchEndDate = searchEndDate;
+    }    
+    // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Operations functionality.">
     public void prepareCreateOperationsItem(String onSuccess) {
@@ -1489,6 +1617,13 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         LocalDateTime opsShiftEndTime = current.getOpsShiftEndTime();
         String shiftStartValue = DateTimeFormatter.ISO_DATE_TIME.format(opsShiftStartTime);
         String shiftEndValue = DateTimeFormatter.ISO_DATE_TIME.format(opsShiftEndTime);
+
+        // Find shift length. 
+        long minutes = ChronoUnit.MINUTES.between(opsShiftStartTime, opsShiftEndTime);
+        double hours = minutes / 60.0;
+        // Additional time that is defined in template.
+        hours += getDocumentLockoutHours();
+        setDocumentLockoutHours(hours);
 
         try {
             // Add properties

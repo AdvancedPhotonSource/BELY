@@ -145,6 +145,8 @@ import org.primefaces.model.TreeNode;
             query = "SELECT DISTINCT(i) FROM Item i JOIN i.itemProjectList ipl WHERE i.domain.name = :domainName and ipl.name = :projectName ORDER BY i.derivedFromItem DESC"),
     @NamedQuery(name = "Item.findByDomainNameAndEntityType",
             query = "SELECT DISTINCT(i) FROM Item i JOIN i.entityTypeList etl WHERE i.domain.name = :domainName and etl.name = :entityTypeName ORDER BY i.id DESC"),    
+    @NamedQuery(name = "Item.findByDomainNameAndEntityTypeOrderByLastModifiedDate",
+            query = "SELECT DISTINCT(i) FROM Item i JOIN i.fullItemElementList fiel JOIN i.entityTypeList etl WHERE fiel.name is NULL and fiel.derivedFromItemElement is NULL AND i.domain.name = :domainName and etl.name = :entityTypeName ORDER BY fiel.entityInfo.lastModifiedOnDateTime DESC"),
     @NamedQuery(name = "Item.findByDomainNameAndParentEntityType",
             query = "SELECT DISTINCT(i) FROM Item i JOIN i.entityTypeList etl WHERE i.domain.name = :domainName and etl.parentEntityType.name = :entityTypeName ORDER BY i.id DESC"),    
     @NamedQuery(name = "Item.findByDomainNameAndEntityTypeAndTopLevel",
@@ -266,6 +268,26 @@ import org.primefaces.model.TreeNode;
                         type = Integer.class
                 ),
                 @StoredProcedureParameter(
+                        name = "entity_type_id_list",
+                        mode = ParameterMode.IN,
+                        type = String.class
+                ),
+                @StoredProcedureParameter(
+                        name = "item_type_id_list",
+                        mode = ParameterMode.IN,
+                        type = String.class
+                ),                
+                @StoredProcedureParameter(
+                        name = "start_time",
+                        mode = ParameterMode.IN,
+                        type = Date.class
+                ),                
+                @StoredProcedureParameter(
+                        name = "end_time",
+                        mode = ParameterMode.IN,
+                        type = Date.class
+                ),
+                @StoredProcedureParameter(
                         name = "search_string",
                         mode = ParameterMode.IN,
                         type = String.class
@@ -286,6 +308,26 @@ import org.primefaces.model.TreeNode;
                         name = "domain_id",
                         mode = ParameterMode.IN,
                         type = Integer.class
+                ),                                
+                @StoredProcedureParameter(
+                        name = "entity_type_id_list",
+                        mode = ParameterMode.IN,
+                        type = String.class
+                ),
+                @StoredProcedureParameter(
+                        name = "item_type_id_list",
+                        mode = ParameterMode.IN,
+                        type = String.class
+                ),                
+                @StoredProcedureParameter(
+                        name = "start_time",
+                        mode = ParameterMode.IN,
+                        type = Date.class
+                ),                
+                @StoredProcedureParameter(
+                        name = "end_time",
+                        mode = ParameterMode.IN,
+                        type = Date.class
                 ),
                 @StoredProcedureParameter(
                         name = "search_string",

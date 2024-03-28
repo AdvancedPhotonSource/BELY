@@ -56,6 +56,8 @@ public class SearchSettings<EntityController extends SearchController> extends S
     protected Boolean displaySources = null;
     protected Boolean displayUsers = null;
     protected Boolean displayUserGroups = null;
+    
+    protected Boolean advancedSearch = null; 
 
     public SearchSettings(EntityController parentController) {
         super(parentController);
@@ -299,6 +301,14 @@ public class SearchSettings<EntityController extends SearchController> extends S
     @Override
     public void clearSelectFilters() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public Boolean getAdvancedSearch() {
+        return advancedSearch;
+    }
+
+    public void setAdvancedSearch(Boolean advancedSearch) {
+        this.advancedSearch = advancedSearch;
     }
 
 }

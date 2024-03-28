@@ -1578,3 +1578,8 @@ body .ui-inplace .ui-inplace-display {
 .homePageDataScroller .ui-panelgrid-cell {
     vertical-align: top; 
 }
+
+/* Temporary fix to display multiple select empty label: https://github.com/primefaces/primefaces/issues/8153 */
+.ui-selectcheckboxmenu-multiple-container:empty:after{
+	content: attr(data-label)!important;
+}
