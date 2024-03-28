@@ -2145,6 +2145,10 @@ public abstract class ItemController<
         Domain defaultDomain = getDefaultDomain();
         return getDomainPath(defaultDomain) + "/list.xhtml?faces-redirect=true";
     }
+    
+    protected String preserveAdditionalParameters(String paramString) {
+        return paramString;
+    }
 
     protected ItemDomainEntity performItemRedirection(ItemDomainEntity item, String paramString, boolean forceRedirection) {
         String currentViewId = SessionUtility.getCurrentViewId();
@@ -2153,6 +2157,7 @@ public abstract class ItemController<
         String desiredViewId;
         if (itemDomain != null) {
             ItemController itemDomainController = item.getItemDomainController();
+            paramString = itemDomainController.preserveAdditionalParameters(paramString); 
             desiredViewId = itemDomainController.getViewPath();
         } else {
             desiredViewId = "/views/item/view.xhtml";

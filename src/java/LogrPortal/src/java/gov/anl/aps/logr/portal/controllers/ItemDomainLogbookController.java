@@ -679,6 +679,15 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     @Override
+    protected String preserveAdditionalParameters(String paramString) {
+        String logId = SessionUtility.getRequestParameterValue("logId");
+        if (logId != null) {
+            paramString += "&logId=" + logId; 
+        }
+        return paramString; 
+    }
+
+    @Override
     public void processViewRequestParams() {
         super.processViewRequestParams();
 
@@ -1348,6 +1357,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             }
         }
         return false;
+    }
+    
+    public String getLogPermalink(int logId) {
+        String currentEntityPermalink = getCurrentEntityPermalink();
+        return currentEntityPermalink + "&logId=" + logId; 
     }
     
     // <editor-fold defaultstate="collapsed" desc="Advanced Search">    

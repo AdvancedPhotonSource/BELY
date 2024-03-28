@@ -7,6 +7,7 @@ See LICENSE file.
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://java.sun.com/jsf/facelets"
                 xmlns:p="http://primefaces.org/ui"
+                xmlns:pe="http://primefaces.org/ui/extensions"
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:h="http://xmlns.jcp.org/jsf/html">
 
@@ -46,7 +47,7 @@ See LICENSE file.
                     </p:panel>
 
                     <p:outputPanel styleClass="logEntry">                        
-                        
+
                         <h:outputText escape="false" value="#{logObject.htmlText}"/>
                     </p:outputPanel>
                     <p:outputPanel rendered="#{logObject.attachmentList.size() > 0 and false}"
@@ -84,6 +85,16 @@ See LICENSE file.
                                        styleClass="logAction-right fa fa-link-icon fa-trash" title="Delete"
                                        onstart="PF('confirmDeleteLog#{logObject.viewUUID}Widget').show();">
                             <p:tooltip for="#{entityTypeName}LogDestroyButton" value="Delete #{entityTypeName} log entry."/>
+                        </p:commandLink>
+
+                        <p:commandLink id="#{entityTypeName}LogPermalink"
+                                       action="#{facesUtility.displayGrowlInfoMessage('Copied', 'Log permalink copied to clipboard.')}"                                        
+                                       styleClass="logAction-right fa fa-link-icon fa-clipboard" title="Copy permalink">                                    
+                            <p:tooltip for="#{entityTypeName}LogPermalink" value="Copy permalink to log entry."/>
+                            <pe:clipboard id="viewPermanentLinkCopy" 
+                                          trigger="@parent"                   
+                                          action="copy"
+                                          text="#{itemDomainLogbookController.getLogPermalink(logObject.id)}"/>
                         </p:commandLink>
 
                         <p:confirmDialog message="Would you like to remove the log?"
