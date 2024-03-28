@@ -10,7 +10,8 @@ See LICENSE file.
                 xmlns:f="http://xmlns.jcp.org/jsf/core"> 
 
     <p:selectOneMenu value="#{logbookTypeValue}"                     
-                     var="type"> 
+                     var="type"
+                     converter="entityTypeConverter"> 
         
         <f:selectItem noSelectionOption="true"
                       itemLabel="None" /> 
