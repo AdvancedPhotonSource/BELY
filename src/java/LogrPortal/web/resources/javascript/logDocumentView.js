@@ -6,6 +6,12 @@
 document.addEventListener('paste', pasteLogTextArea);
 
 function pasteLogTextArea(event) {
+    // Ignore non text area 
+    let srcElement = event.srcElement; 
+    if (srcElement.id !== 'logbookViewForm:logbookLogEntryValue') {
+        return; 
+    }
+     
     pastedFiles = event.clipboardData.files;
 
     if (pastedFiles.length > 0) {
