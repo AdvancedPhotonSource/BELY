@@ -174,8 +174,7 @@ public class EntityType extends CdbEntity implements Serializable {
     public void setPropertyTypeList(List<PropertyType> propertyTypeList) {
         this.propertyTypeList = propertyTypeList;
     }
-
-    @XmlTransient
+    
     public String getDisplayName() {
         return displayName;
     }
@@ -183,8 +182,7 @@ public class EntityType extends CdbEntity implements Serializable {
     public void setDisplayName(String displayName) { 
         this.displayName = displayName;
     }
-
-    @XmlTransient
+    
     public String getLongDisplayName() {
         return longDisplayName;
     }
@@ -231,7 +229,6 @@ public class EntityType extends CdbEntity implements Serializable {
         this.sortOrder = sortOrder;
     }
 
-    @XmlTransient
     public Boolean getIsInternal() {
         return isInternal;
     }
