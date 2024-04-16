@@ -8,10 +8,8 @@ import gov.anl.aps.logr.common.exceptions.AuthorizationError;
 import gov.anl.aps.logr.common.exceptions.CdbException;
 import gov.anl.aps.logr.common.exceptions.InvalidArgument;
 import gov.anl.aps.logr.common.exceptions.ObjectNotFound;
-import gov.anl.aps.logr.portal.controllers.PropertyValueController;
 import gov.anl.aps.logr.portal.controllers.utilities.CdbEntityControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemControllerUtility;
-import gov.anl.aps.logr.portal.controllers.utilities.PropertyValueControllerUtility;
 import gov.anl.aps.logr.portal.model.db.beans.ItemFacade;
 import gov.anl.aps.logr.portal.model.db.beans.PropertyTypeFacade;
 import gov.anl.aps.logr.portal.model.db.beans.PropertyValueFacade;
@@ -116,7 +114,7 @@ public class PropertyValueRoute extends BaseRoute {
     @DELETE
     @Path("/DeleteById/{propertyValueId}")
     @Operation(summary = "Delete a property value by its id.")
-    @SecurityRequirement(name = "cdbAuth")
+    @SecurityRequirement(name = "belyAuth")
     @Secured
     public void deletePropertyById(@PathParam("propertyValueId") int propertyValueId) throws ObjectNotFound, InvalidArgument, AuthorizationError, CdbException {
         LOGGER.debug("Deleting item with id: " + propertyValueId);
@@ -135,12 +133,13 @@ public class PropertyValueRoute extends BaseRoute {
         if (parentItem == null) {
             throw new InvalidArgument("Only properties associated with a one item are supported");
         }
-                   
-        if (!verifyUserPermissionForItem(updatedByUser, parentItem)) {
-            AuthorizationError ex = new AuthorizationError("User does not have permission to delete item");
+        
+        try {
+            verifyUserPermissionForItem(updatedByUser, parentItem);
+        } catch (AuthorizationError ex) {
             LOGGER.error(ex);
-            throw ex;
-        }
+            throw ex;            
+        }                   
         
         List<PropertyValue> propertyValueList = parentItem.getPropertyValueList();
         propertyValueList.remove(dbProperty);
@@ -153,7 +152,7 @@ public class PropertyValueRoute extends BaseRoute {
     @Path("/ById/{id}/AddUpdateMetadata")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @SecurityRequirement(name = "cdbAuth")
+    @SecurityRequirement(name = "belyAuth")
     @Secured
     public List<PropertyMetadata> addOrUpdatePropertyValueMetadataByMap(@PathParam("id") int propertyValueId, @RequestBody(required = true) Map<String, String> metadataMap) throws InvalidArgument, AuthorizationError, CdbException {
         List<Item> items = itemFacade.fetchItemsWithPropertyValue(propertyValueId);
