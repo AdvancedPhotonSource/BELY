@@ -125,4 +125,92 @@ public class LogbookRoute extends ItemBaseRoute {
         String entityTypeName = logbookType.getName();
         return itemDomainLogbookFacade.findByDomainNameAndEntityTypeOrderByLastModifiedDate(domainName, entityTypeName, rowLimit); 
     }
+    
+    @GET
+    @Path("/LogEntries/{logDocumentId}")
+    @Operation(summary = "Fetch log entry for log document id or section id.")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<LogEntry> getLogEntries(@PathParam("logDocumentId") int logDocumentId) throws ObjectNotFound, InvalidArgument {
+        ItemDomainLogbook logDocument = getLogDocumentById(logDocumentId);                 
+        
+        return LogEntry.createLogEntryList(logDocument); 
+    }        
+    
+    @GET
+    @Path("/LogEntryTemplate/{logDocumentId}")
+    @Operation(summary = "Fetch new log entry template for log document id or section id.")
+    @Produces(MediaType.APPLICATION_JSON)
+    @SecurityRequirement(name = "belyAuth")
+    @Secured
+    public LogEntry getLogEntryTemplate(@PathParam("logDocumentId") int logDocumentId) throws ObjectNotFound, InvalidArgument, AuthorizationError {
+        ItemDomainLogbook logDocument = getLogDocumentById(logDocumentId);                
+        verifyCurrentUserPermissionForItem(logDocument); 
+        
+        UserInfo user = getCurrentRequestUserInfo();
+        
+        ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();
+        Log prepareAddLog = utility.prepareAddLog(logDocument, user);
+        
+        return new LogEntry(logDocumentId, prepareAddLog); 
+    }
+    
+    @PUT
+    @Path("/AddUpdateLogEntry")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Add/Update a log entry to a log document or section")
+    @SecurityRequirement(name = "belyAuth")
+    @Secured
+    public LogEntry addUpdateLogEntry(@RequestBody(required = true) LogEntry logEntry) throws CdbException {
+        int itemId = logEntry.getItemId();
+        
+        ItemDomainLogbook logDocument = getLogDocumentById(itemId);                
+        verifyCurrentUserPermissionForItem(logDocument); 
+        
+        UserInfo user = getCurrentRequestUserInfo();
+        Integer logId = logEntry.getLogId();
+        Log logEntity = null; 
+        ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();        
+        
+        if (logId == null) {            
+            logEntity = utility.prepareAddLog(logDocument, user);            
+        } else {
+            List<Log> logList = logDocument.getLogList();
+            
+            for (Log log : logList) {
+                if (Objects.equals(log.getId(), logId)) {
+                    logEntity = log; 
+                    break; 
+                }
+            }
+            
+            if (logEntity == null) {
+                throw new ObjectNotFound(
+                        String.format(
+                                "Log id %d does not exist for log document %d.", 
+                                logId, 
+                                itemId
+                        )
+                ); 
+            }
+            utility.verifySaveLogLockoutsForItem(logDocument, logEntity, user);
+        }
+        
+        logEntry.updateLogPerLogEntryObject(logEntity);        
+        logEntity = saveLog(logEntity, user); 
+        
+        // Update modified date. 
+        updateModifiedDateForLogDocument(logDocument, user);
+        
+        return new LogEntry(itemId, logEntity); 
+    }
+    @Override
+    protected void verifyUserPermissionForItem(UserInfo user, Item item) throws AuthorizationError {
+        // Permission verification should be done at the top level document only. 
+        if (item instanceof ItemDomainLogbook) {
+            item = ((ItemDomainLogbook)item).getTopLevelLogDocument(); 
+        }
+        
+        super.verifyUserPermissionForItem(user, item); 
+    }
+
 }
