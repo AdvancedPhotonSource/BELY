@@ -131,6 +131,21 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
             ie.setContainedItem(newItem);
         }
     }
+
+    public ItemDomainLogbook createLogbookSectionItem(UserInfo user) throws CdbException {
+        ItemDomainLogbook newSectionItem = createEntityInstance(user);
+
+        if (newSectionItem.getIsItemTemplate()) {
+            try {
+                appendTemplateEntityType(newSectionItem);
+            } catch (CdbException ex) {
+                throw ex;
+            }
+        }
+
+        return newSectionItem;
+    }
+
     @Override
     public Log prepareAddLog(ItemDomainLogbook cdbDomainEntity, UserInfo user) {
         Log log = super.prepareAddLog(cdbDomainEntity, user);

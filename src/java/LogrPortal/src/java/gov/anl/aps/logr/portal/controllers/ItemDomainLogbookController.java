@@ -5,8 +5,10 @@
 package gov.anl.aps.logr.portal.controllers;
 
 import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.exceptions.InvalidObjectState;
 import gov.anl.aps.logr.common.utilities.CollectionUtility;
 import gov.anl.aps.logr.portal.constants.EntityTypeName;
+import gov.anl.aps.logr.portal.constants.LogDocumentSettings;
 import gov.anl.aps.logr.portal.controllers.extensions.ItemCreateWizardController;
 import gov.anl.aps.logr.portal.controllers.extensions.ItemCreateWizardDomainLogbookController;
 import gov.anl.aps.logr.portal.controllers.settings.ItemDomainLogbookSettings;
@@ -49,6 +51,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
@@ -458,18 +461,15 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     public void prepareCreateLogbookSection() {
-
         UserInfo user = SessionUtility.getUser();
-        ItemDomainLogbook createEntityInstance = getControllerUtility().createEntityInstance(user);
-
-        if (isCurrentItemTemplate()) {
-            try {
-                appendTemplateEntityType(createEntityInstance);
-            } catch (CdbException ex) {
-                return;
-            }
+        
+        ItemDomainLogbook createEntityInstance = null; 
+        try {
+            createEntityInstance = getControllerUtility().createLogbookSectionItem(user);
+        } catch (CdbException ex) {
+            SessionUtility.addErrorMessage("Error", ex.getErrorMessage());
         }
-
+        
         getCurrent().setNewLogbookSection(createEntityInstance);
     }
 
