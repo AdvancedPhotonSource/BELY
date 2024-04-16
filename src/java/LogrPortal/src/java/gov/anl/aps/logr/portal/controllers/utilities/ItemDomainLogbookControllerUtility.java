@@ -137,12 +137,33 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
         
         log.setItemElementList(new ArrayList<>());
         ItemElement selfElement = cdbDomainEntity.getSelfElement();
+    public void verifySaveLogLockoutsForItem(ItemDomainLogbook logDocument, Log log, UserInfo user) throws InvalidObjectState {
+        // Ensure that top level document is checked for lockout. 
+        logDocument = logDocument.getTopLevelLogDocument(); 
         
-        log.getItemElementList().add(selfElement);         
-        
-        return log; 
+        // Use current for the lockout timeout especially for documents with sections.         
+        EntityInfo entityInfo = logDocument.getEntityInfo();
+        boolean isEntityWriteableByTimeout = entityInfo.refreshWriteableByTimeout();       
+        boolean skipLockouts = (user.isUserAdmin() || user.isUserMaintainer());
+
+        if (!skipLockouts) {
+            if (isEntityWriteableByTimeout == false) {
+                throw new InvalidObjectState("Log document is locked by lockout time.");
+            }
+
+            if (log != null) {
+                Double logLockoutHours = logDocument.getLogLockoutHours();
+                Date lastModifiedOnDateTime = log.getLastModifiedOnDateTime();
+
+                boolean isWriteable = AuthorizationUtility.isEntityWriteableByTimeout(logLockoutHours, lastModifiedOnDateTime);
+                if (!isWriteable) {
+                    throw new InvalidObjectState("Log entry is locked by lockout time.");                                     
+                }
+            }
+        }
     }
     
+
     public Map createAdvancedSearchMap(String entityTypeIdList, String itemTypeIdList, Date startTime, Date endTime) {
         /**
          * Generates the searchOpts for the searchEntities functionality. Can also be used with CdbEntityController.performEntitySearch(); 

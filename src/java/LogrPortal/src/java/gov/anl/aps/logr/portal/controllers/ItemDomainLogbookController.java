@@ -434,33 +434,18 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private boolean isSaveLogLockoutsForCurrent(Log log) {
         // Use current for the lockout timeout especially for documents with sections. 
         ItemDomainLogbook current = getCurrent();
-        EntityInfo entityInfo = current.getEntityInfo();
-        boolean isEntityWriteableByTimeout = entityInfo.refreshWriteableByTimeout();
-
         UserInfo user = SessionUtility.getUser();
-        boolean skipLockouts = (user.isUserAdmin() || user.isUserMaintainer());
-
-        if (!skipLockouts) {
-            if (isEntityWriteableByTimeout == false) {
-                displayMessageAndRefreshCurrent("Cannot change log entries", "Log document is locked by lockout time.");
-                setNewLogEdit(null);
-                return false;
-            }
-
-            if (log != null) {
-                Double logLockoutHours = current.getLogLockoutHours();
-                Date lastModifiedOnDateTime = log.getLastModifiedOnDateTime();
-
-                boolean isWriteable = AuthorizationUtility.isEntityWriteableByTimeout(logLockoutHours, lastModifiedOnDateTime);
-                if (!isWriteable) {
-                    displayMessageAndRefreshCurrent("Cannot change log entry", "Log entry is locked by lockout time.");
-                    setNewLogEdit(null);
-                    return isWriteable;
-                }
-            }
+        
+        ItemDomainLogbookControllerUtility utility = getControllerUtility();
+        
+        try {
+            utility.verifySaveLogLockoutsForItem(current, log, user);
+        } catch (InvalidObjectState ex) {
+            displayMessageAndRefreshCurrent("Cannot change log entries", ex.getErrorMessage());
+            setNewLogEdit(null);
+            return false;
         }
-
-        return true;
+        return true; 
     }
 
     @Override
