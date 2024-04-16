@@ -55,4 +55,74 @@ import org.apache.logging.log4j.Logger;
 @Tag(name = "Logbook")
 public class LogbookRoute extends ItemBaseRoute {
 
+    private static final Logger LOGGER = LogManager.getLogger(LogbookRoute.class.getName());
+
+    @EJB
+    DomainFacade domainFacade;        
+
+    @EJB
+    ItemDomainLogbookFacade itemDomainLogbookFacade;
+
+    private Domain getLogbookDomain() {
+        return domainFacade.find(ItemDomainName.LOGBOOK_ID);
+    }
+
+    @GET
+    @Path("/LogbookTypes")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<EntityType> getLogbookTypes() {
+        Domain domain = getLogbookDomain();
+        List<EntityType> logbookTypes = domain.getAllowedEntityTypeList();
+        // Remove template 
+        for (EntityType logbookType : logbookTypes) {
+            if (logbookType.getName().equals(EntityTypeName.template.getValue())) {
+                logbookTypes.remove(logbookType);
+                break;
+            }
+        }
+
+        return logbookTypes;
+    }
+
+    @GET
+    @Path("/LogbookSystems")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<ItemType> getLogbookSystems() {
+        Domain domain = getLogbookDomain();
+
+        return domain.getItemTypeList();
+    }
+
+    @GET
+    @Path("/LogbookTemplates")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<ItemDomainLogbook> getLogbookTemplates() {
+        String domainName = ItemDomainName.logbook.getValue();
+        String entityTypeName = EntityTypeName.template.getValue();
+        return itemDomainLogbookFacade.findByDomainAndEntityTypeAndTopLevel(domainName, entityTypeName);
+    }
+    
+    @GET
+    @Path("/LogDocuments/{logbookTypeId}/{limit}")
+    @Operation(summary = "Fetch last modified log documents for specific logbook type.")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<ItemDomainLogbook> getLogDocuments(@PathParam("logbookTypeId") int logbookTypeId, @PathParam("limit") int rowLimit) throws InvalidArgument {
+        List<EntityType> logbookTypes = getLogbookTypes();
+        EntityType logbookType = null;
+        
+        for (EntityType type : logbookTypes) {
+            if (type.getId() == logbookTypeId) {
+                logbookType = type; 
+                break;
+            }
+        }
+        
+        if (logbookType == null) {
+            throw new InvalidArgument(String.format("%d is not a valid logbook type id.", logbookTypeId)); 
+        }
+              
+        String domainName = ItemDomainName.logbook.getValue();
+        String entityTypeName = logbookType.getName();
+        return itemDomainLogbookFacade.findByDomainNameAndEntityTypeOrderByLastModifiedDate(domainName, entityTypeName, rowLimit); 
+    }
 }
