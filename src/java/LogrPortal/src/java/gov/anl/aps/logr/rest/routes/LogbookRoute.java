@@ -137,6 +137,28 @@ public class LogbookRoute extends ItemBaseRoute {
     }        
     
     @GET
+    @Path("/LogbookSections/{logDocumentId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<LogDocumentSection> getLogbookSections(@PathParam("logDocumentId") int logDocumentId) throws ObjectNotFound, InvalidArgument {
+        ItemDomainLogbook logDocument = getLogDocumentById(logDocumentId); 
+        
+        List<ItemElement> itemElementDisplayList = logDocument.getItemElementDisplayList();
+        List<LogDocumentSection> sections = new ArrayList<>(); 
+        for (ItemElement ie : itemElementDisplayList)  {
+            Item containedItem = ie.getContainedItem();
+            
+            Integer id = containedItem.getId();
+            String name = containedItem.getName();
+            
+            LogDocumentSection section = new LogDocumentSection(id, name);
+            
+            sections.add(section); 
+        }
+        
+        return sections; 
+    }
+    
+    @GET
     @Path("/LogEntryTemplate/{logDocumentId}")
     @Operation(summary = "Fetch new log entry template for log document id or section id.")
     @Produces(MediaType.APPLICATION_JSON)
@@ -203,6 +225,29 @@ public class LogbookRoute extends ItemBaseRoute {
         
         return new LogEntry(itemId, logEntity); 
     }
+    @PUT
+    @Path("/CreateLogDocumentSection/{logDocumentId}/{sectionName}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Create logbook document.")
+    @SecurityRequirement(name = "belyAuth")
+    @Secured
+    public ItemDomainLogbook createLogDocumentSection(@PathParam("logDocumentId") int logDocumentId, @PathParam("sectionName") String sectionName) throws CdbException {        
+        UserInfo user = getCurrentRequestUserInfo();
+        
+        ItemDomainLogbook logbook = itemDomainLogbookFacade.find(logDocumentId);        
+        verifyCurrentUserPermissionForItem(logbook); 
+        
+        ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility(); 
+        ItemDomainLogbook newSection = utility.createLogbookSectionItem(user);
+        newSection.setName(sectionName); 
+        
+        utility.addLogbookSection(logbook, newSection, user);
+        
+        logbook = utility.update(logbook, user); 
+        
+        return logbook;         
+    }
+
     @Override
     protected void verifyUserPermissionForItem(UserInfo user, Item item) throws AuthorizationError {
         // Permission verification should be done at the top level document only. 
