@@ -452,26 +452,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public Log prepareAddLog(ItemDomainLogbook cdbDomainEntity) {
         if (!isSaveLogLockoutsForCurrent()) {
             return null;
-        }
+        }       
 
-        String logbookTemplateLogMode = getLogbookTemplateLogMode();
-
-        Log log = super.prepareAddLog(cdbDomainEntity);
-
-        if (logbookTemplateLogMode.equals(LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL)) {
-            Item createdFromTemplate = cdbDomainEntity.getCreatedFromTemplate();
-            if (createdFromTemplate != null) {
-                List<Log> logList = createdFromTemplate.getLogList();
-                if (logList.size() > 0) {
-                    Log templateLog = logList.get(0);
-                    String templateText = templateLog.getText();
-                    log.setText(templateText);
-                }
-
-            }
-        }
-
-        return log;
+        return super.prepareAddLog(cdbDomainEntity);
     }
 
     public void prepareCreateLogbookSection() {

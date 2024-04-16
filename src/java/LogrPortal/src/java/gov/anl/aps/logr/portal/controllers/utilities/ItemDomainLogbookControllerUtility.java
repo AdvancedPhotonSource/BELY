@@ -133,10 +133,33 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
     }
     @Override
     public Log prepareAddLog(ItemDomainLogbook cdbDomainEntity, UserInfo user) {
-        Log log = super.prepareAddLog(cdbDomainEntity, user); 
-        
+        Log log = super.prepareAddLog(cdbDomainEntity, user);
+
         log.setItemElementList(new ArrayList<>());
         ItemElement selfElement = cdbDomainEntity.getSelfElement();
+
+        log.getItemElementList().add(selfElement);
+
+        PropertyValue logbookDocumentSettings = cdbDomainEntity.getLogbookDocumentSettings();
+        if (logbookDocumentSettings != null) {
+            String templateMode = logbookDocumentSettings.getPropertyMetadataValueForKey(LogDocumentSettings.logTemplateModeKey.getValue());
+
+            if (templateMode.equals(LogDocumentSettings.logTemplateModeTemplatePerEntryVal.getValue())) {
+                Item createdFromTemplate = cdbDomainEntity.getCreatedFromTemplate();
+                if (createdFromTemplate != null) {
+                    List<Log> logList = createdFromTemplate.getLogList();
+                    if (!logList.isEmpty()) {
+                        Log templateLog = logList.get(0);
+                        String templateText = templateLog.getText();
+                        log.setText(templateText);
+                    }
+                }
+            }
+        }
+
+        return log;
+    }
+    
     public void verifySaveLogLockoutsForItem(ItemDomainLogbook logDocument, Log log, UserInfo user) throws InvalidObjectState {
         // Ensure that top level document is checked for lockout. 
         logDocument = logDocument.getTopLevelLogDocument(); 
