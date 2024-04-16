@@ -478,19 +478,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         ItemDomainLogbookControllerUtility controllerUtility = getControllerUtility();
 
         UserInfo user = SessionUtility.getUser();
-        ItemElement newElement = controllerUtility.createItemElement(current, user);
-        controllerUtility.prepareAddItemElement(current, newElement);
-
-        ItemDomainLogbook newLogbookSection = current.getNewLogbookSection();
-        // Ensure unique names per parent. 
-        newLogbookSection.setItemIdentifier2("" + current.getId());
-
-        newElement.setContainedItem(newLogbookSection);
+        ItemDomainLogbook newLogbookSection = current.getNewLogbookSection();                
 
         // Save 
         try {
+            controllerUtility.addLogbookSection(current, newLogbookSection, user);                 
             controllerUtility.update(current, user);
-
         } catch (Exception ex) {
             String persitanceErrorMessage = current.getPersitanceErrorMessage();
             SessionUtility.addErrorMessage("Error", persitanceErrorMessage);
@@ -688,21 +681,20 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     @Override
     public ItemDomainLogbook createEntityInstance() {
         ItemDomainLogbook entity = super.createEntityInstance();
-
-        if (currentEntityType != null) {
-            try {
-                entity.setEntityTypeList(new ArrayList<>());
-                EntityType entityType = currentEntityType;
-                entity.getEntityTypeList().add(entityType);
-
-                Item primaryTemplateItem = entityType.getPrimaryTemplateItem();
-                if (primaryTemplateItem != null) {
-                    templateToCreateNewItem = (ItemDomainLogbook) primaryTemplateItem;
-                    completeSelectionOfTemplate();
-                }
-            } catch (CdbException ex) {
-                logger.error(ex);
-            }
+        
+        UserInfo user = SessionUtility.getUser();
+        
+        ItemDomainLogbookControllerUtility utility = getControllerUtility();
+        try { 
+            entity = utility.completeCreateEntityInstance(entity, currentEntityType, user);
+            // Sync the UI template selection. 
+            templateToCreateNewItem = (ItemDomainLogbook) entity.getCreatedFromTemplate();            
+        } catch (CdbException ex) {
+            SessionUtility.addErrorMessage("Error", ex.getErrorMessage());
+            logger.error(ex);
+        } catch (CloneNotSupportedException ex) {
+            logger.error(ex);
+            SessionUtility.addErrorMessage("Error", ex.getMessage());
         }
 
         return entity;
