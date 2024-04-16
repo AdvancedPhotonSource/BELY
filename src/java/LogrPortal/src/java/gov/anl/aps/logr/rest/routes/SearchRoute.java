@@ -27,7 +27,7 @@ import javax.ws.rs.core.MediaType;
 
 /**
  *
- * @author darek
+ * @author djarosz
  */
 @Path("/Search")
 @Tag(name = "Search")

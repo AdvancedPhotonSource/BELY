@@ -35,7 +35,7 @@ import org.apache.logging.log4j.Logger;
 
 @Tag(name = "Authentication")
 @Path("/auth")
-@SecurityScheme(name = "cdbAuth",
+@SecurityScheme(name = "belyAuth",
                 type = SecuritySchemeType.APIKEY,
                 in = SecuritySchemeIn.COOKIE,
                 paramName = UserSessionKeeper.AUTH_TOKEN_KEY)
@@ -101,7 +101,7 @@ public class AuthenticationRoute extends BaseRoute {
     @GET
     @Path("/Verify")
     @Produces(MediaType.APPLICATION_JSON)
-    @SecurityRequirement(name = "cdbAuth")
+    @SecurityRequirement(name = "belyAuth")
     @Secured
     public boolean verifyAuthenticated() {
         LOGGER.debug("User is authenticated.");
