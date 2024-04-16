@@ -19,10 +19,12 @@ See LICENSE file.
 
         <ui:param name="logObject" value="#{entityController.newLogEdit}" />
 
-        <p:panelGrid id="logEntryPanelGrid" columns="2" rendered="#{logObject != null}">
+        <p:panelGrid id="logEntryPanelGrid" columns="2" rendered="#{logObject != null}" >
 
             <h:outputLabel for="logbookLogEntryValue" value="Log Entry" styleClass="entityDataEmphasizedLabel"/>
-            <h:inputTextarea styleClass="logEntryDialogEntryValue" id="logbookLogEntryValue" value="#{logObject.text}"
+            <h:inputTextarea styleClass="logEntryDialogEntryValue" 
+                             id="logbookLogEntryValue"                              
+                             value="#{logObject.text}"                             
                              onblur="logbookLogEntryValueBlur()"/> 
 
             <p:column/> 
@@ -43,11 +45,32 @@ See LICENSE file.
                             <h:graphicImage alt="Attachment" library="images" name="attachment.ico"/>
                         </h:outputLink>   
                     </ui:repeat>
+                    
+                    <p:tooltip for="logbookLogAttachmentsValue" value="Files/Screenshots can also be pasted directly into the log entry text." /> 
                 </p:outputPanel>
             </p:outputPanel>
 
 
         </p:panelGrid>
+
+        <p:outputPanel style="display: none">
+            <p:remoteCommand name="completePastedImage"
+                             onstart="PF('loadingDialog').show();"
+                             process="@this"
+                             update="lastFileReference"
+                             oncomplete="PF('loadingDialog').hide(); pasteLatestFileReference();" /> 
+
+            <p:fileUpload listener="#{logAttachmentUploadBean.handleFileUploadWithLastFileReference}"       
+                          id="logEntryClipboardAttachmentFileUpload"
+                          widgetVar="logEntryClipboardAttachmentFileUploadWidget"    
+                          oncomplete="completePastedImage()"                              
+                          mode="simple"
+                          auto="true"
+                          fileLimit="1"                              
+                          fileLimitMessage="Only one attachment can be added per upload."/>
+
+            <h:outputText id="lastFileReference" value="#{logAttachmentUploadBean.lastFileReference}" /> 
+        </p:outputPanel>
 
         <p:remoteCommand name="logbookLogEntryValueBlur" 
                          update="logbookLogEntryValue"/> 

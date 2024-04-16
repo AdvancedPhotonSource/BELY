@@ -27,7 +27,6 @@ import org.apache.logging.log4j.Logger;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.file.UploadedFile;
 
-
 /**
  * JSF bean for log attachment uploads.
  */
@@ -36,6 +35,8 @@ import org.primefaces.model.file.UploadedFile;
 public class LogAttachmentUploadBean implements Serializable {
 
     private static final Logger logger = LogManager.getLogger(LogAttachmentUploadBean.class.getName());
+
+    private String lastFileReference;
 
     private Log logEntry;
 
@@ -47,7 +48,15 @@ public class LogAttachmentUploadBean implements Serializable {
         this.logEntry = logEntry;
     }
 
+    public String getLastFileReference() {
+        return lastFileReference;
+    }
+
     public void upload(UploadedFile uploadedFile) {
+        upload(uploadedFile, true);
+    }
+
+    public String upload(UploadedFile uploadedFile, boolean attachFileReference) {
         Path uploadDirPath;
         try {
             if (uploadedFile != null && !uploadedFile.getFileName().isEmpty()) {
@@ -74,27 +83,37 @@ public class LogAttachmentUploadBean implements Serializable {
                 }
                 attachmentList.add(attachment);
                 String fileName = uploadedFile.getFileName();
-                // TODO make configurable based on domain? 
-                String text = logEntry.getText();   
-                String prefix = "\n\n"; 
+                String fileReference = "[" + fileName + "](" + attachment.getLogAttachmentPath() + ") ";
                 if (GalleryUtility.viewableFileName(fileName)) {
-                    prefix += '!'; 
+                    fileReference = '!' + fileReference;
                     // Generate scaled images 
                     GalleryUtility.storeImagePreviews(originalFile, false);
                 }
-                text += prefix + "[" + fileName + "](" + attachment.getLogAttachmentPath()+ ") ";
-                logEntry.setText(text);
-                
-                        
+
+                if (attachFileReference) {
+                    // TODO make configurable based on domain? 
+                    String text = logEntry.getText();
+                    String prefix = "\n\n";
+
+                    text += prefix + fileReference;
+                    logEntry.setText(text);
+                }
+
                 SessionUtility.addInfoMessage("Success", "Uploaded file " + uploadedFile.getFileName() + ".");
+                return fileReference;
             }
         } catch (IOException ex) {
             logger.error(ex);
             SessionUtility.addErrorMessage("Error", ex.toString());
         }
+        return "";
     }
-    
+
     public void handleFileUpload(FileUploadEvent event) {
         upload(event.getFile());
+    }
+
+    public void handleFileUploadWithLastFileReference(FileUploadEvent event) {
+        lastFileReference = upload(event.getFile(), false);
     }
 }
