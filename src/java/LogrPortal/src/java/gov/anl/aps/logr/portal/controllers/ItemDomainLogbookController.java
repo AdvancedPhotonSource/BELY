@@ -109,11 +109,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     private static final String OPS_ENTITY_TYPE_NAME = "ops";
 
-    private static final String LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY = "showTimestamps";
-    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY = "logMode";
-    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_NONE_VAL = "none";
-    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_COPY_VAL = "copy";
-    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL = "template per entry";
+    private static final String LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY = LogDocumentSettings.showTimestampKey.getValue();
+    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY = LogDocumentSettings.logTemplateModeKey.getValue();
+    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_NONE_VAL = LogDocumentSettings.logTemplateModeNoneVal.getValue();
+    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_COPY_VAL = LogDocumentSettings.logTemplateModeCopyVal.getValue();
+    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL = LogDocumentSettings.logTemplateModeTemplatePerEntryVal.getValue();
 
     // Custom operations functionality.. 
     // <editor-fold defaultstate="collapsed" desc="Operations specific variables.">
