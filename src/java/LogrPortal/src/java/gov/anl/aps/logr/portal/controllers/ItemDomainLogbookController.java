@@ -535,77 +535,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
 
         return viewForCurrentEntity();
-    }
-
-    @Override
-    protected void additionalSelectionOfTemplateSteps() {
-        ItemDomainLogbook current = getCurrent();
-
-        Boolean copyLogs = false;
-        PropertyValue logbookSettingsProperty = getLogbookSettingsProperty(current);
-
-        if (logbookSettingsProperty != null) {
-            String logMode = logbookSettingsProperty.getPropertyMetadataValueForKey(LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY);
-            if (logMode != null) {
-                copyLogs = logMode.equals(LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_COPY_VAL);
-            }
-        }
-
-        ItemDomainLogbook originalTemplateToCreateNewItem = getTemplateToCreateNewItem();
-
-        if (copyLogs) {
-            copyLogs(originalTemplateToCreateNewItem, current);
-        }
-
-        UserInfo user = SessionUtility.getUser();
-
-        // Ensure sort order is set. 
-        List<ItemElement> templateElements = templateToCreateNewItem.getItemElementDisplayList();
-        Float sortOrder = 0.0f;
-        for (ItemElement templateElement : templateElements) {
-            Float elementSortOrder = templateElement.getSortOrder();
-            if (elementSortOrder != null) {
-                sortOrder = elementSortOrder;
-            }
-
-            templateElement.setSortOrder(sortOrder);
-            sortOrder += 1;
-        }
-
-        getControllerUtility().cloneCreateItemElements(current, templateToCreateNewItem, user, true, true, true);
-
-        List<ItemElement> itemElementDisplayList = current.getItemElementDisplayList();
-        for (ItemElement ie : itemElementDisplayList) {
-            ItemDomainLogbook containedItem = (ItemDomainLogbook) ie.getContainedItem();
-            ItemDomainLogbook newItem = null;
-
-            try {
-                newItem = (ItemDomainLogbook) containedItem.clone(user, user.getUserGroupList().get(0), false, false, false);
-            } catch (CloneNotSupportedException ex) {
-                SessionUtility.addErrorMessage("Error", ex.getMessage());
-            }
-
-            newItem.getEntityTypeList().clear();
-            newItem.setName(containedItem.getName());
-            newItem.setItemIdentifier2(current.getViewUUID());
-
-            setTemplateToCreateNewItem(containedItem);
-            setCurrent(newItem);
-
-            if (copyLogs) {
-                copyLogs(containedItem, newItem);
-            }
-
-            completeSelectionOfTemplate();
-
-            ie.setContainedItem(newItem);
-        }
-
-        setTemplateToCreateNewItem(originalTemplateToCreateNewItem);
-        setCurrent(current);
-
-        super.additionalSelectionOfTemplateSteps();
-    }
+    }   
 
     public void prepareEditLogEntry(Log entry) {
         if (isSaveLogLockoutsForCurrent(entry)) {
@@ -1661,7 +1591,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
                 if (opsSelectedCopyList.contains(name)) {
                     ItemDomainLogbook lastSection = lastShiftSections.get(sectionIndex);
-                    copyLogs(lastSection, newSection);
+                    ItemDomainLogbookControllerUtility.copyLogs(lastSection, newSection);
                 }
             }
         } else {
@@ -1688,24 +1618,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         this.opsSelectedCopyList = opsSelectedCopyList;
     }
 
-    // </editor-fold>
-    private void copyLogs(ItemDomainLogbook oldLogDoc, ItemDomainLogbook newLogDoc) {
-        List<Log> logList = oldLogDoc.getLogList();
-        EntityInfo entityInfo = newLogDoc.getEntityInfo();
-        UserInfo createdByUser = entityInfo.getCreatedByUser();
-
-        Calendar calendar = Calendar.getInstance();
-
-        for (Log log : logList) {
-            String text = log.getText();
-            Log newLog = newLogDoc.addLogEntry(text, createdByUser);
-
-            // Specify creation date to maintain order. 
-            calendar.add(Calendar.SECOND, 1);
-            Date enteredTime = calendar.getTime();
-            newLog.setEnteredOnDateTime(enteredTime);
-        }
-    }
+    // </editor-fold>    
 
     // <editor-fold defaultstate="collapsed" desc="FacesConverter">
     @FacesConverter(forClass = ItemDomainLogbook.class)
