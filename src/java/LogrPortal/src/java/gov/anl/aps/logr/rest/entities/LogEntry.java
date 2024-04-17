@@ -9,6 +9,11 @@ import gov.anl.aps.logr.portal.model.db.entities.Log;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * API entity represents a log entry. Used for fetching, adding and updating a log entry. 
+ * 
+ * @author djarosz
+ */
 public class LogEntry {
 
     private int itemId;

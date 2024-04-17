@@ -6,7 +6,8 @@ package gov.anl.aps.logr.rest.entities;
 
 
 /**
- *
+ * API entity with log document section information. 
+ * 
  * @author djarosz
  */
 public class LogDocumentSection {
