@@ -225,6 +225,43 @@ public class LogbookRoute extends ItemBaseRoute {
         
         return new LogEntry(itemId, logEntity); 
     }
+
+    @PUT
+    @Path("/CreateLogDocument")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Create logbook document.")
+    @SecurityRequirement(name = "belyAuth")
+    @Secured
+    public ItemDomainLogbook createLogbookDocument(@RequestBody(required = true) LogDocumentOptions newLogDocumentOptions) throws CdbException {
+        validateAndGatherLogDocumentOptions(newLogDocumentOptions);
+
+        String name = newLogDocumentOptions.getName();
+        EntityType logbookType = newLogDocumentOptions.getLogbookType();
+        List<ItemType> systemList = newLogDocumentOptions.getSystemList();
+        ItemDomainLogbook templateItem = newLogDocumentOptions.getTemplateItem();
+        boolean skipDefaultLogbookTypeTemplate = newLogDocumentOptions.isSkipDefaultLogbookTypeTemplate();
+
+        ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();
+
+        UserInfo user = getCurrentRequestUserInfo();
+        ItemDomainLogbook newLogDocument = utility.createEntityInstance(user);
+        try {
+            newLogDocument = utility.completeCreateEntityInstance(newLogDocument, logbookType, user, !skipDefaultLogbookTypeTemplate);
+
+            if (templateItem != null) {
+                utility.completeSelectionOfTemplate(newLogDocument, templateItem, user);
+            }
+        } catch (CloneNotSupportedException ex) {
+            LOGGER.error(ex);
+            throw new CdbException("Clone exception: " + ex.getMessage());
+        }
+
+        newLogDocument.setName(name);
+        newLogDocument.setItemTypeList(systemList);
+
+        return utility.create(newLogDocument, user);
+    }
+
     @PUT
     @Path("/CreateLogDocumentSection/{logDocumentId}/{sectionName}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -248,6 +285,111 @@ public class LogbookRoute extends ItemBaseRoute {
         return logbook;         
     }
 
+    private void validateAndGatherLogDocumentOptions(LogDocumentOptions logDocumentOptions) throws CdbException {
+        String name = logDocumentOptions.getName();
+        if (name == null || name.isEmpty()) {
+            throw new InvalidArgument("Name is required.");
+        }
+
+        Integer logbookTypeId = logDocumentOptions.getLogbookTypeId();
+        if (logbookTypeId == null) {
+            throw new InvalidArgument("Logbook type id is required.");
+        }
+        EntityType logbookType = verifyLogbookTypeArgument(logbookTypeId);
+
+        List<ItemType> systemList = null;
+        List<Integer> systemIdList = logDocumentOptions.getSystemIdList();
+
+        if (systemIdList != null && !systemIdList.isEmpty()) {
+            systemList = verifySystemListArgument(systemIdList);
+        }
+
+        Integer templateId = logDocumentOptions.getTemplateId();
+        ItemDomainLogbook templateItem = null;
+        if (templateId != null) {
+            templateItem = itemDomainLogbookFacade.findById(templateId);
+            if (templateItem == null) {
+                throw new ObjectNotFound("Could not find template id that was specified.");
+            }
+            if (!templateItem.getIsItemTemplate()) {
+                throw new InvalidArgument("Item specified is not a template.");
+            }
+        }
+
+        boolean skipDefaultLogbookTypeTemplate = logDocumentOptions.isSkipDefaultLogbookTypeTemplate();
+        skipDefaultLogbookTypeTemplate = skipDefaultLogbookTypeTemplate || templateItem != null;
+
+        logDocumentOptions.setLogbookType(logbookType);
+        logDocumentOptions.setSystemList(systemList);
+        logDocumentOptions.setTemplateItem(templateItem);
+        logDocumentOptions.setSkipDefaultLogbookTypeTemplate(skipDefaultLogbookTypeTemplate);
+
+    }
+    
+    private ItemDomainLogbook getLogDocumentById(int logDocumentId) throws InvalidArgument, ObjectNotFound {
+        Item logDocument = getItemByIdBase(logDocumentId);
+        
+        if (logDocument instanceof ItemDomainLogbook == false) {
+            throw new InvalidArgument("logDocument id is not of domain logbook."); 
+        }
+        
+        return (ItemDomainLogbook) logDocument; 
+    }
+
+    private EntityType verifyLogbookTypeArgument(Integer logbookTypeId) throws InvalidArgument {
+        List<EntityType> logbookTypes = getLogbookTypes();
+
+        for (EntityType logbookType : logbookTypes) {
+            if (logbookType.getId() == logbookTypeId) {
+                return logbookType;
+            }
+        }
+
+        throw new InvalidArgument("Invalid logbook type id provided.");
+    }
+
+    private List<ItemType> verifySystemListArgument(List<Integer> systemIdList) throws InvalidArgument {
+        List<ItemType> systemList = new ArrayList<>();
+        List<ItemType> logbookSystems = getLogbookSystems();
+
+        for (ItemType system : logbookSystems) {
+            Integer id = system.getId();
+            if (systemIdList.contains(id)) {
+                systemList.add(system);
+                systemIdList.remove(id);
+            }
+        }
+
+        if (!systemIdList.isEmpty()) {
+            String error = "The following id(s) are invalid: " + systemIdList.toString();
+            throw new InvalidArgument(error);
+        }
+
+        return systemList;
+    }
+    
+    private void updateModifiedDateForLogDocument(ItemDomainLogbook logDocument, UserInfo user) throws CdbException {         
+        logDocument = logDocument.getTopLevelLogDocument();        
+        EntityInfo entityInfo = logDocument.getEntityInfo();        
+        
+        EntityInfoUtility.updateEntityInfo(entityInfo, user);
+        EntityInfoControllerUtility eicu = new EntityInfoControllerUtility(); 
+        
+        eicu.update(entityInfo, user); 
+    }
+    
+    private Log saveLog(Log log, UserInfo userInfo) throws CdbException {
+        LogControllerUtility utility = new LogControllerUtility(); 
+                
+        if (log.getId() != null) {
+            log = utility.update(log, userInfo);
+        } else {
+            log = utility.create(log, userInfo);
+        }                
+        
+        return log;        
+    } 
+    
     @Override
     protected void verifyUserPermissionForItem(UserInfo user, Item item) throws AuthorizationError {
         // Permission verification should be done at the top level document only. 
