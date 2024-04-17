@@ -8,7 +8,7 @@
 #
 # Usage:
 #
-# $0 CDB_BASE_PATH
+# $0 BELY_BASE_PATH
 #
 
 MY_DIR=`dirname $0` && cd $MY_DIR && MY_DIR=`pwd`
@@ -22,8 +22,8 @@ GEN_CONFIG_FILE_PATH=$MY_DIR/ClientApiConfig.yml
 GEN_OUT_DIR="pythonApi"
 
 if [ -z "$1" ]; then
-    echo "Please specify CDB_BASE_PATH";
-    echo "Usage: $0 CDB_BASE_PATH"
+    echo "Please specify BELY_BASE_PATH";
+    echo "Usage: $0 BELY_BASE_PATH"
     exit 1; 
 fi
 CDB_OPENAPI_YML_PATH="api/openapi.yaml"
@@ -36,12 +36,12 @@ curl -O $OPEN_API_GENERATOR_JAR_URL
 java -jar $OPEN_API_GENERATOR_JAR  generate -i "$CDB_OPENAPI_YML_URL" -g python -o $GEN_OUT_DIR -c $GEN_CONFIG_FILE_PATH
 
 # Clean up
-rm cdbApi -rv
+rm belyApi -rv
 rm $OPEN_API_GENERATOR_JAR
 
 # Fetch the generated Api
 cd $GEN_OUT_DIR
-cp -rv cdbApi ../
+cp -rv belyApi ../
 cd ..
 
 # Clean up
