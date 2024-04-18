@@ -67,11 +67,11 @@ class BelyApiFactory:
 	def getAuthenticateToken(self):
 		return self.apiClient.default_headers[self.HEADER_TOKEN_KEY]
 
-	def testAuthenticated(self):
-		self.authApi.verify_authenticated()
+	def test_authenticated(self):
+		self.auth_api.verify_authenticated()
 
-	def logOutUser(self):
-		self.authApi.log_out()
+	def logout_user(self):
+		self.auth_api.log_out()
 
 	# Restore later 
 	# @classmethod
@@ -89,45 +89,45 @@ class BelyApiFactory:
 		exObj.status = openApiException.status
 		return exObj
 
-def run_command():
+# def run_command():
 	# Example
-	print("\nEnter cdb URL (ex: https://cdb.aps.anl.gov/cdb): ")
-	hostname = input()
+# 	print("\nEnter cdb URL (ex: https://cdb.aps.anl.gov/cdb): ")
+# 	hostname = input()
         
-	apiFactory = CdbApiFactory(hostname)
-	itemApi = apiFactory.getItemApi()
+# 	apiFactory = CdbApiFactory(hostname)
+# 	itemApi = apiFactory.getItemApi()
 
-	catalogItems = itemApi.get_catalog_items()
-	catalogItem = catalogItems[0]
+# 	catalogItems = itemApi.get_catalog_items()
+# 	catalogItem = catalogItems[0]
 
-	# Lists of items seem to be lists of dict items
-	catalogId = catalogItem.id
+# 	# Lists of items seem to be lists of dict items
+# 	catalogId = catalogItem.id
 
-	# Single items seem to be appropriate type
-	catalogFetchedById = itemApi.get_item_by_id(catalogId)
-	print(catalogFetchedById.name)
+# 	# Single items seem to be appropriate type
+# 	catalogFetchedById = itemApi.get_item_by_id(catalogId)
+# 	print(catalogFetchedById.name)
 
-	inventoryItemPerCatalog = itemApi.get_items_derived_from_item_by_item_id(catalogId)
-	print(inventoryItemPerCatalog)
+# 	inventoryItemPerCatalog = itemApi.get_items_derived_from_item_by_item_id(catalogId)
+# 	print(inventoryItemPerCatalog)
 
-	print("\n\n\nWould you like to test authentication? (y/N): ")
-	resp = input()
-	if resp == 'y' or resp == "Y":
-		import getpass
-		print("Username: ")
-		username = input()
-		print("Password: ")
-		password = getpass.getpass()
+# 	print("\n\n\nWould you like to test authentication? (y/N): ")
+# 	resp = input()
+# 	if resp == 'y' or resp == "Y":
+# 		import getpass
+# 		print("Username: ")
+# 		username = input()
+# 		print("Password: ")
+# 		password = getpass.getpass()
 
-		try:
-			apiFactory.authenticateUser(username, password)
-			apiFactory.testAuthenticated()
-			apiFactory.logOutUser()
-		except ApiException:
-			print("Authentication failed!")
-			exit(1)
+# 		try:
+# 			apiFactory.authenticateUser(username, password)
+# 			apiFactory.testAuthenticated()
+# 			apiFactory.logOutUser()
+# 		except ApiException:
+# 			print("Authentication failed!")
+# 			exit(1)
 
-		print("Success!")
+# 		print("Success!")
 
-if __name__ == '__main__':
-	run_command()
+# if __name__ == '__main__':
+# 	run_command()
