@@ -181,6 +181,15 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
         if (!itemElementMemberList.isEmpty()) {
             throw new InvalidObjectState("Can only add sections to top level items.");
         }
+        
+        // Verify if existing section with same name. 
+        String sectionName = newSection.getName();
+        for (ItemElement ie : logDocument.getItemElementDisplayList()) {
+            Item containedItem = ie.getContainedItem();
+            if (containedItem.getName().equals(sectionName)) { 
+                throw new InvalidObjectState(String.format("Section with name '%s' already exists.", sectionName)); 
+            }
+        }
 
         ItemElement newElement = createItemElement(logDocument, user);
         prepareAddItemElement(logDocument, newElement);
