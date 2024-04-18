@@ -268,7 +268,7 @@ public class LogbookRoute extends ItemBaseRoute {
     @Operation(summary = "Create logbook document.")
     @SecurityRequirement(name = "belyAuth")
     @Secured
-    public ItemDomainLogbook createLogDocumentSection(@PathParam("logDocumentId") int logDocumentId, @PathParam("sectionName") String sectionName) throws CdbException {        
+    public LogDocumentSection createLogDocumentSection(@PathParam("logDocumentId") int logDocumentId, @PathParam("sectionName") String sectionName) throws CdbException {        
         UserInfo user = getCurrentRequestUserInfo();
         
         ItemDomainLogbook logbook = itemDomainLogbookFacade.find(logDocumentId);        
@@ -282,7 +282,13 @@ public class LogbookRoute extends ItemBaseRoute {
         
         logbook = utility.update(logbook, user); 
         
-        return logbook;         
+        for (ItemElement itemElement : logbook.getItemElementDisplayList()) {
+            Item containedItem = itemElement.getContainedItem();
+            if (containedItem.getName().equals(sectionName)) {                
+                return new LogDocumentSection(containedItem.getId(), sectionName);
+            }
+        }
+        throw new CdbException("Unexpected Exception. Could not find newly added section."); 
     }
 
     private void validateAndGatherLogDocumentOptions(LogDocumentOptions logDocumentOptions) throws CdbException {
