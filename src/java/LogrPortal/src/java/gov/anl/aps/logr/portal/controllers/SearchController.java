@@ -22,47 +22,60 @@ import org.apache.logging.log4j.Logger;
  */
 @Named(SearchController.controllerNamed)
 @SessionScoped
-public class SearchController implements Serializable {   
-        
-    public static final String controllerNamed = "searchController";       
+public class SearchController implements Serializable {
+
+    public static final String controllerNamed = "searchController";
 
     private static final Logger logger = LogManager.getLogger(SearchController.class.getName());
-    private String searchString = null;       
+    private String searchString = null;
 
     private Boolean performSearch = false;
     private Boolean performExternallyInitializedSearch = false;
-    
-    private SearchSettings searchSettings; 
-    
-    private final Set<CdbEntityController> searchableControllers; 
+
+    private SearchSettings searchSettings;
+
+    private final Set<CdbEntityController> searchableControllers;
 
     /**
      * Constructor.
      */
     public SearchController() {
-        searchableControllers = new HashSet<>(); 
+        searchableControllers = new HashSet<>();
     }
 
     @PostConstruct
     public void initialize() {
-        searchSettings = new SearchSettings(this); 
+        searchSettings = new SearchSettings(this);
         searchSettings.updateSettings();
     }
-    
+
     public static SearchController getInstance() {
         return (SearchController) SessionUtility.findBean(controllerNamed);
     }
-    
+
     public void registerSearchableController(CdbEntityController entityController) {
-        searchableControllers.add(entityController);         
+        searchableControllers.add(entityController);
+    }
+
+    public String performInputBoxSearchAdvamced() {
+        getSearchSettings().setAdvancedSearch(true);
+        return performInputBoxSearch(false);
     }
 
     public String performInputBoxSearch() {
+        return performInputBoxSearch(true);
+    }
+
+    private String performInputBoxSearch(boolean requireSearchString) {
         if (searchString == null || searchString.isEmpty()) {
-            SessionUtility.addWarningMessage("Warning", "Please specify a search entry.");
-            return null;
+            if (requireSearchString) {
+                SessionUtility.addWarningMessage("Warning", "Please specify a search entry.");
+                return null;
+            }
+        } else {
+            performExternallyInitializedSearch = true;
         }
-        performExternallyInitializedSearch = true;
+
         return "/views/search/search.xhtml?faces-redirect=true";
     }
 
@@ -73,7 +86,7 @@ public class SearchController implements Serializable {
     public void setInputBoxSearchString(String searchString) {
         this.searchString = searchString;
     }
-    
+
     public void prepareSearch() {
         if (searchString != null && !searchString.isEmpty()) {
             performSearch = true;
@@ -83,37 +96,46 @@ public class SearchController implements Serializable {
 
     public void search() {
         if (performSearch) {
-            for (CdbEntityController controller : searchableControllers) {                                                                                
+            for (CdbEntityController controller : searchableControllers) {
                 // Check if controller needs to be skipped.                               
                 if (controller instanceof ItemTypeController) {
-                    if (!searchSettings.getDisplayItemTypes()) continue;
+                    if (!searchSettings.getDisplayItemTypes()) {
+                        continue;
+                    }
+                } else if (controller instanceof ItemCategoryController) {
+                    if (!searchSettings.getDisplayItemCategories()) {
+                        continue;
+                    }
+                } else if (controller instanceof PropertyTypeController) {
+                    if (!searchSettings.getDisplayPropertyTypes()) {
+                        continue;
+                    }
+                } else if (controller instanceof PropertyTypeCategoryController) {
+                    if (!searchSettings.getDisplayPropertyTypeCategories()) {
+                        continue;
+                    }
+                } else if (controller instanceof SourceController) {
+                    if (!searchSettings.getDisplaySources()) {
+                        continue;
+                    }
+                } else if (controller instanceof UserGroupController) {
+                    if (!searchSettings.getDisplayUserGroups()) {
+                        continue;
+                    }
+                } else if (controller instanceof UserInfoController) {
+                    if (!searchSettings.getDisplayUsers()) {
+                        continue;
+                    }
+                } else if (controller instanceof ItemElementController) {
+                    if (!searchSettings.getDisplayItemElements()) {
+                        continue;
+                    }
                 }
-                else if (controller instanceof ItemCategoryController) {
-                    if (!searchSettings.getDisplayItemCategories()) continue;
-                }
-                else if (controller instanceof PropertyTypeController) {
-                    if (!searchSettings.getDisplayPropertyTypes()) continue;
-                }
-                else if (controller instanceof PropertyTypeCategoryController) {
-                    if (!searchSettings.getDisplayPropertyTypeCategories()) continue;
-                }
-                else if (controller instanceof SourceController) {
-                    if (!searchSettings.getDisplaySources()) continue;
-                }
-                else if (controller instanceof UserGroupController) {
-                    if (!searchSettings.getDisplayUserGroups()) continue;
-                }
-                else if (controller instanceof UserInfoController) {
-                    if (!searchSettings.getDisplayUsers()) continue;                    
-                } 
-                else if (controller instanceof ItemElementController) {
-                    if (!searchSettings.getDisplayItemElements()) continue;
-                } 
-                
-                controller.performEntitySearch(searchString, searchSettings.getCaseInsensitive());                
+
+                controller.performEntitySearch(searchString, searchSettings.getCaseInsensitive());
             }
         }
-    }        
+    }
 
     public void completeSearch() {
         if (searchString == null || searchString.isEmpty()) {
@@ -170,7 +192,7 @@ public class SearchController implements Serializable {
     public SearchSettings getSearchSettings() {
         return searchSettings;
     }
-    
+
     public void processPreRender() {
         searchSettings.updateSettings();
     }

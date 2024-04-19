@@ -61,7 +61,7 @@ See LICENSE file.
                 <p:menubar styleClass="menuBarSupportingItems"> 
 
                     <p:menuitem styleClass="noButtonMenuItem"
-                                id="searchMenuItem">
+                                id="searchMenuItem">                                                                                                
                         <p:inputText id="menuBarSearchInput" placeholder="Search"
                                      autocomplete="off"                                 
                                      styleClass="expandingInputText entityDataText menuBarInputText" 
@@ -72,8 +72,14 @@ See LICENSE file.
                         <p:commandButton id="menuBarSearchInputCommand" 
                                          style="display: none" 
                                          update="@form" 
-                                         action="#{searchController.performInputBoxSearch()}"/>
+                                         action="#{searchController.performInputBoxSearch()}"/>                                                
                     </p:menuitem>
+                    
+                    <p:menuitem icon="pi pi-search" title="Advanced Search"
+                                update="@form"
+                                styleClass="onlyIconMenuItem"
+                                action="#{searchController.performInputBoxSearchAdvamced()}" /> 
+                    
 
                     <ui:include src="portalViewSupplementalMenubar.xhtml"/>                       
                     <p:menuitem value="Settings"
@@ -84,7 +90,7 @@ See LICENSE file.
                     <p:menuitem value="About" url="#{request.contextPath}/views/about.xhtml" icon="fa fa-question"/>
                 </p:menubar>
             </f:facet>
-        </p:menubar>
+        </p:menubar>                
 
     </p:outputPanel>
 </ui:composition>

@@ -665,6 +665,10 @@ h2 {
     background: 0; 
 }
 
+.onlyIconMenuItem .ui-menuitem-icon {
+    margin-right: 0 !important; 
+}
+
 .mainMenuBar .ui-menu {
     border: 0px;
 }
