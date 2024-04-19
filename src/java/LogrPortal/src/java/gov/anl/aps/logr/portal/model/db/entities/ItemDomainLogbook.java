@@ -211,6 +211,7 @@ public class ItemDomainLogbook extends Item {
         this.documentLockoutHours = documentLockoutHours;
     }
     
+    @JsonIgnore
     public boolean isDocumentWriteableByTimeout() {
         return getEntityInfo().isEntityWriteableByTimeout(); 
     }
@@ -250,5 +251,19 @@ public class ItemDomainLogbook extends Item {
 
     public boolean getPrevDocLoaded(){
         return this.prevDocLoaded;
+    }        
+    
+    @JsonIgnore
+    public ItemDomainLogbook getTopLevelLogDocument() {
+        List<ItemElement> itemElementMemberList = getItemElementMemberList();
+        if (itemElementMemberList != null && itemElementMemberList.size() == 1) {
+            ItemElement itemElement = itemElementMemberList.get(0);
+            Item item = itemElement.getParentItem(); 
+            if (item instanceof ItemDomainLogbook) {
+                return (ItemDomainLogbook) item;
+            }
+        }
+                
+        return this; 
     }
 }

@@ -25,13 +25,13 @@ import org.apache.logging.log4j.Logger;
 
 /**
  *
- * @author darek
+ * @author djarosz
  */
 @Path("/Logs")
-@Tag(name = "Log")
-public class LogRoute extends BaseRoute {
+@Tag(name = "SystemLog")
+public class SystemLogRoute extends BaseRoute {
     
-    private static final Logger LOGGER = LogManager.getLogger(LogRoute.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(SystemLogRoute.class.getName());
     
     @EJB
     LogFacade logFacade; 
@@ -39,7 +39,7 @@ public class LogRoute extends BaseRoute {
     @GET
     @Path("/System/LoginInfo")    
     @Produces(MediaType.APPLICATION_JSON)
-    @SecurityRequirement(name = "cdbAuth")
+    @SecurityRequirement(name = "belyAuth")
     @Secured
     public List<Log> getSuccessfulLoginLog() throws InvalidSession {
         checkSystemLogPrivilage();
@@ -51,7 +51,7 @@ public class LogRoute extends BaseRoute {
     @GET
     @Path("/System/LoginWarning")    
     @Produces(MediaType.APPLICATION_JSON)
-    @SecurityRequirement(name = "cdbAuth")
+    @SecurityRequirement(name = "belyAuth")
     @Secured
     public List<Log> getUnsuccessfulLoginLog() throws InvalidSession {
         checkSystemLogPrivilage();
@@ -63,7 +63,7 @@ public class LogRoute extends BaseRoute {
     @GET
     @Path("/System/EntityInfo")
     @Produces(MediaType.APPLICATION_JSON)
-    @SecurityRequirement(name = "cdbAuth")
+    @SecurityRequirement(name = "belyAuth")
     @Secured
     public List<Log> getSuccessfulEntityUpdateLog() throws InvalidSession {
         checkSystemLogPrivilage();
@@ -75,7 +75,7 @@ public class LogRoute extends BaseRoute {
     @GET
     @Path("/System/EntityInfoSinceEnteredDate/{sinceDate}")
     @Produces(MediaType.APPLICATION_JSON)
-    @SecurityRequirement(name = "cdbAuth")
+    @SecurityRequirement(name = "belyAuth")
     @Secured
     public List<Log> getSuccessfulEntityUpdateLogSinceEnteredDate(@PathParam("sinceDate") String sinceDate) throws ParseException, InvalidSession {        
         DateParam sinceDateParam = new DateParam(sinceDate); 
@@ -88,7 +88,7 @@ public class LogRoute extends BaseRoute {
     @GET
     @Path("/System/EntityWarning")    
     @Produces(MediaType.APPLICATION_JSON)
-    @SecurityRequirement(name = "cdbAuth")
+    @SecurityRequirement(name = "belyAuth")
     @Secured
     public List<Log> getUnsuccessfulEntityUpdateLog() throws InvalidSession {
         checkSystemLogPrivilage();
@@ -100,7 +100,7 @@ public class LogRoute extends BaseRoute {
     @GET
     @Path("/System/EntityWarningSinceEnteredDate/{sinceDate}")
     @Produces(MediaType.APPLICATION_JSON)
-    @SecurityRequirement(name = "cdbAuth")
+    @SecurityRequirement(name = "belyAuth")
     @Secured
     public List<Log> getUnsuccessfulEntityUpdateLogSinceEnteredDate(@PathParam("sinceDate") String sinceDate) throws ParseException, InvalidSession {        
         DateParam sinceDateParam = new DateParam(sinceDate);

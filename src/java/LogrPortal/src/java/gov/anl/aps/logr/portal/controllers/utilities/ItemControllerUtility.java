@@ -7,18 +7,20 @@ package gov.anl.aps.logr.portal.controllers.utilities;
 import gov.anl.aps.logr.common.exceptions.CdbException;
 import gov.anl.aps.logr.common.exceptions.InvalidRequest;
 import gov.anl.aps.logr.common.exceptions.ObjectAlreadyExists;
+import gov.anl.aps.logr.portal.constants.EntityTypeName;
 import gov.anl.aps.logr.portal.constants.ItemElementRelationshipTypeNames;
 import gov.anl.aps.logr.portal.constants.ListName;
 import gov.anl.aps.logr.portal.controllers.PropertyTypeController;
 import gov.anl.aps.logr.portal.model.db.beans.AllowedPropertyMetadataValueFacade;
 import gov.anl.aps.logr.portal.model.db.beans.DomainFacade;
+import gov.anl.aps.logr.portal.model.db.beans.EntityTypeFacade;
 import gov.anl.aps.logr.portal.model.db.beans.ItemFacadeBase;
-import gov.anl.aps.logr.portal.model.db.beans.PropertyTypeFacade;
 import gov.anl.aps.logr.portal.model.db.beans.PropertyTypeMetadataFacade;
 import gov.anl.aps.logr.portal.model.db.beans.RelationshipTypeFacade;
 import gov.anl.aps.logr.portal.model.db.entities.AllowedPropertyMetadataValue;
 import gov.anl.aps.logr.portal.model.db.entities.Domain;
 import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
+import gov.anl.aps.logr.portal.model.db.entities.EntityType;
 import gov.anl.aps.logr.portal.model.db.entities.Item;
 import gov.anl.aps.logr.portal.model.db.entities.ItemConnector;
 import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
@@ -31,6 +33,7 @@ import gov.anl.aps.logr.portal.model.db.entities.PropertyTypeMetadata;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
 import gov.anl.aps.logr.portal.model.db.entities.RelationshipType;
 import gov.anl.aps.logr.portal.model.db.entities.SettingEntity;
+import gov.anl.aps.logr.portal.model.db.entities.UserGroup;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.model.db.utilities.EntityInfoUtility;
 import gov.anl.aps.logr.portal.model.db.utilities.ItemElementUtility;
@@ -60,8 +63,8 @@ public abstract class ItemControllerUtility<ItemDomainEntity extends Item, ItemD
         extends CdbDomainEntityControllerUtility<ItemDomainEntity, ItemDomainEntityFacade> {
 
     DomainFacade domainFacade;
-    ItemDomainEntityFacade itemFacade;
-    PropertyTypeFacade propertyTypeFacade;
+    ItemDomainEntityFacade itemFacade;    
+    EntityTypeFacade entityTypeFacade; 
     PropertyTypeMetadataFacade propertyTypeMetadataFacade;
     AllowedPropertyMetadataValueFacade allowedPropertyMetadataValueFacade;
     RelationshipTypeFacade relationshipTypeFacade;
@@ -70,8 +73,8 @@ public abstract class ItemControllerUtility<ItemDomainEntity extends Item, ItemD
 
     public ItemControllerUtility() {
         domainFacade = DomainFacade.getInstance();
-        itemFacade = getItemFacadeInstance();
-        propertyTypeFacade = PropertyTypeFacade.getInstance();
+        itemFacade = getItemFacadeInstance();    
+        entityTypeFacade = EntityTypeFacade.getInstance();
         propertyTypeMetadataFacade = PropertyTypeMetadataFacade.getInstance();
         allowedPropertyMetadataValueFacade = AllowedPropertyMetadataValueFacade.getInstance();
         relationshipTypeFacade = RelationshipTypeFacade.getInstance();
@@ -728,6 +731,52 @@ public abstract class ItemControllerUtility<ItemDomainEntity extends Item, ItemD
         // no match
         return null;
     }
+    
+    public void appendTemplateEntityType(ItemDomainEntity item) throws CdbException { 
+        EntityType templateType = entityTypeFacade.findByName(EntityTypeName.template.getValue());
+        if (item.getEntityTypeList() == null) {
+            try {
+                item.setEntityTypeList(new ArrayList<>());
+            } catch (CdbException ex) {
+                throw ex; 
+            }
+        }
+        item.getEntityTypeList().add(templateType);
+    }
+
+    public ItemDomainEntity completeSelectionOfTemplate(ItemDomainEntity item, ItemDomainEntity templateItem, UserInfo user) throws CloneNotSupportedException {
+        Item createdFromTemplate = item.getCreatedFromTemplate();
+
+        if (createdFromTemplate != null) {
+            // Create a new item. Already assigned to a template before selecting a new one. 
+            EntityInfo entityInfo = item.getEntityInfo();
+            UserInfo userInfo = entityInfo.getCreatedByUser();
+            UserGroup ownerUserGroup = entityInfo.getOwnerUserGroup();
+
+            String originalName = item.getName();
+            item = (ItemDomainEntity) item.clone(userInfo, ownerUserGroup);
+            item.setOwnerUser(entityInfo.getOwnerUser());
+            item.setName(originalName);
+        }
+
+        if (templateItem != null) {
+            item.setItemCategoryList(templateItem.getItemCategoryList());
+            item.setItemTypeList(templateItem.getItemTypeList());
+
+
+            cloneProperties(item, templateItem, user);
+            cloneSources(item, templateItem);
+            addCreatedFromTemplateRelationshipToItem(item, templateItem);            
+
+            additionalSelectionOfTemplateSteps(item, templateItem, user);
+        }
+        
+        return item; 
+    }
+
+    protected void additionalSelectionOfTemplateSteps(ItemDomainEntity current, ItemDomainEntity templateToCreateNewItem, UserInfo user) throws CloneNotSupportedException {
+
+    }
 
     protected String getItemCreatedFromTemplateRelationshipName() {
         return ItemElementRelationshipTypeNames.template.getValue();
@@ -817,15 +866,15 @@ public abstract class ItemControllerUtility<ItemDomainEntity extends Item, ItemD
                 List<PropertyMetadata> propertyMetadataList = propertyValue.getPropertyMetadataList();
 
                 if (propertyMetadataList.size() > 0) {
-                    List<PropertyMetadata> newPropertyMetadata = new ArrayList<>(); 
+                    List<PropertyMetadata> newPropertyMetadata = new ArrayList<>();
                     newPropertyValue.setPropertyMetadataList(newPropertyMetadata);
                     for (PropertyMetadata pm : propertyMetadataList) {
                         PropertyMetadata newPm = new PropertyMetadata();
                         newPm.setMetadataKey(pm.getMetadataKey());
                         newPm.setMetadataValue(pm.getMetadataValue());
                         newPm.setPropertyValue(newPropertyValue);
-                        
-                        newPropertyMetadata.add(newPm); 
+
+                        newPropertyMetadata.add(newPm);
                     }
                 }
 

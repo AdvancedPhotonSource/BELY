@@ -7,6 +7,7 @@ package gov.anl.aps.logr.rest.routes;
 import gov.anl.aps.logr.common.exceptions.AuthorizationError;
 import gov.anl.aps.logr.portal.controllers.LoginController;
 import gov.anl.aps.logr.portal.model.db.beans.UserInfoFacade;
+import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
 import gov.anl.aps.logr.portal.model.db.entities.Item;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.utilities.AuthorizationUtility;
@@ -45,8 +46,9 @@ public abstract class BaseRoute {
     protected UserInfo verifyCurrentUserPermissionForItem(Item item) throws AuthorizationError {
         UserInfo updatedByUser = getCurrentRequestUserInfo();
         
-        if (!verifyUserPermissionForItem(updatedByUser, item)) {            
-            AuthorizationError ex = new AuthorizationError("User does not have permission to update the item");
+        try {
+            verifyUserPermissionForItem(updatedByUser, item);
+        } catch (AuthorizationError ex) {
             LOGGER.error(ex);
             throw ex; 
         }
@@ -54,17 +56,17 @@ public abstract class BaseRoute {
         return updatedByUser; 
     }   
 
-    protected boolean verifyUserPermissionForItem(UserInfo user, Item item) {
+    protected void verifyUserPermissionForItem(UserInfo user, Item item) throws AuthorizationError {
         if (user != null) {
             if (isUserAdmin(user)) {
-                return true;
+                return; 
             }
             if (isUserMaintainer(user)) {
-                return true;
+                return; 
             }
-            return AuthorizationUtility.isEntityWriteableByUser(item, user);
-        }
-        return false;
+            EntityInfo entityInfo = item.getEntityInfo();
+            AuthorizationUtility.isEntityWriteableByUserWithException(entityInfo, user);
+        }        
     }
 
     protected boolean isCurrentRequestUserAdmin() {

@@ -4,6 +4,7 @@
  */
 package gov.anl.aps.logr.portal.utilities;
 
+import gov.anl.aps.logr.common.exceptions.AuthorizationError;
 import gov.anl.aps.logr.portal.model.db.entities.CdbEntity;
 import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
 import gov.anl.aps.logr.portal.model.db.entities.UserGroup;
@@ -18,13 +19,26 @@ import java.util.Date;
 public class AuthorizationUtility {
 
     public static boolean isEntityWriteableByUser(EntityInfo entityInfo, UserInfo userInfo) {
-        boolean entityWriteableByUserBase = isEntityWriteableByUserBase(entityInfo, userInfo);
-
-        if (!entityWriteableByUserBase) {
-            return entityWriteableByUserBase;
+        try { 
+            isEntityWriteableByUserWithException(entityInfo, userInfo);
+        } catch (AuthorizationError ex) {
+            return false; 
         }
+        
+        return true; 
+    }
+    
+    public static void isEntityWriteableByUserWithException(EntityInfo entityInfo, UserInfo userInfo) throws AuthorizationError {
+        boolean writeable = isEntityWriteableByUserBase(entityInfo, userInfo);
 
-        return entityInfo.isEntityWriteableByTimeout();
+        if (!writeable) {
+            throw new AuthorizationError("User does not have permission to update this entity."); 
+        }
+        
+        writeable = entityInfo.isEntityWriteableByTimeout();
+        if (!writeable) {
+            throw new AuthorizationError("User does not have permission to update this entity due to lockout."); 
+        }                       
     }
 
     private static boolean isEntityWriteableByUserBase(EntityInfo entityInfo, UserInfo userInfo) {

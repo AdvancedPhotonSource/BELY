@@ -66,6 +66,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import javax.ejb.EJB;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
@@ -121,7 +122,7 @@ public abstract class ItemController<
     protected ItemConnectorFacade itemConnectorFacade;
 
     private List<ItemElementRelationship> locationRelationshipCache;
-    
+
     private int currentItemEntityHashCode;
 
     protected LazyDataModel itemLazyDataModel;
@@ -135,7 +136,7 @@ public abstract class ItemController<
 
     private List<ItemDomainEntity> selectItemElementItemCandidateList;
 
-    protected List<ItemDomainEntity> templatesList = null; 
+    protected List<ItemDomainEntity> templatesList = null;
     protected DataModel templateItemsListDataModel = null;
     protected ItemDomainEntity templateToCreateNewItem = null;
 
@@ -147,7 +148,7 @@ public abstract class ItemController<
     protected DataModel allowedChildItemSelectDataModel = null;
 
     protected List<ItemCategory> domainItemCategoryList = null;
-    protected List<ItemType> domainItemTypeList = null; 
+    protected List<ItemType> domainItemTypeList = null;
 
     protected Boolean cloneProperties = false;
     protected Boolean cloneCreateItemElementPlaceholders = false;
@@ -168,10 +169,10 @@ public abstract class ItemController<
 
     protected ItemMetadataPropertyInfo coreMetadataPropertyInfo = null;
     protected PropertyType coreMetadataPropertyType = null;
-    
+
     private List<AdvancedFilter> advancedFilters = null;
     private String advancedFilterName = null;
-    
+
     public ItemController() {
     }
 
@@ -395,7 +396,7 @@ public abstract class ItemController<
         }
         return domainItemCategoryList;
     }
-        
+
     public List<ItemType> getDomainItemTypeList() {
         if (domainItemTypeList == null) {
             domainItemTypeList = itemTypeFacade.findByDomainName(this.getDefaultDomainName());
@@ -407,7 +408,7 @@ public abstract class ItemController<
     public SelectItem[] getDomainItemCategoryListForSelectOne() {
         return CollectionUtility.getSelectItems(getDomainItemCategoryList(), true);
     }
-        
+
     public SelectItem[] getDomainItemTypeListForSelectOne() {
         return CollectionUtility.getSelectItems(getDomainItemTypeList(), true);
     }
@@ -552,11 +553,11 @@ public abstract class ItemController<
     public String getDomainPath(Domain domain) {
         return "/views/" + getEntityViewsDirectory(domain.getName());
     }
-    
-    public String getDomainPath(){ 
-        return getDomainPath(getDefaultDomain()); 
+
+    public String getDomainPath() {
+        return getDomainPath(getDefaultDomain());
     }
-    
+
     @Override
     protected String getEntityViewsDirectory() {
         return getEntityViewsDirectory(getDefaultDomainName());
@@ -753,7 +754,7 @@ public abstract class ItemController<
         super.resetListDataModel();
         scopedListDataModel = null;
         itemsWithNoParentsListDataModel = null;
-        templatesList = null; 
+        templatesList = null;
         templateItemsListDataModel = null;
         itemsWithNoParentsRootNode = null;
         displayListDataModelScopeSelectionList = null;
@@ -775,22 +776,22 @@ public abstract class ItemController<
                 || scope.equals(ItemDisplayListDataModelScope.showOwnedPlusFavorites.getValue())
                 || scope.equals(ItemDisplayListDataModelScope.showOwned.getValue());
     }
-    
+
     public final DataModel getScopedListDataModel() {
         // Show all
         if (isDataTableScopeLazy()) {
             return getListDataModel();
-            
+
         } else if (scopedListDataModel == null) {
             // Add code not handled in lazy data model
-            
+
             if (settingObject.getDisplayListDataModelScope().equals(
                     ItemDisplayListDataModelScope.advancedFilter.getValue())) {
                 // handle display mode: advanced filter 
                 scopedListDataModel = createAdvancedFilterDataModel();
             }
         }
-        
+
         loadPreProcessListDataModelIfNeeded(scopedListDataModel);
         return scopedListDataModel;
     }
@@ -934,7 +935,7 @@ public abstract class ItemController<
 
     @Override
     protected void processPreProcessIteratedDomainEntity(CdbDomainEntity entity) {
-        super.processPreProcessIteratedDomainEntity(entity);       
+        super.processPreProcessIteratedDomainEntity(entity);
     }
 
     private List<ItemElementRelationship> getLocationRelationshipCache() {
@@ -1575,13 +1576,13 @@ public abstract class ItemController<
         Item item = getCurrent();
         if (item != null) {
             List<Item> parentItemList = getParentItemList();
-            return !parentItemList.isEmpty(); 
+            return !parentItemList.isEmpty();
         }
         return false;
     }
-    
+
     public Boolean getDisplayMembershipByData() {
-        return false; 
+        return false;
     }
 
     public Boolean getDisplayDerivedFromPropertyList() {
@@ -1598,13 +1599,13 @@ public abstract class ItemController<
 
     public List<Item> getParentItemList() {
         ItemDomainEntity itemEntity = getCurrent();
-        
+
         ControllerUtility utility = getControllerUtility();
-        return utility.getParentItemList(itemEntity);         
+        return utility.getParentItemList(itemEntity);
     }
 
     public static List<Item> getParentItemList(Item itemEntity) {
-        return ItemControllerUtility.getStandardParentItemList(itemEntity);        
+        return ItemControllerUtility.getStandardParentItemList(itemEntity);
     }
 
     @Override
@@ -1618,16 +1619,16 @@ public abstract class ItemController<
     }
 
     public String getDisplayListDataModelScopeDisplayString() {
-        
+
         if (settingObject.getDisplayListDataModelScope() != null) {
-            
+
             if (settingObject.getDisplayListDataModelScope().equals(
                     ItemDisplayListDataModelScope.showItemsWithPropertyType.getValue())) {
                 // label for property type display mode                
-                return settingObject.getDisplayListDataModelScope() + " '" 
-                        + getDisplayPropertyTypeName(settingObject.getDisplayListDataModelScopePropertyTypeId()) 
+                return settingObject.getDisplayListDataModelScope() + " '"
+                        + getDisplayPropertyTypeName(settingObject.getDisplayListDataModelScopePropertyTypeId())
                         + "'";
-                
+
             } else if (settingObject.getDisplayListDataModelScope().equals(
                     ItemDisplayListDataModelScope.advancedFilter.getValue())) {
                 // label for advanced filter display mode
@@ -1928,8 +1929,8 @@ public abstract class ItemController<
                     Integer qrParam = Integer.parseInt(paramValue);
                     ItemDomainEntity item = findByQrId(qrParam);
                     if (item == null) {
-                        SessionUtility.addInfoMessage("Not found","Item with QrId: " + qrParam + " does not exist.");
-                        UserInfo sessionUser = (UserInfo) SessionUtility.getUser();                       
+                        SessionUtility.addInfoMessage("Not found", "Item with QrId: " + qrParam + " does not exist.");
+                        UserInfo sessionUser = (UserInfo) SessionUtility.getUser();
 
                         if (sessionUser != null) {
                             SessionUtility.navigateTo("/views/itemDomainInventory/create.xhtml?faces-redirect=true");
@@ -1994,45 +1995,42 @@ public abstract class ItemController<
     public String templateList() {
         return "templateList.xhtml?faces-redirect=true";
     }
-    
+
     public List<ItemDomainEntity> getTemplatesList() {
         if (templatesList == null) {
             templatesList = getEntityDbFacade().findByDomainAndEntityType(getDefaultDomainName(), EntityTypeName.template.getValue());
         }
-        return templatesList; 
+        return templatesList;
     }
 
     public DataModel getTemplateItemsListDataModel() {
         if (templateItemsListDataModel == null) {
-            List<ItemDomainEntity> templates = getTemplatesList(); 
+            List<ItemDomainEntity> templates = getTemplatesList();
             templateItemsListDataModel = new ListDataModel(templates);
         }
         return templateItemsListDataModel;
     }
-    
-    protected void appendTemplateEntityType(ItemDomainEntity item) throws CdbException { 
-        EntityType templateType = entityTypeFacade.findByName(EntityTypeName.template.getValue());
-        if (item.getEntityTypeList() == null) {
-            try {
-                item.setEntityTypeList(new ArrayList<>());
-            } catch (CdbException ex) {
-                LOGGER.error(ex);
-                SessionUtility.addErrorMessage("Error", ex.getErrorMessage());    
-                throw ex; 
-            }
+
+    protected void appendTemplateEntityType(ItemDomainEntity item) throws CdbException {
+        ControllerUtility controllerUtility = getControllerUtility();
+        try {
+            controllerUtility.appendTemplateEntityType(item);
+        } catch (CdbException ex) {
+            LOGGER.error(ex);
+            SessionUtility.addErrorMessage("Error", ex.getErrorMessage());
+            throw ex;
         }
-        item.getEntityTypeList().add(templateType);
     }
 
     public String prepareCreateTemplate() {
         String prepareCreate = prepareCreate();
-        
+
         ItemDomainEntity current = getCurrent();
 
-        try {       
+        try {
             appendTemplateEntityType(current);
         } catch (CdbException ex) {
-            return null; 
+            return null;
         }
 
         return prepareCreate;
@@ -2056,43 +2054,32 @@ public abstract class ItemController<
 
     public void completeSelectionOfTemplate() {
         ItemDomainEntity current = getCurrent();
-        Item createdFromTemplate = current.getCreatedFromTemplate();
-        
-        if (createdFromTemplate != null) {
-            // Create a new item. Already assigned to a template before selecting a new one. 
-            EntityInfo entityInfo = current.getEntityInfo();
-            UserInfo userInfo = entityInfo.getCreatedByUser();
-            UserGroup ownerUserGroup = entityInfo.getOwnerUserGroup();
-            
-            try { 
-                String originalName = current.getName();
-                current = (ItemDomainEntity) current.clone(userInfo, ownerUserGroup);
-                current.setOwnerUser(entityInfo.getOwnerUser());
-                current.setName(originalName);
-                setCurrent(current);
-            } catch (CloneNotSupportedException ex) {
-                SessionUtility.addErrorMessage("Error", "Error cloning item for template change. Creating a new one.");
-                prepareCreate(); 
-            }
-        }   
-        
-        if (this.templateToCreateNewItem != null) {                        
-            current.setItemCategoryList(templateToCreateNewItem.getItemCategoryList());
-            current.setItemTypeList(templateToCreateNewItem.getItemTypeList());
+        UserInfo user = SessionUtility.getUser();
 
-            ControllerUtility controllerUtility = getControllerUtility();
-            UserInfo user = SessionUtility.getUser();
+        boolean cloneFailed = false;
 
-            current = controllerUtility.cloneProperties(current, templateToCreateNewItem, user);
-            current = controllerUtility.cloneSources(current, templateToCreateNewItem);
-            addCreatedFromTemplateRelationshipToItem(current);
-            
-            additionalSelectionOfTemplateSteps(); 
+        ControllerUtility utility = getControllerUtility();
+        try {
+            current = utility.completeSelectionOfTemplate(current, templateToCreateNewItem, user);
+            setCurrent(current);
+        } catch (CloneNotSupportedException ex) {
+            cloneFailed = true;
         }
-    }
-    
-    protected void additionalSelectionOfTemplateSteps() {
-        
+
+        if (cloneFailed) {
+            // Attempt assignment of template once more. 
+            SessionUtility.addErrorMessage("Error", "Error cloning item for template change. Creating a new one.");
+            prepareCreate();
+            try {
+                current = utility.completeSelectionOfTemplate(current, templateToCreateNewItem, user);
+            } catch (CloneNotSupportedException ex) {
+                // Should not happen since clone only happens to remove template assignment. 
+                SessionUtility.addErrorMessage("Error", "Unknow exception occurred.");
+                return;
+            }
+            // Update current. 
+            setCurrent(current);
+        }
     }
 
     public void addCreatedFromTemplateRelationshipToItem(ItemDomainEntity item) {
@@ -2140,12 +2127,12 @@ public abstract class ItemController<
         Domain defaultDomain = getDefaultDomain();
         return getDomainPath(defaultDomain) + "/view.xhtml";
     }
-    
+
     public String getListPath() {
         Domain defaultDomain = getDefaultDomain();
         return getDomainPath(defaultDomain) + "/list.xhtml?faces-redirect=true";
     }
-    
+
     protected String preserveAdditionalParameters(String paramString) {
         return paramString;
     }
@@ -2157,7 +2144,7 @@ public abstract class ItemController<
         String desiredViewId;
         if (itemDomain != null) {
             ItemController itemDomainController = item.getItemDomainController();
-            paramString = itemDomainController.preserveAdditionalParameters(paramString); 
+            paramString = itemDomainController.preserveAdditionalParameters(paramString);
             desiredViewId = itemDomainController.getViewPath();
         } else {
             desiredViewId = "/views/item/view.xhtml";
@@ -2213,7 +2200,7 @@ public abstract class ItemController<
 
     @Override
     public void processEditRequestParams() {
-        super.processEditRequestParams();       
+        super.processEditRequestParams();
     }
 
     protected ItemController getItemItemController(Item item) {
@@ -2246,7 +2233,7 @@ public abstract class ItemController<
             settingController = SettingController.getInstance();
         }
         return settingController;
-    }   
+    }
 
     public ItemElementController getItemElementController() {
         if (itemElementController == null) {
@@ -2318,7 +2305,7 @@ public abstract class ItemController<
         }
 
     }
-    
+
     public String prepareLinkDisplay(String link) {
         if (link != null && !link.isEmpty()) {
             return HttpLinkUtility.prepareHttpLinkDisplayValue(link);
@@ -2326,7 +2313,7 @@ public abstract class ItemController<
             return null;
         }
     }
-    
+
     public String[] getMetadataUrlList(String urlList) {
         return urlList.split(" ");
     }
@@ -2403,7 +2390,7 @@ public abstract class ItemController<
     public final void checkItemProject(Item item) throws CdbException {
         getControllerUtility().checkItemProject(item);
     }
-    
+
     public List<AdvancedFilter> getAdvancedFilters() {
         if (advancedFilters == null) {
             advancedFilters = getEntityDbFacade().initializeAdvancedFilterInfo(this);
@@ -2429,9 +2416,9 @@ public abstract class ItemController<
     }
 
     public void setAdvancedFilterName(String advancedFilterName) {
-        if ((this.advancedFilterName == null && advancedFilterName != null) 
-            || (this.advancedFilterName != null && !this.advancedFilterName.equals(advancedFilterName))) {
-            
+        if ((this.advancedFilterName == null && advancedFilterName != null)
+                || (this.advancedFilterName != null && !this.advancedFilterName.equals(advancedFilterName))) {
+
             // reset list data models so that we rebuild them in subsequent calls to getScopedListDataModel
             listDataModelScopeChanged();
         }
@@ -2444,33 +2431,34 @@ public abstract class ItemController<
     }
 
     /**
-     * Allows subclass to return a ListDataModel using the specified filter and parameters.
+     * Allows subclass to return a ListDataModel using the specified filter and
+     * parameters.
      */
     protected ListDataModel createAdvancedFilterDataModel_(
             String filterName, Map<String, String> parameterValueMap) {
-        
+
         List<ItemDomainEntity> itemList = getEntityDbFacade().processAdvancedFilter(filterName, parameterValueMap);
         return new ListDataModel(itemList);
     }
 
     private ListDataModel createAdvancedFilterDataModel() {
-        
+
         String filterName = getAdvancedFilterName();
-        
+
         if (getAdvancedFilters() == null) {
             // domain doesn't support advanced filter display mode
             SessionUtility.addErrorMessage("Warning", "Domain does not support advanced filter display mode.");
             return null;
-            
+
         } else if (filterName == null || filterName.isEmpty()) {
             // filter name and value not specified in display mode dialog
             return null;
         }
-        
+
         AdvancedFilter selectedFilter = getSelectedFilter();
         Map<String, String> parameterValueMap = selectedFilter.getParameterValueMap();
-        
-        return createAdvancedFilterDataModel_(selectedFilter.getName(), parameterValueMap);        
+
+        return createAdvancedFilterDataModel_(selectedFilter.getName(), parameterValueMap);
     }
 
 }

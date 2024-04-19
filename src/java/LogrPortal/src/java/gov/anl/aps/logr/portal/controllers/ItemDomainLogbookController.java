@@ -5,8 +5,10 @@
 package gov.anl.aps.logr.portal.controllers;
 
 import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.exceptions.InvalidObjectState;
 import gov.anl.aps.logr.common.utilities.CollectionUtility;
 import gov.anl.aps.logr.portal.constants.EntityTypeName;
+import gov.anl.aps.logr.portal.constants.LogDocumentSettings;
 import gov.anl.aps.logr.portal.controllers.extensions.ItemCreateWizardController;
 import gov.anl.aps.logr.portal.controllers.extensions.ItemCreateWizardDomainLogbookController;
 import gov.anl.aps.logr.portal.controllers.settings.ItemDomainLogbookSettings;
@@ -49,6 +51,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
@@ -109,11 +112,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     private static final String OPS_ENTITY_TYPE_NAME = "ops";
 
-    private static final String LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY = "showTimestamps";
-    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY = "logMode";
-    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_NONE_VAL = "none";
-    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_COPY_VAL = "copy";
-    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL = "template per entry";
+    private static final String LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY = LogDocumentSettings.showTimestampKey.getValue();
+    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY = LogDocumentSettings.logTemplateModeKey.getValue();
+    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_NONE_VAL = LogDocumentSettings.logTemplateModeNoneVal.getValue();
+    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_COPY_VAL = LogDocumentSettings.logTemplateModeCopyVal.getValue();
+    private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL = LogDocumentSettings.logTemplateModeTemplatePerEntryVal.getValue();
 
     // Custom operations functionality.. 
     // <editor-fold defaultstate="collapsed" desc="Operations specific variables.">
@@ -434,74 +437,39 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private boolean isSaveLogLockoutsForCurrent(Log log) {
         // Use current for the lockout timeout especially for documents with sections. 
         ItemDomainLogbook current = getCurrent();
-        EntityInfo entityInfo = current.getEntityInfo();
-        boolean isEntityWriteableByTimeout = entityInfo.refreshWriteableByTimeout();
-
         UserInfo user = SessionUtility.getUser();
-        boolean skipLockouts = (user.isUserAdmin() || user.isUserMaintainer());
-
-        if (!skipLockouts) {
-            if (isEntityWriteableByTimeout == false) {
-                displayMessageAndRefreshCurrent("Cannot change log entries", "Log document is locked by lockout time.");
-                setNewLogEdit(null);
-                return false;
-            }
-
-            if (log != null) {
-                Double logLockoutHours = current.getLogLockoutHours();
-                Date lastModifiedOnDateTime = log.getLastModifiedOnDateTime();
-
-                boolean isWriteable = AuthorizationUtility.isEntityWriteableByTimeout(logLockoutHours, lastModifiedOnDateTime);
-                if (!isWriteable) {
-                    displayMessageAndRefreshCurrent("Cannot change log entry", "Log entry is locked by lockout time.");
-                    setNewLogEdit(null);
-                    return isWriteable;
-                }
-            }
+        
+        ItemDomainLogbookControllerUtility utility = getControllerUtility();
+        
+        try {
+            utility.verifySaveLogLockoutsForItem(current, log, user);
+        } catch (InvalidObjectState ex) {
+            displayMessageAndRefreshCurrent("Cannot change log entries", ex.getErrorMessage());
+            setNewLogEdit(null);
+            return false;
         }
-
-        return true;
+        return true; 
     }
 
     @Override
     public Log prepareAddLog(ItemDomainLogbook cdbDomainEntity) {
         if (!isSaveLogLockoutsForCurrent()) {
             return null;
-        }
+        }       
 
-        String logbookTemplateLogMode = getLogbookTemplateLogMode();
-
-        Log log = super.prepareAddLog(cdbDomainEntity);
-
-        if (logbookTemplateLogMode.equals(LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL)) {
-            Item createdFromTemplate = cdbDomainEntity.getCreatedFromTemplate();
-            if (createdFromTemplate != null) {
-                List<Log> logList = createdFromTemplate.getLogList();
-                if (logList.size() > 0) {
-                    Log templateLog = logList.get(0);
-                    String templateText = templateLog.getText();
-                    log.setText(templateText);
-                }
-
-            }
-        }
-
-        return log;
+        return super.prepareAddLog(cdbDomainEntity);
     }
 
     public void prepareCreateLogbookSection() {
-
         UserInfo user = SessionUtility.getUser();
-        ItemDomainLogbook createEntityInstance = getControllerUtility().createEntityInstance(user);
-
-        if (isCurrentItemTemplate()) {
-            try {
-                appendTemplateEntityType(createEntityInstance);
-            } catch (CdbException ex) {
-                return;
-            }
+        
+        ItemDomainLogbook createEntityInstance = null; 
+        try {
+            createEntityInstance = getControllerUtility().createLogbookSectionItem(user);
+        } catch (CdbException ex) {
+            SessionUtility.addErrorMessage("Error", ex.getErrorMessage());
         }
-
+        
         getCurrent().setNewLogbookSection(createEntityInstance);
     }
 
@@ -510,19 +478,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         ItemDomainLogbookControllerUtility controllerUtility = getControllerUtility();
 
         UserInfo user = SessionUtility.getUser();
-        ItemElement newElement = controllerUtility.createItemElement(current, user);
-        controllerUtility.prepareAddItemElement(current, newElement);
-
-        ItemDomainLogbook newLogbookSection = current.getNewLogbookSection();
-        // Ensure unique names per parent. 
-        newLogbookSection.setItemIdentifier2("" + current.getId());
-
-        newElement.setContainedItem(newLogbookSection);
+        ItemDomainLogbook newLogbookSection = current.getNewLogbookSection();                
 
         // Save 
         try {
+            controllerUtility.addLogbookSection(current, newLogbookSection, user);                 
             controllerUtility.update(current, user);
-
         } catch (Exception ex) {
             String persitanceErrorMessage = current.getPersitanceErrorMessage();
             SessionUtility.addErrorMessage("Error", persitanceErrorMessage);
@@ -535,77 +496,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
 
         return viewForCurrentEntity();
-    }
-
-    @Override
-    protected void additionalSelectionOfTemplateSteps() {
-        ItemDomainLogbook current = getCurrent();
-
-        Boolean copyLogs = false;
-        PropertyValue logbookSettingsProperty = getLogbookSettingsProperty(current);
-
-        if (logbookSettingsProperty != null) {
-            String logMode = logbookSettingsProperty.getPropertyMetadataValueForKey(LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY);
-            if (logMode != null) {
-                copyLogs = logMode.equals(LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_COPY_VAL);
-            }
-        }
-
-        ItemDomainLogbook originalTemplateToCreateNewItem = getTemplateToCreateNewItem();
-
-        if (copyLogs) {
-            copyLogs(originalTemplateToCreateNewItem, current);
-        }
-
-        UserInfo user = SessionUtility.getUser();
-
-        // Ensure sort order is set. 
-        List<ItemElement> templateElements = templateToCreateNewItem.getItemElementDisplayList();
-        Float sortOrder = 0.0f;
-        for (ItemElement templateElement : templateElements) {
-            Float elementSortOrder = templateElement.getSortOrder();
-            if (elementSortOrder != null) {
-                sortOrder = elementSortOrder;
-            }
-
-            templateElement.setSortOrder(sortOrder);
-            sortOrder += 1;
-        }
-
-        getControllerUtility().cloneCreateItemElements(current, templateToCreateNewItem, user, true, true, true);
-
-        List<ItemElement> itemElementDisplayList = current.getItemElementDisplayList();
-        for (ItemElement ie : itemElementDisplayList) {
-            ItemDomainLogbook containedItem = (ItemDomainLogbook) ie.getContainedItem();
-            ItemDomainLogbook newItem = null;
-
-            try {
-                newItem = (ItemDomainLogbook) containedItem.clone(user, user.getUserGroupList().get(0), false, false, false);
-            } catch (CloneNotSupportedException ex) {
-                SessionUtility.addErrorMessage("Error", ex.getMessage());
-            }
-
-            newItem.getEntityTypeList().clear();
-            newItem.setName(containedItem.getName());
-            newItem.setItemIdentifier2(current.getViewUUID());
-
-            setTemplateToCreateNewItem(containedItem);
-            setCurrent(newItem);
-
-            if (copyLogs) {
-                copyLogs(containedItem, newItem);
-            }
-
-            completeSelectionOfTemplate();
-
-            ie.setContainedItem(newItem);
-        }
-
-        setTemplateToCreateNewItem(originalTemplateToCreateNewItem);
-        setCurrent(current);
-
-        super.additionalSelectionOfTemplateSteps();
-    }
+    }   
 
     public void prepareEditLogEntry(Log entry) {
         if (isSaveLogLockoutsForCurrent(entry)) {
@@ -790,21 +681,20 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     @Override
     public ItemDomainLogbook createEntityInstance() {
         ItemDomainLogbook entity = super.createEntityInstance();
-
-        if (currentEntityType != null) {
-            try {
-                entity.setEntityTypeList(new ArrayList<>());
-                EntityType entityType = currentEntityType;
-                entity.getEntityTypeList().add(entityType);
-
-                Item primaryTemplateItem = entityType.getPrimaryTemplateItem();
-                if (primaryTemplateItem != null) {
-                    templateToCreateNewItem = (ItemDomainLogbook) primaryTemplateItem;
-                    completeSelectionOfTemplate();
-                }
-            } catch (CdbException ex) {
-                logger.error(ex);
-            }
+        
+        UserInfo user = SessionUtility.getUser();
+        
+        ItemDomainLogbookControllerUtility utility = getControllerUtility();
+        try { 
+            entity = utility.completeCreateEntityInstance(entity, currentEntityType, user);
+            // Sync the UI template selection. 
+            templateToCreateNewItem = (ItemDomainLogbook) entity.getCreatedFromTemplate();            
+        } catch (CdbException ex) {
+            SessionUtility.addErrorMessage("Error", ex.getErrorMessage());
+            logger.error(ex);
+        } catch (CloneNotSupportedException ex) {
+            logger.error(ex);
+            SessionUtility.addErrorMessage("Error", ex.getMessage());
         }
 
         return entity;
@@ -1661,7 +1551,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
                 if (opsSelectedCopyList.contains(name)) {
                     ItemDomainLogbook lastSection = lastShiftSections.get(sectionIndex);
-                    copyLogs(lastSection, newSection);
+                    ItemDomainLogbookControllerUtility.copyLogs(lastSection, newSection);
                 }
             }
         } else {
@@ -1688,24 +1578,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         this.opsSelectedCopyList = opsSelectedCopyList;
     }
 
-    // </editor-fold>
-    private void copyLogs(ItemDomainLogbook oldLogDoc, ItemDomainLogbook newLogDoc) {
-        List<Log> logList = oldLogDoc.getLogList();
-        EntityInfo entityInfo = newLogDoc.getEntityInfo();
-        UserInfo createdByUser = entityInfo.getCreatedByUser();
-
-        Calendar calendar = Calendar.getInstance();
-
-        for (Log log : logList) {
-            String text = log.getText();
-            Log newLog = newLogDoc.addLogEntry(text, createdByUser);
-
-            // Specify creation date to maintain order. 
-            calendar.add(Calendar.SECOND, 1);
-            Date enteredTime = calendar.getTime();
-            newLog.setEnteredOnDateTime(enteredTime);
-        }
-    }
+    // </editor-fold>    
 
     // <editor-fold defaultstate="collapsed" desc="FacesConverter">
     @FacesConverter(forClass = ItemDomainLogbook.class)

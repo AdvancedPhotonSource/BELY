@@ -28,7 +28,7 @@ public class TestRoute {
     @GET
     @Path("/Auth")
     @Produces(MediaType.APPLICATION_JSON)
-    @SecurityRequirement(name = "cdbAuth")
+    @SecurityRequirement(name = "belyAuth")
     @Secured
     public boolean verifyAuthenticated() {
         LOGGER.debug("User is authenticated.");
