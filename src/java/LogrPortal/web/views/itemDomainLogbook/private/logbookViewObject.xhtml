@@ -31,16 +31,16 @@ See LICENSE file.
                              toggleSpeed="100"
                              id="timestampPanel"
                              widgetVar="timestampPanelWidget#{logObject.id}">
-                        <span>#{logObject.lastModifiedOnDateTime}</span>
-                        <span style="float: right">#{logObject.lastModifiedByUser}</span>
+                        <span>Created on #{logObject.enteredOnDateTime} (#{logObject.enteredByUser.username})</span>
+                        <span style="float: right">Last modified on #{logObject.lastModifiedOnDateTime} (#{logObject.lastModifiedByUser.username})</span>
                         <p:tooltip for="timestampPanel">                            
                             <div>
                                 <h:outputLabel value="Created by "/>
                                 <h:outputText value="#{logObject.enteredByUser}" />
                             </div>
                             <div>
-                                <h:outputLabel value="Created on "/>
-                                <h:outputText value="#{logObject.enteredOnDateTime}" />
+                                <h:outputLabel value="Modified by "/>
+                                <h:outputText value="#{logObject.lastModifiedByUser}" />
                             </div>
 
                         </p:tooltip>
