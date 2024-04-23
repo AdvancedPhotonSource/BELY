@@ -32,7 +32,16 @@ BEGIN
 END //
 
 DROP PROCEDURE IF EXISTS search_items_no_parent;//
-CREATE PROCEDURE `search_items_no_parent` (IN limit_row int, IN domain_id int, IN entity_type_id_list TEXT, IN item_type_id_list TEXT, IN start_time datetime, IN end_time datetime, IN search_string VARCHAR(255)) 
+CREATE PROCEDURE `search_items_no_parent` (
+	IN limit_row int, 
+	IN domain_id int, 
+	IN entity_type_id_list TEXT, 
+	IN item_type_id_list TEXT, 
+	IN user_id_list TEXT, 
+	IN start_time datetime, 
+	IN end_time datetime, 
+	IN search_string VARCHAR(255)
+	) 
 BEGIN
 	SET search_string = CONCAT('"%', search_string, '%"'); 
 
@@ -61,6 +70,15 @@ BEGIN
 	"OR creatoru.username LIKE ", search_string, " ",
 	"OR updateu.username LIKE ", search_string, " ",
 	") ");
+
+	IF user_id_list THEN 
+		SET @where_stmt = CONCAT(@where_stmt, 
+		"AND (",
+		"FIND_IN_SET(owneru.id, '", user_id_list, "')",
+		"OR FIND_IN_SET(creatoru.id, '", user_id_list, "')",
+		"OR FIND_IN_SET(updateu.id, '", user_id_list, "')",
+		")");
+	END IF; 
 
 	IF entity_type_id_list THEN			
 		SET @from_stmt = CONCAT(@from_stmt, "
@@ -103,7 +121,16 @@ BEGIN
 END //
 
 DROP PROCEDURE IF EXISTS search_item_logs;//
-CREATE PROCEDURE `search_item_logs` (IN limit_row int, IN domain_id int, IN entity_type_id_list TEXT, IN item_type_id_list TEXT, IN start_time datetime, IN end_time datetime, IN search_string VARCHAR(255)) 
+CREATE PROCEDURE `search_item_logs` (
+	IN limit_row int, 
+	IN domain_id int, 
+	IN entity_type_id_list TEXT, 
+	IN item_type_id_list TEXT, 
+	IN user_id_list TEXT, 
+	IN start_time datetime, 
+	IN end_time datetime, 
+	IN search_string VARCHAR(255)
+	) 
 BEGIN
 	SET search_string = CONCAT('%', search_string, '%'); 
 
@@ -127,6 +154,14 @@ BEGIN
 		)) "); 
 
 	SET @where_stmt = CONCAT(@where_stmt, 'AND (log.text LIKE "', search_string, '") '); 
+
+	IF user_id_list THEN 
+		SET @where_stmt = CONCAT(@where_stmt, 
+		"AND (",
+		"FIND_IN_SET(log.entered_by_user_id, '", user_id_list, "')",		
+		"OR FIND_IN_SET(log.last_modified_by_user_id, '", user_id_list, "')",
+		")");
+	END IF; 
 
 	IF item_type_id_list THEN 
 		SET @from_tbls = CONCAT(@from_tbls, ", item_item_type iit");		

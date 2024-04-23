@@ -46,6 +46,8 @@ See LICENSE file.
                                               value="#{itemDomainLogbookController.searchLogbookTypeList}"                                                
                                               label="All" 
                                               multiple="true" 
+                                              filter="true"
+                                              filterMatchMode="contains"
                                               converter="entityTypeConverter"
                                               rendered="#{advancedMode}">                             
                             <f:selectItems value="#{itemDomainLogbookController.searchLogbookTypeSelectItemList}" />                             
@@ -55,13 +57,27 @@ See LICENSE file.
                         <h:outputLabel for="systemSelection" rendered="#{advancedMode}" value="System" styleClass="entityDataLabel"/>
                         <p:selectCheckboxMenu id="systemSelection"
                                           value="#{itemDomainLogbookController.searchSystemList}" 
-                                          multiple="true"                                          
+                                          multiple="true"
                                           label="All"
+                                          filter="true"
+                                          filterMatchMode="contains"
                                           converter="itemTypeConverter"
                                           rendered="#{advancedMode}">       
                             <f:selectItems value="#{itemDomainLogbookController.domainItemTypeList}"/> 
                         </p:selectCheckboxMenu>
                         <p:tooltip for="systemSelection" rendered="#{advancedMode}" value="System assignment to log document"/> 
+                        
+                        <h:outputLabel for="usernameSelection" rendered="#{advancedMode}" value="Username" styleClass="entityDataLabel"/>
+                        <p:selectCheckboxMenu id="usernameSelection" 
+                                              rendered="#{advancedMode}"
+                                              value="#{itemDomainLogbookController.searchUserList}"
+                                              multiple="true"
+                                              label="All"
+                                              filter="true"
+                                              filterMatchMode="contains"> 
+                            <f:selectItems value="#{userInfoController.availableItems}"/>                            
+                        </p:selectCheckboxMenu>
+                        <p:tooltip for="usernameSelection" rendered="#{advancedMode}" value="(Optional) Search by username (created/modified/owned)."/>
 
                         <h:outputLabel for="startTime" rendered="#{advancedMode}" value="Start Date" styleClass="entityDataLabel"/>
                         <p:datePicker id="startTime" rendered="#{advancedMode}"

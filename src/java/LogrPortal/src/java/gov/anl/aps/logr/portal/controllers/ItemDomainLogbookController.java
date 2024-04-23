@@ -34,7 +34,6 @@ import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
 import gov.anl.aps.logr.portal.model.db.entities.SettingType;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.model.db.utilities.EntityInfoUtility;
-import gov.anl.aps.logr.portal.utilities.AuthorizationUtility;
 import gov.anl.aps.logr.portal.utilities.MarkdownParser;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
@@ -51,7 +50,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.logging.Level;
 import java.util.regex.Pattern;
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
@@ -104,6 +102,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private List<SelectItem> searchLogbookTypeSelectItemList = null; 
     private List<EntityType> searchLogbookTypeList = null;
     private List<ItemType> searchSystemList = null; 
+    private List<UserInfo> searchUserList = null; 
     private Date searchStartDate = null; 
     private Date searchEndDate = null; 
     // </editor-fold>
@@ -848,12 +847,14 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         
         String entityTypeIdList = null;
         String itemTypeIdList = null; 
+        String userIdList = null; 
         Date startTime = null;
         Date endTime = null;                
                 
         if (advancedSearch) {            
             entityTypeIdList = CollectionUtility.generateIdListString(searchLogbookTypeList); 
             itemTypeIdList = CollectionUtility.generateIdListString(searchSystemList); 
+            userIdList = CollectionUtility.generateIdListString(searchUserList); 
             
             startTime = searchStartDate; 
             endTime = searchEndDate; 
@@ -871,12 +872,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         resetSearchVariables();
         
         ItemDomainLogbookControllerUtility utility = getControllerUtility();
-        Map searchArgs = utility.createAdvancedSearchMap(entityTypeIdList, itemTypeIdList, startTime, endTime); 
+        Map searchArgs = utility.createAdvancedSearchMap(entityTypeIdList, itemTypeIdList, userIdList, startTime, endTime); 
         
         super.performEntitySearch(searchString, searchArgs, caseInsensitive);
 
         // Search log entries. 
-        List<Object[]> results = itemDomainLogbookFacade.searchEntityLogs(searchString, itemTypeIdList, entityTypeIdList, startTime, endTime);                
+        List<Object[]> results = itemDomainLogbookFacade.searchEntityLogs(searchString, itemTypeIdList, entityTypeIdList, userIdList, startTime, endTime);                
 
         ItemDomainLogbookControllerUtility controllerUtility1 = getControllerUtility();
         String patternString = controllerUtility1.generatePatternString(searchString);
@@ -1301,7 +1302,15 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     public void setSearchSystemList(List<ItemType> searchSystemList) {
         this.searchSystemList = searchSystemList;
-    }        
+    }
+
+    public List<UserInfo> getSearchUserList() {
+        return searchUserList;
+    }
+
+    public void setSearchUserList(List<UserInfo> searchUserList) {
+        this.searchUserList = searchUserList;
+    }
 
     public Date getSearchStartDate() {
         return searchStartDate;
