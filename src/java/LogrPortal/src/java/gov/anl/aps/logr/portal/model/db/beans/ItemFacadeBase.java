@@ -1000,10 +1000,16 @@ public abstract class ItemFacadeBase<ItemDomainEntity extends Item> extends CdbE
     }
     
     public List<ItemDomainEntity> searchEntitiesNoParent(String searchString) {
-        return searchEntitiesNoParent(searchString, null, null, null, null, null); 
+        return searchEntitiesNoParent(searchString, null, null, null, null, null, null, null); 
     }
     
-    public List<ItemDomainEntity> searchEntitiesNoParent(String searchString, String itemTypeIdList, String entityTypeIdList, String userIdList, Date startTime, Date endTime) {
+    public List<ItemDomainEntity> searchEntitiesNoParent(
+            String searchString, 
+            String itemTypeIdList, 
+            String entityTypeIdList, 
+            String userIdList, 
+            Date startModifiedTime, Date endModifiedTime,
+            Date startCreatedTime, Date endCreatedTime) {
         try {
             searchString = convertWildcards(searchString);
             ItemDomainName domain = getDomain();
@@ -1012,8 +1018,10 @@ public abstract class ItemFacadeBase<ItemDomainEntity extends Item> extends CdbE
                     .setParameter("item_type_id_list", itemTypeIdList)
                     .setParameter("entity_type_id_list", entityTypeIdList)
                     .setParameter("user_id_list", userIdList)
-                    .setParameter("start_time", startTime)
-                    .setParameter("end_time", endTime)
+                    .setParameter("start_modified_time", startModifiedTime)
+                    .setParameter("end_modified_time", endModifiedTime)
+                    .setParameter("start_created_time", startCreatedTime)
+                    .setParameter("end_created_time", endCreatedTime)
                     .setParameter("search_string", searchString)
                     .setParameter("limit_row", SEARCH_RESULT_LIMIT)
                     .getResultList();
@@ -1023,7 +1031,12 @@ public abstract class ItemFacadeBase<ItemDomainEntity extends Item> extends CdbE
         return null;
     }
     
-    public List<Object[]> searchEntityLogs(String searchString, String itemTypeIdList, String entityTypeIdList, String userIdList, Date startTime, Date endTime) {
+    public List<Object[]> searchEntityLogs(String searchString, 
+            String itemTypeIdList, 
+            String entityTypeIdList, 
+            String userIdList, 
+            Date startModifiedTime, Date endModifiedTime,
+            Date startCreatedTime, Date endCreatedTime) {
         /**
          * Optional Parameters: item_type_id, entity_type_id, start_time, end_time
          */
@@ -1035,8 +1048,10 @@ public abstract class ItemFacadeBase<ItemDomainEntity extends Item> extends CdbE
                     .setParameter("item_type_id_list", itemTypeIdList)
                     .setParameter("entity_type_id_list", entityTypeIdList)
                     .setParameter("user_id_list", userIdList)
-                    .setParameter("start_time", startTime)
-                    .setParameter("end_time", endTime)
+                    .setParameter("start_modified_time", startModifiedTime)
+                    .setParameter("end_modified_time", endModifiedTime)
+                    .setParameter("start_created_time", startCreatedTime)
+                    .setParameter("end_created_time", endCreatedTime)
                     .setParameter("search_string", searchString)
                     .setParameter("limit_row", SEARCH_RESULT_LIMIT)
                     .getResultList();

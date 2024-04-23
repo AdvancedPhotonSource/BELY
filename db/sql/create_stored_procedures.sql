@@ -38,8 +38,10 @@ CREATE PROCEDURE `search_items_no_parent` (
 	IN entity_type_id_list TEXT, 
 	IN item_type_id_list TEXT, 
 	IN user_id_list TEXT, 
-	IN start_time datetime, 
-	IN end_time datetime, 
+	IN start_modified_time datetime, 
+	IN end_modified_time datetime, 
+	IN start_created_time datetime, 
+	IN end_created_time datetime, 
 	IN search_string VARCHAR(255)
 	) 
 BEGIN
@@ -94,14 +96,24 @@ BEGIN
 			AND FIND_IN_SET(iit.item_type_id, '", item_type_id_list, "') ");
 	END IF; 
 
-	IF start_time THEN
+	IF start_modified_time THEN
 		SET @where_stmt = CONCAT(@where_stmt, "
-			AND ei.last_modified_on_date_time > '", start_time, "' ");
+			AND ei.last_modified_on_date_time > '", start_modified_time, "' ");
 	END IF;
 
-	IF end_time THEN
+	IF end_modified_time THEN
 		SET @where_stmt = CONCAT(@where_stmt, "
-			AND ei.last_modified_on_date_time < '", end_time, "' ");			
+			AND ei.last_modified_on_date_time < '", end_modified_time, "' ");			
+	END IF;
+
+	IF start_created_time THEN
+		SET @where_stmt = CONCAT(@where_stmt, "
+			AND ei.created_on_date_time > '", start_created_time, "' ");
+	END IF;
+
+	IF end_created_time THEN
+		SET @where_stmt = CONCAT(@where_stmt, "
+			AND ei.created_on_date_time < '", end_created_time, "' ");			
 	END IF;
 
 
@@ -127,8 +139,10 @@ CREATE PROCEDURE `search_item_logs` (
 	IN entity_type_id_list TEXT, 
 	IN item_type_id_list TEXT, 
 	IN user_id_list TEXT, 
-	IN start_time datetime, 
-	IN end_time datetime, 
+	IN start_modified_time datetime, 
+	IN end_modified_time datetime, 
+	IN start_created_time datetime, 
+	IN end_created_time datetime, 
 	IN search_string VARCHAR(255)
 	) 
 BEGIN
@@ -177,14 +191,24 @@ BEGIN
 			AND FIND_IN_SET(iet.entity_type_id, '", entity_type_id_list, "') ");			
 	END IF;
 	
-	IF start_time THEN
+	IF start_modified_time THEN
 		SET @where_stmt = CONCAT(@where_stmt, "
-			AND log.last_modified_on_date_time > '", start_time, "' ");
+			AND log.last_modified_on_date_time > '", start_modified_time, "' ");
 	END IF;
 
-	IF end_time THEN
+	IF end_modified_time THEN
 		SET @where_stmt = CONCAT(@where_stmt, "
-			AND log.last_modified_on_date_time < '", end_time, "' ");			
+			AND log.last_modified_on_date_time < '", end_modified_time, "' ");			
+	END IF;
+
+	IF start_created_time THEN
+		SET @where_stmt = CONCAT(@where_stmt, "
+			AND log.entered_on_date_time > '", start_created_time, "' ");
+	END IF;
+
+	IF end_created_time THEN
+		SET @where_stmt = CONCAT(@where_stmt, "
+			AND log.entered_on_date_time < '", end_created_time, "' ");			
 	END IF;
 
 	SET @from_stmt = CONCAT(@from_stmt, @from_tbls, " "); 

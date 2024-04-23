@@ -283,12 +283,22 @@ import org.primefaces.model.TreeNode;
                         type = String.class
                 ),
                 @StoredProcedureParameter(
-                        name = "start_time",
+                        name = "start_modified_time",
                         mode = ParameterMode.IN,
                         type = Date.class
                 ),                
                 @StoredProcedureParameter(
-                        name = "end_time",
+                        name = "end_modified_time",
+                        mode = ParameterMode.IN,
+                        type = Date.class
+                ),
+                @StoredProcedureParameter(
+                        name = "start_created_time",
+                        mode = ParameterMode.IN,
+                        type = Date.class
+                ),                
+                @StoredProcedureParameter(
+                        name = "end_created_time",
                         mode = ParameterMode.IN,
                         type = Date.class
                 ),
@@ -330,12 +340,22 @@ import org.primefaces.model.TreeNode;
                         type = String.class
                 ),
                 @StoredProcedureParameter(
-                        name = "start_time",
+                        name = "start_modified_time",
                         mode = ParameterMode.IN,
                         type = Date.class
                 ),                
                 @StoredProcedureParameter(
-                        name = "end_time",
+                        name = "end_modified_time",
+                        mode = ParameterMode.IN,
+                        type = Date.class
+                ),
+                @StoredProcedureParameter(
+                        name = "start_created_time",
+                        mode = ParameterMode.IN,
+                        type = Date.class
+                ),                
+                @StoredProcedureParameter(
+                        name = "end_created_time",
                         mode = ParameterMode.IN,
                         type = Date.class
                 ),
