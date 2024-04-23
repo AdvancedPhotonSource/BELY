@@ -501,6 +501,18 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     public void prepareEditLogEntry(Log entry) {
         if (isSaveLogLockoutsForCurrent(entry)) {
+            // Fetch latest log entry in db. 
+            Log updatedEntry = logFacade.find(entry.getId());
+
+            if (updatedEntry != null) {
+                entry = updatedEntry; 
+            } else {
+                SessionUtility.addWarningMessage("Deleted Entry", "This entry was deleted in another session. Created new entry with existing text.");
+                String text = entry.getText();                
+                entry = prepareAddLog(getCurrent());                 
+                entry.setText(text); 
+            }
+
             setNewLogEdit(entry);
         }
     }
