@@ -5,7 +5,7 @@
 
 document.addEventListener('paste', pasteLogTextArea);
 
-const linkRegex = new RegExp("(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})(\.[a-zA-Z0-9]{2,})?"); 
+const linkRegex = new RegExp("^(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})(\.[a-zA-Z0-9]{2,})?"); 
 
 function pasteLogTextArea(event) {
     // Ignore non text area 
