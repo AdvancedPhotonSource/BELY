@@ -505,16 +505,29 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             Log updatedEntry = logFacade.find(entry.getId());
 
             if (updatedEntry != null) {
-                entry = updatedEntry; 
+                String originalText = entry.getText();
+                entry = updatedEntry;
+                String latestText = entry.getText();
+
+                if (!originalText.equals(latestText)) {
+                    SessionUtility.addInfoMessage("Entry Refreshed", "Fetched latest chages for the log entry.");
+                }
+
+                entry.setOriginalLogEntryText(latestText);
             } else {
-                SessionUtility.addWarningMessage("Deleted Entry", "This entry was deleted in another session. Created new entry with existing text.");
-                String text = entry.getText();                
-                entry = prepareAddLog(getCurrent());                 
-                entry.setText(text); 
+                handleDeletedLogEntryDuringSync(entry);
             }
 
             setNewLogEdit(entry);
         }
+    }
+
+    private void handleDeletedLogEntryDuringSync(Log deletedEntry) {
+        SessionUtility.addWarningMessage("Deleted Entry", "This entry was deleted in another session. Created new entry with existing text.");
+        String text = deletedEntry.getText();
+        deletedEntry = prepareAddLog(getCurrent());
+        deletedEntry.setText(text);
+
     }
 
     private void updateModifiedDateForCurrent() {
@@ -545,17 +558,42 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @Override
     public String saveLogList() {
+        if (newLogEdit.getId() != null) {
+            // Perform validation 
+            Log savedLogEntry = logFacade.find(newLogEdit.getId());
+
+            if (savedLogEntry == null) {
+                handleDeletedLogEntryDuringSync(newLogEdit);
+            } else {
+                String loadedTextEntry = newLogEdit.getOriginalLogEntryText();
+                String savedText = savedLogEntry.getText();
+
+                if (!loadedTextEntry.equals(savedText)) {
+                    SessionUtility.addWarningMessage("Outdated Local Entry", "A newer version was detected before saving. Review changes and try again.");
+                    newLogEdit.setOriginalLogEntryText(savedText);
+                    newLogEdit.setSaveConflict(true);
+
+                    return null;
+                }
+
+            }
+        }
+
+        LogController logController = LogController.getInstance();
+        logController.saveLogEntry(newLogEdit);
+
         lastLog = newLogEdit;
         if (newLogEdit.getId() == null) {
+            // New log entry 
             List<ItemElement> itemElementList = newLogEdit.getItemElementList();
             ItemDomainLogbook parentItem = (ItemDomainLogbook) itemElementList.get(0).getParentItem();
-            newLogEdit = null;
 
             parentItem = (ItemDomainLogbook) getItem(parentItem.getId());
             List<Log> logList = parentItem.getLogList();
             lastLog = logList.get(logList.size() - 1);
         }
 
+        newLogEdit = null;
         updateModifiedDateForCurrent();
 
         return viewForCurrentEntity();
@@ -874,9 +912,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
             startModifiedTime = searchModifiedStartDate;
             endModifiedTime = searchModifiedEndDate;
-            startCreatedTime = searchCreatedStartDate; 
-            endCreatedTime = searchCreatedEndDate; 
-            
+            startCreatedTime = searchCreatedStartDate;
+            endCreatedTime = searchCreatedEndDate;
+
             endModifiedTime = adjustEndTime(endModifiedTime);
             endCreatedTime = adjustEndTime(endCreatedTime);
         }
@@ -884,13 +922,13 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         resetSearchVariables();
 
         ItemDomainLogbookControllerUtility utility = getControllerUtility();
-        Map searchArgs = utility.createAdvancedSearchMap(entityTypeIdList, itemTypeIdList, userIdList, 
+        Map searchArgs = utility.createAdvancedSearchMap(entityTypeIdList, itemTypeIdList, userIdList,
                 startModifiedTime, endModifiedTime, startCreatedTime, endCreatedTime);
 
         super.performEntitySearch(searchString, searchArgs, caseInsensitive);
 
         // Search log entries. 
-        List<Object[]> results = itemDomainLogbookFacade.searchEntityLogs(searchString, itemTypeIdList, entityTypeIdList, userIdList, 
+        List<Object[]> results = itemDomainLogbookFacade.searchEntityLogs(searchString, itemTypeIdList, entityTypeIdList, userIdList,
                 startModifiedTime, endModifiedTime, startCreatedTime, endCreatedTime);
 
         ItemDomainLogbookControllerUtility controllerUtility1 = getControllerUtility();
@@ -930,7 +968,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             endDateCal.set(Calendar.SECOND, 59);
             endTime = endDateCal.getTime();
         }
-        
+
         return endTime;
     }
 

@@ -102,6 +102,9 @@ public class Log extends CdbEntity implements Serializable {
     
     private static transient SimpleDateFormat shortDisplayDateFormat = new SimpleDateFormat("MM/dd/yy HH:mm");
     private transient String htmlText; 
+    
+    private transient String originalLogEntryText; 
+    private transient boolean saveConflict = false; 
 
     public Log() {
     }
@@ -270,12 +273,31 @@ public class Log extends CdbEntity implements Serializable {
         return hash;
     }
 
+    @JsonIgnore
     public String getHtmlText() {
         if (htmlText == null) {   
             htmlText = text;                         
             htmlText = MarkdownParser.parseMarkdownAsHTML(htmlText);             
         }
         return htmlText;
+    }
+
+    @JsonIgnore
+    public String getOriginalLogEntryText() {
+        return originalLogEntryText;
+    }
+
+    public void setOriginalLogEntryText(String originalLogEntryText) {
+        this.originalLogEntryText = originalLogEntryText;
+    }
+
+    @JsonIgnore
+    public boolean isSaveConflict() {
+        return saveConflict;
+    }
+
+    public void setSaveConflict(boolean saveConflict) {
+        this.saveConflict = saveConflict;
     }
 
     @Override
