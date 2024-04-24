@@ -87,5 +87,10 @@ public abstract class CdbLazyDataModel extends LazyDataModel {
             lastSortMap.put(key, intValue);
         }
     }
+    
+    public void refreshDataModel() {
+        lastFilterMap = null; 
+        lastSortMap = null; 
+    }
 
 }

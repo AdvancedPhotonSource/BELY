@@ -646,6 +646,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         if (currentEntityType != null && itemLazyDataModel != null) {
             String name = currentEntityType.getName();
             if (name.equals(OPS_ENTITY_TYPE_NAME)) {
+                // Perform Refresh     
+                ItemDomainLogbookLazyDataModel dataModel = getItemLazyDataModel();
+                dataModel.refreshDataModel();
                 return;
             }
         }
@@ -705,9 +708,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             int etId = Integer.parseInt(currentEntityTypeIdStr);
             EntityType et = entityTypeFacade.find(etId);
             redirectToEntityTypeList(et);
+            return; 
         } else if (itemLazyDataModel == null) {
             // EntitytypeId was not specified and list was reset. 
             redirectToEntityTypeList(lastEntityType);
+            return; 
         }
 
         // no entity type has been selected. 
@@ -719,9 +724,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
                 SessionUtility.addWarningMessage("No list selected", "Redirecting to first list.");
                 EntityType et = topLevelEntityTypeList.get(0);
                 redirectToEntityTypeList(et);
+                return; 
             }
         }
-
+        
+        ItemDomainLogbookLazyDataModel dataModel = getItemLazyDataModel();
+        dataModel.refreshDataModel(); 
     }
 
     @Override
