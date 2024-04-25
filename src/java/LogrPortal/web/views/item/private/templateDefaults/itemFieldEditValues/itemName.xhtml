@@ -13,6 +13,7 @@ See LICENSE file.
         <h:inputText id="nameInputText#{viewName}" value="#{itemObject.name}"                  
                      title="#{entityController.nameTitle}" 
                      styleClass="entityDataEmphasizedText"
+                     style="width: 70%"
                      required="true"
                      requiredMessage="#{entityController.nameTitle} is required"
                      onkeyup="updateName#{viewName}()"/>
