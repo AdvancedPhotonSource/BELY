@@ -1339,7 +1339,36 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         String currentEntityPermalink = getCurrentEntityPermalink();
         return currentEntityPermalink + "&logId=" + logId;
     }
+    
+    // <editor-fold defaultstate="collapsed" desc="Studies functionality.">        
+    public String prepareCreateStudies() {
+        String redirect = super.prepareCreate(); 
+        
+        LocalDateTime now = LocalDateTime.now();               
+        Integer hour = now.getHour();
+        
+        int year = now.getYear();
+        int month = now.getMonthValue(); 
+        int day = now.getDayOfMonth(); 
+        int shift; 
 
+        if (hour < 8) { // Shift 1 0 - 8
+            shift = 1; 
+        } else if (hour < 16) { // Shift 2 8-16
+            shift = 2; 
+        } else { // Shift 3 16-24
+            shift = 3; 
+        }
+        
+        // yyyy/mm/dd/shift
+        String shiftName = String.format("[%d/%02d/%02d/%d] ", year, month, day, shift); 
+
+        ItemDomainLogbook current = getCurrent();
+        current.setName(shiftName);
+        
+        return redirect; 
+    }
+    // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Advanced Search">    
     public List<SelectItem> getSearchLogbookTypeSelectItemList() {
         if (searchLogbookTypeSelectItemList == null) {
