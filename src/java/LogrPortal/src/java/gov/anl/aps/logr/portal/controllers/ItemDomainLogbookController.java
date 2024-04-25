@@ -672,7 +672,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         String entityTypeName = entityType.getName();
         itemLazyDataModel.setCurrentEntityType(entityTypeName);
 
-        String redirect = getListRedirectForEntityType(entityType, false);
+        String redirect = getListRedirectForEntityType(entityType, false, false);
         try {
             SessionUtility.redirectTo(redirect);
         } catch (IOException ex) {
@@ -681,8 +681,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
     }
 
-    private String getListRedirectForEntityType(EntityType entityType, boolean includeETURLParam) {
-        String listUrl = entityType.getCustomListUrl();
+    private String getListRedirectForEntityType(EntityType entityType, boolean includeETURLParam, boolean skipCustomURL) {
+        String listUrl = null; 
+        if (!skipCustomURL) {
+            listUrl = entityType.getCustomListUrl();
+        }
         if (listUrl == null) {
             listUrl = "list";
             if (includeETURLParam) {
@@ -709,7 +712,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             EntityType et = entityTypeFacade.find(etId);
             redirectToEntityTypeList(et);
             return; 
-        } else if (itemLazyDataModel == null) {
+        } else if (itemLazyDataModel == null && lastEntityType != null) {
             // EntitytypeId was not specified and list was reset. 
             redirectToEntityTypeList(lastEntityType);
             return; 
@@ -726,6 +729,14 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
                 redirectToEntityTypeList(et);
                 return; 
             }
+        }
+        
+        // Redirect if user has wrong base page URL for currentEntityType. 
+        String viewId = SessionUtility.getCurrentViewId();
+        viewId = viewId.replace(".xhtml", ""); 
+        String redirect = getListRedirectForEntityType(currentEntityType, false, false);         
+        if (!viewId.equals(redirect)) {
+            redirectToEntityTypeList(currentEntityType);            
         }
         
         ItemDomainLogbookLazyDataModel dataModel = getItemLazyDataModel();
@@ -1292,7 +1303,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     // </editor-fold>
     public final String getCurrentListPermalink() {
         if (currentEntityType != null) {
-            String redirect = getListRedirectForEntityType(currentEntityType, true);
+            String redirect = getListRedirectForEntityType(currentEntityType, true, true);
             String viewPath = String.format("%s%s", contextRootPermanentUrl, redirect);
             return viewPath;
         }
