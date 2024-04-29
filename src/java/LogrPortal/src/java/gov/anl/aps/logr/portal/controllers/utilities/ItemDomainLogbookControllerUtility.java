@@ -217,7 +217,7 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
         if (logbookDocumentSettings != null) {
             String templateMode = logbookDocumentSettings.getPropertyMetadataValueForKey(LogDocumentSettings.logTemplateModeKey.getValue());
 
-            if (templateMode.equals(LogDocumentSettings.logTemplateModeTemplatePerEntryVal.getValue())) {
+            if (templateMode != null && templateMode.equals(LogDocumentSettings.logTemplateModeTemplatePerEntryVal.getValue())) {
                 Item createdFromTemplate = cdbDomainEntity.getCreatedFromTemplate();
                 if (createdFromTemplate != null) {
                     List<Log> logList = createdFromTemplate.getLogList();
