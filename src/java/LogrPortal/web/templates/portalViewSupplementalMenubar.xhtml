@@ -8,19 +8,19 @@ See LICENSE file.
                 xmlns:ui="http://java.sun.com/jsf/facelets"
                 xmlns:fn="http://java.sun.com/jsp/jstl/functions"
                 xmlns:p="http://primefaces.org/ui">
-    
+
     <ui:param name="isAdminVersion" value="#{loginController.loggedInAsAdmin}" /> 
-    
+
     <p:submenu label="#{isAdminVersion ? 'Administrative' : 'Supplemental'}"
                id="administrativeButton"
                icon="fa #{isAdminVersion ? 'fa-superpowers' : 'fa-list'}"
                styleClass="wideSubMenu #{(fn:startsWith(view.viewId, '/views/itemDomainLocation') 
-                             or fn:startsWith(view.viewId, '/views/adminLog')
-                             or fn:startsWith(view.viewId, '/views/system')
-                             or fn:startsWith(view.viewId, '/views/propertyType')
-                             or fn:startsWith(view.viewId, '/views/source')
-                             or fn:startsWith(view.viewId, '/views/userInfo')
-                             or fn:startsWith(view.viewId, '/views/connectorType')) ? 'activeSubMenuParentItem' : ''} ">        
+                                         or fn:startsWith(view.viewId, '/views/adminLog')
+                                         or fn:startsWith(view.viewId, '/views/system')
+                                         or fn:startsWith(view.viewId, '/views/propertyType')
+                                         or fn:startsWith(view.viewId, '/views/source')
+                                         or fn:startsWith(view.viewId, '/views/userInfo')
+                                         or fn:startsWith(view.viewId, '/views/connectorType')) ? 'activeSubMenuParentItem' : ''} ">        
 
         <p:menuitem value="Admin Logs" 
                     icon="fa fa-book"
@@ -33,7 +33,7 @@ See LICENSE file.
                     rendered="#{isAdminVersion}"
                     styleClass="#{fn:startsWith(view.viewId, '/views/system/') ? 'activeMenuItem' : ''} "
                     url="#{request.contextPath}/views/system/browseSystemSessions" /> 
-        
+
         <p:menuitem value="Logbook Types" 
                     icon="fa fa-indent"
                     rendered="#{isAdminVersion}"
@@ -52,12 +52,18 @@ See LICENSE file.
                     id="usersButton"
                     styleClass="#{fn:startsWith(view.viewId, '/views/userInfo/') ? 'activeMenuItem' : ''} "
                     action="#{userInfoController.prepareListFromViewPath('/views/userInfo')}"/>                        
-     
+
 
         <p:menuitem value="Import Templates"                    
                     id="importTemplatesButton"
                     icon="fa fa-plus"
                     styleClass="#{fn:startsWith(view.viewId, '/views/importTemplates/') ? 'activeMenuItem' : ''} "
-                    url="#{request.contextPath}/views/importTemplates/browseImportTemplates" />                        
+                    url="#{request.contextPath}/views/importTemplates/browseImportTemplates" />
+
+        <p:menuitem value="Settings"
+                    action="#{userInfoController.prepareSessionUserEdit()}" 
+                    rendered="#{loginController.loggedIn}" icon="fa fa-cogs"/>
+        <p:menuitem value="Logout" id="logoutButton" action="#{loginController.logout()}" rendered="#{loginController.loggedIn}" icon="fa fa-sign-out"/>
+        <p:menuitem value="About" url="#{request.contextPath}/views/about.xhtml" icon="fa fa-question"/>
     </p:submenu>      
 </ui:composition>
