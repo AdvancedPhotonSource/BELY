@@ -299,6 +299,11 @@ public class Log extends CdbEntity implements Serializable {
     public void setSaveConflict(boolean saveConflict) {
         this.saveConflict = saveConflict;
     }
+    
+    @JsonIgnore
+    public boolean isModifiedEntry() {
+        return enteredOnDateTime.getTime() != lastModifiedOnDateTime.getTime(); 
+    }
 
     @Override
     public boolean equals(Object object) {

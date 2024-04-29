@@ -24,6 +24,7 @@ See LICENSE file.
 
         <ui:fragment rendered="#{itemObject.logList.size() !=0}">
             <p:dataScroller value="#{itemObject.logList}" var="logObject" styleClass="logDataScroller">
+                <ui:param name="logModified" value="#{logObject.modifiedEntry}"/>                
                 <div id="log-#{logObject.id}">                   
                     <p:panel collapsed="#{!itemDomainLogbookController.logbookDisplayTimestamps}"
                              styleClass="logTimestamp"
@@ -32,15 +33,17 @@ See LICENSE file.
                              id="timestampPanel"
                              widgetVar="timestampPanelWidget#{logObject.id}">
                         <span>Created on #{logObject.enteredOnDateTime} (#{logObject.enteredByUser.username})</span>
-                        <span style="float: right">Last modified on #{logObject.lastModifiedOnDateTime} (#{logObject.lastModifiedByUser.username})</span>
+                        <ui:fragment rendered="#{logModified}">
+                            <span style="float: right">Last modified on #{logObject.lastModifiedOnDateTime} (#{logObject.lastModifiedByUser.username})</span>
+                        </ui:fragment>
                         <p:tooltip for="timestampPanel">                            
                             <div>
                                 <h:outputLabel value="Created by "/>
                                 <h:outputText value="#{logObject.enteredByUser}" />
                             </div>
                             <div>
-                                <h:outputLabel value="Modified by "/>
-                                <h:outputText value="#{logObject.lastModifiedByUser}" />
+                                <h:outputLabel value="Modified by " rendered="#{logModified}"/>
+                                <h:outputText value="#{logObject.lastModifiedByUser}" rendered="#{logModified}" />
                             </div>
 
                         </p:tooltip>
