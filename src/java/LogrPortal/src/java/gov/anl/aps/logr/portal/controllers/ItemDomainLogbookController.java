@@ -571,6 +571,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
                 if (!loadedTextEntry.equals(savedText)) {
                     SessionUtility.addWarningMessage("Outdated Local Entry", "A newer version was detected before saving. Review changes and try again.");
                     newLogEdit.setOriginalLogEntryText(savedText);
+                    newLogEdit.setOriginalLogEntryUser(savedLogEntry.getLastModifiedByUser()); 
                     newLogEdit.setSaveConflict(true);
 
                     return null;

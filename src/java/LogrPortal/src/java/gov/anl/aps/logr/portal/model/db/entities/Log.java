@@ -104,6 +104,7 @@ public class Log extends CdbEntity implements Serializable {
     private transient String htmlText; 
     
     private transient String originalLogEntryText; 
+    private transient UserInfo originalLogEntryUser; 
     private transient boolean saveConflict = false; 
 
     public Log() {
@@ -291,6 +292,15 @@ public class Log extends CdbEntity implements Serializable {
         this.originalLogEntryText = originalLogEntryText;
     }
 
+    @JsonIgnore
+    public UserInfo getOriginalLogEntryUser() {
+        return originalLogEntryUser;
+    }
+
+    public void setOriginalLogEntryUser(UserInfo originalLogEntryUser) {
+        this.originalLogEntryUser = originalLogEntryUser;
+    }
+    
     @JsonIgnore
     public boolean isSaveConflict() {
         return saveConflict;

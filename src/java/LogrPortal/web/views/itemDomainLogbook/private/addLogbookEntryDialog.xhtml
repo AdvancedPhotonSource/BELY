@@ -22,9 +22,15 @@ See LICENSE file.
             <ui:param name="logObject" value="#{entityController.newLogEdit}" />
             <ui:param name="saveConflict" value="#{logObject.saveConflict}"/> 
 
+            <ui:fragment rendered="#{saveConflict}">
+                <h3 style="color: darkred">
+                    Another user saved changes to this log entry while you were making changes. Please Review. 
+                </h3>
+            </ui:fragment>
+
             <p:panelGrid id="logEntryPanelGrid" columns="2" rendered="#{logObject != null}" >
 
-                <h:outputText value="Latest Saved Log Entry" rendered="#{saveConflict}"/> 
+                <h:outputText value="Latest Saved Log Entry by #{logObject.originalLogEntryUser}" rendered="#{saveConflict}"/> 
 
                 <h:outputLabel for="logbookLogEntryValue" value="Log Entry" styleClass="entityDataEmphasizedLabel"/>                        
 
@@ -47,7 +53,7 @@ See LICENSE file.
 
                 <p:column rendered="#{saveConflict}"/>                 
                 <h:outputLabel for="logbookLogAttachmentsValue" value="Attachments" styleClass="entityDataEmphasizedLabel"/>            
-                
+
                 <p:column rendered="#{saveConflict}"/> 
                 <p:outputPanel id="logbookLogAttachmentsValue">
                     <ui:include src="../../log/private/logAttachmentFileUpload.xhtml">
@@ -108,7 +114,7 @@ See LICENSE file.
                                  oncomplete="PF('#{entityTypeName}LogAddDialogWidget').hide()"
                                  action="#{entityController.viewForCurrentEntity()}"
                                  update="@form"/>
-                
+
                 <p:remoteCommand name="failSaveLogEntry"
                                  oncomplete="PF('#{entityTypeName}LogbookLogAddDialogWidget').initPosition();  PF('loadingDialog').hide();"/>
             </p:outputPanel>
