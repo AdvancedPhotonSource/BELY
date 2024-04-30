@@ -31,22 +31,26 @@ See LICENSE file.
                              toggleable="true"
                              toggleSpeed="100"
                              id="timestampPanel"
-                             widgetVar="timestampPanelWidget#{logObject.id}">
-                        <span>Created on #{logObject.enteredOnDateTime} (#{logObject.enteredByUser.username})</span>
-                        <ui:fragment rendered="#{logModified}">
-                            <span style="float: right">Last modified on #{logObject.lastModifiedOnDateTime} (#{logObject.lastModifiedByUser.username})</span>
-                        </ui:fragment>
-                        <p:tooltip for="timestampPanel">                            
-                            <div>
-                                <h:outputLabel value="Created by "/>
-                                <h:outputText value="#{logObject.enteredByUser}" />
-                            </div>
-                            <div>
-                                <h:outputLabel value="Modified by " rendered="#{logModified}"/>
-                                <h:outputText value="#{logObject.lastModifiedByUser}" rendered="#{logModified}" />
-                            </div>
+                             widgetVar="timestampPanelWidget#{logObject.id}">                        
 
-                        </p:tooltip>
+                        <span>
+                            Added on 
+                            <h:outputText value="#{logObject.enteredOnDateTime}">
+                                <f:convertDateTime pattern="MM/dd/yyyy hh:mm a"/>
+                            </h:outputText>
+                            by 
+                            #{logObject.enteredByUser}
+                        </span>
+                        <ui:fragment rendered="#{logModified}">
+                            <span style="float: right">
+                                Edited on
+                                <h:outputText value="#{logObject.lastModifiedOnDateTime}">
+                                    <f:convertDateTime pattern="MM/dd/yyyy hh:mm a"/>
+                                </h:outputText>
+                                by
+                                #{logObject.lastModifiedByUser}
+                            </span>
+                        </ui:fragment>                        
                     </p:panel>
 
                     <p:outputPanel styleClass="logEntry">                        
