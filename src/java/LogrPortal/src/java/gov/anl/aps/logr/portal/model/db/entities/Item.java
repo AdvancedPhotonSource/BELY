@@ -905,8 +905,12 @@ public class Item extends CdbDomainEntity implements Serializable {
 
     public String getQrIdFilter() {
         if (qrIdFilter == null) {
-            String dispQr = getQrIdDisplay();
-            qrIdFilter = dispQr + " " + qrId + " " + dispQr.replace(" ", "");
+            if (qrId == null) {
+                qrIdFilter = ""; 
+            } else {
+                String dispQr = getQrIdDisplay();
+                qrIdFilter = dispQr + " " + qrId + " " + dispQr.replace(" ", "");
+            }
         }
         return qrIdFilter;
     }
