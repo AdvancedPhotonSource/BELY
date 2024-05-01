@@ -944,7 +944,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         resetSearchVariables();
 
         ItemDomainLogbookControllerUtility utility = getControllerUtility();
-        Map searchArgs = utility.createAdvancedSearchMap(entityTypeIdList, itemTypeIdList, userIdList,
+        Map searchArgs = utility.createAdvancedSearchMap(searchLogbookTypeList, searchSystemList, searchUserList,
                 startModifiedTime, endModifiedTime, startCreatedTime, endCreatedTime);
 
         super.performEntitySearch(searchString, searchArgs, caseInsensitive);
@@ -958,7 +958,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         Pattern searchPattern = controllerUtility1.getSearchPattern(patternString, caseInsensitive);
 
         logResults = new ArrayList<>();
-
+        
         for (Object[] result : results) {
             ItemDomainLogbook logbook = (ItemDomainLogbook) result[0];
             Log log = (Log) result[1];
@@ -968,14 +968,46 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             searchResult.setAdditionalAttribute("" + logId);
 
             String text = log.getText();
-            String[] logLines = text.split("\n");
-
-            for (int i = 0; i < logLines.length; i++) {
-                String lineNum = "log_line_" + (i + 1);
+            String[] logLines = text.split("\n");            
+            String matching_lines = ""; 
+            
+            for (int i = 0; i < logLines.length; i++) {                
                 String lineText = logLines[i];
+                
+                if (searchPattern.matcher(lineText).find()) {
+                    matching_lines += lineText + "\n"; 
+                }               
+            }            
+            searchResult.addAttributeMatch("log entry", matching_lines);
+            
+            controllerUtility1.addCommonLogEntryDocumentMatches(searchResult, searchLogbookTypeList, searchSystemList);
+            
+            if (searchUserList != null && !searchUserList.isEmpty()) {
+                for (UserInfo ui : searchUserList) {
+                    Integer searchUserId = ui.getId();
 
-                searchResult.doesValueContainPattern(lineNum, lineText, searchPattern);
+                    UserInfo enteredByUser = log.getEnteredByUser();
+                    UserInfo lastModifiedByUser = log.getLastModifiedByUser();
+
+                    if (Objects.equals(enteredByUser.getId(), searchUserId)) {
+                        searchResult.addAttributeMatch("Create User", enteredByUser.toString());
+                    }
+                    if (Objects.equals(lastModifiedByUser.getId(), searchUserId)) {
+                        searchResult.addAttributeMatch("Last Modify User", lastModifiedByUser.toString());
+                    }
+                }
             }
+
+            if (startCreatedTime != null || endCreatedTime != null) {
+                Date enteredOnDateTime = log.getEnteredOnDateTime();
+                searchResult.addAttributeMatch("Created on", enteredOnDateTime.toString());
+            }
+
+            if (startModifiedTime != null || endModifiedTime != null) {
+                Date modifiedOnDateTime = log.getLastModifiedOnDateTime();
+                searchResult.addAttributeMatch("Modified on", modifiedOnDateTime.toString());
+            }
+            
             logResults.add(searchResult);
         }
     }
