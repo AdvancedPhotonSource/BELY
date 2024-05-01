@@ -11,7 +11,7 @@ See LICENSE file.
 
     <ui:param name="isAdminVersion" value="#{loginController.loggedInAsAdmin}" /> 
 
-    <p:submenu label="#{isAdminVersion ? 'Administrative' : 'Supplemental'}"
+    <p:submenu label=""
                id="administrativeButton"
                icon="fa #{isAdminVersion ? 'fa-superpowers' : 'fa-list'}"
                styleClass="wideSubMenu #{(fn:startsWith(view.viewId, '/views/itemDomainLocation') 
@@ -62,8 +62,6 @@ See LICENSE file.
 
         <p:menuitem value="Settings"
                     action="#{userInfoController.prepareSessionUserEdit()}" 
-                    rendered="#{loginController.loggedIn}" icon="fa fa-cogs"/>
-        <p:menuitem value="Logout" id="logoutButton" action="#{loginController.logout()}" rendered="#{loginController.loggedIn}" icon="fa fa-sign-out"/>
-        <p:menuitem value="About" url="#{request.contextPath}/views/about.xhtml" icon="fa fa-question"/>
+                    rendered="#{loginController.loggedIn}" icon="fa fa-cogs"/>        
     </p:submenu>      
 </ui:composition>

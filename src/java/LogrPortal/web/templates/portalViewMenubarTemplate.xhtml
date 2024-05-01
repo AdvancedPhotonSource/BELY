@@ -62,7 +62,7 @@ See LICENSE file.
 
                     <p:menuitem styleClass="noButtonMenuItem"
                                 id="searchMenuItem">                                                                                                
-                        <p:inputText id="menuBarSearchInput" placeholder="Search"
+                        <p:inputText id="menuBarSearchInput" placeholder="Quick Search"
                                      autocomplete="off"                                 
                                      styleClass="expandingInputText entityDataText menuBarInputText" 
                                      value="#{searchController.inputBoxSearchString}" 
@@ -84,7 +84,8 @@ See LICENSE file.
 
                     <ui:include src="portalViewSupplementalMenubar.xhtml"/>                                           
                     <p:menuitem value="Login" id="loginButton" onclick="PF('loginDialogWidget').show()" rendered="#{!loginController.loggedIn}" icon="fa fa-sign-in"/>
-                    
+                    <p:menuitem value="Logout" id="logoutButton" action="#{loginController.logout()}" rendered="#{loginController.loggedIn}" icon="fa fa-sign-out"/>
+                    <p:menuitem value="About" url="#{request.contextPath}/views/about.xhtml" icon="fa fa-question"/>
                 </p:menubar>
             </f:facet>
         </p:menubar>                
