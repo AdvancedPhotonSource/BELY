@@ -124,6 +124,17 @@ public class SearchResult {
         
         return stringList; 
     }
+    
+    public ArrayList<String> getDisplayList() {
+        ArrayList<String> stringList = new ArrayList<>(); 
+        
+        for (String key : objectAttributeMatchMap.keySet()) {
+            String resultItem = String.format("%s: %s", key, objectAttributeMatchMap.get(key));
+            stringList.add(resultItem); 
+        }
+        
+        return stringList; 
+    }
 
     public String getDisplay() {
         String result = "";

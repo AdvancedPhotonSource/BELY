@@ -58,10 +58,10 @@ See LICENSE file.
             </p:column>
 
 
-            <p:column sortBy="#{searchResultObject.display}" headerText="Log Line Match Description">
-                <ui:repeat value="#{searchResultObject.shortDisplayList}"
-                           var="shortDisplay">
-                    <h:outputText value="#{shortDisplay}"/>
+            <p:column sortBy="#{searchResultObject.display}" headerText="Match Description">
+                <ui:repeat value="#{searchResultObject.displayList}"
+                           var="display">
+                    <h:outputText value="#{display}"/>
                     <br/>
                 </ui:repeat>                
             </p:column>
