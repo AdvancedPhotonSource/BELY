@@ -34,7 +34,6 @@ import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
 import gov.anl.aps.logr.portal.model.db.entities.SettingType;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.model.db.utilities.EntityInfoUtility;
-import gov.anl.aps.logr.portal.utilities.AuthorizationUtility;
 import gov.anl.aps.logr.portal.utilities.MarkdownParser;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
@@ -51,7 +50,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.logging.Level;
 import java.util.regex.Pattern;
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
@@ -91,6 +89,8 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private List<SearchResult> logResults;
     private List<EntityType> logbookEntityTypes;
     private List<EntityType> topLevelEntityTypeList;
+    
+    private String generatedName = null; 
 
     // <editor-fold defaultstate="collapsed" desc="Home Page">
     private List<ItemDomainLogbookHomeObject> logbookHome;
@@ -99,13 +99,16 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private EntityType logbookHomeType2 = null;
     private EntityType logbookHomeType3 = null;
     // </editor-fold>
-    
+
     // <editor-fold defaultstate="collapsed" desc="Advanced Search">
-    private List<SelectItem> searchLogbookTypeSelectItemList = null; 
+    private List<SelectItem> searchLogbookTypeSelectItemList = null;
     private List<EntityType> searchLogbookTypeList = null;
-    private List<ItemType> searchSystemList = null; 
-    private Date searchStartDate = null; 
-    private Date searchEndDate = null; 
+    private List<ItemType> searchSystemList = null;
+    private List<UserInfo> searchUserList = null;
+    private Date searchModifiedStartDate = null;
+    private Date searchModifiedEndDate = null;
+    private Date searchCreatedStartDate = null;
+    private Date searchCreatedEndDate = null;
     // </editor-fold>
 
     private EntityInfoControllerUtility entityInfoControllerUtility;
@@ -432,15 +435,15 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     private boolean isSaveLogLockoutsForCurrent() {
         return isSaveLogLockoutsForCurrent(null);
-    }   
+    }
 
     private boolean isSaveLogLockoutsForCurrent(Log log) {
         // Use current for the lockout timeout especially for documents with sections. 
         ItemDomainLogbook current = getCurrent();
         UserInfo user = SessionUtility.getUser();
-        
+
         ItemDomainLogbookControllerUtility utility = getControllerUtility();
-        
+
         try {
             utility.verifySaveLogLockoutsForItem(current, log, user);
         } catch (InvalidObjectState ex) {
@@ -448,28 +451,28 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             setNewLogEdit(null);
             return false;
         }
-        return true; 
+        return true;
     }
 
     @Override
     public Log prepareAddLog(ItemDomainLogbook cdbDomainEntity) {
         if (!isSaveLogLockoutsForCurrent()) {
             return null;
-        }       
+        }
 
         return super.prepareAddLog(cdbDomainEntity);
     }
 
     public void prepareCreateLogbookSection() {
         UserInfo user = SessionUtility.getUser();
-        
-        ItemDomainLogbook createEntityInstance = null; 
+
+        ItemDomainLogbook createEntityInstance = null;
         try {
             createEntityInstance = getControllerUtility().createLogbookSectionItem(user);
         } catch (CdbException ex) {
             SessionUtility.addErrorMessage("Error", ex.getErrorMessage());
         }
-        
+
         getCurrent().setNewLogbookSection(createEntityInstance);
     }
 
@@ -478,11 +481,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         ItemDomainLogbookControllerUtility controllerUtility = getControllerUtility();
 
         UserInfo user = SessionUtility.getUser();
-        ItemDomainLogbook newLogbookSection = current.getNewLogbookSection();                
+        ItemDomainLogbook newLogbookSection = current.getNewLogbookSection();
 
         // Save 
         try {
-            controllerUtility.addLogbookSection(current, newLogbookSection, user);                 
+            controllerUtility.addLogbookSection(current, newLogbookSection, user);
             controllerUtility.update(current, user);
         } catch (Exception ex) {
             String persitanceErrorMessage = current.getPersitanceErrorMessage();
@@ -496,12 +499,37 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
 
         return viewForCurrentEntity();
-    }   
+    }
 
     public void prepareEditLogEntry(Log entry) {
         if (isSaveLogLockoutsForCurrent(entry)) {
+            // Fetch latest log entry in db. 
+            Log updatedEntry = logFacade.find(entry.getId());
+
+            if (updatedEntry != null) {
+                String originalText = entry.getText();
+                entry = updatedEntry;
+                String latestText = entry.getText();
+
+                if (!originalText.equals(latestText)) {
+                    SessionUtility.addInfoMessage("Entry Refreshed", "Fetched latest chages for the log entry.");
+                }
+
+                entry.setOriginalLogEntryText(latestText);
+            } else {
+                handleDeletedLogEntryDuringSync(entry);
+            }
+
             setNewLogEdit(entry);
         }
+    }
+
+    private void handleDeletedLogEntryDuringSync(Log deletedEntry) {
+        SessionUtility.addWarningMessage("Deleted Entry", "This entry was deleted in another session. Created new entry with existing text.");
+        String text = deletedEntry.getText();
+        deletedEntry = prepareAddLog(getCurrent());
+        deletedEntry.setText(text);
+
     }
 
     private void updateModifiedDateForCurrent() {
@@ -532,17 +560,43 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @Override
     public String saveLogList() {
+        if (newLogEdit.getId() != null) {
+            // Perform validation 
+            Log savedLogEntry = logFacade.find(newLogEdit.getId());
+
+            if (savedLogEntry == null) {
+                handleDeletedLogEntryDuringSync(newLogEdit);
+            } else {
+                String loadedTextEntry = newLogEdit.getOriginalLogEntryText();
+                String savedText = savedLogEntry.getText();
+
+                if (!loadedTextEntry.equals(savedText)) {
+                    SessionUtility.addWarningMessage("Outdated Local Entry", "A newer version was detected before saving. Review changes and try again.");
+                    newLogEdit.setOriginalLogEntryText(savedText);
+                    newLogEdit.setOriginalLogEntryUser(savedLogEntry.getLastModifiedByUser()); 
+                    newLogEdit.setSaveConflict(true);
+
+                    return null;
+                }
+
+            }
+        }
+
+        LogController logController = LogController.getInstance();
+        logController.saveLogEntry(newLogEdit);
+
         lastLog = newLogEdit;
         if (newLogEdit.getId() == null) {
+            // New log entry 
             List<ItemElement> itemElementList = newLogEdit.getItemElementList();
             ItemDomainLogbook parentItem = (ItemDomainLogbook) itemElementList.get(0).getParentItem();
-            newLogEdit = null;
 
             parentItem = (ItemDomainLogbook) getItem(parentItem.getId());
             List<Log> logList = parentItem.getLogList();
             lastLog = logList.get(logList.size() - 1);
         }
 
+        newLogEdit = null;
         updateModifiedDateForCurrent();
 
         return viewForCurrentEntity();
@@ -573,9 +627,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     protected String preserveAdditionalParameters(String paramString) {
         String logId = SessionUtility.getRequestParameterValue("logId");
         if (logId != null) {
-            paramString += "&logId=" + logId; 
+            paramString += "&logId=" + logId;
         }
-        return paramString; 
+        return paramString;
     }
 
     @Override
@@ -595,6 +649,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         if (currentEntityType != null && itemLazyDataModel != null) {
             String name = currentEntityType.getName();
             if (name.equals(OPS_ENTITY_TYPE_NAME)) {
+                // Perform Refresh     
+                ItemDomainLogbookLazyDataModel dataModel = getItemLazyDataModel();
+                dataModel.refreshDataModel();
                 return;
             }
         }
@@ -618,7 +675,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         String entityTypeName = entityType.getName();
         itemLazyDataModel.setCurrentEntityType(entityTypeName);
 
-        String redirect = getListRedirectForEntityType(entityType, false);
+        String redirect = getListRedirectForEntityType(entityType, false, false);
         try {
             SessionUtility.redirectTo(redirect);
         } catch (IOException ex) {
@@ -627,8 +684,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
     }
 
-    private String getListRedirectForEntityType(EntityType entityType, boolean includeETURLParam) {
-        String listUrl = entityType.getCustomListUrl();
+    private String getListRedirectForEntityType(EntityType entityType, boolean includeETURLParam, boolean skipCustomURL) {
+        String listUrl = null; 
+        if (!skipCustomURL) {
+            listUrl = entityType.getCustomListUrl();
+        }
         if (listUrl == null) {
             listUrl = "list";
             if (includeETURLParam) {
@@ -654,9 +714,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             int etId = Integer.parseInt(currentEntityTypeIdStr);
             EntityType et = entityTypeFacade.find(etId);
             redirectToEntityTypeList(et);
-        } else if (itemLazyDataModel == null) {
+            return; 
+        } else if (itemLazyDataModel == null && lastEntityType != null) {
             // EntitytypeId was not specified and list was reset. 
             redirectToEntityTypeList(lastEntityType);
+            return; 
         }
 
         // no entity type has been selected. 
@@ -668,9 +730,20 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
                 SessionUtility.addWarningMessage("No list selected", "Redirecting to first list.");
                 EntityType et = topLevelEntityTypeList.get(0);
                 redirectToEntityTypeList(et);
+                return; 
             }
         }
-
+        
+        // Redirect if user has wrong base page URL for currentEntityType. 
+        String viewId = SessionUtility.getCurrentViewId();
+        viewId = viewId.replace(".xhtml", ""); 
+        String redirect = getListRedirectForEntityType(currentEntityType, false, false);         
+        if (!viewId.equals(redirect)) {
+            redirectToEntityTypeList(currentEntityType);            
+        }
+        
+        ItemDomainLogbookLazyDataModel dataModel = getItemLazyDataModel();
+        dataModel.refreshDataModel(); 
     }
 
     @Override
@@ -681,14 +754,14 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     @Override
     public ItemDomainLogbook createEntityInstance() {
         ItemDomainLogbook entity = super.createEntityInstance();
-        
+
         UserInfo user = SessionUtility.getUser();
-        
+
         ItemDomainLogbookControllerUtility utility = getControllerUtility();
-        try { 
+        try {
             entity = utility.completeCreateEntityInstance(entity, currentEntityType, user);
             // Sync the UI template selection. 
-            templateToCreateNewItem = (ItemDomainLogbook) entity.getCreatedFromTemplate();            
+            templateToCreateNewItem = (ItemDomainLogbook) entity.getCreatedFromTemplate();
         } catch (CdbException ex) {
             SessionUtility.addErrorMessage("Error", ex.getErrorMessage());
             logger.error(ex);
@@ -845,45 +918,47 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         SearchController searchCtrl = SearchController.getInstance();
         SearchSettings searchSettings = searchCtrl.getSearchSettings();
         Boolean advancedSearch = searchSettings.getAdvancedSearch();
-        
+
         String entityTypeIdList = null;
-        String itemTypeIdList = null; 
-        Date startTime = null;
-        Date endTime = null;                
-                
-        if (advancedSearch) {            
-            entityTypeIdList = CollectionUtility.generateIdListString(searchLogbookTypeList); 
-            itemTypeIdList = CollectionUtility.generateIdListString(searchSystemList); 
-            
-            startTime = searchStartDate; 
-            endTime = searchEndDate; 
-            if (endTime != null) {
-                // Add offset to the end of the selected date. 
-                Calendar endDateCal = Calendar.getInstance();
-                endDateCal.setTime(endTime);
-                endDateCal.set(Calendar.HOUR, 23); 
-                endDateCal.set(Calendar.MINUTE, 59);
-                endDateCal.set(Calendar.SECOND, 59);
-                endTime = endDateCal.getTime(); 
-            }
+        String itemTypeIdList = null;
+        String userIdList = null;
+        Date startModifiedTime = null;
+        Date endModifiedTime = null;
+        Date startCreatedTime = null;
+        Date endCreatedTime = null;
+
+        if (advancedSearch) {
+            entityTypeIdList = CollectionUtility.generateIdListString(searchLogbookTypeList);
+            itemTypeIdList = CollectionUtility.generateIdListString(searchSystemList);
+            userIdList = CollectionUtility.generateIdListString(searchUserList);
+
+            startModifiedTime = searchModifiedStartDate;
+            endModifiedTime = searchModifiedEndDate;
+            startCreatedTime = searchCreatedStartDate;
+            endCreatedTime = searchCreatedEndDate;
+
+            endModifiedTime = adjustEndTime(endModifiedTime);
+            endCreatedTime = adjustEndTime(endCreatedTime);
         }
-        
+
         resetSearchVariables();
-        
+
         ItemDomainLogbookControllerUtility utility = getControllerUtility();
-        Map searchArgs = utility.createAdvancedSearchMap(entityTypeIdList, itemTypeIdList, startTime, endTime); 
-        
+        Map searchArgs = utility.createAdvancedSearchMap(searchLogbookTypeList, searchSystemList, searchUserList,
+                startModifiedTime, endModifiedTime, startCreatedTime, endCreatedTime);
+
         super.performEntitySearch(searchString, searchArgs, caseInsensitive);
 
         // Search log entries. 
-        List<Object[]> results = itemDomainLogbookFacade.searchEntityLogs(searchString, itemTypeIdList, entityTypeIdList, startTime, endTime);                
+        List<Object[]> results = itemDomainLogbookFacade.searchEntityLogs(searchString, itemTypeIdList, entityTypeIdList, userIdList,
+                startModifiedTime, endModifiedTime, startCreatedTime, endCreatedTime);
 
         ItemDomainLogbookControllerUtility controllerUtility1 = getControllerUtility();
         String patternString = controllerUtility1.generatePatternString(searchString);
         Pattern searchPattern = controllerUtility1.getSearchPattern(patternString, caseInsensitive);
 
         logResults = new ArrayList<>();
-
+        
         for (Object[] result : results) {
             ItemDomainLogbook logbook = (ItemDomainLogbook) result[0];
             Log log = (Log) result[1];
@@ -893,16 +968,62 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             searchResult.setAdditionalAttribute("" + logId);
 
             String text = log.getText();
-            String[] logLines = text.split("\n");
-
-            for (int i = 0; i < logLines.length; i++) {
-                String lineNum = "log_line_" + (i + 1);
+            String[] logLines = text.split("\n");            
+            String matching_lines = ""; 
+            
+            for (int i = 0; i < logLines.length; i++) {                
                 String lineText = logLines[i];
+                
+                if (searchPattern.matcher(lineText).find()) {
+                    matching_lines += lineText + "\n"; 
+                }               
+            }            
+            searchResult.addAttributeMatch("log entry", matching_lines);
+            
+            controllerUtility1.addCommonLogEntryDocumentMatches(searchResult, searchLogbookTypeList, searchSystemList);
+            
+            if (searchUserList != null && !searchUserList.isEmpty()) {
+                for (UserInfo ui : searchUserList) {
+                    Integer searchUserId = ui.getId();
 
-                searchResult.doesValueContainPattern(lineNum, lineText, searchPattern);
+                    UserInfo enteredByUser = log.getEnteredByUser();
+                    UserInfo lastModifiedByUser = log.getLastModifiedByUser();
+
+                    if (Objects.equals(enteredByUser.getId(), searchUserId)) {
+                        searchResult.addAttributeMatch("Create User", enteredByUser.toString());
+                    }
+                    if (Objects.equals(lastModifiedByUser.getId(), searchUserId)) {
+                        searchResult.addAttributeMatch("Last Modify User", lastModifiedByUser.toString());
+                    }
+                }
             }
+
+            if (startCreatedTime != null || endCreatedTime != null) {
+                Date enteredOnDateTime = log.getEnteredOnDateTime();
+                searchResult.addAttributeMatch("Created on", enteredOnDateTime.toString());
+            }
+
+            if (startModifiedTime != null || endModifiedTime != null) {
+                Date modifiedOnDateTime = log.getLastModifiedOnDateTime();
+                searchResult.addAttributeMatch("Modified on", modifiedOnDateTime.toString());
+            }
+            
             logResults.add(searchResult);
         }
+    }
+
+    private Date adjustEndTime(Date endTime) {
+        if (endTime != null) {
+            // Add offset to the end of the selected date. 
+            Calendar endDateCal = Calendar.getInstance();
+            endDateCal.setTime(endTime);
+            endDateCal.set(Calendar.HOUR, 23);
+            endDateCal.set(Calendar.MINUTE, 59);
+            endDateCal.set(Calendar.SECOND, 59);
+            endTime = endDateCal.getTime();
+        }
+
+        return endTime;
     }
 
     public List<SearchResult> getLogResults() {
@@ -1056,7 +1177,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             logbookHomeType3 = entityTypeFacade.find(type3Id);
         }
     }
-    
+
     public List<ItemDomainLogbook> getLogbookHomeListByType(ItemDomainLogbookHomeObject homeObject, Integer limit) {
         List<ItemDomainLogbook> logbookList = homeObject.getLogbookList();
         if (logbookList == null) {
@@ -1064,8 +1185,8 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             logbookList = itemDomainLogbookFacade.findByDomainNameAndEntityTypeOrderByLastModifiedDate(getDefaultDomainName(), et.getName(), limit);
             homeObject.setLogbookList(logbookList);
         }
-        
-       return logbookList; 
+
+        return logbookList;
     }
 
     public List<ItemDomainLogbookHomeObject> getLogbookHome(Integer limit) {
@@ -1084,14 +1205,14 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
             for (EntityType et : etl) {
                 List<ItemDomainLogbook> items = null;
-                ItemDomainLogbookHomeObject homeObject; 
-                if (et.getEntityTypeChildren().isEmpty()) {                    
+                ItemDomainLogbookHomeObject homeObject;
+                if (et.getEntityTypeChildren().isEmpty()) {
                     items = itemDomainLogbookFacade.findByDomainNameAndEntityTypeOrderByLastModifiedDate(getDefaultDomainName(), et.getName(), limit);
                     homeObject = new ItemDomainLogbookHomeObject(et, items);
                 } else {
                     homeObject = new ItemDomainLogbookHomeObject(et);
                 }
-                
+
                 logbookHome.add(homeObject);
             }
         }
@@ -1217,7 +1338,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     // </editor-fold>
     public final String getCurrentListPermalink() {
         if (currentEntityType != null) {
-            String redirect = getListRedirectForEntityType(currentEntityType, true);
+            String redirect = getListRedirectForEntityType(currentEntityType, true, true);
             String viewPath = String.format("%s%s", contextRootPermanentUrl, redirect);
             return viewPath;
         }
@@ -1248,44 +1369,97 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
         return false;
     }
-    
+
     public String getLogPermalink(int logId) {
         String currentEntityPermalink = getCurrentEntityPermalink();
-        return currentEntityPermalink + "&logId=" + logId; 
+        return currentEntityPermalink + "&logId=" + logId;
+    }
+
+    @Override
+    public String prepareCreate() {
+        generatedName = ""; 
+        return super.prepareCreate();
+    }
+
+    @Override
+    public String create() {
+        if (!generatedName.isBlank()) {
+            ItemDomainLogbook current = getCurrent();
+            String name = current.getName();
+            String strippedGeneratedName = generatedName.strip(); 
+            String strippedName = name.strip(); 
+            if (strippedGeneratedName.equals(strippedName)) {
+                String errorMessage = String.format(
+                        "Please specify more descriptive name beyond autogenerated one: '%s'.", 
+                        generatedName);
+                SessionUtility.addErrorMessage("Change Name", errorMessage);
+                return null; 
+            }
+        }
+        return super.create(); 
     }
     
-    // <editor-fold defaultstate="collapsed" desc="Advanced Search">    
+    // <editor-fold defaultstate="collapsed" desc="Studies functionality.">        
+    public String prepareCreateStudies() {
+        String redirect = prepareCreate(); 
+        
+        LocalDateTime now = LocalDateTime.now();               
+        Integer hour = now.getHour();
+        
+        int year = now.getYear();
+        int month = now.getMonthValue(); 
+        int day = now.getDayOfMonth(); 
+        int shift; 
 
+        if (hour < 8) { // Shift 1 0 - 8
+            shift = 1; 
+        } else if (hour < 16) { // Shift 2 8-16
+            shift = 2; 
+        } else { // Shift 3 16-24
+            shift = 3; 
+        }
+        
+        // yyyy/mm/dd/shift
+        String shiftName = String.format("[%d/%02d/%02d/%d] ", year, month, day, shift); 
+
+        ItemDomainLogbook current = getCurrent();
+        generatedName = shiftName; 
+        current.setName(generatedName);
+        
+        return redirect; 
+    }
+    // </editor-fold>
+    // <editor-fold defaultstate="collapsed" desc="Advanced Search">    
     public List<SelectItem> getSearchLogbookTypeSelectItemList() {
         if (searchLogbookTypeSelectItemList == null) {
-            searchLogbookTypeSelectItemList = new ArrayList<>(); 
+            searchLogbookTypeSelectItemList = new ArrayList<>();
             List<EntityType> topLevelEntityTypeList = getTopLevelEntityTypeList();
-            
-            for (EntityType et : topLevelEntityTypeList) { 
+
+            for (EntityType et : topLevelEntityTypeList) {
                 if (et.getEntityTypeChildren().isEmpty()) {
                     SelectItem si = createSelectItemFromEntityType(et);
-                    searchLogbookTypeSelectItemList.add(0, si); 
+                    searchLogbookTypeSelectItemList.add(0, si);
                 } else {
                     String groupName = et.getAvailableLongDisplayName();
                     SelectItemGroup group = new SelectItemGroup(groupName);
-                    SelectItem[] groupList = new SelectItem[et.getEntityTypeChildren().size()];  
+                    SelectItem[] groupList = new SelectItem[et.getEntityTypeChildren().size()];
                     group.setSelectItems(groupList);
-                    
+
                     for (int i = 0; i < groupList.length; i++) {
-                        EntityType childEt = et.getEntityTypeChildren().get(i); 
+                        EntityType childEt = et.getEntityTypeChildren().get(i);
                         SelectItem selectItemEt = createSelectItemFromEntityType(childEt);
-                        groupList[i] = selectItemEt; 
+                        groupList[i] = selectItemEt;
                     }
-                    searchLogbookTypeSelectItemList.add(group); 
-                }                
-            }                
+                    searchLogbookTypeSelectItemList.add(group);
+                }
+            }
         }
         return searchLogbookTypeSelectItemList;
     }
-    
+
     private SelectItem createSelectItemFromEntityType(EntityType entityType) {
-        return new SelectItem(entityType, entityType.getAvailableLongDisplayName()); 
-    }    
+        return new SelectItem(entityType, entityType.getAvailableLongDisplayName());
+    }
 
     public List<EntityType> getSearchLogbookTypeList() {
         return searchLogbookTypeList;
@@ -1301,25 +1475,49 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     public void setSearchSystemList(List<ItemType> searchSystemList) {
         this.searchSystemList = searchSystemList;
-    }        
-
-    public Date getSearchStartDate() {
-        return searchStartDate;
     }
 
-    public void setSearchStartDate(Date searchStartDate) {
-        this.searchStartDate = searchStartDate;
+    public List<UserInfo> getSearchUserList() {
+        return searchUserList;
     }
 
-    public Date getSearchEndDate() {
-        return searchEndDate;
+    public void setSearchUserList(List<UserInfo> searchUserList) {
+        this.searchUserList = searchUserList;
     }
 
-    public void setSearchEndDate(Date searchEndDate) {
-        this.searchEndDate = searchEndDate;
-    }    
+    public Date getSearchModifiedStartDate() {
+        return searchModifiedStartDate;
+    }
+
+    public void setSearchModifiedStartDate(Date searchModifiedStartDate) {
+        this.searchModifiedStartDate = searchModifiedStartDate;
+    }
+
+    public Date getSearchModifiedEndDate() {
+        return searchModifiedEndDate;
+    }
+
+    public void setSearchModifiedEndDate(Date searchModifiedEndDate) {
+        this.searchModifiedEndDate = searchModifiedEndDate;
+    }
+
+    public Date getSearchCreatedStartDate() {
+        return searchCreatedStartDate;
+    }
+
+    public void setSearchCreatedStartDate(Date searchCreatedStartDate) {
+        this.searchCreatedStartDate = searchCreatedStartDate;
+    }
+
+    public Date getSearchCreatedEndDate() {
+        return searchCreatedEndDate;
+    }
+
+    public void setSearchCreatedEndDate(Date searchCreatedEndDate) {
+        this.searchCreatedEndDate = searchCreatedEndDate;
+    }
+
     // </editor-fold>
-
     // <editor-fold defaultstate="collapsed" desc="Operations functionality.">
     public void prepareCreateOperationsItem(String onSuccess) {
         prepareCreate();
@@ -1579,7 +1777,6 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     // </editor-fold>    
-
     // <editor-fold defaultstate="collapsed" desc="FacesConverter">
     @FacesConverter(forClass = ItemDomainLogbook.class)
     public static class ItemDomainLogbookControllerConverter implements Converter {

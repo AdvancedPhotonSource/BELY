@@ -276,14 +276,29 @@ import org.primefaces.model.TreeNode;
                         name = "item_type_id_list",
                         mode = ParameterMode.IN,
                         type = String.class
-                ),                
+                ),
                 @StoredProcedureParameter(
-                        name = "start_time",
+                        name = "user_id_list",
+                        mode = ParameterMode.IN,
+                        type = String.class
+                ),
+                @StoredProcedureParameter(
+                        name = "start_modified_time",
                         mode = ParameterMode.IN,
                         type = Date.class
                 ),                
                 @StoredProcedureParameter(
-                        name = "end_time",
+                        name = "end_modified_time",
+                        mode = ParameterMode.IN,
+                        type = Date.class
+                ),
+                @StoredProcedureParameter(
+                        name = "start_created_time",
+                        mode = ParameterMode.IN,
+                        type = Date.class
+                ),                
+                @StoredProcedureParameter(
+                        name = "end_created_time",
                         mode = ParameterMode.IN,
                         type = Date.class
                 ),
@@ -318,14 +333,29 @@ import org.primefaces.model.TreeNode;
                         name = "item_type_id_list",
                         mode = ParameterMode.IN,
                         type = String.class
-                ),                
+                ),
                 @StoredProcedureParameter(
-                        name = "start_time",
+                        name = "user_id_list",
+                        mode = ParameterMode.IN,
+                        type = String.class
+                ),
+                @StoredProcedureParameter(
+                        name = "start_modified_time",
                         mode = ParameterMode.IN,
                         type = Date.class
                 ),                
                 @StoredProcedureParameter(
-                        name = "end_time",
+                        name = "end_modified_time",
+                        mode = ParameterMode.IN,
+                        type = Date.class
+                ),
+                @StoredProcedureParameter(
+                        name = "start_created_time",
+                        mode = ParameterMode.IN,
+                        type = Date.class
+                ),                
+                @StoredProcedureParameter(
+                        name = "end_created_time",
                         mode = ParameterMode.IN,
                         type = Date.class
                 ),
@@ -875,8 +905,12 @@ public class Item extends CdbDomainEntity implements Serializable {
 
     public String getQrIdFilter() {
         if (qrIdFilter == null) {
-            String dispQr = getQrIdDisplay();
-            qrIdFilter = dispQr + " " + qrId + " " + dispQr.replace(" ", "");
+            if (qrId == null) {
+                qrIdFilter = ""; 
+            } else {
+                String dispQr = getQrIdDisplay();
+                qrIdFilter = dispQr + " " + qrId + " " + dispQr.replace(" ", "");
+            }
         }
         return qrIdFilter;
     }

@@ -24,26 +24,33 @@ See LICENSE file.
 
         <ui:fragment rendered="#{itemObject.logList.size() !=0}">
             <p:dataScroller value="#{itemObject.logList}" var="logObject" styleClass="logDataScroller">
+                <ui:param name="logModified" value="#{logObject.modifiedEntry}"/>                
                 <div id="log-#{logObject.id}">                   
                     <p:panel collapsed="#{!itemDomainLogbookController.logbookDisplayTimestamps}"
                              styleClass="logTimestamp"
                              toggleable="true"
                              toggleSpeed="100"
                              id="timestampPanel"
-                             widgetVar="timestampPanelWidget#{logObject.id}">
-                        <span>#{logObject.lastModifiedOnDateTime}</span>
-                        <span style="float: right">#{logObject.lastModifiedByUser}</span>
-                        <p:tooltip for="timestampPanel">                            
-                            <div>
-                                <h:outputLabel value="Created by "/>
-                                <h:outputText value="#{logObject.enteredByUser}" />
-                            </div>
-                            <div>
-                                <h:outputLabel value="Created on "/>
-                                <h:outputText value="#{logObject.enteredOnDateTime}" />
-                            </div>
+                             widgetVar="timestampPanelWidget#{logObject.id}">                        
 
-                        </p:tooltip>
+                        <span>
+                            Added on 
+                            <h:outputText value="#{logObject.enteredOnDateTime}">
+                                <f:convertDateTime pattern="MM/dd/yyyy hh:mm a"/>
+                            </h:outputText>
+                            by 
+                            #{logObject.enteredByUser}
+                        </span>
+                        <ui:fragment rendered="#{logModified}">
+                            <span style="float: right">
+                                Edited on
+                                <h:outputText value="#{logObject.lastModifiedOnDateTime}">
+                                    <f:convertDateTime pattern="MM/dd/yyyy hh:mm a"/>
+                                </h:outputText>
+                                by
+                                #{logObject.lastModifiedByUser}
+                            </span>
+                        </ui:fragment>                        
                     </p:panel>
 
                     <p:outputPanel styleClass="logEntry">                        

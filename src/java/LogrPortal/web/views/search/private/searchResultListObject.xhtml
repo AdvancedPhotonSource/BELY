@@ -17,13 +17,17 @@ See LICENSE file.
             <h:outputText value="#{searchResultObject.objectName}"/>
         </h:outputLink>
     </p:column>
-    
+
     <ui:insert name="additionalSearchResultInformation"/>
 
     <p:column sortBy="#{searchResultObject.display}" headerText="Match Description">
-        <h:outputText value="#{searchResultObject.display}"/>
+        <ui:repeat value="#{searchResultObject.displayList}"
+                   var="display">
+            <h:outputText value="#{display}"/>
+            <br/>
+        </ui:repeat>                
     </p:column>
-    
+
 </ui:composition>
 
 

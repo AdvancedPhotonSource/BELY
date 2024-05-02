@@ -6,6 +6,7 @@ package gov.anl.aps.logr.portal.controllers.utilities;
 
 import gov.anl.aps.logr.common.exceptions.CdbException;
 import gov.anl.aps.logr.common.exceptions.InvalidObjectState;
+import gov.anl.aps.logr.common.utilities.CollectionUtility;
 import gov.anl.aps.logr.portal.constants.ItemDomainName;
 import gov.anl.aps.logr.portal.constants.LogDocumentSettings;
 import gov.anl.aps.logr.portal.model.db.beans.ItemDomainLogbookFacade;
@@ -14,16 +15,20 @@ import gov.anl.aps.logr.portal.model.db.entities.EntityType;
 import gov.anl.aps.logr.portal.model.db.entities.Item;
 import gov.anl.aps.logr.portal.model.db.entities.ItemDomainLogbook;
 import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
+import gov.anl.aps.logr.portal.model.db.entities.ItemType;
 import gov.anl.aps.logr.portal.model.db.entities.Log;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.utilities.AuthorizationUtility;
+import gov.anl.aps.logr.portal.utilities.SearchResult;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  *
@@ -31,10 +36,13 @@ import java.util.Map;
  */
 public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<ItemDomainLogbook, ItemDomainLogbookFacade> {
 
-    public final String SEARCH_OPT_KEY_ENTITY_TYPE_ID_LIST = "entity_type_id_list";
-    public final String SEARCH_OPT_KEY_ITEM_TYPE_ID_LIST = "item_type_id_list";
-    public final String SEARCH_OPT_KEY_START_TIME = "start_time";
-    public final String SEARCH_OPT_KEY_END_TIME = "ent_time";
+    public final String SEARCH_OPT_KEY_ENTITY_TYPE_LIST = "entity_type_list";
+    public final String SEARCH_OPT_KEY_ITEM_TYPE_LIST = "item_type_list";
+    public final String SEARCH_OPT_KEY_USER_LIST = "user_list";
+    public final String SEARCH_OPT_KEY_START_MODIFIED_TIME = "start_modified_time";
+    public final String SEARCH_OPT_KEY_END_MODIFIED_TIME = "ent_modified_time";
+    public final String SEARCH_OPT_KEY_START_CREATED_TIME = "start_created_time";
+    public final String SEARCH_OPT_KEY_END_CREATED_TIME = "ent_created_time";
 
     @Override
     protected ItemDomainLogbookFacade getItemFacadeInstance() {
@@ -181,13 +189,13 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
         if (!itemElementMemberList.isEmpty()) {
             throw new InvalidObjectState("Can only add sections to top level items.");
         }
-        
+
         // Verify if existing section with same name. 
         String sectionName = newSection.getName();
         for (ItemElement ie : logDocument.getItemElementDisplayList()) {
             Item containedItem = ie.getContainedItem();
-            if (containedItem.getName().equals(sectionName)) { 
-                throw new InvalidObjectState(String.format("Section with name '%s' already exists.", sectionName)); 
+            if (containedItem.getName().equals(sectionName)) {
+                throw new InvalidObjectState(String.format("Section with name '%s' already exists.", sectionName));
             }
         }
 
@@ -214,7 +222,7 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
         if (logbookDocumentSettings != null) {
             String templateMode = logbookDocumentSettings.getPropertyMetadataValueForKey(LogDocumentSettings.logTemplateModeKey.getValue());
 
-            if (templateMode.equals(LogDocumentSettings.logTemplateModeTemplatePerEntryVal.getValue())) {
+            if (templateMode != null && templateMode.equals(LogDocumentSettings.logTemplateModeTemplatePerEntryVal.getValue())) {
                 Item createdFromTemplate = cdbDomainEntity.getCreatedFromTemplate();
                 if (createdFromTemplate != null) {
                     List<Log> logList = createdFromTemplate.getLogList();
@@ -229,14 +237,14 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
 
         return log;
     }
-    
+
     public void verifySaveLogLockoutsForItem(ItemDomainLogbook logDocument, Log log, UserInfo user) throws InvalidObjectState {
         // Ensure that top level document is checked for lockout. 
-        logDocument = logDocument.getTopLevelLogDocument(); 
-        
+        logDocument = logDocument.getTopLevelLogDocument();
+
         // Use current for the lockout timeout especially for documents with sections.         
         EntityInfo entityInfo = logDocument.getEntityInfo();
-        boolean isEntityWriteableByTimeout = entityInfo.refreshWriteableByTimeout();       
+        boolean isEntityWriteableByTimeout = entityInfo.refreshWriteableByTimeout();
         boolean skipLockouts = (user.isUserAdmin() || user.isUserMaintainer());
 
         if (!skipLockouts) {
@@ -250,24 +258,31 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
 
                 boolean isWriteable = AuthorizationUtility.isEntityWriteableByTimeout(logLockoutHours, lastModifiedOnDateTime);
                 if (!isWriteable) {
-                    throw new InvalidObjectState("Log entry is locked by lockout time.");                                     
+                    throw new InvalidObjectState("Log entry is locked by lockout time.");
                 }
             }
         }
     }
-    
 
-    public Map createAdvancedSearchMap(String entityTypeIdList, String itemTypeIdList, Date startTime, Date endTime) {
+    public Map createAdvancedSearchMap(
+            List<EntityType> entityTypeList,
+            List<ItemType> itemTypeList,
+            List<UserInfo> userList,
+            Date startModifiedTime, Date endModifiedTime,
+            Date startCreatedTime, Date endCreatedTime) {
         /**
          * Generates the searchOpts for the searchEntities functionality. Can
          * also be used with CdbEntityController.performEntitySearch();
          */
         Map searchOpts = new HashMap<>();
 
-        searchOpts.put(SEARCH_OPT_KEY_ENTITY_TYPE_ID_LIST, entityTypeIdList);
-        searchOpts.put(SEARCH_OPT_KEY_ITEM_TYPE_ID_LIST, itemTypeIdList);
-        searchOpts.put(SEARCH_OPT_KEY_START_TIME, startTime);
-        searchOpts.put(SEARCH_OPT_KEY_END_TIME, endTime);
+        searchOpts.put(SEARCH_OPT_KEY_ENTITY_TYPE_LIST, entityTypeList);
+        searchOpts.put(SEARCH_OPT_KEY_ITEM_TYPE_LIST, itemTypeList);
+        searchOpts.put(SEARCH_OPT_KEY_USER_LIST, userList);
+        searchOpts.put(SEARCH_OPT_KEY_START_MODIFIED_TIME, startModifiedTime);
+        searchOpts.put(SEARCH_OPT_KEY_END_MODIFIED_TIME, endModifiedTime);
+        searchOpts.put(SEARCH_OPT_KEY_START_CREATED_TIME, startCreatedTime);
+        searchOpts.put(SEARCH_OPT_KEY_END_CREATED_TIME, endCreatedTime);
 
         return searchOpts;
     }
@@ -283,17 +298,110 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
             return searchEntities(searchString);
         }
 
-        String entity_type_id_list = (String) searchOpts.get(SEARCH_OPT_KEY_ENTITY_TYPE_ID_LIST);
-        String item_type_id_list = (String) searchOpts.get(SEARCH_OPT_KEY_ITEM_TYPE_ID_LIST);
-        Date start_time = (Date) searchOpts.get(SEARCH_OPT_KEY_START_TIME);
-        Date end_time = (Date) searchOpts.get(SEARCH_OPT_KEY_END_TIME);
+        List<EntityType> entityTypeList = (List<EntityType>) searchOpts.get(SEARCH_OPT_KEY_ENTITY_TYPE_LIST);
+        List<ItemType> itemTypeList = (List<ItemType>) searchOpts.get(SEARCH_OPT_KEY_ITEM_TYPE_LIST);
+        List<UserInfo> userList = (List<UserInfo>) searchOpts.get(SEARCH_OPT_KEY_USER_LIST);
 
-        return getEntityDbFacade().searchEntitiesNoParent(searchString, item_type_id_list, entity_type_id_list, start_time, end_time);
+        String entity_type_id_list = (String) CollectionUtility.generateIdListString(entityTypeList);
+        String item_type_id_list = (String) CollectionUtility.generateIdListString(itemTypeList);
+        String user_id_list = (String) CollectionUtility.generateIdListString(userList);
+        Date start_modified_time = (Date) searchOpts.get(SEARCH_OPT_KEY_START_MODIFIED_TIME);
+        Date end_modified_time = (Date) searchOpts.get(SEARCH_OPT_KEY_END_MODIFIED_TIME);
+        Date start_created_time = (Date) searchOpts.get(SEARCH_OPT_KEY_START_CREATED_TIME);
+        Date end_created_time = (Date) searchOpts.get(SEARCH_OPT_KEY_END_CREATED_TIME);
+
+        return getEntityDbFacade().searchEntitiesNoParent(
+                searchString, item_type_id_list,
+                entity_type_id_list, user_id_list,
+                start_modified_time, end_modified_time,
+                start_created_time, end_created_time);
     }
 
     @Override
     public List<ItemDomainLogbook> searchEntities(String searchString) {
         return getEntityDbFacade().searchEntitiesNoParent(searchString);
+    }
+
+    @Override
+    public LinkedList<SearchResult> performEntitySearch(String searchString, Map searchOpts, boolean caseInsensitive) {
+        LinkedList<SearchResult> searchResultList = super.performEntitySearch(searchString, searchOpts, caseInsensitive);
+
+        List<EntityType> searchEntityTypeList = (List<EntityType>) searchOpts.get(SEARCH_OPT_KEY_ENTITY_TYPE_LIST);
+        List<ItemType> searchItemTypeList = (List<ItemType>) searchOpts.get(SEARCH_OPT_KEY_ITEM_TYPE_LIST);
+        List<UserInfo> searchUserList = (List<UserInfo>) searchOpts.get(SEARCH_OPT_KEY_USER_LIST);
+
+        Date start_modified_time = (Date) searchOpts.get(SEARCH_OPT_KEY_START_MODIFIED_TIME);
+        Date end_modified_time = (Date) searchOpts.get(SEARCH_OPT_KEY_END_MODIFIED_TIME);
+        Date start_created_time = (Date) searchOpts.get(SEARCH_OPT_KEY_START_CREATED_TIME);
+        Date end_created_time = (Date) searchOpts.get(SEARCH_OPT_KEY_END_CREATED_TIME);
+
+        // Add search opts to match description. 
+        for (SearchResult result : searchResultList) {
+            addCommonLogEntryDocumentMatches(result, searchEntityTypeList, searchItemTypeList); 
+            
+            ItemDomainLogbook resultItem = (ItemDomainLogbook) result.getCdbEntity();            
+            EntityInfo entityInfo = resultItem.getEntityInfo();
+
+            if (searchUserList != null && !searchUserList.isEmpty()) {
+                for (UserInfo ui : searchUserList) {
+                    Integer searchUserId = ui.getId();
+
+                    UserInfo ownerUser = entityInfo.getOwnerUser();
+                    UserInfo createdByUser = entityInfo.getCreatedByUser();
+                    UserInfo lastModifiedByUser = entityInfo.getLastModifiedByUser();
+
+                    if (Objects.equals(ownerUser.getId(), searchUserId)) {
+                        result.addAttributeMatch("Owner User", ownerUser.toString());
+                    }
+                    if (Objects.equals(createdByUser.getId(), searchUserId)) {
+                        result.addAttributeMatch("Create User", createdByUser.toString());
+                    }
+                    if (Objects.equals(lastModifiedByUser.getId(), searchUserId)) {
+                        result.addAttributeMatch("Last Modify User", lastModifiedByUser.toString());
+                    }
+                }
+            }
+
+            if (start_created_time != null || end_created_time != null) {
+                Date createdOnDateTime = entityInfo.getCreatedOnDateTime();
+                result.addAttributeMatch("Created on", createdOnDateTime.toString());
+            }
+
+            if (start_modified_time != null || end_modified_time != null) {
+                Date modifiedOnDateTime = entityInfo.getLastModifiedOnDateTime();
+                result.addAttributeMatch("Modified on", modifiedOnDateTime.toString());
+            }
+
+        }
+
+        return searchResultList;
+    }
+
+    public void addCommonLogEntryDocumentMatches(SearchResult result, List<EntityType> searchEntityTypeList, List<ItemType> searchItemTypeList) {
+        ItemDomainLogbook resultItem = (ItemDomainLogbook) result.getCdbEntity();
+        if (searchEntityTypeList != null && !searchEntityTypeList.isEmpty()) {
+            List<EntityType> etList = resultItem.getEntityTypeList();
+
+            for (EntityType et : searchEntityTypeList) {
+                for (EntityType resultEt : etList) {
+                    if (Objects.equals(et.getId(), resultEt.getId())) {
+                        result.addAttributeMatch("Logbook", et.getLongDisplayName());
+                    }
+                }
+            }
+        }
+
+        if (searchItemTypeList != null && !searchItemTypeList.isEmpty()) {
+            List<ItemType> itList = resultItem.getItemTypeList();
+
+            for (ItemType it : searchItemTypeList) {
+                for (ItemType resultIt : itList) {
+                    if (Objects.equals(it.getId(), resultIt.getId())) {
+                        result.addAttributeMatch("System", it.getName());
+                    }
+                }
+            }
+        }
     }
 
     public static void copyLogs(ItemDomainLogbook oldLogDoc, ItemDomainLogbook newLogDoc) {

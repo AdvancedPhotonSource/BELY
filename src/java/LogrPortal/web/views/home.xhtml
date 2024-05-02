@@ -68,14 +68,14 @@ See LICENSE file.
                                               rendered="#{!noTypeChildren}"
                                               var="homeChild"
                                               dynamic="true">
-                                
+
                                 <ui:param name="childType"
                                           value="#{homeChild.logbookType}" />                                 
                                 <ui:param name="etName"
                                           value="#{childType.name}" />
                                 <ui:param name="logbooks"
                                           value="#{itemDomainLogbookController.getLogbookHomeListByType(homeChild, 6)}" /> 
-                                
+
                                 <p:tab title="#{childType.availableLongDisplayName}">                                    
                                     <p:dataScroller value="#{logbooks}" 
                                                     var="logItem" 
@@ -84,6 +84,13 @@ See LICENSE file.
                                         <ui:include src="itemDomainLogbook/private/home/logDocumentDataScrollerObject.xhtml"/>
 
                                     </p:dataScroller>
+                                    
+                                    <br/>
+                                    
+                                    <h:outputLink value="itemDomainLogbook/#{childType.listUrl}"
+                                                  title="Navigate to list page.">
+                                        Go to full list
+                                    </h:outputLink>       
 
 
                                 </p:tab>

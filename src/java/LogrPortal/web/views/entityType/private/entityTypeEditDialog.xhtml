@@ -25,7 +25,8 @@ See LICENSE file.
                     <ui:define name="additionalPanelGridItems">
                         <h:outputLabel for="parentItem#{viewName}" value="Parent Item" />                        
                         <p:selectOneMenu id="parentItem#{viewName}"
-                                         value="#{entityType.parentEntityType}">
+                                         value="#{entityType.parentEntityType}"
+                                         converter="entityTypeConverter">
                             <f:selectItem noSelectionOption="true"
                                           itemLabel="No parent" /> 
                             <f:selectItems var="topET"

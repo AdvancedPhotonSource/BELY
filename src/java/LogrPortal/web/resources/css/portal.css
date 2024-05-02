@@ -665,6 +665,10 @@ h2 {
     background: 0; 
 }
 
+.onlyIconMenuItem .ui-menuitem-icon {
+    margin-right: 0 !important; 
+}
+
 .mainMenuBar .ui-menu {
     border: 0px;
 }
@@ -1379,7 +1383,7 @@ body .ui-panel .ui-panel-titlebar  {
 
 .expandingInputText,
 .expandingAutoComplete > input {
-    width: 60px;
+    width: 90px;
     transition-duration: 0.5s !important;
     transition-property: width, height !important;     
 }

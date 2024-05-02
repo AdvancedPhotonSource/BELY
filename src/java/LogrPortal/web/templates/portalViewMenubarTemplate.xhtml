@@ -61,8 +61,8 @@ See LICENSE file.
                 <p:menubar styleClass="menuBarSupportingItems"> 
 
                     <p:menuitem styleClass="noButtonMenuItem"
-                                id="searchMenuItem">
-                        <p:inputText id="menuBarSearchInput" placeholder="Search"
+                                id="searchMenuItem">                                                                                                
+                        <p:inputText id="menuBarSearchInput" placeholder="Quick Search"
                                      autocomplete="off"                                 
                                      styleClass="expandingInputText entityDataText menuBarInputText" 
                                      value="#{searchController.inputBoxSearchString}" 
@@ -72,19 +72,23 @@ See LICENSE file.
                         <p:commandButton id="menuBarSearchInputCommand" 
                                          style="display: none" 
                                          update="@form" 
-                                         action="#{searchController.performInputBoxSearch()}"/>
+                                         action="#{searchController.performInputBoxSearch()}"/>                                                
                     </p:menuitem>
+                    
+                    <p:menuitem icon="pi pi-search"
+                                value="Advanced Search"
+                                update="@form"
+                                styleClass="onlyIconMenuItem"
+                                action="#{searchController.performInputBoxSearchAdvamced()}" /> 
+                    
 
-                    <ui:include src="portalViewSupplementalMenubar.xhtml"/>                       
-                    <p:menuitem value="Settings"
-                                action="#{userInfoController.prepareSessionUserEdit()}" 
-                                rendered="#{loginController.loggedIn}" icon="fa fa-cogs"/>
+                    <ui:include src="portalViewSupplementalMenubar.xhtml"/>                                           
                     <p:menuitem value="Login" id="loginButton" onclick="PF('loginDialogWidget').show()" rendered="#{!loginController.loggedIn}" icon="fa fa-sign-in"/>
                     <p:menuitem value="Logout" id="logoutButton" action="#{loginController.logout()}" rendered="#{loginController.loggedIn}" icon="fa fa-sign-out"/>
                     <p:menuitem value="About" url="#{request.contextPath}/views/about.xhtml" icon="fa fa-question"/>
                 </p:menubar>
             </f:facet>
-        </p:menubar>
+        </p:menubar>                
 
     </p:outputPanel>
 </ui:composition>

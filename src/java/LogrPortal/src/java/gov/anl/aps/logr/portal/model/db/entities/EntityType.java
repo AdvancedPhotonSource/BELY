@@ -272,11 +272,7 @@ public class EntityType extends CdbEntity implements Serializable {
     @JsonIgnore    
     public String getListUrl() {
         if (listUrl == null) {
-            if (customListUrl != null) {
-                listUrl = customListUrl; 
-            } else {
-                listUrl = String.format("list?et=%d", id); 
-            }
+            listUrl = String.format("list?et=%d", id); 
         }
         return listUrl;
     }

@@ -32,7 +32,7 @@ See LICENSE file.
 
                     <ui:param name="searchSettings" value="#{searchController.searchSettings}" /> 
                     <ui:param name="advancedMode" value="#{searchSettings.advancedSearch}" /> 
-                    <p:panelGrid columns="3" styleClass="editEntityDetails">
+                    <p:panelGrid columns="6" styleClass="editEntityDetails">
                         <h:outputLabel for="searchString" value="Search String" styleClass="entityDataLabel"/>
                         <h:inputText id="searchString" value="#{searchController.searchString}" title="Search String" styleClass="entityDataText"/>
                         <p:message for="searchString"/> 
@@ -46,6 +46,8 @@ See LICENSE file.
                                               value="#{itemDomainLogbookController.searchLogbookTypeList}"                                                
                                               label="All" 
                                               multiple="true" 
+                                              filter="true"
+                                              filterMatchMode="contains"
                                               converter="entityTypeConverter"
                                               rendered="#{advancedMode}">                             
                             <f:selectItems value="#{itemDomainLogbookController.searchLogbookTypeSelectItemList}" />                             
@@ -55,23 +57,51 @@ See LICENSE file.
                         <h:outputLabel for="systemSelection" rendered="#{advancedMode}" value="System" styleClass="entityDataLabel"/>
                         <p:selectCheckboxMenu id="systemSelection"
                                           value="#{itemDomainLogbookController.searchSystemList}" 
-                                          multiple="true"                                          
+                                          multiple="true"
                                           label="All"
+                                          filter="true"
+                                          filterMatchMode="contains"
                                           converter="itemTypeConverter"
                                           rendered="#{advancedMode}">       
                             <f:selectItems value="#{itemDomainLogbookController.domainItemTypeList}"/> 
                         </p:selectCheckboxMenu>
                         <p:tooltip for="systemSelection" rendered="#{advancedMode}" value="System assignment to log document"/> 
+                        
+                        <h:outputLabel for="usernameSelection" rendered="#{advancedMode}" value="Username" styleClass="entityDataLabel"/>
+                        <p:selectCheckboxMenu id="usernameSelection" 
+                                              rendered="#{advancedMode}"
+                                              value="#{itemDomainLogbookController.searchUserList}"
+                                              multiple="true"
+                                              label="All"
+                                              filter="true"
+                                              filterMatchMode="contains"> 
+                            <f:selectItems value="#{userInfoController.availableItems}"/>                            
+                        </p:selectCheckboxMenu>
+                        <p:tooltip for="usernameSelection" rendered="#{advancedMode}" value="(Optional) Search by username (created/modified/owned)."/>
+                        
+                        <p:outputPanel/>
+                        <p:outputPanel/>
+                        <p:outputPanel/>
+                        
+                        <h:outputLabel for="createdStartTime" rendered="#{advancedMode}" value="Creation Start Date" styleClass="entityDataLabel"/>
+                        <p:datePicker id="createdStartTime" rendered="#{advancedMode}"
+                                      value="#{itemDomainLogbookController.searchCreatedStartDate}"/>
+                        <p:tooltip for="createdStartTime" rendered="#{advancedMode}" value="(Optional) Start of created date"/> 
+                        
+                        <h:outputLabel for="modifiedStartTime" rendered="#{advancedMode}" value="Last Modified Start Date" styleClass="entityDataLabel"/>
+                        <p:datePicker id="modifiedStartTime" rendered="#{advancedMode}"
+                                      value="#{itemDomainLogbookController.searchModifiedStartDate}"/>
+                        <p:tooltip for="modifiedStartTime" rendered="#{advancedMode}" value="(Optional) Start of last modified date"/> 
 
-                        <h:outputLabel for="startTime" rendered="#{advancedMode}" value="Start Date" styleClass="entityDataLabel"/>
-                        <p:datePicker id="startTime" rendered="#{advancedMode}"
-                                      value="#{itemDomainLogbookController.searchStartDate}"/>
-                        <p:tooltip for="startTime" rendered="#{advancedMode}" value="(Optional) Start of last modified date"/> 
+                        <h:outputLabel for="createdEndTime" rendered="#{advancedMode}" value="Creation End Date" styleClass="entityDataLabel"/>
+                        <p:datePicker id="createdEndTime" rendered="#{advancedMode}"
+                                      value="#{itemDomainLogbookController.searchCreatedEndDate}"/>
+                        <p:tooltip for="createdEndTime" rendered="#{advancedMode}" value="(Optional) End of created date"/>                        
 
-                        <h:outputLabel for="endTime" rendered="#{advancedMode}" value="End Date" styleClass="entityDataLabel"/>
-                        <p:datePicker id="endTime" rendered="#{advancedMode}"
-                                      value="#{itemDomainLogbookController.searchEndDate}"/>
-                        <p:tooltip for="endTime" rendered="#{advancedMode}" value="(Optional) End of last modified date"/> 
+                        <h:outputLabel for="modifiedEndTime" rendered="#{advancedMode}" value="Last Modified End Date" styleClass="entityDataLabel"/>
+                        <p:datePicker id="modifiedEndTime" rendered="#{advancedMode}"
+                                      value="#{itemDomainLogbookController.searchModifiedEndDate}"/>
+                        <p:tooltip for="modifiedEndTime" rendered="#{advancedMode}" value="(Optional) End of last modified date"/> 
 
                         <!--                        <h:outputLabel for="searchCustomizeButton" value="Search Options" styleClass="entityDataLabel"/>
                                                 <p:commandButton id="searchCustomizeButton" 
