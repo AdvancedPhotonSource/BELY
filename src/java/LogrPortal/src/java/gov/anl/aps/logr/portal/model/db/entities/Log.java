@@ -26,6 +26,7 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -95,7 +96,12 @@ public class Log extends CdbEntity implements Serializable {
     private UserInfo enteredByUser;
     @JoinColumn(name = "last_modified_by_user_id", referencedColumnName = "id")
     @ManyToOne(optional = false)
-    private UserInfo lastModifiedByUser;    
+    private UserInfo lastModifiedByUser;        
+    @JoinColumn(name = "parent_log_id", referencedColumnName = "id")
+    @ManyToOne
+    private Log parentLog;    
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "parentLog")
+    private List<Log> childLogList;    
     @JoinColumn(name = "log_topic_id", referencedColumnName = "id")
     @ManyToOne
     private LogTopic logTopic;
@@ -174,6 +180,22 @@ public class Log extends CdbEntity implements Serializable {
 
     public void setLastModifiedByUser(UserInfo lastModifiedByUser) {
         this.lastModifiedByUser = lastModifiedByUser;
+    }
+    
+    public List<Log> getChildLogList() {
+        return childLogList;
+    }
+
+    public void setChildLogList(List<Log> childLogList) {
+        this.childLogList = childLogList;
+    }
+
+    public Log getParentLog() {
+        return parentLog;
+    }
+
+    public void setParentLog(Log parentLog) {
+        this.parentLog = parentLog;
     }
 
     @JsonIgnore
