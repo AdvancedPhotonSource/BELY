@@ -152,20 +152,21 @@ BEGIN
 	SET @from_stmt = "FROM item 
 	INNER JOIN v_item_self_element ise ON item.id = ise.item_id 
 	INNER JOIN item_element ie ON ise.self_element_id = ie.id
-	LEFT OUTER JOIN item_element_log iel on iel.item_element_id = ie.id
-	INNER JOIN log on log.id = iel.log_id 
+	LEFT OUTER JOIN item_element_log iel on iel.item_element_id = ie.id	
 	LEFT OUTER JOIN v_item_hierarchy cih on cih.child_item_id = item.id"; 
-
-	SET @from_tbls = ", item as parent_item "; 
+	SET @from_tbls = ", item as parent_item, log"; 
 
 	SET @where_stmt = "WHERE ";
 	SET @where_stmt = CONCAT(@where_stmt, 'item.domain_id = ', domain_id, ' '); 
+
+	SET @where_stmt = CONCAT(@where_stmt, "AND (log.id = iel.log_id or log.parent_log_id = iel.log_id) "); 
+
 	SET @where_stmt = CONCAT(@where_stmt, "AND (
 		parent_item.id = cih.parent_item_id 
 		OR
 		(cih.parent_item_id IS NULL AND 
 		parent_item.id = item.id
-		)) "); 
+		)) "); 	
 
 	SET @where_stmt = CONCAT(@where_stmt, 'AND (log.text LIKE "', search_string, '") '); 
 

@@ -264,14 +264,17 @@ CREATE TABLE `log` (
   `entered_by_user_id` int(11) unsigned NOT NULL,
   `effective_from_date_time` datetime NULL,
   `effective_to_date_time` datetime NULL,
+  `parent_log_id` int(11) unsigned NULL, 
   `log_topic_id` int(11) unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `log_k1` (`entered_by_user_id`),
   KEY `log_k2` (`log_topic_id`),
   KEY `log_k3` (`last_modified_by_user_id`),
+  KEY `log_k4` (`parent_log_id`),
   CONSTRAINT `log_fk1` FOREIGN KEY (`entered_by_user_id`) REFERENCES `user_info` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `log_fk2` FOREIGN KEY (`log_topic_id`) REFERENCES `log_topic` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `log_fk3` FOREIGN KEY (`last_modified_by_user_id`) REFERENCES `user_info` (`id`) ON UPDATE CASCADE
+  CONSTRAINT `log_fk4` FOREIGN KEY (`parent_log_id`) REFERENCES `log` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 --
