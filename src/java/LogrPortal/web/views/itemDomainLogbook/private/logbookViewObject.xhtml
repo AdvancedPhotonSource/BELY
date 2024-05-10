@@ -6,8 +6,7 @@ See LICENSE file.
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://java.sun.com/jsf/facelets"
-                xmlns:p="http://primefaces.org/ui"
-                xmlns:pe="http://primefaces.org/ui/extensions"
+                xmlns:p="http://primefaces.org/ui"                
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:h="http://xmlns.jcp.org/jsf/html">
 
@@ -23,101 +22,46 @@ See LICENSE file.
 
 
         <ui:fragment rendered="#{itemObject.logList.size() !=0}">
-            <p:dataScroller value="#{itemObject.logList}" var="logObject" styleClass="logDataScroller">
-                <ui:param name="logModified" value="#{logObject.modifiedEntry}"/>                
-                <div id="log-#{logObject.id}">                   
-                    <p:panel collapsed="#{!itemDomainLogbookController.logbookDisplayTimestamps}"
-                             styleClass="logTimestamp"
-                             toggleable="true"
-                             toggleSpeed="100"
-                             id="timestampPanel"
-                             widgetVar="timestampPanelWidget#{logObject.id}">                        
-
-                        <span>
-                            Added on 
-                            <h:outputText value="#{logObject.enteredOnDateTime}">
-                                <f:convertDateTime pattern="MM/dd/yyyy hh:mm a"/>
-                            </h:outputText>
-                            by 
-                            #{logObject.enteredByUser}
-                        </span>
-                        <ui:fragment rendered="#{logModified}">
-                            <span style="float: right">
-                                Edited on
-                                <h:outputText value="#{logObject.lastModifiedOnDateTime}">
-                                    <f:convertDateTime pattern="MM/dd/yyyy hh:mm a"/>
-                                </h:outputText>
-                                by
-                                #{logObject.lastModifiedByUser}
-                            </span>
-                        </ui:fragment>                        
-                    </p:panel>
-
-                    <p:outputPanel styleClass="logEntry">                        
-
-                        <h:outputText escape="false" value="#{logObject.htmlText}"/>
-                    </p:outputPanel>
-                    <p:outputPanel rendered="#{logObject.attachmentList.size() > 0 and false}"
-                                   styleClass="logAttachment">
-                        <p:galleria value="#{logObject.attachmentList}"
-                                    var="attachment"
-                                    showThumbnails="false" 
-                                    showCaption="true"
-                                    showIndicators="true"
-                                    showIndicatorsOnItem="true"
-                                    style="max-width: 500px;">
-                            <p:graphicImage value="#{attachment.galleryFilePath}" title="#{attachment.displayName}"
-                                            style="width: 100%; display: block;"
-                                            onclick="window.open('#{attachment.filePath}')"/>  
-                            <f:facet name="footer"> 
-                            </f:facet>
-                        </p:galleria>
-                    </p:outputPanel>
-                    <div class="logFooter">                                                                        
-                        <p:commandLink styleClass="logAction-left fa fa-link-icon fa-pencil logEditButton"
+            <p:dataScroller value="#{itemObject.logList}" var="logObject" styleClass="logDataScroller">                
+                <ui:decorate template="templates/logEntryObjectTemplate.xhtml">
+                    <ui:define name="additionalLogEntryFooter">
+                        <p:commandLink styleClass="logAction-left fa fa-link-icon fa-mail-reply logEditButton"
                                        onclick="PF('loadingDialog').show()"
                                        rendered="#{isEntityWriteable}"
-                                       action="#{itemDomainLogbookController.prepareEditLogEntry(logObject)}"
+                                       action="#{itemDomainLogbookController.prepareAddLogReply(logObject)}"
                                        update="@form:#{entityTypeName}LogbookLogAddDialog"
                                        oncomplete="PF('loadingDialog').hide(); 
-                                       PF('#{entityTypeName}LogbookLogAddDialogWidget').show()"> 
-                            <p:tooltip for="@parent"> 
-                                Edit log entry. <br/>
-                                Tip: Double clicking the log entry will also start log edit. 
-                            </p:tooltip>
+                                       PF('#{entityTypeName}LogbookLogAddDialogWidget').show()">
+                            <p:tooltip for="@parent">Reply</p:tooltip>
                         </p:commandLink>
-
-                        <p:commandLink id="#{entityTypeName}LogDestroyButton"
-                                       rendered="#{isEntityWriteable}"
-                                       styleClass="logAction-right fa fa-link-icon fa-trash" title="Delete"
-                                       onstart="PF('confirmDeleteLog#{logObject.viewUUID}Widget').show();">
-                            <p:tooltip for="#{entityTypeName}LogDestroyButton" value="Delete #{entityTypeName} log entry."/>
+                                                 
+                        <p:commandLink styleClass="logAction-left fa fa-link-icon fa-chevron-up"
+                                       onclick="handleToggleRepliesButton(this, '#{logObject.id}logEntryRepliesWidget');"
+                                       rendered="#{logObject.childLogList.size() > 0}">
+                            <p:tooltip for="@parent">Toggle Replies</p:tooltip>
                         </p:commandLink>
+                    </ui:define>
 
-                        <p:commandLink id="#{entityTypeName}LogPermalink"
-                                       action="#{facesUtility.displayGrowlInfoMessage('Copied', 'Log permalink copied to clipboard.')}"                                        
-                                       styleClass="logAction-right fa fa-link-icon fa-clipboard" title="Copy permalink">                                    
-                            <p:tooltip for="#{entityTypeName}LogPermalink" value="Copy permalink to log entry."/>
-                            <pe:clipboard id="viewPermanentLinkCopy" 
-                                          trigger="@parent"                   
-                                          action="copy"
-                                          text="#{itemDomainLogbookController.getLogPermalink(logObject.id)}"/>
-                        </p:commandLink>
+                    <ui:define name="additionalLogEntryContent"> 
+                        <ui:param name="hasReplies"
+                                  value="#{logObject.childLogList.size() > 0}"/>
 
-                        <p:confirmDialog message="Would you like to remove the log?"
-                                         header="Confirm Log Delete" 
-                                         severity="alert"
-                                         styleClass="viewTransparentBackgroundDialog viewTransparentBackgroundDialog-alert"
-                                         widgetVar="confirmDeleteLog#{logObject.viewUUID}Widget">
-                            <p:commandButton value="Yes" 
-                                             id="confirmYesDestroyLogEntryButton"
-                                             action="#{entityController.viewForCurrentEntity()}" 
-                                             actionListener="#{itemDomainLogbookController.destroyLogEntry(logObject)}"
-                                             onstart="PF('confirmDeleteLog#{logObject.viewUUID}Widget').hide()"/>
-                            <p:commandButton value="No" onclick="PF('confirmDeleteLog#{logObject.viewUUID}Widget').hide();" type="button" />
-                        </p:confirmDialog>
-                    </div>
-                </div>
+                        <p:panel widgetVar="#{logObject.id}logEntryRepliesWidget"
+                                 toggleable="true"                
+                                 rendered="#{hasReplies}">
+                            <p:dataScroller value="#{logObject.childLogList}" var="childLog" styleClass="logDataScroller">
+                                <ui:decorate template="templates/logEntryObjectTemplate.xhtml">
+                                    <ui:param name="logObject" value="#{childLog}"/> 
+                                    <ui:define name="additionalLogEntryFooter"/>
+                                    <ui:define name="additionalLogEntryContent"/> 
+                                </ui:decorate>
+                            </p:dataScroller>
+                        </p:panel>
+
+
+
+                    </ui:define>
+                </ui:decorate>         
             </p:dataScroller>
         </ui:fragment>
     </div>        
