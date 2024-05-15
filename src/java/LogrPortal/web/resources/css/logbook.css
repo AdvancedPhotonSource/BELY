@@ -68,17 +68,17 @@ html, body {
     /*white-space: pre;*/ 
 }
 
-.ui-datascroller-item:hover .logEntry {
+.ui-datascroller-item .logEntry:hover {
     background: #ecf2f9;
     transition: 0.5s; 
 }
 
-.ui-datascroller-item:hover .logTimestamp {
+.ui-datascroller-item .logTimestamp:hover {
     background: slategray; 
     transition: 0.5s; 
 }
 
-.ui-datascroller-item:hover .logAttachment {
+.ui-datascroller-item .logAttachment:hover {
     background: #ecf2f9;
 }
 

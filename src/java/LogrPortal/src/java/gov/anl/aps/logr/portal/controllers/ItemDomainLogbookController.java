@@ -34,6 +34,7 @@ import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
 import gov.anl.aps.logr.portal.model.db.entities.SettingType;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.model.db.utilities.EntityInfoUtility;
+import gov.anl.aps.logr.portal.model.db.utilities.LogUtility;
 import gov.anl.aps.logr.portal.utilities.MarkdownParser;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
@@ -452,6 +453,17 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             return false;
         }
         return true;
+    }
+    
+    public Log prepareAddLogReply(Log parentLog) {        
+        UserInfo user = SessionUtility.getUser();
+                
+        Log logEntry = LogUtility.createLogEntry(user);
+        logEntry.setParentLog(parentLog);        
+        
+        setNewLogEdit(logEntry);
+        
+        return logEntry;         
     }
 
     @Override
