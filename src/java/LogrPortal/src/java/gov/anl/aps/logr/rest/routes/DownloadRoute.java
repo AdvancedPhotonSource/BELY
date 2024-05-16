@@ -23,7 +23,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -102,6 +101,16 @@ public class DownloadRoute extends BaseRoute {
 
         return getFileResponse("Upload: " + originalFileName, originalFileName, filePath, isAttachment);
     }
+    
+    @GET
+    @Path("/Attachments/{attachmentName}/{scaling}")
+    @Produces("image/png")
+    public Response getAttachment(@PathParam("attachmentName") String attachmentName, @PathParam("scaling") String scaling) throws FileNotFoundException {
+        String fullAttachmentName = attachmentName + "." + scaling;
+        String filePath = StorageUtility.getFileSystemLogAttachmentPath(fullAttachmentName);
+
+        return getFileResponse("Image: " + fullAttachmentName, fullAttachmentName + ".png", filePath, false);
+    }        
 
     private Response getFileResponse(String errorFileTypeColonName, String fileName, String storageFilePath, boolean isAttachment) throws FileNotFoundException {        
         File file = new File(storageFilePath);
@@ -121,7 +130,9 @@ public class DownloadRoute extends BaseRoute {
             response = Response.ok((Object) file, typeForFilename);            
             
             response.header("Content-Disposition",
-                    headerObject);                        
+                    headerObject);
+            
+            response.header("Content-Length", file.length()); 
             
             return response.build();
         }
