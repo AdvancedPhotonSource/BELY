@@ -12,5 +12,9 @@ public class CdbPropertyValue {
     public static final String IMAGE_PREFIX = "image.";
     public static final String ORIGINAL_IMAGE_EXTENSION = ".original";
     public static final String THUMBNAIL_IMAGE_EXTENSION = ".thumbnail";
-    public static final String SCALED_IMAGE_EXTENSION = ".scaled";    
+    
+    public static final String SCALED_IMAGE_SCALING = "scaled"; 
+    public static final String SCALED_IMAGE_EXTENSION = "." + SCALED_IMAGE_SCALING;
+    
+    
 }

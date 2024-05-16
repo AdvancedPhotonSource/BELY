@@ -70,6 +70,9 @@ public class MarkdownParser {
             
 
     private static String contextRoot = null;
+    
+    private static final String LOG_ATTACHMENT_PREFIX = "/log/attachments/"; 
+    private static final String API_DOWNLOAD_PREFIX = "/api/Downloads/Attachments/"; 
 
     private static String markdownExampleAsHtml = null;
 
@@ -140,6 +143,17 @@ public class MarkdownParser {
             }
             return contextRoot;
         }
+        
+        private String getScaledImageEndpoint(String url) {
+            if (url.startsWith(LOG_ATTACHMENT_PREFIX)) { 
+                url = url.replace(LOG_ATTACHMENT_PREFIX, API_DOWNLOAD_PREFIX); 
+
+                url = getContextRoot() + url; 
+                url = url + '/' + CdbPropertyValue.SCALED_IMAGE_SCALING; 
+            }
+            
+            return url; 
+        }
 
         private void render(Image node, NodeRendererContext context, HtmlWriter html) {
             BasedSequence nodeUrl = node.getUrl();
@@ -154,7 +168,7 @@ public class MarkdownParser {
                 String contextRoot = getContextRoot();
 
                 fullResUrl = contextRoot + fullResUrl;
-                scaledUrl = contextRoot + scaledUrl + CdbPropertyValue.SCALED_IMAGE_EXTENSION;
+                scaledUrl = getScaledImageEndpoint(scaledUrl); 
             }
 
             // Create a link to full size image. 
@@ -194,7 +208,7 @@ public class MarkdownParser {
 
             // Close a tag after adding image 
             html.tag("/a");
-        }
+        }                
 
         //See https://github.com/vsch/flexmark-java/blob/cc3a2f59ba6e532833f4805f8134b4dc966ff837/flexmark/src/main/java/com/vladsch/flexmark/html/renderer/CoreNodeRenderer.java#L642
         void render(Link node, NodeRendererContext context, HtmlWriter html) {
