@@ -2,6 +2,40 @@ ALTER TABLE `log` ADD column `parent_log_id` int(11) unsigned NULL AFTER effecti
 ALTER TABLE `log` ADD KEY `log_k4` (`parent_log_id`); 
 ALTER TABLE `log` ADD CONSTRAINT `log_fk4` FOREIGN KEY (`parent_log_id`) REFERENCES `log` (`id`) ON UPDATE CASCADE;
 
+--
+-- Table `reaction`
+--
+
+DROP TABLE IF EXISTS `reaction`;
+CREATE TABLE `reaction` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(64) NOT NULL,
+  `emoji_code` int NOT NULL, 
+  `description` varchar(256) DEFAULT NULL,
+  `sort_order` float(10,2) unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `reaction_u1` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+--
+-- Table `log_reaction`
+--
+
+DROP TABLE IF EXISTS `log_reaction`;
+CREATE TABLE `log_reaction` (
+  `log_id` int(11) unsigned NOT NULL,
+  `reaction_id` int(11) unsigned NOT NULL,
+  `user_id` int(11) unsigned NOT NULL,
+  PRIMARY KEY (`log_id`, `reaction_id`, `user_id`),
+  KEY `log_reaction_k1` (`log_id`),
+  KEY `log_reaction_k2` (`reaction_id`),
+  KEY `log_reaction_k3` (`user_id`),
+  CONSTRAINT `log_reaction_fk1` FOREIGN KEY (`log_id`) REFERENCES `log` (`id`),
+  CONSTRAINT `log_reaction_fk2` FOREIGN KEY (`reaction_id`) REFERENCES `reaction` (`id`),
+  CONSTRAINT `log_reaction_fk3` FOREIGN KEY (`user_id`) REFERENCES `user_info` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+INSERT INTO reaction(name, emoji_code) values ('Like', 128077), ('Thinking',129300), ('Star', 11088), ('Important', 10071);
 
 delimiter //
 
