@@ -102,6 +102,8 @@ public class Log extends CdbEntity implements Serializable {
     private Log parentLog;    
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "parentLog")
     private List<Log> childLogList;    
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "log")
+    private List<LogReaction> logReactionList;    
     @JoinColumn(name = "log_topic_id", referencedColumnName = "id")
     @ManyToOne
     private LogTopic logTopic;
@@ -197,6 +199,15 @@ public class Log extends CdbEntity implements Serializable {
     public void setParentLog(Log parentLog) {
         this.parentLog = parentLog;
     }
+
+    @XmlTransient
+    public List<LogReaction> getLogReactionList() {
+        return logReactionList;
+    }
+
+    public void setLogReactionList(List<LogReaction> logReactionList) {
+        this.logReactionList = logReactionList;
+    }   
 
     @JsonIgnore
     public LogTopic getLogTopic() {
