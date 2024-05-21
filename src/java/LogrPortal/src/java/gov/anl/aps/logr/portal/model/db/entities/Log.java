@@ -7,6 +7,7 @@ package gov.anl.aps.logr.portal.model.db.entities;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import gov.anl.aps.logr.portal.utilities.MarkdownParser;
+import gov.anl.aps.logr.portal.view.objects.GroupedReaction;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -114,6 +115,8 @@ public class Log extends CdbEntity implements Serializable {
     private transient String originalLogEntryText; 
     private transient UserInfo originalLogEntryUser; 
     private transient boolean saveConflict = false; 
+    
+    private transient List<GroupedReaction> groupedReactions; 
 
     public Log() {
     }
@@ -190,12 +193,12 @@ public class Log extends CdbEntity implements Serializable {
 
     public void setChildLogList(List<Log> childLogList) {
         this.childLogList = childLogList;
-    }
+    }            
 
     public Log getParentLog() {
         return parentLog;
     }
-
+    
     public void setParentLog(Log parentLog) {
         this.parentLog = parentLog;
     }
@@ -348,6 +351,15 @@ public class Log extends CdbEntity implements Serializable {
         return enteredOnDateTime.getTime() != lastModifiedOnDateTime.getTime(); 
     }
 
+    @JsonIgnore
+    public List<GroupedReaction> getGroupedReactions() {
+        return groupedReactions;
+    }
+
+    public void setGroupedReactions(List<GroupedReaction> groupedReactions) {
+        this.groupedReactions = groupedReactions;
+    }
+
     @Override
     public boolean equals(Object object) {
         // TODO: Warning - this method won't work in the case the id fields are not set
@@ -365,5 +377,5 @@ public class Log extends CdbEntity implements Serializable {
     public String toString() {
         return "gov.anl.aps.cdb.portal.model.db.entities.Log[ id=" + id + " ]";
     }
-    
-}
+
+}  
