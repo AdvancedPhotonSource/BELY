@@ -74,6 +74,50 @@ See LICENSE file.
                 </p:tooltip>
             </p:commandLink>
 
+            <p:commandLink id="logReactionCommandLink"
+                           styleClass="logAction-left fa fa-link-icon fa-smile-o logEditButton"
+                           value=" #{logObject.logReactionList.size()}"   
+                           update="@form:#{entityTypeName}LogbookLogAddDialog"
+                           oncomplete="PF('loadingDialog').hide();"> 
+                <p:tooltip for="@parent"> 
+                    React
+                </p:tooltip>                
+            </p:commandLink>
+
+            <p:overlayPanel for="logReactionCommandLink" dynamic="true">
+                <ui:param name="groupReactionList"
+                          value="#{itemDomainLogbookController.getGroupedReactions(logObject)}"/>                     
+                <p:dataScroller value="#{groupReactionList}"
+                                var="groupedReaction"> 
+                    <ui:param name="reaction"
+                              value="#{groupedReaction.reaction}"/>                         
+                    <ui:param name="reactionLabel"
+                              value="#{reaction.emoji} - #{groupedReaction.reactionCount}"/> 
+
+                    <ui:param name="remoteCommandActionName"
+                              value="reactionAction#{logObject.id}#{reaction.id}" />                                                 
+
+                    <p:selectBooleanButton value="#{groupedReaction.userReaction}"
+                                           onLabel="#{reactionLabel}"     
+                                           offLabel="#{reactionLabel}"
+                                           onchange="#{remoteCommandActionName}()"
+                                           disabled="#{!isEntityWriteable}">
+                        <p:tooltip for="@parent"
+                                   rendered="#{groupedReaction.reactionCount > 0}">
+                            Reaction(s) by: <br/>
+                            <ui:repeat value="#{groupedReaction.logReactionList}"
+                                       var="lr">
+                                #{lr.userInfo} <br/>                                
+                            </ui:repeat>
+                        </p:tooltip>
+                    </p:selectBooleanButton>
+
+                    <p:remoteCommand name="#{remoteCommandActionName}"
+                                     action="#{itemDomainLogbookController.toggleReaction(logObject, reaction)}"
+                                     update="@form"/>
+                </p:dataScroller>
+            </p:overlayPanel>
+
             <p:commandLink id="#{entityTypeName}LogDestroyButton"
                            rendered="#{isEntityWriteable}"
                            styleClass="logAction-right fa fa-link-icon fa-trash" title="Delete"
@@ -105,7 +149,7 @@ See LICENSE file.
             </p:confirmDialog>
             <ui:insert name="additionalLogEntryFooter" />             
         </div>
-        
+
         <ui:insert name="additionalLogEntryContent" /> 
     </div>
 
