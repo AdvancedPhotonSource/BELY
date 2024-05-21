@@ -201,9 +201,7 @@ executePopulateScripts "$STATIC_LOGR_DB_TABLES"
 
 # populate db
 cd $CURRENT_DIR && cd $LOGR_DB_SCRIPTS_DIR
-LOGR_DB_TABLES="\
-    entity_type \
-    allowed_entity_type_domain \
+LOGR_DB_TABLES="\    
     user_info \
     user_group \
     user_user_group \
@@ -222,6 +220,8 @@ LOGR_DB_TABLES="\
     log_attachment \
     log_level \
     system_log \
+    reaction \
+    log_reaction \
     item \
     item_element \
     item_element_history \
@@ -234,6 +234,8 @@ LOGR_DB_TABLES="\
     item_category_item_type \
     item_project \
     item_item_project \
+    entity_type \
+    allowed_entity_type_domain \
     item_entity_type \
     allowed_child_entity_type \
     source \
