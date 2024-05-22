@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 /**
- * User Reaction entity class represents the reaction database table. 
+ * Reaction entity class represents the reaction database table. 
  * 
  * @author djarosz
  */
