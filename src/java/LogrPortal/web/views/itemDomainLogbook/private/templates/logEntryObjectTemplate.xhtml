@@ -106,7 +106,8 @@ See LICENSE file.
                                            disabled="#{!isEntityWriteable}"
                                            styleClass="reactionButton">
                         <p:tooltip for="@parent"
-                                   rendered="#{groupedReaction.reactionCount > 0}">
+                                   rendered="#{groupedReaction.reactionCount > 0}"
+                                   hideEvent="mouseout click">
                             '#{reactionName}' reaction(s) by: <br/>
                             <ui:repeat value="#{groupedReaction.logReactionList}"
                                        var="lr">
@@ -115,7 +116,8 @@ See LICENSE file.
                         </p:tooltip>
                         
                         <p:tooltip for="@parent"
-                                   rendered="#{groupedReaction.reactionCount == 0}">
+                                   rendered="#{groupedReaction.reactionCount == 0}"
+                                   hideEvent="mouseout click">
                             #{reactionName}
                         </p:tooltip>
                     </p:selectBooleanButton>
