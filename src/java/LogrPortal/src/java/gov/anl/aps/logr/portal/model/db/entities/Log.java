@@ -117,6 +117,7 @@ public class Log extends CdbEntity implements Serializable {
     private transient boolean saveConflict = false; 
     
     private transient List<GroupedReaction> groupedReactions; 
+    private transient String addedReactionsString; 
 
     public Log() {
     }
@@ -358,6 +359,15 @@ public class Log extends CdbEntity implements Serializable {
 
     public void setGroupedReactions(List<GroupedReaction> groupedReactions) {
         this.groupedReactions = groupedReactions;
+    }
+
+    @JsonIgnore
+    public String getAddedReactionsString() {
+        return addedReactionsString;
+    }
+
+    public void setAddedReactionsString(String addedReactionsString) {
+        this.addedReactionsString = addedReactionsString;
     }
 
     @Override

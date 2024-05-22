@@ -76,7 +76,7 @@ See LICENSE file.
 
             <p:commandLink id="logReactionCommandLink"
                            styleClass="logAction-left fa fa-link-icon fa-smile-o logEditButton"
-                           value=" #{logObject.logReactionList.size()}"   
+                           value=" #{itemDomainLogbookController.getAddedReactionsString(logObject)}"   
                            update="@form:#{entityTypeName}LogbookLogAddDialog"
                            oncomplete="PF('loadingDialog').hide();"> 
                 <p:tooltip for="@parent"> 

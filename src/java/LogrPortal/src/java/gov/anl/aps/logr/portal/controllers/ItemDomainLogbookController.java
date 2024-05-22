@@ -584,6 +584,30 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         updateModifiedDateForCurrent();
     }
     
+    public String getAddedReactionsString(Log entry) {
+        String addedReactionsString = entry.getAddedReactionsString();
+        
+        if (addedReactionsString == null) {        
+            addedReactionsString = ""; 
+            List<GroupedReaction> groupedReactions = getGroupedReactions(entry);
+            
+            for (GroupedReaction groupedReaction : groupedReactions) {
+                List<LogReaction> logReactionList = groupedReaction.getLogReactionList();
+                if (logReactionList.size() > 0) {
+                    Reaction reaction = groupedReaction.getReaction(); 
+                    
+                    addedReactionsString += String.format("%s(%d) ", 
+                            reaction.getEmoji(), 
+                            logReactionList.size()); 
+                }
+            }
+            
+            entry.setAddedReactionsString(addedReactionsString);
+        }
+        
+        return addedReactionsString; 
+    }
+    
     public List<GroupedReaction> getGroupedReactions(Log entry) {
         List<GroupedReaction> groupedReactions = entry.getGroupedReactions();
         
