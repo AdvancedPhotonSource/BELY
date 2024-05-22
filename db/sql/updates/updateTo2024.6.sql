@@ -35,7 +35,7 @@ CREATE TABLE `log_reaction` (
   CONSTRAINT `log_reaction_fk3` FOREIGN KEY (`user_id`) REFERENCES `user_info` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
-INSERT INTO reaction(name, emoji_code) values ('Like', 128077), ('Thinking',129300), ('Star', 11088), ('Important', 10071);
+INSERT INTO reaction(name, emoji_code) values ('Like', 128077), ('Thinking',129300), ('Great Job!', 128175), ('Important', 10071);
 
 delimiter //
 

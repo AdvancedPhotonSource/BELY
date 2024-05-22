@@ -8,7 +8,7 @@ LOCK TABLES `reaction` WRITE;
 INSERT INTO `reaction` VALUES
 (1,'Like',128077,NULL,1.0),
 (2,'Thinking',129300,NULL,2.0),
-(3,'Star',11088,NULL,3.0),
+(3,'Great Job!',128175,NULL,3.0),
 (4,'Important',10071,NULL,4.0);
 /*!40000 ALTER TABLE `reaction` ENABLE KEYS */;
 UNLOCK TABLES;

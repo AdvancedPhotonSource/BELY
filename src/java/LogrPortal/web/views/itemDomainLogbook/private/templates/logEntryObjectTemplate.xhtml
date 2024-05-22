@@ -90,7 +90,9 @@ See LICENSE file.
                 <p:dataScroller value="#{groupReactionList}"
                                 var="groupedReaction"> 
                     <ui:param name="reaction"
-                              value="#{groupedReaction.reaction}"/>                         
+                              value="#{groupedReaction.reaction}"/>    
+                    <ui:param name="reactionName"
+                              value="#{reaction.name}"/>
                     <ui:param name="reactionLabel"
                               value="#{reaction.emoji} - #{groupedReaction.reactionCount}"/> 
 
@@ -101,14 +103,20 @@ See LICENSE file.
                                            onLabel="#{reactionLabel}"     
                                            offLabel="#{reactionLabel}"
                                            onchange="#{remoteCommandActionName}()"
-                                           disabled="#{!isEntityWriteable}">
+                                           disabled="#{!isEntityWriteable}"
+                                           styleClass="reactionButton">
                         <p:tooltip for="@parent"
                                    rendered="#{groupedReaction.reactionCount > 0}">
-                            Reaction(s) by: <br/>
+                            '#{reactionName}' reaction(s) by: <br/>
                             <ui:repeat value="#{groupedReaction.logReactionList}"
                                        var="lr">
                                 #{lr.userInfo} <br/>                                
                             </ui:repeat>
+                        </p:tooltip>
+                        
+                        <p:tooltip for="@parent"
+                                   rendered="#{groupedReaction.reactionCount == 0}">
+                            #{reactionName}
                         </p:tooltip>
                     </p:selectBooleanButton>
 

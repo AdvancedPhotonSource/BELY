@@ -172,3 +172,11 @@ div.logbookSection {
     font-size: 15px;
     font-weight: bold;
 }
+
+.reactionButton {
+    width: 7em;
+}
+
+.reactionButton > .ui-button-text {
+    font-size: large !important;
+}
