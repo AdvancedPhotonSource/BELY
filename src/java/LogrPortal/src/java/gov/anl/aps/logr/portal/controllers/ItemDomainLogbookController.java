@@ -21,6 +21,8 @@ import gov.anl.aps.logr.portal.controllers.utilities.SettingTypeControllerUtilit
 import gov.anl.aps.logr.portal.model.ItemDomainLogbookLazyDataModel;
 import gov.anl.aps.logr.portal.model.db.beans.ItemDomainLogbookFacade;
 import gov.anl.aps.logr.portal.model.db.beans.LogFacade;
+import gov.anl.aps.logr.portal.model.db.beans.LogReactionFacade;
+import gov.anl.aps.logr.portal.model.db.beans.ReactionFacade;
 import gov.anl.aps.logr.portal.model.db.entities.Domain;
 import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
 import gov.anl.aps.logr.portal.model.db.entities.EntityType;
@@ -29,8 +31,10 @@ import gov.anl.aps.logr.portal.model.db.entities.ItemDomainLogbook;
 import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
 import gov.anl.aps.logr.portal.model.db.entities.ItemType;
 import gov.anl.aps.logr.portal.model.db.entities.Log;
+import gov.anl.aps.logr.portal.model.db.entities.LogReaction;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyType;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
+import gov.anl.aps.logr.portal.model.db.entities.Reaction;
 import gov.anl.aps.logr.portal.model.db.entities.SettingType;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.model.db.utilities.EntityInfoUtility;
@@ -38,6 +42,7 @@ import gov.anl.aps.logr.portal.model.db.utilities.LogUtility;
 import gov.anl.aps.logr.portal.utilities.MarkdownParser;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
+import gov.anl.aps.logr.portal.view.objects.GroupedReaction;
 import gov.anl.aps.logr.portal.view.objects.ItemDomainLogbookHomeObject;
 import java.io.IOException;
 import java.time.DayOfWeek;
@@ -83,6 +88,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @EJB
     LogFacade logFacade;
+    
+    @EJB
+    ReactionFacade reactionFacade; 
+    
+    @EJB
+    LogReactionFacade logReactionFacade; 
 
     private EntityType currentEntityType = null;
     private Log lastLog;
@@ -121,7 +132,10 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_NONE_VAL = LogDocumentSettings.logTemplateModeNoneVal.getValue();
     private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_COPY_VAL = LogDocumentSettings.logTemplateModeCopyVal.getValue();
     private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL = LogDocumentSettings.logTemplateModeTemplatePerEntryVal.getValue();
-
+    
+    // Cache for full reaction list. 
+    private List<Reaction> reactionList = null; 
+    
     // Custom operations functionality.. 
     // <editor-fold defaultstate="collapsed" desc="Operations specific variables.">
     private static final String OPS_TEMPLATE_NAME = "Operations Shift";
@@ -148,8 +162,8 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     public static ItemDomainLogbookController getInstance() {
         return (ItemDomainLogbookController) SessionUtility.findBean(controllerNamed);
-    }
-
+    }        
+    
     @Override
     public ItemDomainLogbookLazyDataModel createItemLazyDataModel() {
         return new ItemDomainLogbookLazyDataModel(itemDomainLogbookFacade, getDefaultDomain(), settingObject);
@@ -569,6 +583,81 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         updateModifiedDateForCurrent();
     }
+    
+    public String getAddedReactionsString(Log entry) {
+        String addedReactionsString = entry.getAddedReactionsString();
+        
+        if (addedReactionsString == null) {        
+            addedReactionsString = ""; 
+            List<GroupedReaction> groupedReactions = getGroupedReactions(entry);
+            
+            for (GroupedReaction groupedReaction : groupedReactions) {
+                List<LogReaction> logReactionList = groupedReaction.getLogReactionList();
+                if (logReactionList.size() > 0) {
+                    Reaction reaction = groupedReaction.getReaction(); 
+                    
+                    addedReactionsString += String.format("%s(%d) ", 
+                            reaction.getEmoji(), 
+                            logReactionList.size()); 
+                }
+            }
+            
+            entry.setAddedReactionsString(addedReactionsString);
+        }
+        
+        return addedReactionsString; 
+    }
+    
+    public List<GroupedReaction> getGroupedReactions(Log entry) {
+        List<GroupedReaction> groupedReactions = entry.getGroupedReactions();
+        
+        if (groupedReactions == null) {
+            UserInfo user = SessionUtility.getUser();
+            if (reactionList == null) {
+                reactionList = reactionFacade.findAll(); 
+            }
+                
+            groupedReactions = GroupedReaction.createGroupedReactionList(reactionList, entry, user); 
+            entry.setGroupedReactions(groupedReactions);             
+        }
+        
+        return groupedReactions; 
+    }
+    
+    public void toggleReaction(Log entry, Reaction reaction) {
+        // Fetch the latest version 
+        entry = logFacade.find(entry.getId());                
+        UserInfo user = SessionUtility.getUser();
+        
+        List<LogReaction> logReactionList = entry.getLogReactionList();
+        boolean add = true; 
+        
+        // Check if need to remove log reaction. 
+        for (LogReaction lr : logReactionList) { 
+            UserInfo userId = lr.getUserInfo();
+            
+            if (user.equals(userId)) { 
+                Reaction existingReaction = lr.getReaction();
+                
+                if (existingReaction.equals(reaction)) {
+                    add = false; 
+                    logReactionList.remove(lr); 
+                    logReactionFacade.remove(lr);
+                    break; 
+                }
+            }            
+        }
+        
+        if (add) {
+            LogReaction lr = new LogReaction(entry.getId(), reaction.getId(), user.getId());
+            logReactionFacade.create(lr); 
+        }
+
+        // No need to scroll to any log entry. Ajax event. 
+        lastLog = null;         
+        reloadCurrent();
+    }
+
 
     @Override
     public String saveLogList() {

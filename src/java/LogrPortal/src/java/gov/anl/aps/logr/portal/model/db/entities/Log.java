@@ -7,6 +7,7 @@ package gov.anl.aps.logr.portal.model.db.entities;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import gov.anl.aps.logr.portal.utilities.MarkdownParser;
+import gov.anl.aps.logr.portal.view.objects.GroupedReaction;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -102,6 +103,8 @@ public class Log extends CdbEntity implements Serializable {
     private Log parentLog;    
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "parentLog")
     private List<Log> childLogList;    
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "log")
+    private List<LogReaction> logReactionList;    
     @JoinColumn(name = "log_topic_id", referencedColumnName = "id")
     @ManyToOne
     private LogTopic logTopic;
@@ -112,6 +115,9 @@ public class Log extends CdbEntity implements Serializable {
     private transient String originalLogEntryText; 
     private transient UserInfo originalLogEntryUser; 
     private transient boolean saveConflict = false; 
+    
+    private transient List<GroupedReaction> groupedReactions; 
+    private transient String addedReactionsString; 
 
     public Log() {
     }
@@ -188,15 +194,24 @@ public class Log extends CdbEntity implements Serializable {
 
     public void setChildLogList(List<Log> childLogList) {
         this.childLogList = childLogList;
-    }
+    }            
 
     public Log getParentLog() {
         return parentLog;
     }
-
+    
     public void setParentLog(Log parentLog) {
         this.parentLog = parentLog;
     }
+
+    @XmlTransient
+    public List<LogReaction> getLogReactionList() {
+        return logReactionList;
+    }
+
+    public void setLogReactionList(List<LogReaction> logReactionList) {
+        this.logReactionList = logReactionList;
+    }   
 
     @JsonIgnore
     public LogTopic getLogTopic() {
@@ -337,6 +352,24 @@ public class Log extends CdbEntity implements Serializable {
         return enteredOnDateTime.getTime() != lastModifiedOnDateTime.getTime(); 
     }
 
+    @JsonIgnore
+    public List<GroupedReaction> getGroupedReactions() {
+        return groupedReactions;
+    }
+
+    public void setGroupedReactions(List<GroupedReaction> groupedReactions) {
+        this.groupedReactions = groupedReactions;
+    }
+
+    @JsonIgnore
+    public String getAddedReactionsString() {
+        return addedReactionsString;
+    }
+
+    public void setAddedReactionsString(String addedReactionsString) {
+        this.addedReactionsString = addedReactionsString;
+    }
+
     @Override
     public boolean equals(Object object) {
         // TODO: Warning - this method won't work in the case the id fields are not set
@@ -354,5 +387,5 @@ public class Log extends CdbEntity implements Serializable {
     public String toString() {
         return "gov.anl.aps.cdb.portal.model.db.entities.Log[ id=" + id + " ]";
     }
-    
-}
+
+}  
