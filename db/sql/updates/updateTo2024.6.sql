@@ -2,6 +2,14 @@ ALTER TABLE `log` ADD column `parent_log_id` int(11) unsigned NULL AFTER effecti
 ALTER TABLE `log` ADD KEY `log_k4` (`parent_log_id`); 
 ALTER TABLE `log` ADD CONSTRAINT `log_fk4` FOREIGN KEY (`parent_log_id`) REFERENCES `log` (`id`) ON UPDATE CASCADE;
 
+
+LOCK TABLES `attachment` WRITE;
+/*!40000 ALTER TABLE `attachment` DISABLE KEYS */;
+ALTER TABLE `attachment` ADD column `original_filename` varchar(256) NOT NULL AFTER `name`;
+UPDATE `attachment` set original_filename = name;
+/*!40000 ALTER TABLE `attachment` ENABLE KEYS */;
+UNLOCK TABLES;
+
 --
 -- Table `reaction`
 --
