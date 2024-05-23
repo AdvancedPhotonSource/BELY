@@ -22,7 +22,17 @@ public abstract class CdbDomainEntity extends CdbEntity {
     private transient final HashMap<Integer, PropertyValueInformation> propertyValueCacheMap = new HashMap<>();
     // Used to map property type id to property value number
     private static transient HashMap<Integer, Integer> propertyTypeIdIndexMap = new HashMap<>();
+    private transient Log newLogEdit;
+    
+    @JsonIgnore
+    public Log getNewLogEdit() {
+        return newLogEdit;
+    }
 
+    public void setNewLogEdit(Log newLogEdit) {
+        this.newLogEdit = newLogEdit;
+    }
+    
     public static void setPropertyTypeIdIndex(Integer index, Integer propertyTypeId) {
         if (propertyTypeId != null) {
             propertyTypeIdIndexMap.put(index, propertyTypeId);

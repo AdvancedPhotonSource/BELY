@@ -661,6 +661,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @Override
     public String saveLogList() {
+        Log newLogEdit = getNewLogEdit();
         if (newLogEdit.getId() != null) {
             // Perform validation 
             Log savedLogEntry = logFacade.find(newLogEdit.getId());
@@ -696,8 +697,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             List<Log> logList = parentItem.getLogList();
             lastLog = logList.get(logList.size() - 1);
         }
-
-        newLogEdit = null;
+        setNewLogEdit(null);
         updateModifiedDateForCurrent();
 
         return viewForCurrentEntity();
