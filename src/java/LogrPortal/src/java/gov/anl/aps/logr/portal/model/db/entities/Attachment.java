@@ -4,11 +4,13 @@
  */
 package gov.anl.aps.logr.portal.model.db.entities;
 
+import gov.anl.aps.logr.common.utilities.FileUtility;
 import gov.anl.aps.logr.portal.utilities.GalleryUtility;
 import gov.anl.aps.logr.portal.utilities.StorageUtility;
 import java.io.Serializable;
 import java.util.List;
 import javax.persistence.Basic;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -46,6 +48,9 @@ public class Attachment implements Serializable {
     @NotNull
     @Size(min = 1, max = 128)
     private String name;
+   @Size(min = 1, max = 256)
+   @Column(name = "original_filename")
+   private String originalFilename;
     @Size(max = 64)
     private String tag;
     @Size(max = 256)
@@ -83,6 +88,14 @@ public class Attachment implements Serializable {
     public void setName(String name) {
         this.name = name;
     }
+
+   public String getOriginalFilename() {
+       return originalFilename;
+   }
+
+   public void setOriginalFilename(String originalFilename) {
+       this.originalFilename = FileUtility.shortenFileNameIfNeeded(originalFilename, name, 256);        
+   }
     
     public String getDisplayName() {
         if (tag != null && !tag.isEmpty()) {
