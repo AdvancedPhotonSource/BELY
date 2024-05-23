@@ -83,15 +83,31 @@ function toggleTimestamps() {
     }
 }
 
-$('.logEntry').dblclick(function (event) {
-    console.log("Log Entry Double Clicked");
+$('.logEntry').dblclick(function (event) {    
     var logEntryPanel = event.delegateTarget;
     var logObjectPanel = logEntryPanel.parentElement;
-    var logEditButtons = logObjectPanel.getElementsByClassName('logEditButton');
+    
+    children = logObjectPanel.children;         
+    var footer = undefined; 
+    
+    for (var element of children) {
+        if (element.className === 'logFooter') {
+            footer = element; 
+            break; 
+        }
+    }
+    
+    if (footer !== undefined) {
+        var logEditButtons = footer.getElementsByClassName('logEditButton');       
 
-    if (logEditButtons.length == 1) {
-        var editButton = logEditButtons[0];
-        editButton.click();
+        if (logEditButtons.length === 1) {
+            var editButton = logEditButtons[0];
+            editButton.click();
+        } else {
+            console.error("Too many matches for logEditButton found.");
+        }
+    } else {
+         console.error("Could not find log footer.");
     }
 });
 

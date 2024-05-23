@@ -25,7 +25,7 @@ See LICENSE file.
             <p:dataScroller value="#{itemObject.logList}" var="logObject" styleClass="logDataScroller">                
                 <ui:decorate template="templates/logEntryObjectTemplate.xhtml">
                     <ui:define name="additionalLogEntryFooter">
-                        <p:commandLink styleClass="logAction-left fa fa-link-icon fa-mail-reply logEditButton"
+                        <p:commandLink styleClass="logAction-left fa fa-link-icon fa-mail-reply"
                                        onclick="PF('loadingDialog').show()"
                                        rendered="#{isEntityWriteable}"
                                        action="#{itemDomainLogbookController.prepareAddLogReply(logObject)}"
