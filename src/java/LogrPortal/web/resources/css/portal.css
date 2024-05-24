@@ -1260,9 +1260,12 @@ body .ui-panel .ui-panel-titlebar  {
     padding-top: 1.75rem;
 }
 
-.viewTransparentBackgroundDialog  {
+.viewTransparentBackgroundOverlay {
     background-color: rgba(242, 250, 255, 0.93) !important;
     border-radius: 5px 5px 10px 10px;
+}
+
+.viewTransparentBackgroundDialog  {    
     vertical-align: central;
     text-align: center;
     margin: 0;
@@ -1451,6 +1454,14 @@ body .ui-tree .ui-tree-container .ui-treenode .ui-treenode-content .ui-treenode-
 
 .inlineFlexOutputPanel {
     display: inline-flex; 
+}
+
+.pi-link-icon {
+    padding: 4px;
+    color: #4f4f4f !important; 
+    text-decoration: none; 
+    font-weight: unset !important;
+    font-family: primeicons !important;
 }
 
 .fa-link-icon {
