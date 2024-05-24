@@ -11,6 +11,20 @@ See LICENSE file.
                 xmlns:h="http://xmlns.jcp.org/jsf/html">
 
     <h2>#{itemObject.name}</h2>  
+    
+    <ui:param name="reversedLogList"
+                  value="#{itemDomainLogbookController.reversedLogs}" /> 
+    
+    <ui:param name="logListName" 
+                  value="#{reversedLogList ? 'logListReversed' : 'logList'}" /> 
+    
+    <ui:param name="childLogListName" 
+                  value="#{reversedLogList ? 'childLogListReversed' : 'childLogList'}" /> 
+    
+    <ui:include src="addLogEntryCommandButton.xhtml">
+        <ui:param name="renderedButton"
+                  value="#{reversedLogList}" />
+    </ui:include>
 
     <div class="logbookSection">
 
@@ -18,11 +32,10 @@ See LICENSE file.
             <div class="logEntry">
                 Click the plus button to create a first log entry.            
             </div>
-        </ui:fragment>
-
+        </ui:fragment>                      
 
         <ui:fragment rendered="#{itemObject.logList.size() !=0}">
-            <p:dataScroller value="#{itemObject.logList}" var="logObject" styleClass="logDataScroller">                
+            <p:dataScroller value="#{itemObject[logListName]}" var="logObject" styleClass="logDataScroller">                
                 <ui:decorate template="templates/logEntryObjectTemplate.xhtml">
                     <ui:define name="additionalLogEntryFooter">
                         <p:commandLink styleClass="logAction-left fa fa-link-icon fa-mail-reply"
@@ -49,7 +62,7 @@ See LICENSE file.
                         <p:panel widgetVar="#{logObject.id}logEntryRepliesWidget"
                                  toggleable="true"                
                                  rendered="#{hasReplies}">
-                            <p:dataScroller value="#{logObject.childLogList}" var="childLog" styleClass="logDataScroller">
+                            <p:dataScroller value="#{logObject[childLogListName]}" var="childLog" styleClass="logDataScroller">
                                 <ui:decorate template="templates/logEntryObjectTemplate.xhtml">
                                     <ui:param name="logObject" value="#{childLog}"/> 
                                     <ui:define name="additionalLogEntryFooter"/>
@@ -66,15 +79,11 @@ See LICENSE file.
         </ui:fragment>
     </div>        
 
-    <p:commandButton icon="fa fa-plus"
-                     value="Add Log Entry"
-                     rendered="#{isEntityWriteable}"
-                     onclick="PF('loadingDialog').show()"
-                     action="#{itemDomainLogbookController.prepareAddLog(itemObject)}"
-                     update="@form:#{entityTypeName}LogbookLogAddDialog"
-                     oncomplete="PF('loadingDialog').hide(); 
-                     PF('#{entityTypeName}LogbookLogAddDialogWidget').show()"/>
-
+    <ui:include src="addLogEntryCommandButton.xhtml" > 
+        <ui:param name="renderedButton"
+                  value="#{!reversedLogList}" />
+    </ui:include>
+        
 
 
 </ui:composition>

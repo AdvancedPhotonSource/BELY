@@ -10,6 +10,7 @@ import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookController
 import gov.anl.aps.logr.portal.model.db.utilities.LogUtility;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -38,6 +39,8 @@ public class ItemDomainLogbook extends Item {
     private transient String opsShiftType = "Machine Studies";
     private transient LocalDateTime opsShiftStartTime;
     private transient LocalDateTime opsShiftEndTime;
+
+    private transient List<Log> logListReversed = null;
 
     public ItemDomainLogbook() {
     }
@@ -265,5 +268,15 @@ public class ItemDomainLogbook extends Item {
         }
                 
         return this; 
+    }
+
+    @JsonIgnore
+    public List<Log> getLogListReversed() {
+        if (logListReversed == null) {
+            List<Log> logList = getLogList();
+            logListReversed = new ArrayList<>(logList);
+            Collections.reverse(logListReversed);
+        }
+        return logListReversed;
     }
 }

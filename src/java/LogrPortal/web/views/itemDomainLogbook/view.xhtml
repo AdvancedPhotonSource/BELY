@@ -133,6 +133,20 @@ See LICENSE file.
                          onclick="toggleTimestamps()">
             <p:tooltip for="toggleTimestamp" value="Click to show/hide the timestamp on each log entry." /> 
         </p:commandButton>
+        
+        <p:selectBooleanButton value="#{itemDomainLogbookController.reversedLogs}" 
+                               style="float: right"
+                               onIcon="pi pi-sort-amount-up"
+                               offIcon="pi pi-sort-amount-down" 
+                               onchange="reversedLogsToggled()"> 
+            <p:tooltip for="@parent"> 
+                Toggle log order, oldest -> newest (default, off) and newest -> oldest.
+            </p:tooltip>
+            
+            <p:remoteCommand name="reversedLogsToggled"
+                             update="@this"
+                             action="#{itemDomainLogbookController.viewForCurrentEntity()}"/>
+        </p:selectBooleanButton>
 
         <p:panel header="Log Entries" 
                  id="#{entityTypeName}ViewLogEntriesPanel"
