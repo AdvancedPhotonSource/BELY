@@ -58,8 +58,6 @@ public abstract class CdbDomainEntityController<ControllerUtility extends CdbDom
 
     protected List<Integer> loadedDisplayPropertyTypes = null;
 
-    protected Log newLogEdit;
-
     private static final Logger logger = LogManager.getLogger(CdbDomainEntity.class.getName());    
 
     private List<PropertyValue> filteredPropertyValueList;
@@ -519,23 +517,26 @@ public abstract class CdbDomainEntityController<ControllerUtility extends CdbDom
     }
 
     public Log getNewLogEdit() {
-        return newLogEdit;
+        EntityType current = getCurrent();
+        return current.getNewLogEdit();
     }
 
     public void setNewLogEdit(Log newLogEdit) {
-        this.newLogEdit = newLogEdit;
+        EntityType current = getCurrent();
+        current.setNewLogEdit(newLogEdit);
     }
 
     public void removeNewLog() {
+        Log newLogEdit=getNewLogEdit();
         if (newLogEdit != null) {
             EntityType cdbDomainEntity = getCurrent();
             cdbDomainEntity.getLogList().remove(newLogEdit);
-            newLogEdit = null;
+            setNewLogEdit(null);
         }
     }
 
     public String saveLogList() {
-        newLogEdit = null;
+        setNewLogEdit(null);
         update();      
         
         return viewForCurrentEntity(); 
