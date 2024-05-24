@@ -133,6 +133,8 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_COPY_VAL = LogDocumentSettings.logTemplateModeCopyVal.getValue();
     private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL = LogDocumentSettings.logTemplateModeTemplatePerEntryVal.getValue();
     
+    private transient Boolean reversedLogs = false; 
+    
     // Cache for full reaction list. 
     private List<Reaction> reactionList = null; 
     
@@ -368,6 +370,14 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     public String getLOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL() {
         return LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL;
+    }
+
+    public Boolean getReversedLogs() {
+        return reversedLogs;                
+    }
+
+    public void setReversedLogs(Boolean reversedLogs) {
+        this.reversedLogs = reversedLogs;
     }
 
     @Override
@@ -1378,6 +1388,20 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     private String homeRedirect() {
         return "home?faces-redirect=true";
+    }
+    
+    public String resetLogbookHome() {
+        UserInfo user = SessionUtility.getUser();
+        settingObject.resetLogbookHomeSettings(user); 
+        
+        settingObject.saveListSettingsForSessionSettingEntityActionListener(null);
+        SettingController settingController = getSettingController();
+        settingController.saveSettingListForSettingEntity();
+        
+        LoginController instance = LoginController.getInstance();
+        instance.resetSession();
+
+        return homeRedirect();        
     }
 
     public String saveLogbookHome() {

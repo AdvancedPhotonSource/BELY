@@ -5,8 +5,10 @@
 package gov.anl.aps.logr.portal.controllers.settings;
 
 import gov.anl.aps.logr.portal.controllers.ItemDomainLogbookController;
+import gov.anl.aps.logr.portal.model.db.entities.EntitySetting;
 import gov.anl.aps.logr.portal.model.db.entities.SettingEntity;
 import gov.anl.aps.logr.portal.model.db.entities.SettingType;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -67,6 +69,18 @@ public class ItemDomainLogbookSettings extends ItemSettings<ItemDomainLogbookCon
         displayHomeLogbookTypeId1 = parseSettingValueAsInteger(settingTypeMap.get(DisplayLogbookTypeId1Key).getDefaultValue());        
         displayHomeLogbookTypeId2 = parseSettingValueAsInteger(settingTypeMap.get(DisplayLogbookTypeId2Key).getDefaultValue());        
         displayHomeLogbookTypeId3 = parseSettingValueAsInteger(settingTypeMap.get(DisplayLogbookTypeId3Key).getDefaultValue());        
+    }
+
+    public void resetLogbookHomeSettings(SettingEntity settingEntity) {
+        List<EntitySetting> settingList = settingEntity.getSettingList();
+        
+        EntitySetting logbook1Setting = settingEntity.getSetting(DisplayLogbookTypeId1Key); 
+        EntitySetting logbook2Setting = settingEntity.getSetting(DisplayLogbookTypeId2Key); 
+        EntitySetting logbook3Setting = settingEntity.getSetting(DisplayLogbookTypeId3Key); 
+        
+        settingList.remove(logbook1Setting); 
+        settingList.remove(logbook2Setting); 
+        settingList.remove(logbook3Setting);               
     }
 
     @Override

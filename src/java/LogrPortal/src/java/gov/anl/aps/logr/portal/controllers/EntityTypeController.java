@@ -402,15 +402,24 @@ public class EntityTypeController extends CdbEntityController<EntityTypeControll
             if (value == null || value.length() == 0) {
                 return null;
             }
+            Integer key = getKey(value); 
+            if (key == null) {
+                return null; 
+            }
+            
             EntityTypeController controller = (EntityTypeController) facesContext.getApplication().getELResolver().
                     getValue(facesContext.getELContext(), null, "entityTypeController");
-            return controller.findById(getKey(value));
+            return controller.findById(key);
         }
 
-        java.lang.Integer getKey(String value) {
+        java.lang.Integer getKey(String value) {            
             java.lang.Integer key;
-            key = Integer.valueOf(value);
-            return key;
+            try {
+                key = Integer.valueOf(value);
+                return key;
+            } catch (NumberFormatException ex) {
+                return null; 
+            }            
         }
 
         String getStringKey(java.lang.Integer value) {

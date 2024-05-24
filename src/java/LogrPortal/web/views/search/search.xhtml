@@ -34,7 +34,23 @@ See LICENSE file.
                     <ui:param name="advancedMode" value="#{searchSettings.advancedSearch}" /> 
                     <p:panelGrid columns="6" styleClass="editEntityDetails">
                         <h:outputLabel for="searchString" value="Search String" styleClass="entityDataLabel"/>
-                        <h:inputText id="searchString" value="#{searchController.searchString}" title="Search String" styleClass="entityDataText"/>
+                        <p:outputPanel>
+                            <h:inputText id="searchString" value="#{searchController.searchString}" title="Search String" styleClass="entityDataText"/>
+                            <p:commandLink styleClass="pi pi-link-icon pi-question" > 
+                                <p:overlayPanel for="@parent"
+                                                styleClass="viewTransparentBackgroundOverlay">
+                                    Search String Help
+                                    <ul>
+                                        <li>It is NOT case sensitive</li>
+                                        <li>Wildcards such as '?' or '*' can be used</li>
+                                        <ul>
+                                            <li>'?' can replace a single character</li>
+                                            <li>'*' can replace one or more characters</li>
+                                        </ul>
+                                    </ul>
+                                </p:overlayPanel>
+                            </p:commandLink>
+                        </p:outputPanel>
                         <p:message for="searchString"/> 
 
                         <h:outputLabel for="advancedToggle" value="Advanced" styleClass="entityDataLabel"/>

@@ -11,6 +11,7 @@ import gov.anl.aps.logr.portal.view.objects.GroupedReaction;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import javax.persistence.Basic;
@@ -119,6 +120,8 @@ public class Log extends CdbEntity implements Serializable {
     private transient List<GroupedReaction> groupedReactions; 
     private transient String addedReactionsString; 
 
+    private transient List<Log> childLogListReversed = null;
+
     public Log() {
     }
 
@@ -194,7 +197,17 @@ public class Log extends CdbEntity implements Serializable {
 
     public void setChildLogList(List<Log> childLogList) {
         this.childLogList = childLogList;
-    }            
+    }
+
+    @JsonIgnore
+    public List<Log> getChildLogListReversed() {
+        if (childLogListReversed == null) {
+            List<Log> logList = getChildLogList();
+            childLogListReversed = logList.subList(0, logList.size());
+            Collections.reverse(childLogListReversed);
+        }
+        return childLogListReversed;
+    }
 
     public Log getParentLog() {
         return parentLog;
