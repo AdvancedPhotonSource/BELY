@@ -1265,7 +1265,9 @@ body .ui-panel .ui-panel-titlebar  {
     border-radius: 5px 5px 10px 10px;
 }
 
-.viewTransparentBackgroundDialog  {    
+.viewTransparentBackgroundDialog  {  
+    background-color: rgba(242, 250, 255, 0.93) !important;
+    border-radius: 5px 5px 10px 10px;
     vertical-align: central;
     text-align: center;
     margin: 0;
