@@ -1389,6 +1389,20 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private String homeRedirect() {
         return "home?faces-redirect=true";
     }
+    
+    public String resetLogbookHome() {
+        UserInfo user = SessionUtility.getUser();
+        settingObject.resetLogbookHomeSettings(user); 
+        
+        settingObject.saveListSettingsForSessionSettingEntityActionListener(null);
+        SettingController settingController = getSettingController();
+        settingController.saveSettingListForSettingEntity();
+        
+        LoginController instance = LoginController.getInstance();
+        instance.resetSession();
+
+        return homeRedirect();        
+    }
 
     public String saveLogbookHome() {
         setLogbookHomeSettings();

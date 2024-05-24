@@ -39,7 +39,7 @@ See LICENSE file.
                              update="editHomePageDialogPanelGrid"
                              action="#{itemDomainLogbookController.saveLogbookHomeForAll()}"
                              value="Save New Default"
-                             icon="fa fa-save">
+                             icon="pi pi-save">
                 <p:tooltip for="@parent">
                     This will save a new default setting for all users. <br/>
                     Setting type defaults are part of static db records they will be cleared if database is restored.
@@ -48,9 +48,18 @@ See LICENSE file.
             <p:commandButton update="editHomePageDialogPanelGrid"
                              action="#{itemDomainLogbookController.saveLogbookHome()}"
                              value="Save"
-                             icon="fa fa-save">
+                             icon="pi pi-save">
                 <p:tooltip for="@parent">
                     Save home page for current user.                    
+                </p:tooltip>
+            </p:commandButton>
+            
+            <p:commandButton update="editHomePageDialogPanelGrid"
+                             action="#{itemDomainLogbookController.resetLogbookHome()}"
+                             value="Reset To Default"
+                             icon="pi pi-refresh">
+                <p:tooltip for="@parent">
+                    Revert to system default home page.
                 </p:tooltip>
             </p:commandButton>
         </f:facet>
