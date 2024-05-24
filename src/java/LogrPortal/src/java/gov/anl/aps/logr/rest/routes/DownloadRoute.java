@@ -7,7 +7,9 @@ package gov.anl.aps.logr.rest.routes;
 import gov.anl.aps.logr.common.constants.CdbPropertyValue;
 import gov.anl.aps.logr.common.exceptions.InvalidRequest;
 import gov.anl.aps.logr.common.exceptions.ObjectNotFound;
+import gov.anl.aps.logr.portal.model.db.beans.AttachmentFacade;
 import gov.anl.aps.logr.portal.model.db.beans.PropertyValueFacade;
+import gov.anl.aps.logr.portal.model.db.entities.Attachment;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyTypeHandler;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
 import gov.anl.aps.logr.portal.model.jsf.handlers.DocumentPropertyTypeHandler;
@@ -40,6 +42,9 @@ public class DownloadRoute extends BaseRoute {
 
     @EJB
     PropertyValueFacade propertyValueFacade;
+    
+    @EJB
+    AttachmentFacade attachmentFacade; 
 
     @GET
     @Path("/PropertyValue/Image/{imageName}/{scaling}")
@@ -100,6 +105,20 @@ public class DownloadRoute extends BaseRoute {
         }
 
         return getFileResponse("Upload: " + originalFileName, originalFileName, filePath, isAttachment);
+    }
+    
+    @GET
+    @Path("/Attachments/{attachmentName}")
+    public Response getAttachment(@PathParam("attachmentName") String attachmentName) throws FileNotFoundException {
+        String originalAttachmentName = attachmentName;         
+        Attachment att = attachmentFacade.findByName(attachmentName);         
+        if (att != null) {
+            // Set filename header to correct file name. 
+            originalAttachmentName = att.getOriginalFilename(); 
+        }
+        
+        String filePath = StorageUtility.getFileSystemLogAttachmentPath(attachmentName);
+        return getFileResponse("Attachment: " + originalAttachmentName, originalAttachmentName, filePath, false);
     }
     
     @GET

@@ -144,12 +144,15 @@ public class MarkdownParser {
             return contextRoot;
         }
         
-        private String getScaledImageEndpoint(String url) {
+        private String getAttachmentEndpoint(String url, boolean scaled) {
             if (url.startsWith(LOG_ATTACHMENT_PREFIX)) { 
                 url = url.replace(LOG_ATTACHMENT_PREFIX, API_DOWNLOAD_PREFIX); 
 
                 url = getContextRoot() + url; 
-                url = url + '/' + CdbPropertyValue.SCALED_IMAGE_SCALING; 
+                
+                if (scaled) {
+                    url = url + '/' + CdbPropertyValue.SCALED_IMAGE_SCALING; 
+                } 
             }
             
             return url; 
@@ -159,16 +162,13 @@ public class MarkdownParser {
             BasedSequence nodeUrl = node.getUrl();
             ResolvedLink aLink = context.resolveLink(LinkType.LINK, node.getUrl().unescape(), null, null);
             ResolvedLink imgLink = context.resolveLink(LinkType.IMAGE, node.getUrl().unescape(), null, null);
-
+            
             String fullResUrl = aLink.getUrl();
             String scaledUrl = imgLink.getUrl();
 
             if (nodeUrl.startsWith("/")) {
-                // Ensure that conext root is loaded. 
-                String contextRoot = getContextRoot();
-
-                fullResUrl = contextRoot + fullResUrl;
-                scaledUrl = getScaledImageEndpoint(scaledUrl); 
+                fullResUrl = getAttachmentEndpoint(fullResUrl, false); 
+                scaledUrl = getAttachmentEndpoint(scaledUrl, true); 
             }
 
             // Create a link to full size image. 
@@ -218,11 +218,7 @@ public class MarkdownParser {
                 ResolvedLink resolvedLink = context.resolveLink(LinkType.LINK, node.getUrl().unescape(), null, null);
                 String url = resolvedLink.getUrl();
 
-                if (url.startsWith("/")) {
-                    // Ensure that conext root is loaded. 
-                    String contextRoot = getContextRoot();
-                    url = contextRoot + url;
-                }
+                url = getAttachmentEndpoint(url, false);
 
                 html.attr("href", url);
                 html.attr("target", "_log_link");

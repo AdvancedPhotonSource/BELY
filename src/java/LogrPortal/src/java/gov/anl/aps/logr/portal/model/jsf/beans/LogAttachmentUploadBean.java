@@ -76,6 +76,7 @@ public class LogAttachmentUploadBean implements Serializable {
                 logger.debug("Saved file: " + originalFile.toPath());
                 Attachment attachment = new Attachment();
                 attachment.setName(originalFile.getName());
+                attachment.setOriginalFilename(uploadedFile.getFileName());
                 List<Attachment> attachmentList = logEntry.getAttachmentList();
                 if (attachmentList == null) {
                     attachmentList = new ArrayList<>();
