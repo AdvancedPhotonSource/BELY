@@ -1696,34 +1696,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         DayOfWeek dayOfWeek = now.getDayOfWeek();
         Integer hour = now.getHour();
 
-        if (hour < 6 || hour > 21) {
-            shiftStart = 23;
-            shiftEnd = 7;
-            if (dayOfWeek == DayOfWeek.FRIDAY) {
-                shiftEnd = 11;
-            }
-        } else if (hour < 14) {
-            shiftStart = 7;
-            shiftEnd = 15;
-        } else { // if (hour < 22) {            
-            shiftStart = 15;
-            shiftEnd = 23;
-        }
-
-        if (dayOfWeek == DayOfWeek.SATURDAY
-                || dayOfWeek == DayOfWeek.SUNDAY) {
-            if (hour > 9 && hour < 22) {
-                shiftStart = 11;
-                shiftEnd = 23;
-            } else {
-                shiftStart = 23;
-                shiftEnd = 11;
-
-                if (dayOfWeek == DayOfWeek.SUNDAY) {
-                    shiftEnd = 7;
-                }
-
-            }
+        if (hour < 5 || hour >= 17) {
+            shiftStart = 18;
+            shiftEnd = 6;
+        } else { // if ( 5<= hour <= 16) {
+            shiftStart = 6;
+            shiftEnd = 18;
         }
 
         LocalDateTime timeStart = now.withHour(shiftStart);
@@ -1733,11 +1711,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             timeStart = now;
             timeEnd = null;
 
-            if (hour > 0 && hour < 11) {
+            if (hour < 5) {
                 // Shift created on next day
                 timeEnd = timeStart;
                 timeStart = now.minusHours(24);
-            } else {
+            } else { // if (hour >= 17)
                 timeEnd = timeStart.plusHours(24);
             }
 
