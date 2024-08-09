@@ -1,23 +1,17 @@
-{% set name = "ComponentDB-API" %}
-{% set version = "3.15.4" %}
+{% set name = "BELY-API" %}
+{% set version = "2024.6" %}
 
 package:
   name: "{{ name|lower }}"  
   version: "{{ version }}"
 
 source:
-  url: "https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz"
-  sha256: 33979ae849995e13f04c8f0fe8a795e0354e48eb8111743a29997783d86a2253
-
-build:
-  number: 0
-  noarch: python
-  script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed -vvv "
+  path: ./src
 
 requirements:  
   build:
     - pip
-    - python    
+    - python>3.10
   run:
     - python
     - python-dateutil
@@ -27,9 +21,9 @@ requirements:
 
 test:
   imports:
-    - CdbApiFactory
+    - BelyApiFactory
 
 about:
-  home: "https://github.com/AdvancedPhotonSource/ComponentDB"
+  home: "https://git.aps.anl.gov/controls/hla/bely"
   license: "Copyright (c) UChicago Argonne, LLC. All rights reserved."    
   summary: "Library Containing Component DB APIs"

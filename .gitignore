@@ -24,6 +24,10 @@ tools/developer_tools/portal_testing/CdbFunctionalTester/nbproject/private/
 !/tools/developer_tools/python-client/test
 !/tools/developer_tools/python-client/conda-recipe
 !/tools/developer_tools/python-client/data
+## Conda API build
+/tools/developer_tools/python-client/conda-recipe/API/build
+/tools/developer_tools/python-client/conda-recipe/API/src
+/tools/developer_tools/python-client/conda-recipe/API/bely-api-env.txt
 
 # Generated deployment specific config files 
 src/java/LogrPortal/nbproject/private/private.xml
