@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.File;
 import java.io.FileNotFoundException;
 import javax.ejb.EJB;
+import javax.ejb.EJBException;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -110,8 +111,12 @@ public class DownloadRoute extends BaseRoute {
     @GET
     @Path("/Attachments/{attachmentName}")
     public Response getAttachment(@PathParam("attachmentName") String attachmentName) throws FileNotFoundException {
-        String originalAttachmentName = attachmentName;         
-        Attachment att = attachmentFacade.findByName(attachmentName);         
+        String originalAttachmentName = attachmentName; 
+        Attachment att = null; 
+        try{
+            att = attachmentFacade.findByName(attachmentName);         
+        } catch (EJBException ex) { }
+        
         if (att != null) {
             // Set filename header to correct file name. 
             originalAttachmentName = att.getOriginalFilename(); 
