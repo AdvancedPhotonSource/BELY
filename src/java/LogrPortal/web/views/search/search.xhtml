@@ -8,10 +8,13 @@ See LICENSE file.
                 xmlns:h="http://java.sun.com/jsf/html"
                 xmlns:ui="http://java.sun.com/jsf/facelets"
                 xmlns:f="http://java.sun.com/jsf/core"
-                xmlns:p="http://primefaces.org/ui">
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:pe="http://primefaces.org/ui/extensions">
 
     <f:metadata>
         <f:viewAction action="#{settingController.updateGlobalSettings()}" />
+        <f:viewAction action="#{searchController.processSearchRequestParams}"/>
+        <f:viewAction action="#{itemDomainLogbookController.processSearchRequestParams}"/>
         <f:viewAction action="#{searchController.processPreRender()}" />        
     </f:metadata>
 
@@ -21,7 +24,19 @@ See LICENSE file.
             <div class="searchPage">
 
                 <div class="pageTitle">
-                    <h1>BELY Search</h1>
+                    <h1>
+                        BELY Search
+                        <p:commandLink  id="#{entityTypeName}ViewPermanentLinkButton" 
+                                        action="#{facesUtility.displayGrowlInfoMessage('Copied', 'Permalink copied to clipboard.')}" 
+                                        styleClass="fa fa-link-icon fa-link"  >
+                            <p:tooltip for="#{entityTypeName}ViewPermanentLinkButton" value="Copy permanent link for this search."/>
+                        </p:commandLink>
+
+                        <pe:clipboard id="viewPermanentLinkCopy" 
+                                      trigger="#{entityTypeName}ViewPermanentLinkButton" 
+                                      action="copy"
+                                      text="#{searchController.searchPermaLink}#{itemDomainLogbookController.searchOpts}"/>
+                    </h1>
                 </div>
 
 
@@ -72,17 +87,17 @@ See LICENSE file.
 
                         <h:outputLabel for="systemSelection" rendered="#{advancedMode}" value="System" styleClass="entityDataLabel"/>
                         <p:selectCheckboxMenu id="systemSelection"
-                                          value="#{itemDomainLogbookController.searchSystemList}" 
-                                          multiple="true"
-                                          label="All"
-                                          filter="true"
-                                          filterMatchMode="contains"
-                                          converter="itemTypeConverter"
-                                          rendered="#{advancedMode}">       
+                                              value="#{itemDomainLogbookController.searchSystemList}" 
+                                              multiple="true"
+                                              label="All"
+                                              filter="true"
+                                              filterMatchMode="contains"
+                                              converter="itemTypeConverter"
+                                              rendered="#{advancedMode}">       
                             <f:selectItems value="#{itemDomainLogbookController.domainItemTypeList}"/> 
                         </p:selectCheckboxMenu>
                         <p:tooltip for="systemSelection" rendered="#{advancedMode}" value="System assignment to log document"/> 
-                        
+
                         <h:outputLabel for="usernameSelection" rendered="#{advancedMode}" value="Username" styleClass="entityDataLabel"/>
                         <p:selectCheckboxMenu id="usernameSelection" 
                                               rendered="#{advancedMode}"
@@ -94,16 +109,16 @@ See LICENSE file.
                             <f:selectItems value="#{userInfoController.availableItems}"/>                            
                         </p:selectCheckboxMenu>
                         <p:tooltip for="usernameSelection" rendered="#{advancedMode}" value="(Optional) Search by username (created/modified/owned)."/>
-                        
+
                         <p:outputPanel/>
                         <p:outputPanel/>
                         <p:outputPanel/>
-                        
+
                         <h:outputLabel for="createdStartTime" rendered="#{advancedMode}" value="Creation Start Date" styleClass="entityDataLabel"/>
                         <p:datePicker id="createdStartTime" rendered="#{advancedMode}"
                                       value="#{itemDomainLogbookController.searchCreatedStartDate}"/>
                         <p:tooltip for="createdStartTime" rendered="#{advancedMode}" value="(Optional) Start of created date"/> 
-                        
+
                         <h:outputLabel for="modifiedStartTime" rendered="#{advancedMode}" value="Last Modified Start Date" styleClass="entityDataLabel"/>
                         <p:datePicker id="modifiedStartTime" rendered="#{advancedMode}"
                                       value="#{itemDomainLogbookController.searchModifiedStartDate}"/>
