@@ -88,12 +88,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @EJB
     LogFacade logFacade;
-    
+
     @EJB
-    ReactionFacade reactionFacade; 
-    
+    ReactionFacade reactionFacade;
+
     @EJB
-    LogReactionFacade logReactionFacade; 
+    LogReactionFacade logReactionFacade;
 
     private EntityType currentEntityType = null;
     private Log lastLog;
@@ -101,8 +101,8 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private List<SearchResult> logResults;
     private List<EntityType> logbookEntityTypes;
     private List<EntityType> topLevelEntityTypeList;
-    
-    private String generatedName = null; 
+
+    private String generatedName = null;
 
     // <editor-fold defaultstate="collapsed" desc="Home Page">
     private List<ItemDomainLogbookHomeObject> logbookHome;
@@ -121,6 +121,17 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private Date searchModifiedEndDate = null;
     private Date searchCreatedStartDate = null;
     private Date searchCreatedEndDate = null;
+    
+    private static final String SEARCH_ETL_IDS = "logbookTypeIds";
+    private static final String SEARCH_ITL_IDS = "logbookItemTypeIds";
+    private static final String SEARCH_USR_IDS = "logbookUserIds";
+    private static final String SEARCH_CREATE_START_DATE = "logbookCreateStartDate";
+    private static final String SEARCH_CREATE_END_DATE = "logbookCreateEndDate";
+    private static final String SEARCH_MOD_START_DATE = "logbookModStartDate";
+    private static final String SEARCH_MOD_END_DATE = "logbookModEndDate";
+
+    // URL options
+    private String searchOpts = null;
     // </editor-fold>
 
     private EntityInfoControllerUtility entityInfoControllerUtility;
@@ -132,12 +143,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_NONE_VAL = LogDocumentSettings.logTemplateModeNoneVal.getValue();
     private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_COPY_VAL = LogDocumentSettings.logTemplateModeCopyVal.getValue();
     private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_TEMPLATE_VAL = LogDocumentSettings.logTemplateModeTemplatePerEntryVal.getValue();
-    
-    private transient Boolean reversedLogs = false; 
-    
+
+    private transient Boolean reversedLogs = false;
+
     // Cache for full reaction list. 
-    private List<Reaction> reactionList = null; 
-    
+    private List<Reaction> reactionList = null;
+
     // Custom operations functionality.. 
     // <editor-fold defaultstate="collapsed" desc="Operations specific variables.">
     private static final String OPS_TEMPLATE_NAME = "Operations Shift";
@@ -164,8 +175,8 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     public static ItemDomainLogbookController getInstance() {
         return (ItemDomainLogbookController) SessionUtility.findBean(controllerNamed);
-    }        
-    
+    }
+
     @Override
     public ItemDomainLogbookLazyDataModel createItemLazyDataModel() {
         return new ItemDomainLogbookLazyDataModel(itemDomainLogbookFacade, getDefaultDomain(), settingObject);
@@ -373,7 +384,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     public Boolean getReversedLogs() {
-        return reversedLogs;                
+        return reversedLogs;
     }
 
     public void setReversedLogs(Boolean reversedLogs) {
@@ -478,16 +489,16 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
         return true;
     }
-    
-    public Log prepareAddLogReply(Log parentLog) {        
+
+    public Log prepareAddLogReply(Log parentLog) {
         UserInfo user = SessionUtility.getUser();
-                
+
         Log logEntry = LogUtility.createLogEntry(user);
-        logEntry.setParentLog(parentLog);        
-        
+        logEntry.setParentLog(parentLog);
+
         setNewLogEdit(logEntry);
-        
-        return logEntry;         
+
+        return logEntry;
     }
 
     @Override
@@ -593,81 +604,80 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         updateModifiedDateForCurrent();
     }
-    
+
     public String getAddedReactionsString(Log entry) {
         String addedReactionsString = entry.getAddedReactionsString();
-        
-        if (addedReactionsString == null) {        
-            addedReactionsString = ""; 
+
+        if (addedReactionsString == null) {
+            addedReactionsString = "";
             List<GroupedReaction> groupedReactions = getGroupedReactions(entry);
-            
+
             for (GroupedReaction groupedReaction : groupedReactions) {
                 List<LogReaction> logReactionList = groupedReaction.getLogReactionList();
                 if (logReactionList.size() > 0) {
-                    Reaction reaction = groupedReaction.getReaction(); 
-                    
-                    addedReactionsString += String.format("%s(%d) ", 
-                            reaction.getEmoji(), 
-                            logReactionList.size()); 
+                    Reaction reaction = groupedReaction.getReaction();
+
+                    addedReactionsString += String.format("%s(%d) ",
+                            reaction.getEmoji(),
+                            logReactionList.size());
                 }
             }
-            
+
             entry.setAddedReactionsString(addedReactionsString);
         }
-        
-        return addedReactionsString; 
+
+        return addedReactionsString;
     }
-    
+
     public List<GroupedReaction> getGroupedReactions(Log entry) {
         List<GroupedReaction> groupedReactions = entry.getGroupedReactions();
-        
+
         if (groupedReactions == null) {
             UserInfo user = SessionUtility.getUser();
             if (reactionList == null) {
-                reactionList = reactionFacade.findAll(); 
+                reactionList = reactionFacade.findAll();
             }
-                
-            groupedReactions = GroupedReaction.createGroupedReactionList(reactionList, entry, user); 
-            entry.setGroupedReactions(groupedReactions);             
+
+            groupedReactions = GroupedReaction.createGroupedReactionList(reactionList, entry, user);
+            entry.setGroupedReactions(groupedReactions);
         }
-        
-        return groupedReactions; 
+
+        return groupedReactions;
     }
-    
+
     public void toggleReaction(Log entry, Reaction reaction) {
         // Fetch the latest version 
-        entry = logFacade.find(entry.getId());                
+        entry = logFacade.find(entry.getId());
         UserInfo user = SessionUtility.getUser();
-        
+
         List<LogReaction> logReactionList = entry.getLogReactionList();
-        boolean add = true; 
-        
+        boolean add = true;
+
         // Check if need to remove log reaction. 
-        for (LogReaction lr : logReactionList) { 
+        for (LogReaction lr : logReactionList) {
             UserInfo userId = lr.getUserInfo();
-            
-            if (user.equals(userId)) { 
+
+            if (user.equals(userId)) {
                 Reaction existingReaction = lr.getReaction();
-                
+
                 if (existingReaction.equals(reaction)) {
-                    add = false; 
-                    logReactionList.remove(lr); 
+                    add = false;
+                    logReactionList.remove(lr);
                     logReactionFacade.remove(lr);
-                    break; 
+                    break;
                 }
-            }            
+            }
         }
-        
+
         if (add) {
             LogReaction lr = new LogReaction(entry.getId(), reaction.getId(), user.getId());
-            logReactionFacade.create(lr); 
+            logReactionFacade.create(lr);
         }
 
         // No need to scroll to any log entry. Ajax event. 
-        lastLog = null;         
+        lastLog = null;
         reloadCurrent();
     }
-
 
     @Override
     public String saveLogList() {
@@ -685,7 +695,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
                 if (!loadedTextEntry.equals(savedText)) {
                     SessionUtility.addWarningMessage("Outdated Local Entry", "A newer version was detected before saving. Review changes and try again.");
                     newLogEdit.setOriginalLogEntryText(savedText);
-                    newLogEdit.setOriginalLogEntryUser(savedLogEntry.getLastModifiedByUser()); 
+                    newLogEdit.setOriginalLogEntryUser(savedLogEntry.getLastModifiedByUser());
                     newLogEdit.setSaveConflict(true);
 
                     return null;
@@ -796,7 +806,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     private String getListRedirectForEntityType(EntityType entityType, boolean includeETURLParam, boolean skipCustomURL) {
-        String listUrl = null; 
+        String listUrl = null;
         if (!skipCustomURL) {
             listUrl = entityType.getCustomListUrl();
         }
@@ -825,11 +835,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             int etId = Integer.parseInt(currentEntityTypeIdStr);
             EntityType et = entityTypeFacade.find(etId);
             redirectToEntityTypeList(et);
-            return; 
+            return;
         } else if (itemLazyDataModel == null && lastEntityType != null) {
             // EntitytypeId was not specified and list was reset. 
             redirectToEntityTypeList(lastEntityType);
-            return; 
+            return;
         }
 
         // no entity type has been selected. 
@@ -841,20 +851,20 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
                 SessionUtility.addWarningMessage("No list selected", "Redirecting to first list.");
                 EntityType et = topLevelEntityTypeList.get(0);
                 redirectToEntityTypeList(et);
-                return; 
+                return;
             }
         }
-        
+
         // Redirect if user has wrong base page URL for currentEntityType. 
         String viewId = SessionUtility.getCurrentViewId();
-        viewId = viewId.replace(".xhtml", ""); 
-        String redirect = getListRedirectForEntityType(currentEntityType, false, false);         
+        viewId = viewId.replace(".xhtml", "");
+        String redirect = getListRedirectForEntityType(currentEntityType, false, false);
         if (!viewId.equals(redirect)) {
-            redirectToEntityTypeList(currentEntityType);            
+            redirectToEntityTypeList(currentEntityType);
         }
-        
+
         ItemDomainLogbookLazyDataModel dataModel = getItemLazyDataModel();
-        dataModel.refreshDataModel(); 
+        dataModel.refreshDataModel();
     }
 
     @Override
@@ -1069,7 +1079,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         Pattern searchPattern = controllerUtility1.getSearchPattern(patternString, caseInsensitive);
 
         logResults = new ArrayList<>();
-        
+
         for (Object[] result : results) {
             ItemDomainLogbook logbook = (ItemDomainLogbook) result[0];
             Log log = (Log) result[1];
@@ -1079,20 +1089,20 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             searchResult.setAdditionalAttribute("" + logId);
 
             String text = log.getText();
-            String[] logLines = text.split("\n");            
-            String matching_lines = ""; 
-            
-            for (int i = 0; i < logLines.length; i++) {                
+            String[] logLines = text.split("\n");
+            String matching_lines = "";
+
+            for (int i = 0; i < logLines.length; i++) {
                 String lineText = logLines[i];
-                
+
                 if (searchPattern.matcher(lineText).find()) {
-                    matching_lines += lineText + "\n"; 
-                }               
-            }            
+                    matching_lines += lineText + "\n";
+                }
+            }
             searchResult.addAttributeMatch("log entry", matching_lines);
-            
+
             controllerUtility1.addCommonLogEntryDocumentMatches(searchResult, searchLogbookTypeList, searchSystemList);
-            
+
             if (searchUserList != null && !searchUserList.isEmpty()) {
                 for (UserInfo ui : searchUserList) {
                     Integer searchUserId = ui.getId();
@@ -1118,8 +1128,116 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
                 Date modifiedOnDateTime = log.getLastModifiedOnDateTime();
                 searchResult.addAttributeMatch("Modified on", modifiedOnDateTime.toString());
             }
-            
+
             logResults.add(searchResult);
+        }
+    }   
+
+    public String getSearchOpts() {
+        if (searchOpts == null) {
+            searchOpts = "";
+            if (searchLogbookTypeList != null && !searchLogbookTypeList.isEmpty()) {
+                String entityTypeIdList = CollectionUtility.generateIdListString(searchLogbookTypeList);
+                searchOpts += String.format("&%s=%s", SEARCH_ETL_IDS, entityTypeIdList);
+            }
+            if (searchSystemList != null && !searchSystemList.isEmpty()) {
+                String itemTypeIdList = CollectionUtility.generateIdListString(searchSystemList);
+                searchOpts += String.format("&%s=%s", SEARCH_ITL_IDS, itemTypeIdList);
+            }
+            if (searchUserList != null && !searchUserList.isEmpty()) {
+                String userIdList = CollectionUtility.generateIdListString(searchUserList);
+                searchOpts += String.format("&%s=%s", SEARCH_USR_IDS, userIdList);
+            }
+            if (searchCreatedStartDate != null) {
+                searchOpts += String.format("&%s=%d", SEARCH_CREATE_START_DATE, searchCreatedStartDate.getTime());
+            }
+            if (searchCreatedEndDate != null) {
+                searchOpts += String.format("&%s=%d", SEARCH_CREATE_END_DATE, searchCreatedEndDate.getTime());
+            }
+            if (searchModifiedStartDate != null) {
+                searchOpts += String.format("&%s=%d", SEARCH_MOD_START_DATE, searchModifiedStartDate.getTime());
+            }
+            if (searchModifiedEndDate != null) {
+                searchOpts += String.format("&%s=%d", SEARCH_MOD_END_DATE, searchModifiedEndDate.getTime());
+            }
+        }
+
+        return searchOpts;
+    }
+
+    public void processSearchRequestParams() {      
+        String entityTypeIdList = SessionUtility.getRequestParameterValue(SEARCH_ETL_IDS);
+        String itemTypeIdList = SessionUtility.getRequestParameterValue(SEARCH_ITL_IDS);
+        String userIdList = SessionUtility.getRequestParameterValue(SEARCH_USR_IDS);        
+        String createStart = SessionUtility.getRequestParameterValue(SEARCH_CREATE_START_DATE);
+        String createEnd = SessionUtility.getRequestParameterValue(SEARCH_CREATE_END_DATE);
+        String modifyStart = SessionUtility.getRequestParameterValue(SEARCH_MOD_START_DATE);
+        String modifyEnd = SessionUtility.getRequestParameterValue(SEARCH_MOD_END_DATE);
+
+        // If any variables have been passed in, reset all search options. 
+        if (entityTypeIdList != null 
+                || itemTypeIdList != null
+                || userIdList != null
+                || createStart != null
+                || createEnd != null
+                || modifyStart != null
+                || modifyEnd != null) {
+            
+            SearchController searchCtrl = SearchController.getInstance();
+            SearchSettings searchSettings = searchCtrl.getSearchSettings();
+            searchSettings.setAdvancedSearch(true);
+
+            searchLogbookTypeList = null;
+            searchSystemList = null;
+            searchUserList = null;
+            searchCreatedStartDate = null;
+            searchCreatedEndDate = null;
+            searchModifiedStartDate = null;
+            searchModifiedEndDate = null;
+            
+            if (entityTypeIdList != null) {
+                String[] ids = entityTypeIdList.split(",");
+                List<EntityType> selection = new ArrayList<>();
+                
+                for (String id : ids) {
+                    selection.add(entityTypeFacade.find(Integer.valueOf(id)));
+                }
+                setSearchLogbookTypeList(selection);
+            } 
+            if (itemTypeIdList != null) {
+                String[] ids = itemTypeIdList.split(",");
+                List<ItemType> selection = new ArrayList<>();
+                
+                for (String id : ids) {
+                    selection.add(itemTypeFacade.find(Integer.valueOf(id)));
+                }
+                setSearchSystemList(selection);               
+            }
+            if (userIdList != null) {
+                String[] ids = userIdList.split(",");
+                List<UserInfo> selection = new ArrayList<>();
+                
+                for (String id : ids) {
+                    selection.add(userInfoFacade.find(Integer.valueOf(id)));
+                }
+                setSearchUserList(selection);
+            }
+            if (createStart != null) {
+                long unixTimestamp = Long.parseLong(createStart);
+                setSearchCreatedStartDate(new Date(unixTimestamp));
+            }
+            if (createEnd != null) {
+                long unixTimestamp = Long.parseLong(createEnd);
+                setSearchCreatedEndDate(new Date(unixTimestamp));
+            }
+            if (modifyStart != null) {
+                long unixTimestamp = Long.parseLong(modifyStart);
+                setSearchModifiedStartDate(new Date(unixTimestamp)); 
+            }
+            if (modifyEnd != null) {
+                long unixTimestamp = Long.parseLong(modifyEnd);
+                setSearchModifiedEndDate(new Date(unixTimestamp));
+            }            
         }
     }
 
@@ -1389,19 +1507,19 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private String homeRedirect() {
         return "home?faces-redirect=true";
     }
-    
+
     public String resetLogbookHome() {
         UserInfo user = SessionUtility.getUser();
-        settingObject.resetLogbookHomeSettings(user); 
-        
+        settingObject.resetLogbookHomeSettings(user);
+
         settingObject.saveListSettingsForSessionSettingEntityActionListener(null);
         SettingController settingController = getSettingController();
         settingController.saveSettingListForSettingEntity();
-        
+
         LoginController instance = LoginController.getInstance();
         instance.resetSession();
 
-        return homeRedirect();        
+        return homeRedirect();
     }
 
     public String saveLogbookHome() {
@@ -1502,7 +1620,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @Override
     public String prepareCreate() {
-        generatedName = ""; 
+        generatedName = "";
         return super.prepareCreate();
     }
 
@@ -1511,48 +1629,49 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         if (!generatedName.isBlank()) {
             ItemDomainLogbook current = getCurrent();
             String name = current.getName();
-            String strippedGeneratedName = generatedName.strip(); 
-            String strippedName = name.strip(); 
+            String strippedGeneratedName = generatedName.strip();
+            String strippedName = name.strip();
             if (strippedGeneratedName.equals(strippedName)) {
                 String errorMessage = String.format(
-                        "Please specify more descriptive name beyond autogenerated one: '%s'.", 
+                        "Please specify more descriptive name beyond autogenerated one: '%s'.",
                         generatedName);
                 SessionUtility.addErrorMessage("Change Name", errorMessage);
-                return null; 
+                return null;
             }
         }
-        return super.create(); 
+        return super.create();
     }
-    
+
     // <editor-fold defaultstate="collapsed" desc="Studies functionality.">        
     public String prepareCreateStudies() {
-        String redirect = prepareCreate(); 
-        
-        LocalDateTime now = LocalDateTime.now();               
+        String redirect = prepareCreate();
+
+        LocalDateTime now = LocalDateTime.now();
         Integer hour = now.getHour();
-        
+
         int year = now.getYear();
-        int month = now.getMonthValue(); 
-        int day = now.getDayOfMonth(); 
-        int shift; 
+        int month = now.getMonthValue();
+        int day = now.getDayOfMonth();
+        int shift;
 
         if (hour < 8) { // Shift 1 0 - 8
-            shift = 1; 
+            shift = 1;
         } else if (hour < 16) { // Shift 2 8-16
-            shift = 2; 
+            shift = 2;
         } else { // Shift 3 16-24
-            shift = 3; 
+            shift = 3;
         }
-        
+
         // yyyy/mm/dd/shift
-        String shiftName = String.format("[%d/%02d/%02d/%d] ", year, month, day, shift); 
+        String shiftName = String.format("[%d/%02d/%02d/%d] ", year, month, day, shift);
 
         ItemDomainLogbook current = getCurrent();
-        generatedName = shiftName; 
+        generatedName = shiftName;
         current.setName(generatedName);
-        
-        return redirect; 
+
+        return redirect;
     }
+
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Advanced Search">    
     public List<SelectItem> getSearchLogbookTypeSelectItemList() {
@@ -1591,6 +1710,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     public void setSearchLogbookTypeList(List<EntityType> searchLogbookTypeList) {
+        searchOpts = null;
         this.searchLogbookTypeList = searchLogbookTypeList;
     }
 
@@ -1599,6 +1719,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     public void setSearchSystemList(List<ItemType> searchSystemList) {
+        searchOpts = null;
         this.searchSystemList = searchSystemList;
     }
 
@@ -1607,6 +1728,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     public void setSearchUserList(List<UserInfo> searchUserList) {
+        searchOpts = null;
         this.searchUserList = searchUserList;
     }
 
@@ -1615,6 +1737,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     public void setSearchModifiedStartDate(Date searchModifiedStartDate) {
+        searchOpts = null;
         this.searchModifiedStartDate = searchModifiedStartDate;
     }
 
@@ -1623,6 +1746,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     public void setSearchModifiedEndDate(Date searchModifiedEndDate) {
+        searchOpts = null;
         this.searchModifiedEndDate = searchModifiedEndDate;
     }
 
@@ -1631,6 +1755,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     public void setSearchCreatedStartDate(Date searchCreatedStartDate) {
+        searchOpts = null;
         this.searchCreatedStartDate = searchCreatedStartDate;
     }
 
@@ -1639,6 +1764,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     public void setSearchCreatedEndDate(Date searchCreatedEndDate) {
+        searchOpts = null;
         this.searchCreatedEndDate = searchCreatedEndDate;
     }
 
