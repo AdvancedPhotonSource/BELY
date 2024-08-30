@@ -281,7 +281,7 @@ if [ -z "$adminWithLocalPassword" ]; then
     read -sp "Enter password for local portal admin (username: logr): [leave blank for no local password] " LOGR_LOCAL_SYSTEM_ADMIN_PASSWORD
     echo ""
     if [ ! -z "$LOGR_LOCAL_SYSTEM_ADMIN_PASSWORD" ]; then
-	adminCryptPassword=`python -c "from cdb.common.utility.cryptUtility import CryptUtility; print CryptUtility.cryptPasswordWithPbkdf2('$LOGR_LOCAL_SYSTEM_ADMIN_PASSWORD')"`
+	adminCryptPassword=`python -c "from cdb.common.utility.cryptUtility import CryptUtility; print(str(CryptUtility.cryptPasswordWithPbkdf2('$CDB_LOCAL_SYSTEM_ADMIN_PASSWORD')))"`
 	echo "update user_info set password = '$adminCryptPassword' where username='logr'" > temporaryAdminCommand.sql
         execute $mysqlCmd temporaryAdminCommand.sql
     fi
