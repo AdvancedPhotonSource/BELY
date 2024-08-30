@@ -2,6 +2,7 @@ LOCK TABLES `user_group` WRITE;
 SET SESSION FOREIGN_KEY_CHECKS=0;
 /*!40000 ALTER TABLE `user_group` DISABLE KEYS */;
 INSERT INTO `user_group` VALUES
-(1,'LOGR_ADMIN','System Admin Group');
+(1,'LOGR_ADMIN','System Admin Group'),
+(2,'REG','');
 /*!40000 ALTER TABLE `user_group` ENABLE KEYS */;
 UNLOCK TABLES;

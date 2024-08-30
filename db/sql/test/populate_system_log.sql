@@ -1,5 +1,13 @@
 LOCK TABLES `system_log` WRITE;
 SET SESSION FOREIGN_KEY_CHECKS=0;
 /*!40000 ALTER TABLE `system_log` DISABLE KEYS */;
+INSERT INTO `system_log` VALUES
+(17,4),
+(18,4),
+(20,4),
+(21,4),
+(23,4),
+(24,4),
+(25,4);
 /*!40000 ALTER TABLE `system_log` ENABLE KEYS */;
 UNLOCK TABLES;
