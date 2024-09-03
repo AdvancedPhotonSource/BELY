@@ -30,7 +30,7 @@ public class AttachmentFacade extends CdbEntityFacade<Attachment> {
         super(Attachment.class);
     }
 
-    public Attachment findByName(String name) {
+    public Attachment findByName(String name) throws NoResultException {
         return (Attachment) em.createNamedQuery("Attachment.findByName")
                 .setParameter("name", name)
                 .getSingleResult();

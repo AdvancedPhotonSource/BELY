@@ -1,5 +1,18 @@
 LOCK TABLES `item_type` WRITE;
 SET SESSION FOREIGN_KEY_CHECKS=0;
 /*!40000 ALTER TABLE `item_type` DISABLE KEYS */;
+INSERT INTO `item_type` VALUES
+(1,'RF',NULL,1,NULL),
+(2,'Software',NULL,1,NULL),
+(3,'SR',NULL,1,NULL),
+(4,'Feedback',NULL,1,NULL),
+(5,'Linac',NULL,1,NULL),
+(6,'PAR',NULL,1,NULL),
+(7,'Booster',NULL,1,NULL),
+(8,'Other',NULL,1,NULL),
+(9,'LEA',NULL,1,NULL),
+(10,'Laser',NULL,1,NULL),
+(11,'Insertion Device',NULL,1,NULL),
+(12,'ITS',NULL,1,NULL);
 /*!40000 ALTER TABLE `item_type` ENABLE KEYS */;
 UNLOCK TABLES;

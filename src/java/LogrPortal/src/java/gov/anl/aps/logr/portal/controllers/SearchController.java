@@ -4,10 +4,14 @@
  */
 package gov.anl.aps.logr.portal.controllers;
 
+import gov.anl.aps.logr.common.constants.CdbProperty;
 import gov.anl.aps.logr.portal.controllers.settings.SearchSettings;
+import gov.anl.aps.logr.portal.utilities.ConfigurationUtility;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.PostConstruct;
@@ -27,7 +31,12 @@ public class SearchController implements Serializable {
     public static final String controllerNamed = "searchController";
 
     private static final Logger logger = LogManager.getLogger(SearchController.class.getName());
+        
+    private static final String SEARCH_TEXT_URL_KEY = "searchString"; 
+        
     private String searchString = null;
+    
+    private String searchOpts = null; 
 
     private Boolean performSearch = false;
     private Boolean performExternallyInitializedSearch = false;
@@ -35,12 +44,15 @@ public class SearchController implements Serializable {
     private SearchSettings searchSettings;
 
     private final Set<CdbEntityController> searchableControllers;
+    
+    protected String contextRootPermanentUrl;
 
     /**
      * Constructor.
      */
     public SearchController() {
         searchableControllers = new HashSet<>();
+        contextRootPermanentUrl = ConfigurationUtility.getPortalProperty(CdbProperty.PERMANENT_CONTEXT_ROOT_URL_PROPERTY_NAME);
     }
 
     @PostConstruct
@@ -61,6 +73,10 @@ public class SearchController implements Serializable {
         getSearchSettings().setAdvancedSearch(true);
         return performInputBoxSearch(false);
     }
+    
+    public String getSearchPath() {
+        return "/views/search/search"; 
+    }
 
     public String performInputBoxSearch() {
         return performInputBoxSearch(true);
@@ -76,7 +92,7 @@ public class SearchController implements Serializable {
             performExternallyInitializedSearch = true;
         }
 
-        return "/views/search/search.xhtml?faces-redirect=true";
+        return String.format("%s.xhtml?faces-redirect=true", getSearchPath());
     }
 
     public String getInputBoxSearchString() {
@@ -84,7 +100,7 @@ public class SearchController implements Serializable {
     }
 
     public void setInputBoxSearchString(String searchString) {
-        this.searchString = searchString;
+        setSearchString(searchString);        
     }
 
     public void prepareSearch() {
@@ -187,6 +203,7 @@ public class SearchController implements Serializable {
 
     public void setSearchString(String searchString) {
         this.searchString = searchString;
+        searchOpts = null; 
     }
 
     public SearchSettings getSearchSettings() {
@@ -195,6 +212,28 @@ public class SearchController implements Serializable {
 
     public void processPreRender() {
         searchSettings.updateSettings();
+    }
+        
+    public void processSearchRequestParams() {
+        // User friendly search string in URL. 
+        String text = SessionUtility.getRequestParameterValue(SEARCH_TEXT_URL_KEY);        
+        if (text != null && !text.isEmpty()) {
+            searchString = text;
+            performExternallyInitializedSearch = true; 
+            return; 
+        }                
+    }
+    
+    public String getSearchOpts() {
+        if (searchOpts == null) {            
+            searchOpts = URLEncoder.encode(searchString, StandardCharsets.UTF_8); 
+            searchOpts = String.format("%s=%s", SEARCH_TEXT_URL_KEY, searchOpts);
+        }
+        return searchOpts; 
+    }
+    
+    public String getSearchPermaLink() {
+        return String.format("%s%s?%s", contextRootPermanentUrl, getSearchPath(), getSearchOpts());
     }
 
 }

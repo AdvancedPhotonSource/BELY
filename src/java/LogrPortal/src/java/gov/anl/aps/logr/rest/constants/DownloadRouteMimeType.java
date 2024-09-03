@@ -11,6 +11,10 @@ public enum DownloadRouteMimeType {
     gif(new String[]{"gif"}, "image/gif"),
     pdf(new String[]{"pdf"}, "application/pdf"),
     html(new String[]{"htm", "html"}, "text/html"),
+    mp4(new String[]{"mp4", "mov"}, "video/mp4"), 
+    mpeg(new String[]{"mpeg", "mpg"}, "video/mpeg"),
+    webm(new String[]{"webm"}, "video/webm"), 
+    ogv(new String[]{"ogv"}, "video/ogg"), 
     wildcard(new String[]{""}, "*/*");
 
     private String[] extension;

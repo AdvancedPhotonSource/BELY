@@ -13,9 +13,9 @@
 # $0 [CDB_DB_NAME [CDB_BACKUP_DIR]]
 #
 
-CDB_DB_NAME=cdb
-CDB_DB_OWNER=cdb
-CDB_DB_OWNER_PASSWORD=cdb
+CDB_DB_NAME=logr
+CDB_DB_OWNER=logr
+CDB_DB_OWNER_PASSWORD=logr
 CDB_DB_HOST=127.0.0.1
 CDB_DB_PORT=3306
 CDB_DB_ADMIN_USER=root
@@ -121,6 +121,12 @@ while [ $lockCnt -lt $nTableLocks ]; do
     targetFile=$CDB_BACKUP_DIR/populate_$dbTable.sql
     cat $fullBackupFilePath | sed -n ${firstLine},${lastLine}p > $targetFile
     cat $targetFile | sed 's?VALUES ?VALUES\n?g' | sed 's?),(?),\n(?g' > $targetFile.2 && mv $targetFile.2 $targetFile
+
+    # Mac OS version, need to test on linux.
+#     sed -i '' '2 i \
+# SET SESSION FOREIGN_KEY_CHECKS=0;\
+# ' $targetFile
+
     sed -i '2i SET SESSION FOREIGN_KEY_CHECKS=0;' $targetFile
 done
 rm -f $processingFile
