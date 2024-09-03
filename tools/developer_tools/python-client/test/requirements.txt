@@ -1,0 +1,5 @@
+certifi
+pytest
+python-dateutil
+six
+urllib3

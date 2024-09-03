@@ -92,6 +92,40 @@ cp src/java/CdbWebPortal/lib/mariadb-java-client-3.1.0.jar ../support-`hostname`
 ```
 10. Run the project
 
+## Automated Tests
+
+To get started with running the API test suite the BELY app needs to be running on local machine. 
+
+### Prereqs 
+
+```sh 
+# API requirements 
+pip install -r  tools/developer_tools/python-client/test/requirements.txt
+```
+
+### Manual Test
+
+```sh
+source setup.sh
+# Deploy test-db data
+make test-db
+# Test API 
+# Navigate to python-client directory
+cd tools/developer_tools/python-client/
+# Optionally genreate latest version of API. 
+./generatePyClient.sh http://localhost:8080/bely
+# Run tests
+pytest test/api_test.py
+```
+
+### Single Command Test
+This will backup the db, deploy test db, run test, and restore backup. 
+
+```sh
+source setup.sh
+make test
+```
+
 ## Python Web Service Development
     # Code is located in $desired_dev_directory/ComponentDB/src/python
     # For web service development (Use your favorite python editor) to test run web service using:

@@ -13,7 +13,7 @@
 # $0 [CDB_DB_NAME [CDB_BACKUP_DIR]]
 #
 
-CDB_DB_NAME=cdb
+CDB_DB_NAME=logr
 
 CURRENT_DIR=`pwd`
 MY_DIR=`dirname $0` && cd $MY_DIR && MY_DIR=`pwd`
