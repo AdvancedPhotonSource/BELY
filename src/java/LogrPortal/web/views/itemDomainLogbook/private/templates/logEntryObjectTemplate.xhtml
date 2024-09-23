@@ -40,8 +40,8 @@ See LICENSE file.
             </ui:fragment>                        
         </p:panel>
 
-        <p:outputPanel styleClass="logEntry">                        
-            <h:outputText escape="false" value="#{logObject.htmlText}"/>
+        <p:outputPanel styleClass="logEntry">
+            <h:outputText value="#{logObject.htmlText}" style="display: none;"/>            
         </p:outputPanel>
 
         <p:outputPanel rendered="#{logObject.attachmentList.size() > 0 and false}"

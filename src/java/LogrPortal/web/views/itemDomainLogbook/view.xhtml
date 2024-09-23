@@ -184,7 +184,7 @@ See LICENSE file.
         <h:outputScript library="javascript" name="logDocumentView.js"/>
         
         <p:remoteCommand autoRun="true"
-                         oncomplete="ScrollToLog(#{itemDomainLogbookController.lastLog.id});" /> 
+                         oncomplete="renderLogs(); ScrollToLog(#{itemDomainLogbookController.lastLog.id});" /> 
     </ui:define>
 
 

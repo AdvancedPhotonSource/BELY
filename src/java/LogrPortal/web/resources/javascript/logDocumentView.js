@@ -62,6 +62,15 @@ function addCustomDataToLogEntryValue(newData) {
     $(textArea).val(newData);
 }
 
+function renderLogs() {
+    logEntries = document.getElementsByClassName('logEntry'); 
+    
+    for (var entry of logEntries) {
+        span = entry.children[0]; 
+        entry.innerHTML = span.innerText; 
+    }
+}
+
 function ScrollToLog(logId) {
     if (logId) {
         var location = 'log-' + logId;
