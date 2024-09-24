@@ -67,6 +67,10 @@ function renderLogs() {
     
     for (var entry of logEntries) {
         span = entry.children[0]; 
+        if (span === undefined) {
+            // Blank log document.
+            continue; 
+        }
         entry.innerHTML = span.innerText; 
     }
 }
