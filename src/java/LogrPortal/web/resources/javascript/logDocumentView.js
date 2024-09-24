@@ -62,6 +62,7 @@ function addCustomDataToLogEntryValue(newData) {
     $(textArea).val(newData);
 }
 
+// Convert plain text html code into rendered html
 function renderLogs() {
     logEntries = document.getElementsByClassName('logEntry'); 
     
@@ -71,6 +72,8 @@ function renderLogs() {
             // Blank log document.
             continue; 
         }
+        // Javascript function to convert text to html. 
+        // Also closes any unclosed tags leaving the rest of page unaffected by invalid html. 
         entry.innerHTML = span.innerText; 
     }
 }
