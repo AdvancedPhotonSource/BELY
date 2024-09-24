@@ -181,10 +181,10 @@ See LICENSE file.
         <ui:include src="private/addLogbookEntryDialog.xhtml" />   
         <ui:include src="private/markdownExampleDialog.xhtml" />        
         
-        <h:outputScript library="javascript" name="logDocumentView.js"/>
+        <h:outputScript library="javascript" name="logDocumentView.js?v=1"  />
         
         <p:remoteCommand autoRun="true"
-                         oncomplete="ScrollToLog(#{itemDomainLogbookController.lastLog.id});" /> 
+                         oncomplete="renderLogs(); ScrollToLog(#{itemDomainLogbookController.lastLog.id});" /> 
     </ui:define>
 
 
