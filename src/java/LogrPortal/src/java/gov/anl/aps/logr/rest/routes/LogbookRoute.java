@@ -209,6 +209,17 @@ public class LogbookRoute extends ItemBaseRoute {
                     logEntity = log;
                     break;
                 }
+                Log replyMatch = null;
+                for (Log reply : log.getChildLogList()) {
+                    if (Objects.equals(reply.getId(), logId)) {
+                        replyMatch = reply;
+                        break;
+                    }
+                }
+                if (replyMatch != null) {
+                    logEntity = replyMatch;
+                    break;
+                }
             }
 
             if (logEntity == null) {
