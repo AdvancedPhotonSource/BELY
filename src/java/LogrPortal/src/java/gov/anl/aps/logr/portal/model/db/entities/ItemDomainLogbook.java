@@ -148,6 +148,7 @@ public class ItemDomainLogbook extends Item {
         this.opsShiftType = opsShiftType;
     }
 
+    @JsonIgnore
     public LocalDateTime getOpsShiftStartTime() {
         return opsShiftStartTime;
     }
@@ -156,12 +157,17 @@ public class ItemDomainLogbook extends Item {
         this.opsShiftStartTime = opsShiftStartTime;
     }
 
+    @JsonIgnore
     public LocalDateTime getOpsShiftEndTime() {
         return opsShiftEndTime;
     }
 
     public void setOpsShiftEndTime(LocalDateTime opsShiftEndTime) {
         this.opsShiftEndTime = opsShiftEndTime;
+    }
+
+    public EntityInfo getMoreInfo() {
+        return super.getEntityInfo();
     }
 
     @Override
@@ -213,10 +219,10 @@ public class ItemDomainLogbook extends Item {
     public void setDocumentLockoutHours(Double documentLockoutHours) {
         this.documentLockoutHours = documentLockoutHours;
     }
-    
+
     @JsonIgnore
     public boolean isDocumentWriteableByTimeout() {
-        return getEntityInfo().isEntityWriteableByTimeout(); 
+        return getEntityInfo().isEntityWriteableByTimeout();
     }
 
     private transient ItemDomainLogbook nextDoc;
@@ -224,50 +230,54 @@ public class ItemDomainLogbook extends Item {
     private transient boolean nextDocLoaded;
     private transient boolean prevDocLoaded;
 
-    public void setNextDoc(ItemDomainLogbook nextDoc){
+    public void setNextDoc(ItemDomainLogbook nextDoc) {
         this.nextDoc = nextDoc;
     }
 
-    public void setPrevDoc(ItemDomainLogbook prevDoc){
+    public void setPrevDoc(ItemDomainLogbook prevDoc) {
         this.prevDoc = prevDoc;
     }
 
-    public ItemDomainLogbook getNextDoc(){
+    @JsonIgnore
+    public ItemDomainLogbook getNextDoc() {
         return this.nextDoc;
     }
 
-    public ItemDomainLogbook getPrevDoc(){
+    @JsonIgnore
+    public ItemDomainLogbook getPrevDoc() {
         return this.prevDoc;
     }
 
-    public void setNextDocLoaded(boolean nextDocLoaded){
+    public void setNextDocLoaded(boolean nextDocLoaded) {
         this.nextDocLoaded = nextDocLoaded;
     }
 
-    public void setPrevDocLoaded(boolean prevDocLoaded){
+    public void setPrevDocLoaded(boolean prevDocLoaded) {
         this.prevDocLoaded = prevDocLoaded;
     }
 
-    public boolean getNextDocLoaded(){
+    @JsonIgnore
+    public boolean getNextDocLoaded() {
         return this.nextDocLoaded;
     }
 
-    public boolean getPrevDocLoaded(){
+    @JsonIgnore
+    public boolean getPrevDocLoaded() {
         return this.prevDocLoaded;
-    }        
-    
+    }
+
     @JsonIgnore
     public ItemDomainLogbook getTopLevelLogDocument() {
         List<ItemElement> itemElementMemberList = getItemElementMemberList();
         if (itemElementMemberList != null && itemElementMemberList.size() == 1) {
             ItemElement itemElement = itemElementMemberList.get(0);
-            Item item = itemElement.getParentItem(); 
+            Item item = itemElement.getParentItem();
             if (item instanceof ItemDomainLogbook) {
                 return (ItemDomainLogbook) item;
             }
         }
-                
-        return this; 
+
+        return this;
     }
 
     @JsonIgnore
