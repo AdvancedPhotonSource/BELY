@@ -17,6 +17,7 @@ class BelyTestBase(unittest.TestCase):
     DOC_TEMPLATE_SECTIONS_COPY_ID = 78
 
     DOC_SAMPLE_ID = 82
+    DOC_WITH_ENTRIES = 83
 
     TEST_DOCUMENT_ID = 3
 
