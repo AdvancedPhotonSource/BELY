@@ -6,7 +6,7 @@ from belyApi import LogDocumentOptions, OpenApiException
 from test.bely_test_base import BelyTestBase
 
 
-class AuthTest(BelyTestBase):
+class AuthTests(BelyTestBase):
 
     def test_verify_admin_auth(self):
         self.login_as_admin()
