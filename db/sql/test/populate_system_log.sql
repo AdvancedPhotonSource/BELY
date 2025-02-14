@@ -8,6 +8,7 @@ INSERT INTO `system_log` VALUES
 (21,4),
 (23,4),
 (24,4),
-(25,4);
+(25,4),
+(26,4);
 /*!40000 ALTER TABLE `system_log` ENABLE KEYS */;
 UNLOCK TABLES;

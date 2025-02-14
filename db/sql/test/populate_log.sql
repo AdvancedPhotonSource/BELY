@@ -15,6 +15,13 @@ INSERT INTO `log` VALUES
 (22,'Section 3 Entry','2024-08-29 14:48:09','2024-08-29 14:48:09',1,1,'2024-08-29 14:48:09',NULL,NULL,NULL),
 (23,'User: logr | Updated: Test Template Sections + Copy [Item Id: 78]','2024-08-29 14:48:30','2024-08-29 14:48:30',1,1,NULL,NULL,NULL,NULL),
 (24,'User: logr | Updated: Test Template Sections + Copy [Item Id: 78]','2024-08-29 14:48:30','2024-08-29 14:48:30',1,1,NULL,NULL,NULL,NULL),
-(25,'User: logr | Created: Sample log document [Item Id: 82]','2024-08-29 14:56:36','2024-08-29 14:56:36',1,1,NULL,NULL,NULL,NULL);
+(25,'User: logr | Created: Sample log document [Item Id: 82]','2024-08-29 14:56:36','2024-08-29 14:56:36',1,1,NULL,NULL,NULL,NULL),
+(26,'User: logr | Created: Log Document With Entries [Item Id: 83]','2025-02-14 08:37:06','2025-02-14 08:37:06',1,1,NULL,NULL,NULL,NULL),
+(27,'Top level entry with reactions and replies','2025-02-14 08:37:23','2025-02-14 08:37:23',1,1,'2025-02-14 08:37:23',NULL,NULL,NULL),
+(28,'Reply','2025-02-14 08:38:00','2025-02-14 08:38:00',1,1,'2025-02-14 08:38:00',NULL,27,NULL),
+(29,'Reply with reaction','2025-02-14 08:38:09','2025-02-14 08:38:09',1,1,'2025-02-14 08:38:09',NULL,27,NULL),
+(30,'Entry with reactions','2025-02-14 08:38:21','2025-02-14 08:38:21',1,1,'2025-02-14 08:38:21',NULL,NULL,NULL),
+(31,'Entry with reply','2025-02-14 08:38:46','2025-02-14 08:38:46',1,1,'2025-02-14 08:38:46',NULL,NULL,NULL),
+(32,'Reply','2025-02-14 08:39:01','2025-02-14 08:39:01',1,1,'2025-02-14 08:39:01',NULL,31,NULL);
 /*!40000 ALTER TABLE `log` ENABLE KEYS */;
 UNLOCK TABLES;

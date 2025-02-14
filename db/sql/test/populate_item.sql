@@ -83,6 +83,7 @@ INSERT INTO `item` VALUES
 (79,1,'Section 1',NULL,'','78',NULL),
 (80,1,'Section 2',NULL,'','78',NULL),
 (81,1,'Section 3',NULL,'','78',NULL),
-(82,1,'Sample log document',NULL,'','',NULL);
+(82,1,'Sample log document',NULL,'','',NULL),
+(83,1,'Log Document With Entries',NULL,'','',NULL);
 /*!40000 ALTER TABLE `item` ENABLE KEYS */;
 UNLOCK TABLES;
