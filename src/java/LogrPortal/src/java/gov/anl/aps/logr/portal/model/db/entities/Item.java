@@ -1058,6 +1058,7 @@ public class Item extends CdbDomainEntity implements Serializable {
     }
     
     @XmlTransient
+    @JsonIgnore
     public List<EntityType> getPrimaryTemplateEntityTypeList() {
         return primaryTemplateEntityTypeList;
     }
@@ -1853,6 +1854,7 @@ public class Item extends CdbDomainEntity implements Serializable {
         this.isCloned = isCloned;
     }
 
+    @JsonIgnore
     public String getPrimaryImageForItem() {
         PropertyValue primaryImagePropertyValueForItem = ItemController.getPrimaryImagePropertyValueForItem(this);
         if (primaryImagePropertyValueForItem != null) {
@@ -2149,6 +2151,7 @@ public class Item extends CdbDomainEntity implements Serializable {
         return null;
     }
 
+    @JsonIgnore
     public Float getMaxSortOrder() {
         Float maxSortOrder = 0f;
         List<ItemElement> ieList = getFullItemElementList();

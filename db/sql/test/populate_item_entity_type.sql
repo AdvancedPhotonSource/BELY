@@ -80,6 +80,7 @@ INSERT INTO `item_entity_type` VALUES
 (76,4),
 (77,4),
 (78,1),
-(82,5);
+(82,5),
+(83,5);
 /*!40000 ALTER TABLE `item_entity_type` ENABLE KEYS */;
 UNLOCK TABLES;

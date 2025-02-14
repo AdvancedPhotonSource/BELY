@@ -4,6 +4,7 @@
  */
 package gov.anl.aps.logr.portal.model.db.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
@@ -16,7 +17,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Log Reaction entity class represents the log_reaction database table.
- * 
+ *
  * @author djarosz
  */
 @Entity
@@ -53,6 +54,7 @@ public class LogReaction implements Serializable {
         this.logReactionPK = new LogReactionPK(logId, reactionId, userId);
     }
 
+    @JsonIgnore
     public LogReactionPK getLogReactionPK() {
         return logReactionPK;
     }
@@ -61,6 +63,7 @@ public class LogReaction implements Serializable {
         this.logReactionPK = logReactionPK;
     }
 
+    @JsonIgnore
     public Log getLog() {
         return log;
     }
@@ -77,6 +80,11 @@ public class LogReaction implements Serializable {
         this.reaction = reaction;
     }
 
+    public String getUsername() {
+        return userInfo.getUsername();
+    }
+
+    @JsonIgnore
     public UserInfo getUserInfo() {
         return userInfo;
     }
@@ -109,5 +117,5 @@ public class LogReaction implements Serializable {
     public String toString() {
         return "gov.anl.aps.logr.portal.model.db.entities.LogReaction[ logReactionPK=" + logReactionPK + " ]";
     }
-    
+
 }

@@ -305,6 +305,7 @@ public class UserInfo extends SettingEntity implements Serializable {
         this.userSettingList = userSettingList;
     }
 
+    @JsonIgnore
     public List<UserSession> getUserSessions() {
         return userSessions;
     }
