@@ -6,7 +6,7 @@ from belyApi import LogDocumentOptions, OpenApiException
 from test.bely_test_base import BelyTestBase
 
 
-class LogDocumentFetchTest(BelyTestBase):
+class LogDocumentFetchTests(BelyTestBase):
 
     def test_fetch_logbooks(self):
         logbooks = self.logbook_api.get_logbook_types()
@@ -28,8 +28,20 @@ class LogDocumentFetchTest(BelyTestBase):
 
         self.assertEqual(len(documents), 75)
 
+    def test_fetch_logbook_document_with_more_info(self):
+        documents = self.logbook_api.get_log_documents(self.OPS_LOGBOOK_ID, limit=1)
 
-class LogDocumentCreateTest(BelyTestBase):
+        document = documents[0]
+        more_info = document.more_info
+
+        self.assertIsNotNone(more_info)
+        self.assertIsNotNone(more_info.created_by_username)
+        self.assertIsNotNone(more_info.created_on_date_time)
+        self.assertIsNotNone(more_info.last_modified_by_username)
+        self.assertIsNotNone(more_info.last_modified_on_date_time)
+
+
+class LogDocumentEditTests(BelyTestBase):
 
     def test_create_logbook_document(self):
         doc_name = self._gen_unique_name() + "Basic"
@@ -202,31 +214,6 @@ class LogDocumentCreateTest(BelyTestBase):
 
         for i, section in enumerate(added_sections):
             self.assertEqual(sample_sections[i], section.name)
-
-
-class LogEntryTests(BelyTestBase):
-    def test_add_log_entry_to_sample_log_document(self):
-        self.login_as_user()
-        with self.assertRaises(OpenApiException):
-            self.logbook_api.get_log_entry_template(self.DOC_SAMPLE_ID)
-
-        self.login_as_admin()
-        entry_template = self.logbook_api.get_log_entry_template(self.DOC_SAMPLE_ID)
-
-        entries = self.logbook_api.get_log_entries(self.DOC_SAMPLE_ID)
-
-        log_entry_text = "sample entry text %s" % self._gen_unique_name()
-        entry_template.log_entry = log_entry_text
-
-        new_entry = self.logbook_api.add_update_log_entry(entry_template)
-
-        new_entries = self.logbook_api.get_log_entries(self.DOC_SAMPLE_ID)
-
-        self.assertEqual(len(entries) + 1, len(new_entries))
-
-        last_entry = new_entries[-1]
-        self.assertEqual(new_entry.log_id, last_entry.log_id)
-        self.assertEqual(new_entry.log_entry, log_entry_text)
 
 
 if __name__ == "__main__":
