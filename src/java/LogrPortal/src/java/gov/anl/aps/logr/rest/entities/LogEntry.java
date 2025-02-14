@@ -26,10 +26,10 @@ public class LogEntry {
     private String logEntry;
 
     private Date enteredOnDateTime;
-    private UserInfo enteredByUser;
+    private String enteredByUsername;
 
     private Date lastModifiedOnDateTime;
-    private UserInfo lastModifiedByUser;
+    private String lastModifiedByUsername;
 
     private List<LogEntry> logReplies;
     private List<LogReaction> logReactions;
@@ -43,10 +43,12 @@ public class LogEntry {
         logEntry = log.getText();
 
         enteredOnDateTime = log.getEnteredOnDateTime();
-        enteredByUser = log.getEnteredByUser();
+        UserInfo enteredByUser = log.getEnteredByUser();
+        enteredByUsername = enteredByUser.getUsername();
 
         lastModifiedOnDateTime = log.getLastModifiedOnDateTime();
-        lastModifiedByUser = log.getLastModifiedByUser();
+        UserInfo lastModifiedByUser = log.getLastModifiedByUser();
+        lastModifiedByUsername = lastModifiedByUser.getUsername();
 
         if (logEntry == null) {
             logEntry = "";
@@ -78,8 +80,8 @@ public class LogEntry {
         return enteredOnDateTime;
     }
 
-    public UserInfo getEnteredByUser() {
-        return enteredByUser;
+    public String getEnteredByUsername() {
+        return enteredByUsername;
     }
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
@@ -87,8 +89,8 @@ public class LogEntry {
         return lastModifiedOnDateTime;
     }
 
-    public UserInfo getLastModifiedByUser() {
-        return lastModifiedByUser;
+    public String getLastModifiedByUsername() {
+        return lastModifiedByUsername;
     }
 
     public List<LogEntry> getLogReplies() {

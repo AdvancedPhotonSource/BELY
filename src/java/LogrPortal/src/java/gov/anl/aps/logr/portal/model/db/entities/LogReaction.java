@@ -80,6 +80,11 @@ public class LogReaction implements Serializable {
         this.reaction = reaction;
     }
 
+    public String getUsername() {
+        return userInfo.getUsername();
+    }
+
+    @JsonIgnore
     public UserInfo getUserInfo() {
         return userInfo;
     }
