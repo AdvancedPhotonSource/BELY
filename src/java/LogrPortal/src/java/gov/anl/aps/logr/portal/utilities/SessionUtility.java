@@ -4,16 +4,12 @@
  */
 package gov.anl.aps.logr.portal.utilities;
 
+import fish.payara.cloud.connectors.mqtt.api.MQTTConnectionFactory;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
-import java.util.logging.Level;
 import javax.faces.application.FacesMessage;
 import javax.faces.application.NavigationHandler;
 import javax.faces.application.ViewHandler;
@@ -47,6 +43,7 @@ public class SessionUtility {
     private static final String MODULE_NAME_LOOKUP = "java:module/ModuleName";
     private static final String JAVA_LOOKUP_START = "java:global/";
     private static String FACADE_LOOKUP_STRING_START = null;
+    private static final String BELY_MQTT_NAME = "bely/MQTT/factory";
 
     private static final String USER_SESSION_COOKIE_KEY = "USERSESSIONID";
 
@@ -133,7 +130,7 @@ public class SessionUtility {
     public static String getRemoteAddress() {
         HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
 
-        return request.getRemoteAddr();                                     
+        return request.getRemoteAddr();
     }
 
     public static String getSessionCookie() {
@@ -141,10 +138,10 @@ public class SessionUtility {
 
         Cookie cookie = (Cookie) cookieMap.get(USER_SESSION_COOKIE_KEY);
 
-        if (cookie != null) { 
+        if (cookie != null) {
             String value = cookie.getValue();
-            
-            return value; 
+
+            return value;
         }
 
         return null;
@@ -321,6 +318,18 @@ public class SessionUtility {
     public static Object findBean(String beanName) {
         FacesContext context = FacesContext.getCurrentInstance();
         return (Object) context.getApplication().evaluateExpressionGet(context, "#{" + beanName + "}", Object.class);
+    }
+
+    public static MQTTConnectionFactory fetchMQTTConnectionFactory() {
+        try {
+            InitialContext context = new InitialContext();
+
+            return (MQTTConnectionFactory) context.lookup(BELY_MQTT_NAME);
+        } catch (NamingException ex) {
+            logger.error(ex);
+        }
+        return null;
+
     }
 
     public static Object findFacade(String facadeName) {
