@@ -235,7 +235,7 @@ public class LogbookRoute extends ItemBaseRoute {
         }
 
         logEntry.updateLogPerLogEntryObject(logEntity);
-        logEntity = saveLog(logEntity, user);
+        logEntity = utility.saveLog(logEntity, user);
 
         // Update modified date. 
         updateModifiedDateForLogDocument(logDocument, user);
@@ -399,18 +399,6 @@ public class LogbookRoute extends ItemBaseRoute {
         EntityInfoControllerUtility eicu = new EntityInfoControllerUtility();
 
         eicu.update(entityInfo, user);
-    }
-
-    private Log saveLog(Log log, UserInfo userInfo) throws CdbException {
-        LogControllerUtility utility = new LogControllerUtility();
-
-        if (log.getId() != null) {
-            log = utility.update(log, userInfo);
-        } else {
-            log = utility.create(log, userInfo);
-        }
-
-        return log;
     }
 
     @Override
