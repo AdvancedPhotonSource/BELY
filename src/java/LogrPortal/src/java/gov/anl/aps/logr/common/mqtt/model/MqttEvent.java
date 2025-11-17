@@ -14,35 +14,30 @@ import gov.anl.aps.logr.portal.model.db.entities.CdbEntity;
  *
  * @author djarosz
  */
-public abstract class MqttEvent {
+public abstract class MqttEvent<Entity extends CdbEntity> {
 
-    Object entityId;
-    String entityName;
+    Entity entity;
     String description;
 
-    public MqttEvent(CdbEntity entity, String description) {
-        this.entityId = entity.getId();
-        this.entityName = entity.getClass().getSimpleName();
+    public MqttEvent(Entity entity, String description) {
+        this.entity = entity;
         this.description = description;
     }
 
     @JsonIgnore
     public abstract MqttTopic getTopic();
 
-    public Object getEntityId() {
-        return entityId;
+    @JsonIgnore
+    public CdbEntity getEntity() {
+        return entity;
     }
 
-    public void setEntityId(Object entityId) {
-        this.entityId = entityId;
+    public Object getEntityId() {
+        return entity.getId();
     }
 
     public String getEntityName() {
-        return entityName;
-    }
-
-    public void setEntityName(String entityName) {
-        this.entityName = entityName;
+        return entity.getClass().getSimpleName();
     }
 
     public String getDescription() {
