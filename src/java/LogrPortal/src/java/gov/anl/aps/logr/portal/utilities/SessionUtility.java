@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
+import javax.annotation.Resource;
 import javax.faces.application.FacesMessage;
 import javax.faces.application.NavigationHandler;
 import javax.faces.application.ViewHandler;
@@ -48,6 +49,10 @@ public class SessionUtility {
     private static final String USER_SESSION_COOKIE_KEY = "USERSESSIONID";
 
     private static final Logger logger = LogManager.getLogger(SessionUtility.class.getName());
+
+    // Instructs the framework of the class to resolve for the mqtt connection factory.
+    @Resource(lookup = BELY_MQTT_NAME)
+    MQTTConnectionFactory factory;
 
     public SessionUtility() {
     }
@@ -323,8 +328,9 @@ public class SessionUtility {
     public static MQTTConnectionFactory fetchMQTTConnectionFactory() {
         try {
             InitialContext context = new InitialContext();
+            MQTTConnectionFactory result = (MQTTConnectionFactory) context.lookup(BELY_MQTT_NAME);
 
-            return (MQTTConnectionFactory) context.lookup(BELY_MQTT_NAME);
+            return result;
         } catch (NamingException ex) {
             logger.error(ex);
         }
