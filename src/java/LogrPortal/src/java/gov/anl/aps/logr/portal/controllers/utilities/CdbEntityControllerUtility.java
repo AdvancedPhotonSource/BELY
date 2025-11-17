@@ -60,7 +60,30 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
         MQTTConnection connection = mqttFactory.getConnection();
         try {
             connection.publish(event.getTopic().getValue(), jsonMessage.getBytes(), 0, false);
+            CdbEntity entity = event.getEntity();
+
+            List actionEvents = entity.getActionEvents();
+            _publishActionEvents(connection, actionEvents);
+
+            connection.close();
         } catch (Exception ex) {
+            logger.error(ex);
+        }
+    }
+
+    private void _publishActionEvents(MQTTConnection activeConnection, List<MqttEvent> events) {
+        if (events == null) {
+            return;
+        }
+
+        for (MqttEvent event : events) {
+            try {
+                String jsonMessage = event.toJson();
+                activeConnection.publish(event.getTopic().getValue(), jsonMessage.getBytes(), 0, false);
+            } catch (Exception ex) {
+                logger.error(ex);
+            }
+
         }
     }
 
