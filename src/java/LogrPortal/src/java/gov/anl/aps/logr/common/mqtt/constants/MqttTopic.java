@@ -12,7 +12,8 @@ public enum MqttTopic {
     UPDATE("bely/update"),
     ADD("bely/add"),
     DELETE("bely/delete"),
-    LOGENTRY("bely/logEntry");
+    LOGENTRY("bely/logEntry"),
+    LOGENTRYREPLY("bely/logEntryReply");
 
     private final String value;
 
@@ -22,5 +23,10 @@ public enum MqttTopic {
 
     public String getValue() {
         return value;
+    }
+
+    @Override
+    public String toString() {
+        return super.toString() + "(" + value + ")";
     }
 }
