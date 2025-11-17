@@ -42,7 +42,8 @@ public abstract class CdbEntityFacade<T> {
         // delete list of connectors, if any
         if (entity instanceof CdbEntity) {
             CdbEntity cdbEntity = (CdbEntity) entity;
-            for (ItemConnector connector : cdbEntity.getDeletedConnectorList()) {
+            List<ItemConnector> deletedConnectorList = cdbEntity.getDeletedConnectorList();
+            for (ItemConnector connector : deletedConnectorList) {
                 ItemConnectorFacade.getInstance().remove(connector);
             }
             cdbEntity.clearDeletedConnectorList();
