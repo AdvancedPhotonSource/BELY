@@ -147,5 +147,12 @@ public class LogControllerUtility extends CdbEntityControllerUtility<Log, LogFac
         super.publishMqttEvent(event);
     }
 
-    
+    public Log saveLogEntry(Log log, UserInfo userInfo) throws CdbException {
+        if (log.getId() != null) {
+            return update(log, userInfo);
+        } else {
+            return create(log, userInfo);
+        }
+    }
+
 }

@@ -100,25 +100,6 @@ public class LogController extends CdbEntityController<LogControllerUtility, Log
         return new LogControllerUtility();
     }
 
-    public void saveLogEntry(Log log) {
-        LogControllerUtility controllerUtility1 = getControllerUtility();
-        UserInfo userInfo = SessionUtility.getUser();
-
-        try {
-            if (log.getId() != null) {
-                controllerUtility1.update(log, userInfo);
-            } else {
-                controllerUtility1.create(log, userInfo);
-            }
-        } catch (CdbException ex) {
-            String persitanceErrorMessage = log.getPersitanceErrorMessage();
-            SessionUtility.addErrorMessage("Error", persitanceErrorMessage);
-        } catch (RuntimeException ex) {
-            String persitanceErrorMessage = log.getPersitanceErrorMessage();
-            SessionUtility.addErrorMessage("Error", persitanceErrorMessage);
-        }
-    }
-
     /**
      * Converter class for log objects.
      */

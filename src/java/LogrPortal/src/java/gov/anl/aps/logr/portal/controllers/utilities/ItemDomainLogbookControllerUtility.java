@@ -6,6 +6,8 @@ package gov.anl.aps.logr.portal.controllers.utilities;
 
 import gov.anl.aps.logr.common.exceptions.CdbException;
 import gov.anl.aps.logr.common.exceptions.InvalidObjectState;
+import gov.anl.aps.logr.common.mqtt.model.LogEntryEvent;
+import gov.anl.aps.logr.common.mqtt.model.ReplyLogEntryEvent;
 import gov.anl.aps.logr.common.utilities.CollectionUtility;
 import gov.anl.aps.logr.portal.constants.ItemDomainName;
 import gov.anl.aps.logr.portal.constants.LogDocumentSettings;
@@ -21,6 +23,7 @@ import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.utilities.AuthorizationUtility;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
+import gov.anl.aps.logr.rest.entities.LogEntry;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -337,9 +340,9 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
 
         // Add search opts to match description. 
         for (SearchResult result : searchResultList) {
-            addCommonLogEntryDocumentMatches(result, searchEntityTypeList, searchItemTypeList); 
-            
-            ItemDomainLogbook resultItem = (ItemDomainLogbook) result.getCdbEntity();            
+            addCommonLogEntryDocumentMatches(result, searchEntityTypeList, searchItemTypeList);
+
+            ItemDomainLogbook resultItem = (ItemDomainLogbook) result.getCdbEntity();
             EntityInfo entityInfo = resultItem.getEntityInfo();
 
             if (searchUserList != null && !searchUserList.isEmpty()) {
@@ -420,6 +423,59 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
             Date enteredTime = calendar.getTime();
             newLog.setEnteredOnDateTime(enteredTime);
         }
+    }
+
+    private ItemDomainLogbook getParentLogbook(Log logEntry) {
+        Log parentLog = logEntry.getParentLog();
+
+        if (parentLog != null) {
+            // Parent log has association to the log document.
+            logEntry = parentLog;
+        }
+        List<ItemElement> itemElementList = logEntry.getItemElementList();
+
+        if (itemElementList != null && itemElementList.size() == 1) {
+            // This should always happen.
+            // No exception however since this is required for notification framework not core functionality.
+            ItemElement parentElement = itemElementList.get(0);
+            Item parentItem = parentElement.getParentItem();
+            if (parentItem instanceof ItemDomainLogbook) {
+                return (ItemDomainLogbook) parentItem;
+            }
+        }
+        return null;
+
+    }
+
+    public Log saveLog(Log logEntity, UserInfo user) throws CdbException {
+        LogControllerUtility utility = new LogControllerUtility();
+
+        // Avoid duplicates
+        logEntity.clearActionEvents();
+
+        ItemDomainLogbook parentLogbook = getParentLogbook(logEntity);
+
+        Log parentLog = logEntity.getParentLog();
+        Integer id = logEntity.getId();
+
+        String description = "";
+        if (id == null) {
+            description += "log entry was added";
+        } else {
+            description += "log entry id [" + id + "] was modified";
+        }
+
+        if (parentLog != null) {
+            description = "reply " + description;
+
+            // Reply
+            logEntity.addActionEvent(new ReplyLogEntryEvent(parentLogbook, logEntity, description));
+        } else {
+            logEntity.addActionEvent(new LogEntryEvent(parentLogbook, logEntity, description));
+        }
+
+        // Add a generic log entry.
+        return utility.saveLogEntry(logEntity, user);
     }
 
 }

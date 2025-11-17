@@ -16,6 +16,7 @@ import gov.anl.aps.logr.portal.controllers.settings.SearchSettings;
 import gov.anl.aps.logr.portal.controllers.utilities.EntityInfoControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.EntityTypeControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
+import gov.anl.aps.logr.portal.controllers.utilities.LogControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.PropertyTypeControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.SettingTypeControllerUtility;
 import gov.anl.aps.logr.portal.model.ItemDomainLogbookLazyDataModel;
@@ -121,7 +122,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private Date searchModifiedEndDate = null;
     private Date searchCreatedStartDate = null;
     private Date searchCreatedEndDate = null;
-    
+
     private static final String SEARCH_ETL_IDS = "logbookTypeIds";
     private static final String SEARCH_ITL_IDS = "logbookItemTypeIds";
     private static final String SEARCH_USR_IDS = "logbookUserIds";
@@ -682,6 +683,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     @Override
     public String saveLogList() {
         Log newLogEdit = getNewLogEdit();
+        Log originalLogEntry = null;
         if (newLogEdit.getId() != null) {
             // Perform validation 
             Log savedLogEntry = logFacade.find(newLogEdit.getId());
@@ -704,8 +706,17 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             }
         }
 
-        LogController logController = LogController.getInstance();
-        logController.saveLogEntry(newLogEdit);
+        UserInfo userInfo = SessionUtility.getUser();
+
+        try {
+            controllerUtility.saveLog(newLogEdit, userInfo);
+        } catch (CdbException ex) {
+            String persitanceErrorMessage = newLogEdit.getPersitanceErrorMessage();
+            SessionUtility.addErrorMessage("Error", persitanceErrorMessage);
+        } catch (RuntimeException ex) {
+            String persitanceErrorMessage = newLogEdit.getPersitanceErrorMessage();
+            SessionUtility.addErrorMessage("Error", persitanceErrorMessage);
+        }
 
         lastLog = newLogEdit;
         if (newLogEdit.getId() == null) {
@@ -1131,7 +1142,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
             logResults.add(searchResult);
         }
-    }   
+    }
 
     public String getSearchOpts() {
         if (searchOpts == null) {
@@ -1165,24 +1176,24 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         return searchOpts;
     }
 
-    public void processSearchRequestParams() {      
+    public void processSearchRequestParams() {
         String entityTypeIdList = SessionUtility.getRequestParameterValue(SEARCH_ETL_IDS);
         String itemTypeIdList = SessionUtility.getRequestParameterValue(SEARCH_ITL_IDS);
-        String userIdList = SessionUtility.getRequestParameterValue(SEARCH_USR_IDS);        
+        String userIdList = SessionUtility.getRequestParameterValue(SEARCH_USR_IDS);
         String createStart = SessionUtility.getRequestParameterValue(SEARCH_CREATE_START_DATE);
         String createEnd = SessionUtility.getRequestParameterValue(SEARCH_CREATE_END_DATE);
         String modifyStart = SessionUtility.getRequestParameterValue(SEARCH_MOD_START_DATE);
         String modifyEnd = SessionUtility.getRequestParameterValue(SEARCH_MOD_END_DATE);
 
         // If any variables have been passed in, reset all search options. 
-        if (entityTypeIdList != null 
+        if (entityTypeIdList != null
                 || itemTypeIdList != null
                 || userIdList != null
                 || createStart != null
                 || createEnd != null
                 || modifyStart != null
                 || modifyEnd != null) {
-            
+
             SearchController searchCtrl = SearchController.getInstance();
             SearchSettings searchSettings = searchCtrl.getSearchSettings();
             searchSettings.setAdvancedSearch(true);
@@ -1194,29 +1205,29 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             searchCreatedEndDate = null;
             searchModifiedStartDate = null;
             searchModifiedEndDate = null;
-            
+
             if (entityTypeIdList != null) {
                 String[] ids = entityTypeIdList.split(",");
                 List<EntityType> selection = new ArrayList<>();
-                
+
                 for (String id : ids) {
                     selection.add(entityTypeFacade.find(Integer.valueOf(id)));
                 }
                 setSearchLogbookTypeList(selection);
-            } 
+            }
             if (itemTypeIdList != null) {
                 String[] ids = itemTypeIdList.split(",");
                 List<ItemType> selection = new ArrayList<>();
-                
+
                 for (String id : ids) {
                     selection.add(itemTypeFacade.find(Integer.valueOf(id)));
                 }
-                setSearchSystemList(selection);               
+                setSearchSystemList(selection);
             }
             if (userIdList != null) {
                 String[] ids = userIdList.split(",");
                 List<UserInfo> selection = new ArrayList<>();
-                
+
                 for (String id : ids) {
                     selection.add(userInfoFacade.find(Integer.valueOf(id)));
                 }
@@ -1232,12 +1243,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
             }
             if (modifyStart != null) {
                 long unixTimestamp = Long.parseLong(modifyStart);
-                setSearchModifiedStartDate(new Date(unixTimestamp)); 
+                setSearchModifiedStartDate(new Date(unixTimestamp));
             }
             if (modifyEnd != null) {
                 long unixTimestamp = Long.parseLong(modifyEnd);
                 setSearchModifiedEndDate(new Date(unixTimestamp));
-            }            
+            }
         }
     }
 
