@@ -121,6 +121,8 @@ public class Log extends CdbEntity implements Serializable {
     private transient String addedReactionsString; 
 
     private transient List<Log> childLogListReversed = null;
+    
+    private transient boolean isSystemLog = false; 
 
     public Log() {
     }
@@ -185,6 +187,10 @@ public class Log extends CdbEntity implements Serializable {
 
     public UserInfo getLastModifiedByUser() {
         return lastModifiedByUser;
+    }
+    
+    public String getLastModifiedByUsername() {
+        return lastModifiedByUser.getUsername();
     }
 
     public void setLastModifiedByUser(UserInfo lastModifiedByUser) {
@@ -383,6 +389,15 @@ public class Log extends CdbEntity implements Serializable {
         this.addedReactionsString = addedReactionsString;
     }
 
+    @JsonIgnore
+    public boolean isSystemLog() {
+        return isSystemLog;
+    }
+
+    public void markAsSystemLog() {
+        isSystemLog = true;
+    }
+
     @Override
     public boolean equals(Object object) {
         // TODO: Warning - this method won't work in the case the id fields are not set
@@ -398,7 +413,7 @@ public class Log extends CdbEntity implements Serializable {
 
     @Override
     public String toString() {
-        return "gov.anl.aps.cdb.portal.model.db.entities.Log[ id=" + id + " ]";
+        return "gov.anl.aps.cdb.portal.model.db.entities.Log[ id=" + id;
     }
 
 }  
