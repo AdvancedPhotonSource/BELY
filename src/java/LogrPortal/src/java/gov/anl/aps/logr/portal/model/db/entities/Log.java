@@ -6,6 +6,7 @@ package gov.anl.aps.logr.portal.model.db.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import gov.anl.aps.logr.common.mqtt.model.LogEntryEvent;
 import gov.anl.aps.logr.portal.utilities.MarkdownParser;
 import gov.anl.aps.logr.portal.view.objects.GroupedReaction;
 import java.io.Serializable;
@@ -50,7 +51,7 @@ import javax.xml.bind.annotation.XmlTransient;
     @NamedQuery(name = "Log.findByEnteredOnDateTime", query = "SELECT l FROM Log l WHERE l.enteredOnDateTime = :enteredOnDateTime"),
     @NamedQuery(name = "Log.findByEffectiveFromDateTime", query = "SELECT l FROM Log l WHERE l.effectiveFromDateTime = :effectiveFromDateTime"),
     @NamedQuery(name = "Log.findByEffectiveToDateTime", query = "SELECT l FROM Log l WHERE l.effectiveToDateTime = :effectiveToDateTime")})
-public class Log extends CdbEntity implements Serializable {
+public class Log extends CdbEntity<LogEntryEvent> implements Serializable {
 
     private static final long serialVersionUID = 1L;
     @Id
