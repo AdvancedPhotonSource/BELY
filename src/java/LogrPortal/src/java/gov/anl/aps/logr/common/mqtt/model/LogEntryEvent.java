@@ -21,7 +21,7 @@ import java.util.List;
  */
 public class LogEntryEvent extends MqttEvent<Log> {
 
-    LogbookDocumentInfo parentLogbookInfo;
+    LogbookDocumentInfo parentLogDocumentInfo;
     LogInfo logInfo;
     List<LogbookInfo> logbookList;
 
@@ -30,7 +30,7 @@ public class LogEntryEvent extends MqttEvent<Log> {
         this.logInfo = new LogInfo(entity);
 
         if (parentLogbook != null) {
-            parentLogbookInfo = new LogbookDocumentInfo(parentLogbook);
+            parentLogDocumentInfo = new LogbookDocumentInfo(parentLogbook);
         }
 
         List<EntityType> entityTypeList = parentLogbook.getEntityTypeList();
@@ -50,8 +50,8 @@ public class LogEntryEvent extends MqttEvent<Log> {
         return logInfo;
     }
 
-    public LogbookDocumentInfo getParentLogbookInfo() {
-        return parentLogbookInfo;
+    public LogbookDocumentInfo getParentLogDocumentInfo() {
+        return parentLogDocumentInfo;
     }
 
     public List<LogbookInfo> getLogbookList() {
