@@ -8,9 +8,12 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import gov.anl.aps.logr.common.mqtt.constants.MqttTopic;
 import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
+import gov.anl.aps.logr.portal.model.db.entities.EntityType;
 import gov.anl.aps.logr.portal.model.db.entities.ItemDomainLogbook;
 import gov.anl.aps.logr.portal.model.db.entities.Log;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  *
@@ -18,15 +21,23 @@ import java.util.Date;
  */
 public class LogEntryEvent extends MqttEvent<Log> {
 
-    LogbookInfo parentLogbookInfo;
+    LogbookDocumentInfo parentLogbookInfo;
     LogInfo logInfo;
+    List<LogbookInfo> logbookList;
 
     public LogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, String description) {
         super(entity, description);
         this.logInfo = new LogInfo(entity);
 
         if (parentLogbook != null) {
-            parentLogbookInfo = new LogbookInfo(parentLogbook);
+            parentLogbookInfo = new LogbookDocumentInfo(parentLogbook);
+        }
+
+        List<EntityType> entityTypeList = parentLogbook.getEntityTypeList();
+        logbookList = new ArrayList<>();
+        for (EntityType entityType : entityTypeList) {
+            LogbookInfo info = new LogbookInfo(entityType);
+            logbookList.add(info);
         }
     }
 
@@ -39,8 +50,12 @@ public class LogEntryEvent extends MqttEvent<Log> {
         return logInfo;
     }
 
-    public LogbookInfo getParentLogbookInfo() {
+    public LogbookDocumentInfo getParentLogbookInfo() {
         return parentLogbookInfo;
+    }
+
+    public List<LogbookInfo> getLogbookList() {
+        return logbookList;
     }
 
     protected class LogInfo {
@@ -74,11 +89,11 @@ public class LogEntryEvent extends MqttEvent<Log> {
         }
     }
 
-    private class LogbookInfo {
+    private class LogbookDocumentInfo {
 
         ItemDomainLogbook parentLogbook;
 
-        public LogbookInfo(ItemDomainLogbook parentLogbook) {
+        public LogbookDocumentInfo(ItemDomainLogbook parentLogbook) {
             this.parentLogbook = parentLogbook;
         }
 
@@ -121,6 +136,27 @@ public class LogEntryEvent extends MqttEvent<Log> {
             return getEntityInfo().getLastModifiedOnDateTime();
         }
 
+    }
+
+    private class LogbookInfo {
+
+        EntityType logbook;
+
+        public LogbookInfo(EntityType logbook) {
+            this.logbook = logbook;
+        }
+
+        public Integer getId() {
+            return this.logbook.getId();
+        }
+
+        public String getName() {
+            return this.logbook.getName();
+        }
+
+        public String getDisplayName() {
+            return this.logbook.getDisplayName();
+        }
     }
 
 }
