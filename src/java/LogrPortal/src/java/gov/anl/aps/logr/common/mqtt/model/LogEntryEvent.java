@@ -24,10 +24,12 @@ public class LogEntryEvent extends MqttEvent<Log> {
     LogbookDocumentInfo parentLogDocumentInfo;
     LogInfo logInfo;
     List<LogbookInfo> logbookList;
+    String textDiff;
 
-    public LogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, String description) {
+    public LogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, String description, String textDiff) {
         super(entity, description);
         this.logInfo = new LogInfo(entity);
+        this.textDiff = textDiff;
 
         if (parentLogbook != null) {
             parentLogDocumentInfo = new LogbookDocumentInfo(parentLogbook);
@@ -56,6 +58,10 @@ public class LogEntryEvent extends MqttEvent<Log> {
 
     public List<LogbookInfo> getLogbookList() {
         return logbookList;
+    }
+
+    public String getTextDiff() {
+        return textDiff;
     }
 
     protected class LogInfo {

@@ -23,7 +23,6 @@ import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.utilities.AuthorizationUtility;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
-import gov.anl.aps.logr.rest.entities.LogEntry;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -447,8 +446,45 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
 
     }
 
-    public Log saveLog(Log logEntity, UserInfo user) throws CdbException {
+    private String getLogDiffString(Log originalLog, Log updatedLog) {
+        String originalText;
+        String updatedText = updatedLog.getText();
+
+        if (originalLog != null) {
+            originalText = originalLog.getText();
+        } else {
+            return updatedText;
+        }
+
+        StringBuilder diffOutput = new StringBuilder();
+        String[] originalLines = originalText.split("\n");
+        String[] updatedLines = updatedText.split("\n");
+
+        int maxLines = Math.max(originalLines.length, updatedLines.length);
+
+        for (int i = 0; i < maxLines; i++) {
+            String originalLine = i < originalLines.length ? originalLines[i] : "";
+            String updatedLine = i < updatedLines.length ? updatedLines[i] : "";
+
+            if (!originalLine.equals(updatedLine)) {
+                if (i < originalLines.length) {
+                    diffOutput.append("- ").append(originalLine).append("\n");
+                }
+                if (i < updatedLines.length) {
+                    diffOutput.append("+ ").append(updatedLine).append("\n");
+                }
+            } else if (i < originalLines.length) {
+                diffOutput.append("  ").append(originalLine).append("\n");
+            }
+        }
+        return diffOutput.toString();
+
+    }
+
+    public Log saveLog(Log logEntity, UserInfo user, Log originalLog) throws CdbException {
         LogControllerUtility utility = new LogControllerUtility();
+
+        String logDiffString = getLogDiffString(originalLog, logEntity);
 
         // Avoid duplicates
         logEntity.clearActionEvents();
@@ -469,9 +505,9 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
             description = "reply " + description;
 
             // Reply
-            logEntity.addActionEvent(new ReplyLogEntryEvent(parentLogbook, logEntity, description));
+            logEntity.addActionEvent(new ReplyLogEntryEvent(parentLogbook, logEntity, description, logDiffString));
         } else {
-            logEntity.addActionEvent(new LogEntryEvent(parentLogbook, logEntity, description));
+            logEntity.addActionEvent(new LogEntryEvent(parentLogbook, logEntity, description, logDiffString));
         }
 
         // Add a generic log entry.

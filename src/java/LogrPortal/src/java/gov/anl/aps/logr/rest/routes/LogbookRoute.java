@@ -15,6 +15,7 @@ import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookController
 import gov.anl.aps.logr.portal.controllers.utilities.LogControllerUtility;
 import gov.anl.aps.logr.portal.model.db.beans.DomainFacade;
 import gov.anl.aps.logr.portal.model.db.beans.ItemDomainLogbookFacade;
+import gov.anl.aps.logr.portal.model.db.beans.LogFacade;
 import gov.anl.aps.logr.portal.model.db.entities.Domain;
 import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
 import gov.anl.aps.logr.portal.model.db.entities.EntityType;
@@ -64,6 +65,9 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @EJB
     ItemDomainLogbookFacade itemDomainLogbookFacade;
+
+    @EJB
+    LogFacade logFacade;
 
     private Domain getLogbookDomain() {
         return domainFacade.find(ItemDomainName.LOGBOOK_ID);
@@ -234,8 +238,13 @@ public class LogbookRoute extends ItemBaseRoute {
             utility.verifySaveLogLockoutsForItem(logDocument, logEntity, user);
         }
 
+        Log originalLogEntry = null;
+        if (logId != null) {
+            originalLogEntry = logFacade.find(logId);
+        }
+
         logEntry.updateLogPerLogEntryObject(logEntity);
-        logEntity = utility.saveLog(logEntity, user);
+        logEntity = utility.saveLog(logEntity, user, originalLogEntry);
 
         // Update modified date. 
         updateModifiedDateForLogDocument(logDocument, user);

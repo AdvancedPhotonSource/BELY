@@ -683,10 +683,10 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     @Override
     public String saveLogList() {
         Log newLogEdit = getNewLogEdit();
-        Log originalLogEntry = null;
+        Log savedLogEntry = null;
         if (newLogEdit.getId() != null) {
             // Perform validation 
-            Log savedLogEntry = logFacade.find(newLogEdit.getId());
+            savedLogEntry = logFacade.find(newLogEdit.getId());
 
             if (savedLogEntry == null) {
                 handleDeletedLogEntryDuringSync(newLogEdit);
@@ -709,13 +709,15 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         UserInfo userInfo = SessionUtility.getUser();
 
         try {
-            controllerUtility.saveLog(newLogEdit, userInfo);
+            controllerUtility.saveLog(newLogEdit, userInfo, savedLogEntry);
         } catch (CdbException ex) {
             String persitanceErrorMessage = newLogEdit.getPersitanceErrorMessage();
             SessionUtility.addErrorMessage("Error", persitanceErrorMessage);
+            return null;
         } catch (RuntimeException ex) {
             String persitanceErrorMessage = newLogEdit.getPersitanceErrorMessage();
             SessionUtility.addErrorMessage("Error", persitanceErrorMessage);
+            return null;
         }
 
         lastLog = newLogEdit;

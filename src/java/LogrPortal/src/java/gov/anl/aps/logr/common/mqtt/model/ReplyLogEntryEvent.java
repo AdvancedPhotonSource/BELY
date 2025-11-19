@@ -17,8 +17,8 @@ public class ReplyLogEntryEvent extends LogEntryEvent {
 
     LogInfo parentlogInfo;
 
-    public ReplyLogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, String description) {
-        super(parentLogbook, entity, description);
+    public ReplyLogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, String description, String textDiff) {
+        super(parentLogbook, entity, description, textDiff);
 
         Log parentLogObject = getParentLogObject();
 
