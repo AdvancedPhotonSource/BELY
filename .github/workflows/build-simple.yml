@@ -1,0 +1,56 @@
+name: Build (Simple)
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main, develop ]
+  workflow_dispatch:
+
+jobs:
+  build-java:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        java-version: ['11', '17']
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Java ${{ matrix.java-version }}
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ matrix.java-version }}
+        distribution: 'temurin'
+    
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ant
+    
+    - name: Build Java Portal
+      run: |
+        cd src/java/LogrPortal
+        # Create minimal build properties for CI
+        mkdir -p nbproject/private
+        cat > nbproject/private/private.properties.generic.build << 'EOF'
+        # Build properties for CI environment
+        user.properties.file=${user.home}/.netbeans/8.2/build.properties
+        EOF
+        
+        # Attempt to build with ant
+        ant -version
+        ant clean 
+        ant dist
+      continue-on-error: false
+    
+    - name: Upload Java build artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: java-build-java${{ matrix.java-version }}
+        path: |
+          src/java/LogrPortal/dist/
+          src/java/LogrPortal/build/
+
