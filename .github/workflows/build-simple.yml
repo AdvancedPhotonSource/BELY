@@ -41,8 +41,8 @@ jobs:
         
         # Attempt to build with ant
         ant -version
-        ant clean || true
-        ant dist || true
+        ant clean 
+        ant dist
       continue-on-error: false
     
     - name: Upload Java build artifacts
