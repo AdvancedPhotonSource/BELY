@@ -47,7 +47,7 @@ jobs:
     
     - name: Upload Java build artifacts
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: java-build-java${{ matrix.java-version }}
         path: |
@@ -81,7 +81,7 @@ jobs:
     
     - name: Upload Python build artifacts
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: python-build
         path: |
@@ -116,3 +116,4 @@ jobs:
     - name: Lint with pylint
       run: |
         pylint src/python --disable=all --enable=E,F || true
+
