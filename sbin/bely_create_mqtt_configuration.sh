@@ -44,8 +44,9 @@ echo "- connectionTimeout: Connection timeout value in seconds"
 echo "- maxInflight: Maximum messages that can be sent without acknowledgements"
 echo "- keepAliveInterval: Keep alive interval in seconds"
 echo "- userName/password: Authentication credentials"
-echo "- topicFilter: Topic Filter (For MDBs only)"
-echo "- qos: Quality of Service for the subscription (For MDBs only)"
+# Disable MDB only variables.
+# echo "- topicFilter: Topic Filter (For MDBs only)"
+# echo "- qos: Quality of Service for the subscription (For MDBs only)"
 echo ""
 
 # Ensure directory exists
@@ -86,10 +87,10 @@ MAX_INFLIGHT=${MAX_INFLIGHT:-10}
 read -p "Keep Alive Interval (seconds) [60]: " KEEP_ALIVE_INTERVAL
 KEEP_ALIVE_INTERVAL=${KEEP_ALIVE_INTERVAL:-60}
 
-read -p "Topic Filter (leave empty if not using MDB): " TOPIC_FILTER
-
-read -p "QoS (0/1/2) [0]: " QOS
-QOS=${QOS:-0}
+# MDB only variables 
+# read -p "Topic Filter (leave empty if not using MDB): " TOPIC_FILTER
+# read -p "QoS (0/1/2) [0]: " QOS
+# QOS=${QOS:-0}
 
 # Write configuration file
 cat > "$MQTT_CONFIG_FILE" << EOF
@@ -122,7 +123,9 @@ if [ ! -z "$TOPIC_FILTER" ]; then
     echo "MQTT_TOPIC_FILTER=$TOPIC_FILTER" >> "$MQTT_CONFIG_FILE"
 fi
 
-echo "MQTT_QOS=$QOS" >> "$MQTT_CONFIG_FILE"
+if [ ! -z "$QOS" ]; then
+    echo "MQTT_QOS=$QOS" >> "$MQTT_CONFIG_FILE"
+fi
 
 echo ""
 echo "Configuration file created successfully at: $MQTT_CONFIG_FILE"

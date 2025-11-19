@@ -73,7 +73,7 @@ MQTT_HOST=${MQTT_HOST:=localhost}
 MQTT_PORT=${MQTT_PORT:=1883}
 
 # Build properties string for connection pool
-PROPERTIES="serverUrl=tcp\\://${MQTT_HOST}\\:${MQTT_PORT}"
+PROPERTIES="serverURIs=tcp\\://${MQTT_HOST}\\:${MQTT_PORT}"
 
 if [ ! -z "$MQTT_USERNAME" ]; then
     PROPERTIES="${PROPERTIES}:userName=${MQTT_USERNAME}"
@@ -85,10 +85,6 @@ fi
 
 if [ ! -z "$MQTT_CLEAN_SESSION" ]; then
     PROPERTIES="${PROPERTIES}:cleanSession=${MQTT_CLEAN_SESSION}"
-fi
-
-if [ ! -z "$MQTT_QOS" ]; then
-    PROPERTIES="${PROPERTIES}:qos=${MQTT_QOS}"
 fi
 
 if [ ! -z "$MQTT_KEEP_ALIVE_INTERVAL" ]; then
@@ -113,6 +109,10 @@ fi
 
 if [ ! -z "$MQTT_PERSISTENCE_DIRECTORY" ]; then
     PROPERTIES="${PROPERTIES}:persistenceDirectory=${MQTT_PERSISTENCE_DIRECTORY}"
+fi
+
+if [ ! -z "$MQTT_QOS" ]; then
+    PROPERTIES="${PROPERTIES}:qos=${MQTT_QOS}"
 fi
 
 if [ ! -z "$MQTT_TOPIC_FILTER" ]; then
