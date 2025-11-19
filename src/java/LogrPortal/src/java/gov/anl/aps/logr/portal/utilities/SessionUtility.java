@@ -44,7 +44,7 @@ public class SessionUtility {
     private static final String MODULE_NAME_LOOKUP = "java:module/ModuleName";
     private static final String JAVA_LOOKUP_START = "java:global/";
     private static String FACADE_LOOKUP_STRING_START = null;
-    private static final String BELY_MQTT_NAME = "bely/MQTT/factory";
+    private static final String BELY_MQTT_NAME = "bely/MQTT/resource";
 
     private static final String USER_SESSION_COOKIE_KEY = "USERSESSIONID";
 
@@ -332,6 +332,8 @@ public class SessionUtility {
 
             return result;
         } catch (NamingException ex) {
+            logger.error(ex);
+        } catch (NoClassDefFoundError ex) {
             logger.error(ex);
         }
         return null;
