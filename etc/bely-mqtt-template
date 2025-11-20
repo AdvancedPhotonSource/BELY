@@ -1,0 +1,157 @@
+keys:
+    - name: topic
+      type: string
+      color:
+        foreground: crimson
+        background: black
+      max-width: 25
+    - name: description
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
+    - name: entityId
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
+    - name: entityName
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
+    - name: eventTimestamp
+      type: string
+      color:
+        foreground: limegreen
+        background: black
+      max-width: 25
+    - name: eventTriggedByUsername
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
+    - name: logInfo/enteredByUsername
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
+    - name: logInfo/enteredOnDateTime
+      type: string
+      color:
+        foreground: limegreen
+        background: black
+      max-width: 25
+    - name: logInfo/id
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
+    - name: logInfo/lastModifiedByUsername
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
+    - name: logInfo/lastModifiedOnDateTime
+      type: string
+      color:
+        foreground: limegreen
+        background: black
+      max-width: 25
+    - name: logbookList
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
+    - name: parentLogDocumentInfo/createdByUsername
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
+    - name: parentLogDocumentInfo/enteredOnDateTime
+      type: string
+      color:
+        foreground: limegreen
+        background: black
+      max-width: 25
+    - name: parentLogDocumentInfo/id
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
+    - name: parentLogDocumentInfo/lastModifiedByUsername
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
+    - name: parentLogDocumentInfo/lastModifiedOnDateTime
+      type: string
+      color:
+        foreground: limegreen
+        background: black
+      max-width: 25
+    - name: parentLogDocumentInfo/name
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
+    - name: parentLogDocumentInfo/ownerUserGroupName
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
+    - name: parentLogDocumentInfo/ownerUsername
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
+    - name: parentlogInfo/enteredByUsername
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
+    - name: parentlogInfo/enteredOnDateTime
+      type: string
+      color:
+        foreground: limegreen
+        background: black
+      max-width: 25
+    - name: parentlogInfo/id
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
+    - name: parentlogInfo/lastModifiedByUsername
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
+    - name: parentlogInfo/lastModifiedOnDateTime
+      type: string
+      color:
+        foreground: limegreen
+        background: black
+      max-width: 25
+    - name: textDiff
+      type: string
+      color:
+        foreground: white
+        background: black
+      max-width: 25
