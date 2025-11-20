@@ -4,6 +4,9 @@
  */
 package gov.anl.aps.logr.common.mqtt.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import java.util.Date;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,10 +21,12 @@ public abstract class MqttEvent<Entity extends CdbEntity> {
 
     Entity entity;
     String description;
+    Date eventTimestamp;
 
     public MqttEvent(Entity entity, String description) {
         this.entity = entity;
         this.description = description;
+        this.eventTimestamp = new Date();
     }
 
     @JsonIgnore
@@ -46,6 +51,9 @@ public abstract class MqttEvent<Entity extends CdbEntity> {
 
     public void setDescription(String description) {
         this.description = description;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    public Date getEventTimestamp() {
+        return eventTimestamp;
     }
 
     public String toJson() throws JsonProcessingException {
