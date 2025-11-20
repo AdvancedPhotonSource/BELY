@@ -108,7 +108,7 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
 
             addCreatedSystemLog(entity, createdByUserInfo);
             entity.setPersitanceErrorMessage(null);
-            publishMqttEvent(new AddEvent(entity, "Add action completed"));
+            publishMqttEvent(new AddEvent(entity, createdByUserInfo, "Add action completed"));
 
             clearCaches();
             return entity;
@@ -135,7 +135,7 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
 
             addCdbEntitySystemLog(SystemLogLevel.entityInfo, "Created " + entities.size() + " entities.", createdByUserInfo);
             for (EntityType entity : entities) {
-                publishMqttEvent(new AddEvent(entity, "Add action completed"));
+                publishMqttEvent(new AddEvent(entity, createdByUserInfo, "Add action completed"));
             }
             setPersistenceErrorMessageForList(entities, null);
             clearCaches();
@@ -159,7 +159,7 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
             prepareEntityUpdate(entity, updatedByUserInfo);
             EntityType updatedEntity = getEntityDbFacade().edit(entity);
             addCdbEntitySystemLog(SystemLogLevel.entityInfo, "Updated: " + entity.getSystemLogString(), updatedByUserInfo);
-            publishMqttEvent(new UpdateEvent(entity, "Update action completed"));
+            publishMqttEvent(new UpdateEvent(entity, updatedByUserInfo, "Update action completed"));
             entity.setPersitanceErrorMessage(null);
 
             clearCaches();
@@ -187,7 +187,7 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
             EntityType updatedEntity = getEntityDbFacade().edit(entity);
             clearCaches();
 
-            publishMqttEvent(new UpdateEvent(entity, "Update on removal action completed"));
+            publishMqttEvent(new UpdateEvent(entity, updatedByUserInfo, "Update on removal action completed"));
 
             return updatedEntity;
         } catch (CdbException ex) {
@@ -216,7 +216,7 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
             for (EntityType entity : entities) {
                 entity.setPersitanceErrorMessage(null);
                 addCdbEntitySystemLog(SystemLogLevel.entityInfo, "Updated: " + entity.getSystemLogString(), updatedByUserInfo);
-                publishMqttEvent(new UpdateEvent(entity, "Update action completed"));
+                publishMqttEvent(new UpdateEvent(entity, updatedByUserInfo, "Update action completed"));
             }
             clearCaches();
         } catch (CdbException ex) {
@@ -239,7 +239,7 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
             getEntityDbFacade().remove(entity);
 
             addCdbEntitySystemLog(SystemLogLevel.entityInfo, "Deleted: " + entity.getSystemLogString(), destroyedByUserInfo);
-            publishMqttEvent(new DeleteEvent(entity, "Delete action completed"));
+            publishMqttEvent(new DeleteEvent(entity, destroyedByUserInfo, "Delete action completed"));
 
             clearCaches();
         } catch (CdbException ex) {
@@ -278,7 +278,7 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
 
             addCdbEntitySystemLog(SystemLogLevel.entityInfo, "Deleted: " + entities.size() + " entities.", destroyedByUserInfo);
             for (EntityType entity : entities) {
-                publishMqttEvent(new DeleteEvent(entity, "Delete action completed"));
+                publishMqttEvent(new DeleteEvent(entity, destroyedByUserInfo, "Delete action completed"));
             }
             setPersistenceErrorMessageForList(entities, null);
             clearCaches();

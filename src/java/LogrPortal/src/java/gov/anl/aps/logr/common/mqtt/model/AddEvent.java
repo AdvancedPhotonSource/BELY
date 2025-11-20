@@ -6,6 +6,7 @@ package gov.anl.aps.logr.common.mqtt.model;
 
 import gov.anl.aps.logr.common.mqtt.constants.MqttTopic;
 import gov.anl.aps.logr.portal.model.db.entities.CdbEntity;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 
 /**
  *
@@ -13,8 +14,8 @@ import gov.anl.aps.logr.portal.model.db.entities.CdbEntity;
  */
 public class AddEvent extends MqttEvent {
 
-    public AddEvent(CdbEntity entity, String description) {
-        super(entity, description);
+    public AddEvent(CdbEntity entity, UserInfo eventTriggedByUser, String description) {
+        super(entity, eventTriggedByUser, description);
     }
 
     @Override

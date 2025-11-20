@@ -10,8 +10,10 @@ import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import gov.anl.aps.logr.common.mqtt.constants.MqttTopic;
 import gov.anl.aps.logr.portal.model.db.entities.CdbEntity;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 
 /**
  *
@@ -22,11 +24,13 @@ public abstract class MqttEvent<Entity extends CdbEntity> {
     Entity entity;
     String description;
     Date eventTimestamp;
+    UserInfo eventTriggedByUser;
 
-    public MqttEvent(Entity entity, String description) {
+    public MqttEvent(Entity entity, UserInfo eventTriggedByUser, String description) {
         this.entity = entity;
         this.description = description;
         this.eventTimestamp = new Date();
+        this.eventTriggedByUser = eventTriggedByUser;
     }
 
     @JsonIgnore
@@ -49,11 +53,17 @@ public abstract class MqttEvent<Entity extends CdbEntity> {
         return description;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     public Date getEventTimestamp() {
         return eventTimestamp;
+    }
+
+    public String getEventTriggedByUsername() {
+        if (eventTriggedByUser == null) {
+            return null;
+        }
+
+        return eventTriggedByUser.getUsername();
     }
 
     public String toJson() throws JsonProcessingException {

@@ -505,9 +505,9 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
             description = "reply " + description;
 
             // Reply
-            logEntity.addActionEvent(new ReplyLogEntryEvent(parentLogbook, logEntity, description, logDiffString));
+            logEntity.addActionEvent(new ReplyLogEntryEvent(parentLogbook, logEntity, user, description, logDiffString));
         } else {
-            logEntity.addActionEvent(new LogEntryEvent(parentLogbook, logEntity, description, logDiffString));
+            logEntity.addActionEvent(new LogEntryEvent(parentLogbook, logEntity, user, description, logDiffString));
         }
 
         // Add a generic log entry.

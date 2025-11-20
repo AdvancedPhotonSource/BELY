@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import gov.anl.aps.logr.common.mqtt.constants.MqttTopic;
 import gov.anl.aps.logr.portal.model.db.entities.ItemDomainLogbook;
 import gov.anl.aps.logr.portal.model.db.entities.Log;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 
 /**
  *
@@ -17,8 +18,8 @@ public class ReplyLogEntryEvent extends LogEntryEvent {
 
     LogInfo parentlogInfo;
 
-    public ReplyLogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, String description, String textDiff) {
-        super(parentLogbook, entity, description, textDiff);
+    public ReplyLogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, UserInfo eventTriggedByUser, String description, String textDiff) {
+        super(parentLogbook, entity, eventTriggedByUser, description, textDiff);
 
         Log parentLogObject = getParentLogObject();
 
@@ -33,7 +34,7 @@ public class ReplyLogEntryEvent extends LogEntryEvent {
     }
 
     @JsonIgnore
-    public Log getParentLogObject() {
+    public final Log getParentLogObject() {
         if (entity == null) {
             return null;
         }

@@ -11,6 +11,7 @@ import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
 import gov.anl.aps.logr.portal.model.db.entities.EntityType;
 import gov.anl.aps.logr.portal.model.db.entities.ItemDomainLogbook;
 import gov.anl.aps.logr.portal.model.db.entities.Log;
+import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -26,8 +27,8 @@ public class LogEntryEvent extends MqttEvent<Log> {
     List<LogbookInfo> logbookList;
     String textDiff;
 
-    public LogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, String description, String textDiff) {
-        super(entity, description);
+    public LogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, UserInfo eventTriggedByUser, String description, String textDiff) {
+        super(entity, eventTriggedByUser, description);
         this.logInfo = new LogInfo(entity);
         this.textDiff = textDiff;
 
