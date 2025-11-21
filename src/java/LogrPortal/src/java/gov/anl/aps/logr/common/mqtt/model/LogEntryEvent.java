@@ -26,11 +26,13 @@ public class LogEntryEvent extends MqttEvent<Log> {
     LogInfo logInfo;
     List<LogbookInfo> logbookList;
     String textDiff;
+    protected boolean isNew;
 
-    public LogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, UserInfo eventTriggedByUser, String description, String textDiff) {
+    public LogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, UserInfo eventTriggedByUser, String description, String textDiff, boolean isNew) {
         super(entity, eventTriggedByUser, description);
         this.logInfo = new LogInfo(entity);
         this.textDiff = textDiff;
+        this.isNew = isNew;
 
         if (parentLogbook != null) {
             parentLogDocumentInfo = new LogbookDocumentInfo(parentLogbook);
@@ -45,8 +47,19 @@ public class LogEntryEvent extends MqttEvent<Log> {
     }
 
     @Override
-    public MqttTopic getTopic() {
-        return MqttTopic.LOGENTRY;
+    public final MqttTopic getTopic() {
+        if (isNew) {
+            return getAddEventTopic();
+        }
+        return getUpdateEventTopic();
+    }
+
+    protected MqttTopic getAddEventTopic() {
+        return MqttTopic.LOGENTRYADD;
+    }
+
+    protected MqttTopic getUpdateEventTopic() {
+        return MqttTopic.LOGENTRYUPDATE;
     }
 
     public LogInfo getLogInfo() {

@@ -18,8 +18,8 @@ public class ReplyLogEntryEvent extends LogEntryEvent {
 
     LogInfo parentlogInfo;
 
-    public ReplyLogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, UserInfo eventTriggedByUser, String description, String textDiff) {
-        super(parentLogbook, entity, eventTriggedByUser, description, textDiff);
+    public ReplyLogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, UserInfo eventTriggedByUser, String description, String textDiff, boolean isNew) {
+        super(parentLogbook, entity, eventTriggedByUser, description, textDiff, isNew);
 
         Log parentLogObject = getParentLogObject();
 
@@ -29,8 +29,13 @@ public class ReplyLogEntryEvent extends LogEntryEvent {
     }
 
     @Override
-    public MqttTopic getTopic() {
-        return MqttTopic.LOGENTRYREPLY;
+    protected MqttTopic getAddEventTopic() {
+        return MqttTopic.LOGENTRYREPLYADD;
+    }
+
+    @Override
+    protected MqttTopic getUpdateEventTopic() {
+        return MqttTopic.LOGENTRYREPLYUPDATE;
     }
 
     @JsonIgnore

@@ -493,21 +493,24 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
 
         Log parentLog = logEntity.getParentLog();
         Integer id = logEntity.getId();
+        boolean isNew;
 
         String description = "";
         if (id == null) {
             description += "log entry was added";
+            isNew = true;
         } else {
             description += "log entry id [" + id + "] was modified";
+            isNew = false;
         }
 
         if (parentLog != null) {
             description = "reply " + description;
 
             // Reply
-            logEntity.addActionEvent(new ReplyLogEntryEvent(parentLogbook, logEntity, user, description, logDiffString));
+            logEntity.addActionEvent(new ReplyLogEntryEvent(parentLogbook, logEntity, user, description, logDiffString, isNew));
         } else {
-            logEntity.addActionEvent(new LogEntryEvent(parentLogbook, logEntity, user, description, logDiffString));
+            logEntity.addActionEvent(new LogEntryEvent(parentLogbook, logEntity, user, description, logDiffString, isNew));
         }
 
         // Add a generic log entry.
