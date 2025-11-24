@@ -17,7 +17,7 @@ import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
  */
 public class ReplyLogEntryEvent extends LogEntryEvent {
 
-    LogInfo parentlogInfo;
+    LogInfo parentLogInfo;
 
     public ReplyLogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, UserInfo eventTriggedByUser, String description, String textDiff, boolean isNew) {
         super(parentLogbook, entity, eventTriggedByUser, description, textDiff, isNew);
@@ -25,7 +25,7 @@ public class ReplyLogEntryEvent extends LogEntryEvent {
         Log parentLogObject = getParentLogObject();
 
         if (parentLogObject != null) {
-            parentlogInfo = new LogInfo(parentLogObject);
+            parentLogInfo = new LogInfo(parentLogObject);
         }
     }
 
@@ -47,8 +47,8 @@ public class ReplyLogEntryEvent extends LogEntryEvent {
         return entity.getParentLog();
     }
 
-    public LogInfo getParentlogInfo() {
-        return parentlogInfo;
+    public LogInfo getParentLogInfo() {
+        return parentLogInfo;
     }
 
 }
