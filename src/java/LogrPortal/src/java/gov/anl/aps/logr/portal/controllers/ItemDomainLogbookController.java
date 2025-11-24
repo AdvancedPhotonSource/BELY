@@ -16,7 +16,7 @@ import gov.anl.aps.logr.portal.controllers.settings.SearchSettings;
 import gov.anl.aps.logr.portal.controllers.utilities.EntityInfoControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.EntityTypeControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
-import gov.anl.aps.logr.portal.controllers.utilities.LogControllerUtility;
+import gov.anl.aps.logr.portal.controllers.utilities.LogReactionControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.PropertyTypeControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.SettingTypeControllerUtility;
 import gov.anl.aps.logr.portal.model.ItemDomainLogbookLazyDataModel;
@@ -57,6 +57,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
@@ -136,6 +137,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     // </editor-fold>
 
     private EntityInfoControllerUtility entityInfoControllerUtility;
+    private LogReactionControllerUtility logReactionControllerUtility;
 
     private static final String OPS_ENTITY_TYPE_NAME = "ops";
 
@@ -301,6 +303,13 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
 
         return entityInfoControllerUtility;
+    }
+
+    public LogReactionControllerUtility getLogReactionControllerUtility() {
+        if (logReactionControllerUtility == null) {
+            logReactionControllerUtility = new LogReactionControllerUtility();
+        }
+        return logReactionControllerUtility;
     }
 
     @Override
@@ -647,32 +656,14 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     public void toggleReaction(Log entry, Reaction reaction) {
-        // Fetch the latest version 
-        entry = logFacade.find(entry.getId());
+        LogReactionControllerUtility utility = getLogReactionControllerUtility();
         UserInfo user = SessionUtility.getUser();
 
-        List<LogReaction> logReactionList = entry.getLogReactionList();
-        boolean add = true;
-
-        // Check if need to remove log reaction. 
-        for (LogReaction lr : logReactionList) {
-            UserInfo userId = lr.getUserInfo();
-
-            if (user.equals(userId)) {
-                Reaction existingReaction = lr.getReaction();
-
-                if (existingReaction.equals(reaction)) {
-                    add = false;
-                    logReactionList.remove(lr);
-                    logReactionFacade.remove(lr);
-                    break;
-                }
-            }
-        }
-
-        if (add) {
-            LogReaction lr = new LogReaction(entry.getId(), reaction.getId(), user.getId());
-            logReactionFacade.create(lr);
+        try {
+            utility.toggleReaction(entry, reaction, user);
+        } catch (CdbException ex) {
+            logger.error(ex);
+            SessionUtility.addErrorMessage("Error", ex.getMessage());
         }
 
         // No need to scroll to any log entry. Ajax event. 
