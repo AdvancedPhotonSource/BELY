@@ -15,7 +15,9 @@ public enum MqttTopic {
     LOGENTRYADD("bely/logEntry/Add"),
     LOGENTRYUPDATE("bely/logEntry/Update"),
     LOGENTRYREPLYADD("bely/logEntryReply/Add"),
-    LOGENTRYREPLYUPDATE("bely/logEntryReply/Update");
+    LOGENTRYREPLYUPDATE("bely/logEntryReply/Update"),
+    LOGREACTIONADD("bely/logReaction/Add"),
+    LOGREACTIONDELETE("bely/logReaction/Delete");
 
     private final String value;
 
