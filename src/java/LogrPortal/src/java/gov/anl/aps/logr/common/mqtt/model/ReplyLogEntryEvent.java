@@ -6,6 +6,7 @@ package gov.anl.aps.logr.common.mqtt.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import gov.anl.aps.logr.common.mqtt.constants.MqttTopic;
+import gov.anl.aps.logr.common.mqtt.model.entities.LogInfo;
 import gov.anl.aps.logr.portal.model.db.entities.ItemDomainLogbook;
 import gov.anl.aps.logr.portal.model.db.entities.Log;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
