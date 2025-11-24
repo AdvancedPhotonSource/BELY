@@ -5,6 +5,7 @@
 package gov.anl.aps.logr.portal.model.db.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import gov.anl.aps.logr.common.mqtt.model.LogReactionEvent;
 import java.io.Serializable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
@@ -28,7 +29,7 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "LogReaction.findByLogId", query = "SELECT l FROM LogReaction l WHERE l.logReactionPK.logId = :logId"),
     @NamedQuery(name = "LogReaction.findByReactionId", query = "SELECT l FROM LogReaction l WHERE l.logReactionPK.reactionId = :reactionId"),
     @NamedQuery(name = "LogReaction.findByUserId", query = "SELECT l FROM LogReaction l WHERE l.logReactionPK.userId = :userId")})
-public class LogReaction implements Serializable {
+public class LogReaction extends CdbEntity<LogReactionEvent> implements Serializable {
 
     private static final long serialVersionUID = 1L;
     @EmbeddedId
@@ -44,6 +45,7 @@ public class LogReaction implements Serializable {
     private UserInfo userInfo;
 
     public LogReaction() {
+        this.logReactionPK = new LogReactionPK();
     }
 
     public LogReaction(LogReactionPK logReactionPK) {
@@ -63,6 +65,11 @@ public class LogReaction implements Serializable {
         this.logReactionPK = logReactionPK;
     }
 
+    @Override
+    public Object getId() {
+        return logReactionPK;
+    }
+
     @JsonIgnore
     public Log getLog() {
         return log;
@@ -70,6 +77,7 @@ public class LogReaction implements Serializable {
 
     public void setLog(Log log) {
         this.log = log;
+        updatePK();
     }
 
     public Reaction getReaction() {
@@ -78,6 +86,7 @@ public class LogReaction implements Serializable {
 
     public void setReaction(Reaction reaction) {
         this.reaction = reaction;
+        updatePK();
     }
 
     public String getUsername() {
@@ -91,6 +100,22 @@ public class LogReaction implements Serializable {
 
     public void setUserInfo(UserInfo userInfo) {
         this.userInfo = userInfo;
+        updatePK();
+    }
+
+    private void updatePK() {
+        if (this.log != null) {
+            this.logReactionPK.setLogId(this.log.getId());
+        }
+
+        if (this.reaction != null) {
+            this.logReactionPK.setReactionId(this.reaction.getId());
+        }
+
+        if (this.userInfo != null) {
+            this.logReactionPK.setUserId(this.userInfo.getId());
+        }
+
     }
 
     @Override

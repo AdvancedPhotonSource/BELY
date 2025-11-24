@@ -315,6 +315,7 @@ public class CdbEntity<ActionEvent extends MqttEvent> implements Serializable, C
         return list.contains(designation);
     }
 
+    @JsonIgnore
     public List<ActionEvent> getActionEvents() {
         return actionEvents;
     }
