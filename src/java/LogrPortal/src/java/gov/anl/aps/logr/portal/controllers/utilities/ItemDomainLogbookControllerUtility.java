@@ -424,7 +424,7 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
         }
     }
 
-    private ItemDomainLogbook getParentLogbook(Log logEntry) {
+    public static ItemDomainLogbook getParentLogDocument(Log logEntry) {
         Log parentLog = logEntry.getParentLog();
 
         if (parentLog != null) {
@@ -489,7 +489,7 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
         // Avoid duplicates
         logEntity.clearActionEvents();
 
-        ItemDomainLogbook parentLogbook = getParentLogbook(logEntity);
+        ItemDomainLogbook parentLogbook = getParentLogDocument(logEntity);
 
         Log parentLog = logEntity.getParentLog();
         Integer id = logEntity.getId();
