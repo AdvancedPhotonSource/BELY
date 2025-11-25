@@ -18,12 +18,23 @@ Basic understanding helps, but the framework handles most MQTT details for you. 
 
 ### How do I handle multiple event types?
 
-Use wildcards in your topic pattern:
+Use wildcards in your topic pattern and implement specific handler methods:
 
 ```python
-@property
-def topic_pattern(self) -> str:
-    return "bely/logEntry/+"  # Handles Add, Update, Delete
+from bely_mqtt import HybridEventHandler, LogEntryAddEvent, LogEntryUpdateEvent
+
+class MultiHandler(HybridEventHandler):
+    @property
+    def topic_pattern(self) -> str:
+        return "bely/logEntry/+"  # Handles Add, Update, Delete
+    
+    async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
+        # Handle new entries
+        pass
+    
+    async def handle_log_entry_update(self, event: LogEntryUpdateEvent) -> None:
+        # Handle updates
+        pass
 ```
 
 ### Can I use the BELY API in handlers?

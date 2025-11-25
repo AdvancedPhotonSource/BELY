@@ -12,9 +12,9 @@ license = {text = "MIT"}
 authors = [
     {name = "BELY Team", email = "team@bely.dev"}
 ]
-keywords = ["mqtt", "bely", "logbook", "plugins", "framework"]
+keywords = ["mqtt", "bely", "logbook", "plugins", "framework", "events", "async"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
@@ -22,6 +22,9 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Monitoring",
+    "Framework :: AsyncIO",
 ]
 
 dependencies = [
@@ -31,6 +34,13 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "pluggy>=1.3.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/bely-org/bely-mqtt-framework"
+Documentation = "https://github.com/bely-org/bely-mqtt-framework/tree/main/docs"
+Repository = "https://github.com/bely-org/bely-mqtt-framework"
+Issues = "https://github.com/bely-org/bely-mqtt-framework/issues"
+Changelog = "https://github.com/bely-org/bely-mqtt-framework/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [

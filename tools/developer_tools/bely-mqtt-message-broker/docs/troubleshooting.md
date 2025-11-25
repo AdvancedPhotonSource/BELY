@@ -37,11 +37,18 @@
    def topic_pattern(self) -> str:
        return "bely/logEntry/Add"  # Must match exactly
    ```
-2. Test with wildcards:
+2. Implement the correct handler method:
+   ```python
+   # Use specific method for the event type
+   async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
+       # Not just handle(self, message)
+       pass
+   ```
+3. Test with wildcards:
    ```python
    return "bely/#"  # Receives all BELY messages
    ```
-3. Check MQTT subscription: Look for "Subscribed to topic" in logs
+4. Check MQTT subscription: Look for "Subscribed to topic" in logs
 
 ### Import Errors
 
