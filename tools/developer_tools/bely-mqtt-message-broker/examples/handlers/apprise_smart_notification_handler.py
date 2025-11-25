@@ -67,7 +67,7 @@ from bely_mqtt import (
 )
 
 
-class ApprisSmartNotificationHandler(MQTTHandler):
+class AppriseSmartNotificationHandler(MQTTHandler):
     """
     Smart notification handler using Apprise with YAML configuration.
     
@@ -118,11 +118,6 @@ class ApprisSmartNotificationHandler(MQTTHandler):
             self._initialize_apprise_instances()
         else:
             self.logger.warning("No config path provided. Handler will not send notifications.")
-
-    @property
-    def topic_pattern(self) -> str:
-        """Subscribe to all log entry and reply events."""
-        return "bely/logEntry/#"
 
     def _load_config(self, config_path: str) -> None:
         """
