@@ -1,0 +1,19 @@
+# Build variants for different configurations
+# This allows building multiple package variants in one go
+
+# Python versions to build for
+python:
+  - 3.9
+  - 3.10
+  - 3.11
+  - 3.12
+
+# Optional: Build with different dependency versions
+pydantic:
+  - 2.0
+  - 2.5
+
+# Optional: Build with/without optional dependencies
+include_apprise:
+  - true
+  - false

@@ -10,6 +10,7 @@ from typing import Optional
 import click
 from dotenv import load_dotenv
 
+from bely_mqtt import __version__
 from bely_mqtt.config import ConfigManager
 from bely_mqtt.mqtt_client import BelyMQTTClient
 from bely_mqtt.plugin import BelyAPIClient, PluginManager
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-@click.version_option()
+@click.version_option(version=__version__, prog_name="bely-mqtt")
 def cli() -> None:
     """BELY MQTT Framework - Pluggable MQTT handler for BELY events."""
     pass
