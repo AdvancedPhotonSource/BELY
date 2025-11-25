@@ -1,0 +1,16 @@
+{
+  "handlers": {
+    "AdvancedLoggingHandler": {
+      "logging_dir": "/var/log/bely"
+    },
+    "LoggingHandler": {},
+    "NotificationHandler": {
+      "webhook_url": "https://example.com/webhook"
+    },
+    "AppriseSmartNotificationHandler": {
+      "config": {
+        "config_path": "/path/to/apprise_notification_config.yaml"
+      }
+    }
+  }
+}

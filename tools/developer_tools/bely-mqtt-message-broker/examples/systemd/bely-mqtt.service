@@ -1,0 +1,51 @@
+[Unit]
+Description=BELY MQTT Message Broker Framework
+Documentation=https://github.com/yourusername/bely-mqtt-message-broker
+After=network-online.target mosquitto.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=%u
+Group=%u
+
+# Working directory
+WorkingDirectory=%h/.config/bely-mqtt
+
+# Environment variables
+Environment="PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin"
+EnvironmentFile=%h/.config/bely-mqtt/bely-mqtt.env
+
+# Service execution
+ExecStart=%h/.local/bin/bely-mqtt start \
+  --handlers-dir %h/.config/bely-mqtt/handlers \
+  --config %h/.config/bely-mqtt/config.json \
+  --broker ${MQTT_BROKER:-localhost} \
+  --port ${MQTT_PORT:-1883} \
+  --topic "bely/#" \
+  --log-level ${LOG_LEVEL:-INFO}
+
+# Restart policy
+Restart=on-failure
+RestartSec=10
+StartLimitInterval=60
+StartLimitBurst=3
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bely-mqtt
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.config/bely-mqtt/logs
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=512
+
+[Install]
+WantedBy=default.target
