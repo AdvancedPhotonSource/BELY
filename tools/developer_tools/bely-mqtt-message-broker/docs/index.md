@@ -30,15 +30,15 @@ pip install bely-mqtt-framework
 ## Basic Example
 
 ```python
-from bely_mqtt import MQTTHandler, MQTTMessage
+from bely_mqtt import MQTTHandler, LogEntryAddEvent
 
 class LogHandler(MQTTHandler):
     @property
     def topic_pattern(self) -> str:
         return "bely/logEntry/Add"
     
-    async def handle(self, message: MQTTMessage) -> None:
-        self.logger.info(f"New entry: {message.payload['description']}")
+    async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
+        self.logger.info(f"New entry: {event.description}")
 ```
 
 ## Architecture

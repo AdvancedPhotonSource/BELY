@@ -51,17 +51,24 @@ Then use `self.api_client` in your handler.
 
 ```python
 import pytest
-from bely_mqtt import MQTTMessage
+from bely_mqtt import LogEntryAddEvent
 from my_handler import MyHandler
 
 @pytest.mark.asyncio
 async def test_handler():
     handler = MyHandler()
-    message = MQTTMessage(
-        topic="bely/logEntry/Add",
-        payload={"description": "Test"}
+    event = LogEntryAddEvent(
+        description="Test entry",
+        event_timestamp="2024-01-01T00:00:00Z",
+        entity_name="Log",
+        entity_id=1,
+        event_triggered_by_username="testuser",
+        parent_log_document_info={"name": "Test Doc", "id": 1},
+        log_info={"id": 1},
+        logbook_list=[],
+        text_diff="+ Test entry"
     )
-    await handler.handle(message)
+    await handler.handle_log_entry_add(event)
 ```
 
 ## Troubleshooting

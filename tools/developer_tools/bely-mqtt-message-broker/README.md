@@ -11,6 +11,6 @@ A pluggable Python framework for handling MQTT events from BELY (Best Electronic
 - 🚀 **Async Support** - Built on async/await for high performance
 - 📢 **Notifications** - Send alerts via email, Slack, Discord, and more
 
-## Quick Start
+## Documentation
 
-
+For more details, see the [docs](./docs) directory.

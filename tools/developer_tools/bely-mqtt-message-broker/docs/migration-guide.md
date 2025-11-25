@@ -25,15 +25,15 @@ client.loop_forever()
 ### After (BELY MQTT Framework)
 
 ```python
-from bely_mqtt import MQTTHandler, MQTTMessage
+from bely_mqtt import MQTTHandler, LogEntryAddEvent
 
 class LogHandler(MQTTHandler):
     @property
     def topic_pattern(self) -> str:
         return "bely/logEntry/Add"
     
-    async def handle(self, message: MQTTMessage) -> None:
-        print(f"New entry: {message.payload['description']}")
+    async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
+        print(f"New entry: {event.description}")
 ```
 
 ## Benefits of Migration
@@ -54,7 +54,7 @@ class LogHandler(MQTTHandler):
 
 2. **Convert callbacks to handlers**
    - Create one handler per event type
-   - Move callback logic to `handle()` method
+   - Move callback logic to specific handler methods (e.g., `handle_log_entry_add`)
 
 3. **Use provided models**
    ```python
@@ -92,17 +92,20 @@ def on_message(client, userdata, msg):
 
 **After:**
 ```python
-class MultiHandler(MQTTHandler):
+from bely_mqtt import HybridEventHandler, LogEntryAddEvent, LogEntryUpdateEvent
+
+class MultiHandler(HybridEventHandler):
     @property
     def topic_pattern(self) -> str:
         return "bely/logEntry/+"
     
-    async def handle(self, message: MQTTMessage) -> None:
-        action = message.topic.split('/')[-1]
-        if action == "Add":
-            await self.handle_add(message)
-        elif action == "Update":
-            await self.handle_update(message)
+    async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
+        # Handle add events
+        pass
+    
+    async def handle_log_entry_update(self, event: LogEntryUpdateEvent) -> None:
+        # Handle update events
+        pass
 ```
 
 ### Error Handling
@@ -119,9 +122,8 @@ def on_message(client, userdata, msg):
 
 **After:**
 ```python
-async def handle(self, message: MQTTMessage) -> None:
+async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
     try:
-        event = LogEntryAddEvent(**message.payload)
         await self.process_event(event)
     except Exception as e:
         self.logger.error(f"Failed to process: {e}", exc_info=True)
