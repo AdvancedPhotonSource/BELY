@@ -11,10 +11,8 @@ from bely_mqtt import MQTTHandler, LogEntryAddEvent
 class SimpleLogHandler(MQTTHandler):
     """Logs when new entries are added to BELY."""
     
-    @property
-    def topic_pattern(self) -> str:
-        """Subscribe to log entry add events."""
-        return "bely/logEntry/Add"
+    # Uses default topic_pattern "bely/#" - receives all BELY events
+    # The framework will automatically route log entry add events to handle_log_entry_add
     
     async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
         """Handle new log entry event using the specific handler method."""

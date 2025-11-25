@@ -28,9 +28,20 @@ client.loop_forever()
 from bely_mqtt import MQTTHandler, LogEntryAddEvent
 
 class LogHandler(MQTTHandler):
+    # By default, subscribes to all BELY topics (bely/#)
+    # The framework automatically routes events to specific handlers
+    
+    async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
+        print(f"New entry: {event.description}")
+```
+
+Or if you want to subscribe to specific topics only:
+
+```python
+class SpecificLogHandler(MQTTHandler):
     @property
     def topic_pattern(self) -> str:
-        return "bely/logEntry/Add"
+        return "bely/logEntry/Add"  # Override to subscribe to specific topic
     
     async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
         print(f"New entry: {event.description}")

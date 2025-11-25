@@ -18,13 +18,33 @@ from bely_mqtt import MQTTHandler, LogEntryAddEvent
 class MyFirstHandler(MQTTHandler):
     """Logs when new entries are added."""
     
-    @property
-    def topic_pattern(self) -> str:
-        return "bely/logEntry/Add"
+    # By default, handlers subscribe to all BELY topics (bely/#)
+    # The framework automatically routes events to the appropriate handler methods
     
     async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
         self.logger.info(f"New log entry: {event.description}")
         self.logger.info(f"Added by: {event.event_triggered_by_username}")
+```
+
+### Subscribing to Specific Topics
+
+If you want to limit your handler to specific topics only (for performance or clarity), override the `topic_pattern` property:
+
+```python
+class SpecificTopicHandler(MQTTHandler):
+    """Only handles log entry events."""
+    
+    @property
+    def topic_pattern(self) -> str:
+        return "bely/logEntry/#"  # Only log entry events
+    
+    async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
+        # Handle new entries
+        pass
+    
+    async def handle_log_entry_update(self, event: LogEntryUpdateEvent) -> None:
+        # Handle updates
+        pass
 ```
 
 ## Running the Framework

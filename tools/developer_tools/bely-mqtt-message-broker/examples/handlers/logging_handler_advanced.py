@@ -109,10 +109,8 @@ class AdvancedLoggingHandler(MQTTHandler):
         
         self.logger.info(f"AdvancedLoggingHandler initialized with directory: {self.logging_dir}")
 
-    @property
-    def topic_pattern(self) -> str:
-        """Subscribe to all BELY topics."""
-        return "bely/#"
+    # Uses default topic_pattern "bely/#" - no need to override
+    # This handler will receive all BELY events
 
     def _get_logger_for_topic(self, topic: str) -> logging.Logger:
         """

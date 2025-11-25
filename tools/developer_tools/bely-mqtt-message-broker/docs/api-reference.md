@@ -10,10 +10,8 @@ Base class for all MQTT event handlers.
 from bely_mqtt import MQTTHandler, LogEntryAddEvent
 
 class MyHandler(MQTTHandler):
-    @property
-    def topic_pattern(self) -> str:
-        """MQTT topic pattern to match."""
-        return "bely/logEntry/Add"
+    # By default, subscribes to all BELY topics (bely/#)
+    # Override topic_pattern to subscribe to specific topics only
     
     async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
         """Handle new log entry event."""
@@ -21,8 +19,19 @@ class MyHandler(MQTTHandler):
 ```
 
 **Properties:**
+- `topic_pattern` - MQTT topic pattern to match (default: `"bely/#"`)
 - `logger` - Pre-configured logger instance
 - `api_client` - Optional BELY API client (if configured)
+
+**Overriding Topic Pattern:**
+
+```python
+class SpecificHandler(MQTTHandler):
+    @property
+    def topic_pattern(self) -> str:
+        """Subscribe to specific topics only."""
+        return "bely/logEntry/Add"
+```
 
 **Event Handler Methods:**
 - `handle_log_entry_add(event: LogEntryAddEvent)` - New log entries
@@ -37,15 +46,14 @@ class MyHandler(MQTTHandler):
 
 ### HybridEventHandler
 
-Handler that can process multiple event types with specific methods.
+Alias for MQTTHandler that emphasizes handling multiple event types. With the default topic pattern `"bely/#"`, all handlers can process multiple event types by implementing the appropriate handler methods.
 
 ```python
-from bely_mqtt import HybridEventHandler, LogEntryAddEvent, LogEntryUpdateEvent
+from bely_mqtt import MQTTHandler, LogEntryAddEvent, LogEntryUpdateEvent
 
-class MultiHandler(HybridEventHandler):
-    @property
-    def topic_pattern(self) -> str:
-        return "bely/logEntry/+"  # Matches Add, Update, Delete
+class MultiHandler(MQTTHandler):
+    # Uses default topic_pattern "bely/#"
+    # Implements multiple event handler methods
     
     async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
         self.logger.info(f"New entry: {event.description}")
@@ -110,16 +118,23 @@ async def handle_log_entry_reply_add(self, event: LogEntryReplyAddEvent) -> None
 
 ## Topic Patterns
 
+By default, handlers subscribe to `bely/#` (all BELY events). The framework automatically routes events to the appropriate handler methods based on the event type.
+
 MQTT topic patterns support wildcards:
 
 - `+` - Single level wildcard
 - `#` - Multi-level wildcard
 
 Examples:
+- `bely/#` - Matches all BELY events (default)
 - `bely/logEntry/Add` - Exact match
 - `bely/logEntry/+` - Matches Add, Update, Delete
 - `bely/+/Add` - Matches any entity Add events
-- `bely/#` - Matches all BELY events
+
+**When to Override the Default:**
+- Performance optimization - reduce unnecessary message processing
+- Clarity - make handler's purpose explicit
+- Testing - isolate specific event types
 
 ## CLI Commands
 

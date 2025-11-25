@@ -8,7 +8,7 @@ pluggable handlers for MQTT topics.
 import importlib
 import inspect
 import logging
-from abc import ABC, abstractmethod
+from abc import ABC
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type
 
@@ -49,6 +49,8 @@ class MQTTHandler(ABC):
     Base class for MQTT message handlers.
     
     Subclass this to create handlers for specific MQTT topics or event types.
+    By default, handlers subscribe to all BELY topics (bely/#). Override the
+    topic_pattern property to subscribe to specific topics only.
     
     Handlers can implement either:
     1. The generic `handle()` method for all messages
@@ -68,9 +70,7 @@ class MQTTHandler(ABC):
     
     Example:
         class MyHandler(MQTTHandler):
-            @property
-            def topic_pattern(self) -> str:
-                return "bely/#"
+            # Uses default topic_pattern "bely/#" - receives all BELY events
             
             async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
                 # Only called for bely/logEntry/Add events
@@ -80,9 +80,15 @@ class MQTTHandler(ABC):
             async def handle_generic_update(self, event: CoreEvent) -> None:
                 # Only called for bely/update events
                 self.logger.info(f"Updated: {event.entity_name}")
+        
+        class SpecificHandler(MQTTHandler):
+            @property
+            def topic_pattern(self) -> str:
+                # Override to subscribe to specific topics only
+                return "bely/logEntry/#"
             
             async def handle(self, message: MQTTMessage) -> None:
-                # Fallback for any other events
+                # Handle only log entry related events
                 pass
     """
 
@@ -97,20 +103,23 @@ class MQTTHandler(ABC):
         self.logger = logging.getLogger(self.__class__.__name__)
 
     @property
-    @abstractmethod
     def topic_pattern(self) -> str:
         """
         Return the MQTT topic pattern this handler subscribes to.
         
+        By default, handlers subscribe to all BELY topics (bely/#).
+        Override this property to subscribe to specific topics only.
+        
         Examples:
+            - "bely/#" - matches all BELY topics (default)
             - "bely/add" - matches exact topic
-            - "bely/logEntry/#" - matches all subtopics
+            - "bely/logEntry/#" - matches all log entry subtopics
             - "bely/+/Add" - matches single level wildcard
         
         Returns:
             MQTT topic pattern string.
         """
-        pass
+        return "bely/#"
 
     async def handle(self, message: MQTTMessage) -> None:
         """

@@ -54,11 +54,13 @@ class LogEntryUpdateHandler(MQTTHandler):
     Handler for log entry update events.
     
     This handler processes events when log entries are modified.
+    This example shows how to override the default topic pattern
+    to subscribe to specific events only.
     """
 
     @property
     def topic_pattern(self) -> str:
-        """Subscribe to log entry update events."""
+        """Subscribe to log entry update events only (override default)."""
         return "bely/logEntry/Update"
 
     async def handle(self, message: MQTTMessage) -> None:

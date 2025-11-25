@@ -10,9 +10,8 @@ from bely_mqtt import MQTTHandler, LogEntryAddEvent
 class SimpleHandler(MQTTHandler):
     """Log new entries to console."""
     
-    @property
-    def topic_pattern(self) -> str:
-        return "bely/logEntry/Add"
+    # Uses default topic_pattern "bely/#" - receives all BELY events
+    # The framework automatically routes log entry add events to handle_log_entry_add
     
     async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
         self.logger.info(f"New entry: {event.description}")
@@ -21,14 +20,32 @@ class SimpleHandler(MQTTHandler):
 ### Multi-Event Handler
 
 ```python
-from bely_mqtt import HybridEventHandler, LogEntryAddEvent, LogEntryUpdateEvent
+from bely_mqtt import MQTTHandler, LogEntryAddEvent, LogEntryUpdateEvent
 
-class LogMonitor(HybridEventHandler):
+class LogMonitor(MQTTHandler):
     """Monitor all log entry changes."""
+    
+    # Uses default topic_pattern "bely/#" - receives all BELY events
+    # Simply implement the handler methods for the events you care about
+    
+    async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
+        self.logger.info(f"NEW: {event.description[:50]}...")
+    
+    async def handle_log_entry_update(self, event: LogEntryUpdateEvent) -> None:
+        self.logger.info(f"UPDATED: Entry {event.log_info.id}")
+```
+
+### Specific Topic Handler
+
+```python
+from bely_mqtt import MQTTHandler, LogEntryAddEvent, LogEntryUpdateEvent
+
+class LogEntryOnlyHandler(MQTTHandler):
+    """Monitor only log entry events (not replies, reactions, etc)."""
     
     @property
     def topic_pattern(self) -> str:
-        return "bely/logEntry/+"  # Matches Add, Update, Delete
+        return "bely/logEntry/+"  # Override default to match only log entry events
     
     async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
         self.logger.info(f"NEW: {event.description[:50]}...")
@@ -49,6 +66,7 @@ class EnrichedHandler(MQTTHandler):
     
     @property
     def topic_pattern(self) -> str:
+        # Override default to only process update events (performance optimization)
         return "bely/logEntry/Update"
     
     async def handle_log_entry_update(self, event: LogEntryUpdateEvent) -> None:
@@ -69,6 +87,7 @@ class NotificationHandler(MQTTHandler):
     
     @property
     def topic_pattern(self) -> str:
+        # Override to only process reply events (avoid unnecessary processing)
         return "bely/logEntryReply/Add"
     
     async def handle_log_entry_reply_add(self, event: LogEntryReplyAddEvent) -> None:
@@ -100,6 +119,7 @@ class ReactionTracker(MQTTHandler):
     
     @property
     def topic_pattern(self) -> str:
+        # Override to only process reaction events
         return "bely/logReaction/+"
     
     async def handle_log_reaction_add(self, event: LogReactionAddEvent) -> None:
@@ -125,9 +145,8 @@ import asyncio
 class RobustHandler(MQTTHandler):
     """Handler with comprehensive error handling."""
     
-    @property
-    def topic_pattern(self) -> str:
-        return "bely/logEntry/Add"
+    # Uses default topic_pattern "bely/#"
+    # Implements only the specific handler method needed
     
     async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
         try:
