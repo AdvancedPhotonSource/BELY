@@ -371,6 +371,45 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         except Exception as e:
             self.logger.error(f"Error processing log entry reply update: {e}", exc_info=True)
 
+    async def _handle_log_reaction_event(self, event: LogReactionEventBase) -> None:
+        """
+        Handle log reaction events (both add and delete).
+
+        Notify the original entry creator if someone else reacts to or removes a reaction from their entry.
+
+        Args:
+            event: The log reaction event
+        """
+        try:
+            # Don't notify the reactor (person who added/removed the reaction)
+            if event.event_triggered_by_username == event.parent_log_info.entered_by_username:
+                return
+
+            # Check if we should notify about reactions
+            creator_username = event.parent_log_info.entered_by_username
+            if not self._should_notify(creator_username, "reactions"):
+                return
+
+            # Determine if this is an add or delete event
+            is_delete = isinstance(event, LogReactionDeleteEvent)
+
+            # Build notification
+            if is_delete:
+                title = (
+                    f"Reaction Removed from Your Log Entry in {event.parent_log_document_info.name}"
+                )
+                body = self._format_reaction_deleted_body(event)
+            else:
+                title = f"Reaction to Your Log Entry in {event.parent_log_document_info.name}"
+                body = self._format_reaction_added_body(event)
+
+            # Send notification
+            await self._send_notification(creator_username, title, body)
+
+        except Exception as e:
+            event_type = "delete" if isinstance(event, LogReactionDeleteEvent) else "add"
+            self.logger.error(f"Error processing log reaction {event_type}: {e}", exc_info=True)
+
     async def handle_log_reaction_add(self, event: LogReactionAddEvent) -> None:
         """
         Handle log reaction add events.
@@ -380,25 +419,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         Args:
             event: The log reaction add event
         """
-        try:
-            # Don't notify the reactor (person who added the reaction)
-            if event.event_triggered_by_username == event.parent_log_info.entered_by_username:
-                return
-
-            # Check if we should notify about reactions
-            creator_username = event.parent_log_info.entered_by_username
-            if not self._should_notify(creator_username, "reactions"):
-                return
-
-            # Build notification
-            title = f"Reaction to Your Log Entry in {event.parent_log_document_info.name}"
-            body = self._format_reaction_added_body(event)
-
-            # Send notification
-            await self._send_notification(creator_username, title, body)
-
-        except Exception as e:
-            self.logger.error(f"Error processing log reaction add: {e}", exc_info=True)
+        await self._handle_log_reaction_event(event)
 
     async def handle_log_reaction_delete(self, event: LogReactionDeleteEvent) -> None:
         """
@@ -409,25 +430,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         Args:
             event: The log reaction delete event
         """
-        try:
-            # Don't notify the reactor (person who removed the reaction)
-            if event.event_triggered_by_username == event.parent_log_info.entered_by_username:
-                return
-
-            # Check if we should notify about reactions
-            creator_username = event.parent_log_info.entered_by_username
-            if not self._should_notify(creator_username, "reactions"):
-                return
-
-            # Build notification
-            title = f"Reaction Removed from Your Log Entry in {event.parent_log_document_info.name}"
-            body = self._format_reaction_deleted_body(event)
-
-            # Send notification
-            await self._send_notification(creator_username, title, body)
-
-        except Exception as e:
-            self.logger.error(f"Error processing log reaction delete: {e}", exc_info=True)
+        await self._handle_log_reaction_event(event)
 
     def _process_apprise_url(self, url: str, global_config: Dict[str, Any]) -> str:
         """
@@ -652,12 +655,13 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             f"<br/>Reply markdown changes: {self._format_text_diff_pre(event.text_diff)}"
         )
 
-    @_append_permalink
-    def _format_reaction_added_body(self, event: LogReactionAddEvent) -> str:
-        """Format notification body for added reaction."""
+    def _format_reaction_body(self, event: LogReactionEventBase, is_removed: bool) -> str:
+        """Format notification body for reaction events."""
         reaction_info = event.log_reaction.reaction
+        title = "Reaction removed from" if is_removed else "New reaction added to"
+
         return (
-            f"New reaction to your entry in {event.parent_log_document_info.name}<br/>"
+            f"{title} your entry in {event.parent_log_document_info.name}<br/>"
             f"By: {event.event_triggered_by_username}<br/>"
             f"Time: {event.event_timestamp}<br/>"
             f"Reaction: {reaction_info.emoji} {reaction_info.name}<br/>"
@@ -665,13 +669,11 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         )
 
     @_append_permalink
+    def _format_reaction_added_body(self, event: LogReactionAddEvent) -> str:
+        """Format notification body for added reaction."""
+        return self._format_reaction_body(event, is_removed=False)
+
+    @_append_permalink
     def _format_reaction_deleted_body(self, event: LogReactionDeleteEvent) -> str:
         """Format notification body for deleted reaction."""
-        reaction_info = event.log_reaction.reaction
-        return (
-            f"Reaction removed from your entry in {event.parent_log_document_info.name}<br/>"
-            f"By: {event.event_triggered_by_username}<br/>"
-            f"Time: {event.event_timestamp}<br/>"
-            f"Reaction: {reaction_info.emoji} {reaction_info.name}<br/>"
-            f"Description: {event.description}"
-        )
+        return self._format_reaction_body(event, is_removed=True)
