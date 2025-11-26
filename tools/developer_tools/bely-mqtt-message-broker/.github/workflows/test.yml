@@ -1,0 +1,138 @@
+name: Test BELY MQTT Message Broker
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'tools/developer_tools/bely-mqtt-message-broker/**'
+      - '.github/workflows/test.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'tools/developer_tools/bely-mqtt-message-broker/**'
+      - '.github/workflows/test.yml'
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: tools/developer_tools/bely-mqtt-message-broker
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        make install-dev
+    
+    - name: Run linting
+      run: make lint
+      continue-on-error: true
+    
+    - name: Run type checking
+      run: make type-check
+      continue-on-error: true
+    
+    - name: Run tests with coverage
+      run: make test-cov
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./htmlcov/index.html
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  integration-test:
+    runs-on: ubuntu-latest
+    services:
+      mosquitto:
+        image: eclipse-mosquitto:2
+        ports:
+          - 1883:1883
+        options: >-
+          --health-cmd "mosquitto_sub -t '$$SYS/#' -C 1 | grep -v Error || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      working-directory: tools/developer_tools/bely-mqtt-message-broker
+      run: |
+        python -m pip install --upgrade pip
+        make install-dev
+    
+    - name: Run integration tests
+      working-directory: tools/developer_tools/bely-mqtt-message-broker
+      env:
+        MQTT_BROKER_HOST: localhost
+        MQTT_BROKER_PORT: 1883
+      run: |
+        pytest tests/integration/ -v --tb=short || true
+    
+    - name: Test CLI commands
+      working-directory: tools/developer_tools/bely-mqtt-message-broker
+      run: |
+        # Test listing handlers
+        bely-mqtt list-handlers --handlers-dir ./examples/handlers || echo "No example handlers found"
+        
+        # Test help command
+        bely-mqtt --help
+
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      working-directory: tools/developer_tools/bely-mqtt-message-broker
+      run: |
+        python -m pip install --upgrade pip
+        make install-dev
+    
+    - name: Check code formatting
+      working-directory: tools/developer_tools/bely-mqtt-message-broker
+      run: |
+        black --check src/ tests/
+    
+    - name: Run security checks
+      working-directory: tools/developer_tools/bely-mqtt-message-broker
+      run: |
+        pip install bandit safety
+        bandit -r src/ -ll || true
+        safety check --json || true

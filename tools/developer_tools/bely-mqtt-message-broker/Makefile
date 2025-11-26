@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test lint format type-check clean docs
+.PHONY: help install install-dev test test-integration test-all lint format type-check clean docs
 
 help:
 	@echo "BELY MQTT Framework - Development Commands"
@@ -8,7 +8,9 @@ help:
 	@echo "  make install-dev      Install with development dependencies"
 	@echo ""
 	@echo "Testing:"
-	@echo "  make test             Run tests"
+	@echo "  make test             Run unit tests"
+	@echo "  make test-integration Run integration tests (requires MQTT broker)"
+	@echo "  make test-all         Run all tests"
 	@echo "  make test-cov         Run tests with coverage"
 	@echo ""
 	@echo "Code Quality:"
@@ -16,6 +18,11 @@ help:
 	@echo "  make format           Format code with black"
 	@echo "  make type-check       Run type checking with mypy"
 	@echo "  make quality          Run all quality checks"
+	@echo ""
+	@echo "Docker:"
+	@echo "  make docker-test      Run tests in Docker with MQTT broker"
+	@echo "  make docker-up        Start MQTT broker for local testing"
+	@echo "  make docker-down      Stop MQTT broker"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  make clean            Clean build artifacts"
@@ -29,10 +36,32 @@ install-dev:
 	pip install -e ".[dev]"
 
 test:
-	pytest
+	pytest tests/ -k "not integration"
+
+test-integration:
+	@echo "Running integration tests (requires MQTT broker on localhost:1883)"
+	pytest tests/integration/ -v
+test-all:
+	pytest tests/ -v
 
 test-cov:
-	pytest --cov=src/bely_mqtt --cov-report=html --cov-report=term-missing
+	pytest --cov=src/bely_mqtt --cov-report=html --cov-report=term-missing --cov-report=xml
+
+# Docker commands for testing
+docker-up:
+	@echo "Starting MQTT broker for testing..."
+	docker run -d --name mqtt-test-broker -p 1883:1883 eclipse-mosquitto:2
+
+docker-down:
+	@echo "Stopping MQTT broker..."
+	docker stop mqtt-test-broker || true
+	docker rm mqtt-test-broker || true
+
+docker-test: docker-down docker-up
+	@echo "Waiting for MQTT broker to start..."
+	@sleep 3
+	@make test-integration
+	@make docker-down
 
 lint:
 	ruff check src/ tests/
@@ -46,6 +75,15 @@ type-check:
 	mypy src/bely_mqtt
 
 quality: lint type-check test
+
+# CI/CD specific commands
+ci-test:
+	@echo "Running CI tests..."
+	pytest tests/ -v --tb=short --junitxml=test-results.xml
+
+ci-integration:
+	@echo "Running CI integration tests..."
+	MQTT_BROKER_HOST=localhost MQTT_BROKER_PORT=1883 pytest tests/integration/ -v --tb=short
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
@@ -77,3 +115,4 @@ run-example:
 
 list-handlers:
 	bely-mqtt list-handlers --handlers-dir ./examples/handlers
+

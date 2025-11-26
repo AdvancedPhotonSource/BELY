@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: bely-mqtt-test-broker
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./tests/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    healthcheck:
+      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-i", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  test-runner:
+    build:
+      context: .
+      dockerfile: tests/Dockerfile.test
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    environment:
+      - MQTT_BROKER_HOST=mosquitto
+      - MQTT_BROKER_PORT=1883
+      - PYTHONPATH=/app/src
+    volumes:
+      - .:/app
+      - test-results:/app/test-results
+    command: |
+      sh -c "
+        pip install -e '.[dev]' &&
+        pytest tests/ -v --junitxml=/app/test-results/junit.xml --cov=src/bely_mqtt --cov-report=xml:/app/test-results/coverage.xml
+      "
+
+volumes:
+  test-results:
