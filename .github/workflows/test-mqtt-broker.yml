@@ -35,10 +35,6 @@ jobs:
           python -m pip install --upgrade pip
           make install-dev      
 
-      - name: Run tests with coverage
-        run: |
-          make test-cov
-
       - name: Run code quality linter
         run: |
           make lint
@@ -46,6 +42,10 @@ jobs:
       - name: Run code quality type-check
         run: |
           make type-check
+
+      - name: Run tests with coverage
+        run: |
+          make test-cov
 
       # - name: Upload coverage reports
       #   if: matrix.python-version == '3.11'
