@@ -91,6 +91,7 @@ from bely_mqtt import (
     LogEntryReplyAddEvent,
     LogEntryReplyUpdateEvent,
 )
+from bely_mqtt.config import GlobalConfig
 
 
 class AppriseSmartNotificationHandler(MQTTHandler):
@@ -107,6 +108,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         self,
         config_path: Optional[str] = None,
         api_client: Optional[Any] = None,
+        global_config: Optional[GlobalConfig] = None,
     ):
         """
         Initialize the handler.
@@ -114,6 +116,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         Args:
             config_path: Path to YAML configuration file
             api_client: Optional BELY API client
+            global_config: Optional global configuration containing bely_url and other settings
 
         Raises:
             ImportError: If apprise or yaml not installed
@@ -121,6 +124,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             ValueError: If config is invalid
         """
         super().__init__(api_client=api_client)
+        self.bely_url = global_config.bely_url
 
         if not APPRISE_AVAILABLE:
             self.logger.warning("Apprise not installed. Install with: pip install apprise")
