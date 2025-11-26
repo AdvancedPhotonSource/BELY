@@ -18,8 +18,8 @@ jobs:
 
     strategy:
       matrix:
-        # python-version: ['3.9', '3.10', '3.11', '3.12']
-        python-version: ['3.11']
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+        # python-version: ['3.11']
 
     steps:
       - name: Checkout code
@@ -33,32 +33,23 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          make install-dev
-
-      - name: Run test_models.py
-        run: |
-          pytest tests/test_models.py -v
-
-      - name: Run test_plugin.py
-        run: |
-          pytest tests/test_plugin.py -v
-
-      - name: Run all tests via Makefile
-        run: |
-          make test
+          make install-dev      
 
       - name: Run tests with coverage
         run: |
           make test-cov
 
-      - name: Run code quality checks
+      - name: Run code quality linter
         run: |
-          make lint || true
-          make type-check || true
+          make lint
 
-      - name: Upload coverage reports
-        if: matrix.python-version == '3.11'
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: tools/developer_tools/bely-mqtt-message-broker/htmlcov/
+      - name: Run code quality type-check
+        run: |
+          make type-check
+
+      # - name: Upload coverage reports
+      #   if: matrix.python-version == '3.11'
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: coverage-report
+      #     path: tools/developer_tools/bely-mqtt-message-broker/htmlcov/
