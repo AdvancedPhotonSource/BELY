@@ -12,6 +12,7 @@ from abc import ABC
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type
 
+from bely_mqtt.config import GlobalConfig
 from bely_mqtt.events import EventType
 from bely_mqtt.models import MQTTMessage
 
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 class BelyAPIClient:
     """
     Interface for BELY API client.
-    
+
     This is a placeholder interface. The actual implementation should be
     provided by the bely-api library.
     """
@@ -47,16 +48,16 @@ class BelyAPIClient:
 class MQTTHandler(ABC):
     """
     Base class for MQTT message handlers.
-    
+
     Subclass this to create handlers for specific MQTT topics or event types.
     By default, handlers subscribe to all BELY topics (bely/#). Override the
     topic_pattern property to subscribe to specific topics only.
-    
+
     Handlers can implement either:
     1. The generic `handle()` method for all messages
     2. Specific event handler methods like `handle_log_entry_add()`, `handle_generic_update()`, etc.
     3. Both (specific handlers are called first, then generic handle if not overridden)
-    
+
     Supported specific event handlers:
         - handle_generic_add(event: CoreEvent) - Generic add events (bely/add)
         - handle_generic_update(event: CoreEvent) - Generic update events (bely/update)
@@ -67,55 +68,61 @@ class MQTTHandler(ABC):
         - handle_log_entry_reply_update(event: LogEntryReplyUpdateEvent) - Reply updated (bely/logEntryReply/Update)
         - handle_log_reaction_add(event: LogReactionAddEvent) - Reaction added (bely/logReaction/Add)
         - handle_log_reaction_delete(event: LogReactionDeleteEvent) - Reaction deleted (bely/logReaction/Delete)
-    
+
     Example:
         class MyHandler(MQTTHandler):
             # Uses default topic_pattern "bely/#" - receives all BELY events
-            
+
             async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
                 # Only called for bely/logEntry/Add events
                 # event is already parsed and typed
                 self.logger.info(f"New entry: {event.log_info.id}")
-            
+
             async def handle_generic_update(self, event: CoreEvent) -> None:
                 # Only called for bely/update events
                 self.logger.info(f"Updated: {event.entity_name}")
-        
+
         class SpecificHandler(MQTTHandler):
             @property
             def topic_pattern(self) -> str:
                 # Override to subscribe to specific topics only
                 return "bely/logEntry/#"
-            
+
             async def handle(self, message: MQTTMessage) -> None:
                 # Handle only log entry related events
                 pass
     """
 
-    def __init__(self, api_client: Optional[BelyAPIClient] = None):
+    def __init__(
+        self,
+        api_client: Optional[BelyAPIClient] = None,
+        global_config: Optional[GlobalConfig] = None,
+    ):
         """
         Initialize the handler.
-        
+
         Args:
             api_client: Optional BELY API client for querying additional information.
+            global_config: Optional global configuration shared across all handlers.
         """
         self.api_client = api_client
+        self.global_config = global_config
         self.logger = logging.getLogger(self.__class__.__name__)
 
     @property
     def topic_pattern(self) -> str:
         """
         Return the MQTT topic pattern this handler subscribes to.
-        
+
         By default, handlers subscribe to all BELY topics (bely/#).
         Override this property to subscribe to specific topics only.
-        
+
         Examples:
             - "bely/#" - matches all BELY topics (default)
             - "bely/add" - matches exact topic
             - "bely/logEntry/#" - matches all log entry subtopics
             - "bely/+/Add" - matches single level wildcard
-        
+
         Returns:
             MQTT topic pattern string.
         """
@@ -124,14 +131,14 @@ class MQTTHandler(ABC):
     async def handle(self, message: MQTTMessage) -> None:
         """
         Handle an MQTT message.
-        
+
         This method is called for all messages matching the topic pattern.
         Override this method to handle all messages, or implement specific
         event handler methods (handle_log_entry_add, etc.) for specific events.
-        
+
         Args:
             message: The MQTT message to handle.
-        
+
         Raises:
             Exception: Any exception raised will be logged but not propagated.
         """
@@ -146,17 +153,17 @@ class MQTTHandler(ABC):
                     event = self._parse_event(event_type, message)
                     await handler_method(event)
                     return
-        
+
         # If no specific handler found, call the generic handler
         await self.handle_generic(message)
 
     async def handle_generic(self, message: MQTTMessage) -> None:
         """
         Generic handler for messages that don't match specific event types.
-        
+
         Override this method to handle messages that don't match any specific
         event type, or implement specific event handler methods.
-        
+
         Args:
             message: The MQTT message to handle.
         """
@@ -168,14 +175,14 @@ class MQTTHandler(ABC):
     def _parse_event(event_type: EventType, message: MQTTMessage) -> Any:
         """
         Parse an MQTT message into the appropriate event type.
-        
+
         Args:
             event_type: The EventType to parse into.
             message: The MQTT message to parse.
-        
+
         Returns:
             Parsed event object of the appropriate type.
-        
+
         Raises:
             ValueError: If the event type is not recognized.
         """
@@ -189,7 +196,7 @@ class MQTTHandler(ABC):
             LogReactionAddEvent,
             LogReactionDeleteEvent,
         )
-        
+
         event_type_map = {
             EventType.GENERIC_ADD: CoreEvent,
             EventType.GENERIC_UPDATE: CoreEvent,
@@ -201,20 +208,20 @@ class MQTTHandler(ABC):
             EventType.LOG_REACTION_ADD: LogReactionAddEvent,
             EventType.LOG_REACTION_DELETE: LogReactionDeleteEvent,
         }
-        
+
         event_class = event_type_map.get(event_type)
         if not event_class:
             raise ValueError(f"Unknown event type: {event_type}")
-        
+
         return event_class(**message.payload)
 
     def topic_matches(self, topic: str) -> bool:
         """
         Check if a topic matches this handler's pattern.
-        
+
         Args:
             topic: The topic to check.
-        
+
         Returns:
             True if the topic matches the pattern, False otherwise.
         """
@@ -224,16 +231,16 @@ class MQTTHandler(ABC):
     def _match_mqtt_pattern(pattern: str, topic: str) -> bool:
         """
         Match an MQTT topic against a pattern.
-        
+
         Supports:
             - # (multi-level wildcard, must be at end)
             - + (single-level wildcard)
             - exact matches
-        
+
         Args:
             pattern: The MQTT pattern.
             topic: The topic to match.
-        
+
         Returns:
             True if the topic matches the pattern.
         """
@@ -260,8 +267,9 @@ class MQTTHandler(ABC):
 class PluginManager:
     """
     Manages loading and executing MQTT handlers.
-    
-    Supports passing configuration to handlers during instantiation.
+
+    Supports passing both global and handler-specific configuration to handlers
+    during instantiation.
     """
 
     def __init__(
@@ -271,7 +279,7 @@ class PluginManager:
     ):
         """
         Initialize the plugin manager.
-        
+
         Args:
             api_client: Optional BELY API client to pass to handlers.
             config_manager: Optional ConfigManager for handler configuration.
@@ -284,7 +292,7 @@ class PluginManager:
     def register_handler(self, handler: MQTTHandler) -> None:
         """
         Register a handler.
-        
+
         Args:
             handler: The handler instance to register.
         """
@@ -297,46 +305,85 @@ class PluginManager:
     def register_handler_class(self, handler_class: Type[MQTTHandler]) -> None:
         """
         Register a handler by class.
-        
-        Attempts to pass configuration to the handler if available.
-        
+
+        Attempts to pass both global configuration and handler-specific
+        configuration to the handler if available.
+
         Args:
             handler_class: The handler class to instantiate and register.
         """
         handler_name = handler_class.__name__
-        
-        # Try to get configuration for this handler
-        config = None
+
+        # Get global configuration if available
+        global_config = None
         if self.config_manager:
-            config = self.config_manager.get_config(handler_name)
-        
-        # Instantiate handler with configuration if available
+            global_config = self.config_manager.get_global_config()
+
+        # Try to get handler-specific configuration
+        handler_config = None
+        if self.config_manager:
+            handler_config = self.config_manager.get_config(handler_name)
+
+        # Prepare constructor arguments
+        constructor_args = {
+            "api_client": self.api_client,
+        }
+
+        # Add global_config if the handler accepts it
+        if global_config:
+            constructor_args["global_config"] = global_config
+
+        # Add handler-specific configuration if available
+        if handler_config and handler_config.config:
+            constructor_args.update(handler_config.config)
+
+        # Instantiate handler with configuration
         try:
-            if config and config.config:
-                # Pass configuration to handler
-                handler = handler_class(api_client=self.api_client, **config.config)
+            # First try with all arguments
+            handler = handler_class(**constructor_args)
+            if global_config:
+                self.logger.debug(f"Instantiated {handler_name} with global configuration")
+            if handler_config:
                 self.logger.debug(
-                    f"Instantiated {handler_name} with configuration: {config.config}"
+                    f"Instantiated {handler_name} with handler configuration: {handler_config.config}"
                 )
-            else:
-                # Instantiate without configuration
-                handler = handler_class(api_client=self.api_client)
         except TypeError as e:
-            # Handler doesn't accept configuration parameters
+            # Handler might not accept all parameters, try with just what it accepts
             self.logger.debug(
-                f"Handler {handler_name} does not accept configuration parameters: {e}"
+                f"Handler {handler_name} does not accept all configuration parameters: {e}"
             )
-            handler = handler_class(api_client=self.api_client)
-        
+
+            # Get the handler's __init__ signature
+            import inspect
+
+            sig = inspect.signature(handler_class.__init__)
+            accepted_params = set(sig.parameters.keys()) - {"self"}
+
+            # Filter constructor args to only what the handler accepts
+            filtered_args = {k: v for k, v in constructor_args.items() if k in accepted_params}
+
+            try:
+                handler = handler_class(**filtered_args)
+                self.logger.debug(
+                    f"Instantiated {handler_name} with filtered parameters: {filtered_args.keys()}"
+                )
+            except Exception as e2:
+                # Fall back to minimal instantiation
+                self.logger.warning(
+                    f"Failed to instantiate {handler_name} with configuration, "
+                    f"falling back to minimal instantiation: {e2}"
+                )
+                handler = handler_class()
+
         self.register_handler(handler)
 
     def load_handlers_from_directory(self, directory: Path) -> None:
         """
         Dynamically load handlers from a directory.
-        
+
         Looks for Python files in the directory and imports any classes
         that inherit from MQTTHandler.
-        
+
         Args:
             directory: Path to the directory containing handler modules.
         """
@@ -374,14 +421,14 @@ class PluginManager:
     async def handle_message(self, message: MQTTMessage) -> None:
         """
         Route a message to all matching handlers.
-        
+
         For each matching handler, attempts to route to a specific event handler
         method (e.g., handle_log_entry_add) if available, otherwise calls the
         generic handle() method.
-        
+
         Specific event handlers receive parsed event objects (e.g., LogEntryAddEvent)
         instead of raw MQTT messages.
-        
+
         Args:
             message: The MQTT message to handle.
         """
@@ -393,7 +440,7 @@ class PluginManager:
 
         # Get event type for this topic
         event_type = EventType.from_topic(message.topic)
-        
+
         for handler in matching_handlers:
             try:
                 # Try to route to specific event handler
@@ -410,11 +457,10 @@ class PluginManager:
                             event = MQTTHandler._parse_event(event_type, message)
                             await handler_method(event)
                             continue
-                
+
                 # Fall back to generic handle method
                 self.logger.debug(
-                    f"Routing {message.topic} to "
-                    f"{handler.__class__.__name__}.handle"
+                    f"Routing {message.topic} to " f"{handler.__class__.__name__}.handle"
                 )
                 await handler.handle(message)
             except Exception as e:
@@ -426,10 +472,10 @@ class PluginManager:
     def get_handlers_for_topic(self, topic: str) -> List[MQTTHandler]:
         """
         Get all handlers that match a topic.
-        
+
         Args:
             topic: The MQTT topic.
-        
+
         Returns:
             List of matching handlers.
         """

@@ -1,4 +1,7 @@
 {
+  "global": {
+    "bely_url": "https://bely.gov/bely"
+  },
   "handlers": {
     "AdvancedLoggingHandler": {
       "logging_dir": "/var/log/bely"
