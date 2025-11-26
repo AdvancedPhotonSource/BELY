@@ -6,6 +6,7 @@ pluggable handlers for MQTT topics.
 """
 
 import importlib
+import importlib.util
 import inspect
 import logging
 from abc import ABC
