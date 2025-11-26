@@ -79,41 +79,31 @@ class CoreEvent(BaseEvent):
     pass
 
 
-class LogEntryAddEvent(BaseEvent):
+class LogEntryEventBase(BaseEvent):
+    """Base class for log entry events with common fields."""
+    parent_log_document_info: LogDocumentInfo = Field(alias="parentLogDocumentInfo")
+    log_info: LogInfo = Field(alias="logInfo")
+    logbook_list: List[LogbookInfo] = Field(alias="logbookList")
+    text_diff: str = Field(alias="textDiff")
+
+
+class LogEntryAddEvent(LogEntryEventBase):
     """Event triggered when a log entry is added."""
-
-    parent_log_document_info: LogDocumentInfo = Field(alias="parentLogDocumentInfo")
-    log_info: LogInfo = Field(alias="logInfo")
-    logbook_list: List[LogbookInfo] = Field(alias="logbookList")
-    text_diff: str = Field(alias="textDiff")
+    pass
 
 
-class LogEntryUpdateEvent(BaseEvent):
+class LogEntryUpdateEvent(LogEntryEventBase):
     """Event triggered when a log entry is updated."""
-
-    parent_log_document_info: LogDocumentInfo = Field(alias="parentLogDocumentInfo")
-    log_info: LogInfo = Field(alias="logInfo")
-    logbook_list: List[LogbookInfo] = Field(alias="logbookList")
-    text_diff: str = Field(alias="textDiff")
+    pass
 
 
-class LogEntryReplyAddEvent(BaseEvent):
+class LogEntryReplyAddEvent(LogEntryEventBase):
     """Event triggered when a reply to a log entry is added."""
-
-    parent_log_document_info: LogDocumentInfo = Field(alias="parentLogDocumentInfo")
-    log_info: LogInfo = Field(alias="logInfo")
-    logbook_list: List[LogbookInfo] = Field(alias="logbookList")
-    text_diff: str = Field(alias="textDiff")
     parent_log_info: LogInfo = Field(alias="parentLogInfo")
 
 
-class LogEntryReplyUpdateEvent(BaseEvent):
+class LogEntryReplyUpdateEvent(LogEntryEventBase):
     """Event triggered when a reply to a log entry is updated."""
-
-    parent_log_document_info: LogDocumentInfo = Field(alias="parentLogDocumentInfo")
-    log_info: LogInfo = Field(alias="logInfo")
-    logbook_list: List[LogbookInfo] = Field(alias="logbookList")
-    text_diff: str = Field(alias="textDiff")
     parent_log_info: LogInfo = Field(alias="parentLogInfo")
 
 
