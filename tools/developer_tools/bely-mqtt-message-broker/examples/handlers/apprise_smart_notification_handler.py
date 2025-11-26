@@ -7,6 +7,7 @@ from a YAML file. It supports:
 1. Log Entry Updates - Notify when someone else updates a log entry
 2. Log Entry Replies - Notify when someone else replies to a log entry
 3. New Log Entries - Notify when someone else creates an entry in a document
+4. Log Reactions - Notify when someone reacts to a log entry
 
 Configuration is loaded from a YAML file with the following structure:
 
@@ -39,6 +40,7 @@ Configuration is loaded from a YAML file with the following structure:
           entry_updates: true
           entry_replies: true
           new_entries: true
+          reactions: true
 
       jane_smith:
         apprise_urls:
@@ -49,6 +51,7 @@ Configuration is loaded from a YAML file with the following structure:
           entry_updates: true
           entry_replies: false
           new_entries: true
+          reactions: true
 
       # User with custom mail server (overrides global)
       custom_user:
@@ -59,6 +62,7 @@ Configuration is loaded from a YAML file with the following structure:
           entry_updates: true
           entry_replies: true
           new_entries: true
+          reactions: false
 
 Example usage:
     handler = ApprisSmartNotificationHandler(
@@ -91,6 +95,9 @@ from bely_mqtt import (
     LogEntryReplyAddEvent,
     LogEntryReplyUpdateEvent,
     LogEntryEventBase,
+    LogReactionAddEvent,
+    LogReactionDeleteEvent,
+    LogReactionEventBase,
 )
 from bely_mqtt.config import GlobalConfig
 
@@ -103,6 +110,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
     - Log entry updates by other users
     - Log entry replies by other users
     - New log entries in documents by other users
+    - Reactions to log entries by other users
     """
 
     def __init__(
@@ -238,6 +246,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
                     "entry_updates": notifications.get("entry_updates", True),
                     "entry_replies": notifications.get("entry_replies", True),
                     "new_entries": notifications.get("new_entries", True),
+                    "reactions": notifications.get("reactions", True),
                 }
 
             except Exception as e:
@@ -362,6 +371,64 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         except Exception as e:
             self.logger.error(f"Error processing log entry reply update: {e}", exc_info=True)
 
+    async def handle_log_reaction_add(self, event: LogReactionAddEvent) -> None:
+        """
+        Handle log reaction add events.
+
+        Notify the original entry creator if someone else reacts to their entry.
+
+        Args:
+            event: The log reaction add event
+        """
+        try:
+            # Don't notify the reactor (person who added the reaction)
+            if event.event_triggered_by_username == event.parent_log_info.entered_by_username:
+                return
+
+            # Check if we should notify about reactions
+            creator_username = event.parent_log_info.entered_by_username
+            if not self._should_notify(creator_username, "reactions"):
+                return
+
+            # Build notification
+            title = f"Reaction to Your Log Entry in {event.parent_log_document_info.name}"
+            body = self._format_reaction_added_body(event)
+
+            # Send notification
+            await self._send_notification(creator_username, title, body)
+
+        except Exception as e:
+            self.logger.error(f"Error processing log reaction add: {e}", exc_info=True)
+
+    async def handle_log_reaction_delete(self, event: LogReactionDeleteEvent) -> None:
+        """
+        Handle log reaction delete events.
+
+        Notify the original entry creator if someone removes a reaction from their entry.
+
+        Args:
+            event: The log reaction delete event
+        """
+        try:
+            # Don't notify the reactor (person who removed the reaction)
+            if event.event_triggered_by_username == event.parent_log_info.entered_by_username:
+                return
+
+            # Check if we should notify about reactions
+            creator_username = event.parent_log_info.entered_by_username
+            if not self._should_notify(creator_username, "reactions"):
+                return
+
+            # Build notification
+            title = f"Reaction Removed from Your Log Entry in {event.parent_log_document_info.name}"
+            body = self._format_reaction_deleted_body(event)
+
+            # Send notification
+            await self._send_notification(creator_username, title, body)
+
+        except Exception as e:
+            self.logger.error(f"Error processing log reaction delete: {e}", exc_info=True)
+
     def _process_apprise_url(self, url: str, global_config: Dict[str, Any]) -> str:
         """
         Process Apprise URL to incorporate global settings.
@@ -431,7 +498,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
 
         Args:
             username: Username to check
-            notification_type: Type of notification (entry_updates, entry_replies, new_entries)
+            notification_type: Type of notification (entry_updates, entry_replies, new_entries, reactions)
 
         Returns:
             True if user should be notified, False otherwise
@@ -523,10 +590,20 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             body = format_method(self, event)
 
             # Generate permalink if bely_url is available
-            if self.bely_url and isinstance(event, LogEntryEventBase):
-                log_id = event.log_info.id
-                if log_id and event.parent_log_document_info.id:
-                    link = self._generate_log_entry_link(event.parent_log_document_info.id, log_id)
+            if self.bely_url:
+                # Handle both LogEntryEventBase and LogReaction events
+                if isinstance(event, LogEntryEventBase):
+                    log_id = event.log_info.id
+                    document_id = event.parent_log_document_info.id
+                elif isinstance(event, LogReactionEventBase):
+                    log_id = event.parent_log_info.id
+                    document_id = event.parent_log_document_info.id
+                else:
+                    log_id = None
+                    document_id = None
+
+                if log_id and document_id:
+                    link = self._generate_log_entry_link(document_id, log_id)
                     body += f"<br/><br/>View entry: {link}"
 
             return body
@@ -573,4 +650,28 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             f"Updated by: {event.event_triggered_by_username}<br/>"
             f"Time: {event.event_timestamp}<br/>"
             f"<br/>Reply markdown changes: {self._format_text_diff_pre(event.text_diff)}"
+        )
+
+    @_append_permalink
+    def _format_reaction_added_body(self, event: LogReactionAddEvent) -> str:
+        """Format notification body for added reaction."""
+        reaction_info = event.log_reaction.reaction
+        return (
+            f"New reaction to your entry in {event.parent_log_document_info.name}<br/>"
+            f"By: {event.event_triggered_by_username}<br/>"
+            f"Time: {event.event_timestamp}<br/>"
+            f"Reaction: {reaction_info.emoji} {reaction_info.name}<br/>"
+            f"Description: {event.description}"
+        )
+
+    @_append_permalink
+    def _format_reaction_deleted_body(self, event: LogReactionDeleteEvent) -> str:
+        """Format notification body for deleted reaction."""
+        reaction_info = event.log_reaction.reaction
+        return (
+            f"Reaction removed from your entry in {event.parent_log_document_info.name}<br/>"
+            f"By: {event.event_triggered_by_username}<br/>"
+            f"Time: {event.event_timestamp}<br/>"
+            f"Reaction: {reaction_info.emoji} {reaction_info.name}<br/>"
+            f"Description: {event.description}"
         )
