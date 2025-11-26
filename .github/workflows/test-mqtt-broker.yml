@@ -1,10 +1,6 @@
 name: Test BELY MQTT Message Broker
 
 on:
-  push:
-    paths:
-      - 'tools/developer_tools/bely-mqtt-message-broker/**'
-      - '.github/workflows/test-mqtt-broker.yml'
   pull_request:
     paths:
       - 'tools/developer_tools/bely-mqtt-message-broker/**'
