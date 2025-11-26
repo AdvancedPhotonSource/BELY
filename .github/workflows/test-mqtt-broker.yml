@@ -1,0 +1,67 @@
+name: Test BELY MQTT Message Broker
+
+on:
+  push:
+    paths:
+      - 'tools/developer_tools/bely-mqtt-message-broker/**'
+      - '.github/workflows/test-mqtt-broker.yml'
+  pull_request:
+    paths:
+      - 'tools/developer_tools/bely-mqtt-message-broker/**'
+      - '.github/workflows/test-mqtt-broker.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run MQTT Broker Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: tools/developer_tools/bely-mqtt-message-broker
+
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          make install-dev
+
+      - name: Run test_models.py
+        run: |
+          pytest tests/test_models.py -v
+
+      - name: Run test_plugin.py
+        run: |
+          pytest tests/test_plugin.py -v
+
+      - name: Run all tests via Makefile
+        run: |
+          make test
+
+      - name: Run tests with coverage
+        run: |
+          make test-cov
+
+      - name: Run code quality checks
+        run: |
+          make lint || true
+          make type-check || true
+
+      - name: Upload coverage reports
+        if: matrix.python-version == '3.11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: tools/developer_tools/bely-mqtt-message-broker/htmlcov/
