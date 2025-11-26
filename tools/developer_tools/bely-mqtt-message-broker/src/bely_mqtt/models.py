@@ -33,9 +33,7 @@ class LogDocumentInfo(BaseModel):
 
     name: str
     id: int
-    last_modified_on_date_time: Optional[datetime] = Field(
-        None, alias="lastModifiedOnDateTime"
-    )
+    last_modified_on_date_time: Optional[datetime] = Field(None, alias="lastModifiedOnDateTime")
     created_by_username: Optional[str] = Field(None, alias="createdByUsername")
     last_modified_by_username: Optional[str] = Field(None, alias="lastModifiedByUsername")
     entered_on_date_time: Optional[datetime] = Field(None, alias="enteredOnDateTime")
@@ -49,9 +47,7 @@ class LogInfo(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     id: int
-    last_modified_on_date_time: Optional[datetime] = Field(
-        None, alias="lastModifiedOnDateTime"
-    )
+    last_modified_on_date_time: Optional[datetime] = Field(None, alias="lastModifiedOnDateTime")
     last_modified_by_username: Optional[str] = Field(None, alias="lastModifiedByUsername")
     entered_by_username: Optional[str] = Field(None, alias="enteredByUsername")
     entered_on_date_time: Optional[datetime] = Field(None, alias="enteredOnDateTime")
@@ -59,7 +55,7 @@ class LogInfo(BaseModel):
 
 class BaseEvent(BaseModel):
     """Base class for all BELY MQTT events.
-    
+
     Note: entity_id can be either an integer (for most events) or a composite
     object like ReactionId (for log reaction events).
     """
@@ -81,6 +77,7 @@ class CoreEvent(BaseEvent):
 
 class LogEntryEventBase(BaseEvent):
     """Base class for log entry events with common fields."""
+
     parent_log_document_info: LogDocumentInfo = Field(alias="parentLogDocumentInfo")
     log_info: LogInfo = Field(alias="logInfo")
     logbook_list: List[LogbookInfo] = Field(alias="logbookList")
@@ -89,21 +86,25 @@ class LogEntryEventBase(BaseEvent):
 
 class LogEntryAddEvent(LogEntryEventBase):
     """Event triggered when a log entry is added."""
+
     pass
 
 
 class LogEntryUpdateEvent(LogEntryEventBase):
     """Event triggered when a log entry is updated."""
+
     pass
 
 
 class LogEntryReplyAddEvent(LogEntryEventBase):
     """Event triggered when a reply to a log entry is added."""
+
     parent_log_info: LogInfo = Field(alias="parentLogInfo")
 
 
 class LogEntryReplyUpdateEvent(LogEntryEventBase):
     """Event triggered when a reply to a log entry is updated."""
+
     parent_log_info: LogInfo = Field(alias="parentLogInfo")
 
 
@@ -139,20 +140,24 @@ class LogReactionInfo(BaseModel):
     username: str
 
 
-class LogReactionAddEvent(BaseEvent):
+class LogReactionEventBase(BaseEvent):
+    """Base class for log reaction events with common fields."""
+
+    parent_log_info: LogInfo = Field(alias="parentLogInfo")
+    parent_log_document_info: LogDocumentInfo = Field(alias="parentLogDocumentInfo")
+    log_reaction: LogReactionInfo = Field(alias="logReaction")
+
+
+class LogReactionAddEvent(LogReactionEventBase):
     """Event triggered when a reaction is added to a log entry."""
 
-    parent_log_info: LogInfo = Field(alias="parentLogInfo")
-    parent_log_document_info: LogDocumentInfo = Field(alias="parentLogDocumentInfo")
-    log_reaction: LogReactionInfo = Field(alias="logReaction")
+    pass
 
 
-class LogReactionDeleteEvent(BaseEvent):
+class LogReactionDeleteEvent(LogReactionEventBase):
     """Event triggered when a reaction is deleted from a log entry."""
 
-    parent_log_info: LogInfo = Field(alias="parentLogInfo")
-    parent_log_document_info: LogDocumentInfo = Field(alias="parentLogDocumentInfo")
-    log_reaction: LogReactionInfo = Field(alias="logReaction")
+    pass
 
 
 class MQTTMessage(BaseModel):
