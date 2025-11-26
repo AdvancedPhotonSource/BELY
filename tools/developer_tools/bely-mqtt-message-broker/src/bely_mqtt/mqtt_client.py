@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class BelyMQTTClient:
     """
     MQTT client for BELY events.
-    
+
     Connects to an MQTT broker and routes messages to registered handlers.
     """
 
@@ -33,7 +33,7 @@ class BelyMQTTClient:
     ):
         """
         Initialize the MQTT client.
-        
+
         Args:
             broker_host: MQTT broker hostname or IP.
             broker_port: MQTT broker port (default: 1883).
@@ -66,7 +66,7 @@ class BelyMQTTClient:
     def subscribe(self, topic: str) -> None:
         """
         Subscribe to an MQTT topic.
-        
+
         Args:
             topic: The topic pattern to subscribe to.
         """
@@ -85,9 +85,7 @@ class BelyMQTTClient:
     ) -> None:
         """Handle MQTT connection."""
         if reason_code == 0:
-            self.logger.info(
-                f"Connected to MQTT broker at {self.broker_host}:{self.broker_port}"
-            )
+            self.logger.info(f"Connected to MQTT broker at {self.broker_host}:{self.broker_port}")
             # Resubscribe to all topics
             for topic in self._subscribed_topics:
                 client.subscribe(topic)
@@ -159,9 +157,7 @@ class BelyMQTTClient:
         """Connect to the MQTT broker."""
         try:
             self.client.connect(self.broker_host, self.broker_port, keepalive=60)
-            self.logger.info(
-                f"Connecting to MQTT broker at {self.broker_host}:{self.broker_port}"
-            )
+            self.logger.info(f"Connecting to MQTT broker at {self.broker_host}:{self.broker_port}")
         except Exception as e:
             self.logger.error(f"Failed to connect to MQTT broker: {e}")
             raise

@@ -1,6 +1,5 @@
 """Tests for BELY event models."""
 
-import json
 from datetime import datetime
 
 import pytest
@@ -8,7 +7,6 @@ import pytest
 from bely_mqtt.models import (
     CoreEvent,
     LogEntryAddEvent,
-    LogEntryUpdateEvent,
     LogbookInfo,
 )
 

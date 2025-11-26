@@ -12,22 +12,22 @@ from typing import Optional
 class EventType(Enum):
     """
     Enumeration of all supported BELY event types.
-    
+
     Each event type corresponds to a specific MQTT topic pattern.
-    
+
     Generic Events:
         GENERIC_ADD - Generic add event (bely/add)
         GENERIC_UPDATE - Generic update event (bely/update)
         GENERIC_DELETE - Generic delete event (bely/delete)
-    
+
     Log Entry Events:
         LOG_ENTRY_ADD - Log entry added (bely/logEntry/Add)
         LOG_ENTRY_UPDATE - Log entry updated (bely/logEntry/Update)
-    
+
     Log Entry Reply Events:
         LOG_ENTRY_REPLY_ADD - Reply added (bely/logEntryReply/Add)
         LOG_ENTRY_REPLY_UPDATE - Reply updated (bely/logEntryReply/Update)
-    
+
     Log Reaction Events:
         LOG_REACTION_ADD - Reaction added (bely/logReaction/Add)
         LOG_REACTION_DELETE - Reaction deleted (bely/logReaction/Delete)
@@ -58,17 +58,17 @@ class EventType(Enum):
     def from_topic(cls, topic: str) -> Optional["EventType"]:
         """
         Get EventType from MQTT topic.
-        
+
         Args:
             topic: MQTT topic string (e.g., "bely/logEntry/Add")
-        
+
         Returns:
             EventType if topic matches, None otherwise.
-        
+
         Examples:
             >>> EventType.from_topic("bely/logEntry/Add")
             <EventType.LOG_ENTRY_ADD: 'bely/logEntry/Add'>
-            
+
             >>> EventType.from_topic("bely/unknown")
             None
         """
@@ -81,14 +81,14 @@ class EventType(Enum):
     def handler_method_name(self) -> str:
         """
         Get the handler method name for this event type.
-        
+
         Returns:
             Method name like "handle_log_entry_add"
-        
+
         Examples:
             >>> EventType.LOG_ENTRY_ADD.handler_method_name
             'handle_log_entry_add'
-            
+
             >>> EventType.GENERIC_UPDATE.handler_method_name
             'handle_generic_update'
         """
