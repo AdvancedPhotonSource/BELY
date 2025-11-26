@@ -90,6 +90,7 @@ from bely_mqtt import (
     LogEntryUpdateEvent,
     LogEntryReplyAddEvent,
     LogEntryReplyUpdateEvent,
+    LogEntryEventBase,
 )
 from bely_mqtt.config import GlobalConfig
 
@@ -479,38 +480,97 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         except Exception as e:
             self.logger.error(f"Error sending notification to {username}: {e}", exc_info=True)
 
+    def _generate_log_entry_link(self, document_id: int, log_id: int) -> str:
+        """
+        Generate a direct link to a log entry in BELY.
+
+        Args:
+            document_id: The document ID
+            log_id: The log entry ID
+
+        Returns:
+            URL string to the log entry
+        """
+        if not self.bely_url:
+            return ""
+
+        # Remove trailing slash if present
+        base_url = self.bely_url.rstrip("/")
+
+        return f"{base_url}/views/item/view?id={document_id}&logId={log_id}"
+
+    def _format_text_diff_pre(self, text_diff: str, max_height: str = "200px") -> str:
+        """
+        Format text diff in a styled pre box.
+
+        Args:
+            text_diff: The text difference to display
+            max_height: Maximum height of the pre box (default: "200px")
+
+        Returns:
+            HTML formatted pre box with the text diff
+        """
+        return (
+            f"<pre style='max-height: {max_height}; overflow-y: auto; "
+            f"background-color: #f5f5f5; padding: 10px; border: 1px solid #ddd;'>"
+            f"{text_diff}</pre>"
+        )
+
+    def _append_permalink(format_method):
+        """Decorator to append permalink to notification body if bely_url is defined."""
+
+        def wrapper(self, event):
+            body = format_method(self, event)
+
+            # Generate permalink if bely_url is available
+            if self.bely_url and isinstance(event, LogEntryEventBase):
+                log_id = event.log_info.id
+                if log_id and event.parent_log_document_info.id:
+                    link = self._generate_log_entry_link(event.parent_log_document_info.id, log_id)
+                    body += f"<br/><br/>View entry: {link}"
+
+            return body
+
+        return wrapper
+
+    @_append_permalink
     def _format_entry_added_body(self, event: LogEntryAddEvent) -> str:
         """Format notification body for new log entry."""
         return (
-            f"New entry added to {event.parent_log_document_info.name}\n"
-            f"By: {event.event_triggered_by_username}\n"
-            f"Time: {event.event_timestamp}\n"
-            f"Description: {event.description}"
+            f"New entry added to {event.parent_log_document_info.name}<br/>"
+            f"By: {event.event_triggered_by_username}<br/>"
+            f"Time: {event.event_timestamp}<br/>"
+            f"Description: {event.description}<br/>"
+            f"<br/>Entry markdown: {self._format_text_diff_pre(event.text_diff)}"
         )
 
+    @_append_permalink
     def _format_entry_updated_body(self, event: LogEntryUpdateEvent) -> str:
         """Format notification body for updated log entry."""
         return (
-            f"Entry updated in {event.parent_log_document_info.name}\n"
-            f"Updated by: {event.event_triggered_by_username}\n"
-            f"Time: {event.event_timestamp}\n"
-            f"Description: {event.description}"
+            f"Entry updated in {event.parent_log_document_info.name}<br/>"
+            f"Updated by: {event.event_triggered_by_username}<br/>"
+            f"Time: {event.event_timestamp}<br/>"
+            f"Description: {event.description}<br/>"
+            f"<br/>Entry markdown changes: {self._format_text_diff_pre(event.text_diff)}"
         )
 
+    @_append_permalink
     def _format_reply_added_body(self, event: LogEntryReplyAddEvent) -> str:
         """Format notification body for new reply."""
         return (
-            f"New reply to your entry in {event.parent_log_document_info.name}\n"
-            f"By: {event.event_triggered_by_username}\n"
-            f"Time: {event.event_timestamp}\n"
-            f"Reply: {event.text_diff[:100]}..."
+            f"New reply to your entry in {event.parent_log_document_info.name}<br/>"
+            f"By: {event.event_triggered_by_username}<br/>"
+            f"Time: {event.event_timestamp}<br/>"
+            f"<br/>Reply markdown: {self._format_text_diff_pre(event.text_diff)}"
         )
 
+    @_append_permalink
     def _format_reply_updated_body(self, event: LogEntryReplyUpdateEvent) -> str:
         """Format notification body for updated reply."""
         return (
-            f"Reply updated on your entry in {event.parent_log_document_info.name}\n"
-            f"Updated by: {event.event_triggered_by_username}\n"
-            f"Time: {event.event_timestamp}\n"
-            f"Reply: {event.text_diff[:100]}..."
+            f"Reply updated on your entry in {event.parent_log_document_info.name}<br/>"
+            f"Updated by: {event.event_triggered_by_username}<br/>"
+            f"Time: {event.event_timestamp}<br/>"
+            f"<br/>Reply markdown changes: {self._format_text_diff_pre(event.text_diff)}"
         )
