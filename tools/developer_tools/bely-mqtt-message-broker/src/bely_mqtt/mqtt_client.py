@@ -52,10 +52,10 @@ class BelyMQTTClient:
         self.plugin_manager = plugin_manager or PluginManager()
         self.logger = logging.getLogger(__name__)
 
-        self.client = mqtt.Client(client_id)
+        self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id)  # type: ignore[attr-defined, arg-type]
         self.client.on_connect = self._on_connect
         self.client.on_message = self._on_message
-        self.client.on_disconnect = self._on_disconnect
+        self.client.on_disconnect = self._on_disconnect  # type: ignore[assignment]
         self.client.on_subscribe = self._on_subscribe
 
         if username and password:
@@ -132,6 +132,7 @@ class BelyMQTTClient:
         self,
         client: mqtt.Client,
         userdata: Any,
+        disconnect_flags: dict[str, int],
         reason_code: Optional[ReasonCodes],
         properties: Optional[Properties],
     ) -> None:
