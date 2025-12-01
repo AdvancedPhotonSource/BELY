@@ -5,9 +5,11 @@ MQTT client for connecting to BELY message broker.
 import asyncio
 import json
 import logging
-from typing import Optional
+from typing import Any, Optional, NamedTuple
 
 import paho.mqtt.client as mqtt
+from paho.mqtt.client import ReasonCodes
+from paho.mqtt.client import Properties
 
 from bely_mqtt.models import MQTTMessage
 from bely_mqtt.plugin import PluginManager
@@ -50,7 +52,7 @@ class BelyMQTTClient:
         self.plugin_manager = plugin_manager or PluginManager()
         self.logger = logging.getLogger(__name__)
 
-        self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=client_id)
+        self.client = mqtt.Client(client_id)
         self.client.on_connect = self._on_connect
         self.client.on_message = self._on_message
         self.client.on_disconnect = self._on_disconnect
@@ -75,13 +77,15 @@ class BelyMQTTClient:
             self.client.subscribe(topic)
             self.logger.info(f"Subscribed to topic: {topic}")
 
+    # CallbackOnConnect_v2 = Callable[["Client", Any, ConnectFlags, ReasonCode, Union[Properties, None]], None]
+    # Callable[[Client, Any, Optional[ReasonCodes], Optional[Properties]], object], None]")
     def _on_connect(
         self,
         client: mqtt.Client,
-        userdata: object,
-        connect_flags: mqtt.ConnectFlags,
-        reason_code: mqtt.ReasonCode,
-        properties: mqtt.Properties,
+        userdata: Any,
+        connect_flags: dict[str, int],
+        reason_code: ReasonCodes,
+        properties: Optional[Properties],
     ) -> None:
         """Handle MQTT connection."""
         if reason_code == 0:
@@ -127,10 +131,9 @@ class BelyMQTTClient:
     def _on_disconnect(
         self,
         client: mqtt.Client,
-        userdata: object,
-        disconnect_flags: mqtt.DisconnectFlags,
-        reason_code: mqtt.ReasonCode,
-        properties: mqtt.Properties,
+        userdata: Any,
+        reason_code: Optional[ReasonCodes],
+        properties: Optional[Properties],
     ) -> None:
         """Handle MQTT disconnection."""
         if reason_code == 0:
@@ -143,7 +146,7 @@ class BelyMQTTClient:
         client: mqtt.Client,
         userdata: object,
         mid: int,
-        reason_code_list: list[mqtt.ReasonCode],
+        reason_code_list: list[mqtt.ReasonCodes],
         properties: mqtt.Properties,
     ) -> None:
         """Handle subscription confirmation."""
