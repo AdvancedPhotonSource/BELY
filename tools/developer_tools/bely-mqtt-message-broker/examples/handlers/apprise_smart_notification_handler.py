@@ -586,8 +586,8 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             f"{text_diff}</pre>"
         )
 
-    def _append_permalink(format_method):
-        """Decorator to append permalink to notification body if bely_url is defined."""
+    def _append_permalink_and_trigger(format_method):
+        """Decorator to append permalink and trigger description to notification body."""
 
         def wrapper(self, event):
             body = format_method(self, event)
@@ -609,11 +609,64 @@ class AppriseSmartNotificationHandler(MQTTHandler):
                     link = self._generate_log_entry_link(document_id, log_id)
                     body += f"<br/><br/>View entry: {link}"
 
+            # Add trigger description
+            trigger_description = self._get_trigger_description(event)
+            body += f"<br/><br/><hr/><small><i>{trigger_description}</i></small>"
+
             return body
 
         return wrapper
 
-    @_append_permalink
+    def _get_trigger_description(self, event) -> str:
+        """
+        Get a description of why this notification was triggered.
+
+        Args:
+            event: The event that triggered the notification
+
+        Returns:
+            A human-readable description of the trigger
+        """
+        if isinstance(event, LogEntryAddEvent):
+            return (
+                f"This notification was sent because {event.event_triggered_by_username} "
+                f"added a new log entry to the document '{event.parent_log_document_info.name}' "
+                f"which you own. You have 'new_entries' notifications enabled."
+            )
+        elif isinstance(event, LogEntryUpdateEvent):
+            return (
+                f"This notification was sent because {event.event_triggered_by_username} "
+                f"updated a log entry that you originally created in the document "
+                f"'{event.parent_log_document_info.name}'. You have 'entry_updates' notifications enabled."
+            )
+        elif isinstance(event, LogEntryReplyAddEvent):
+            return (
+                f"This notification was sent because {event.event_triggered_by_username} "
+                f"replied to your log entry in the document '{event.parent_log_document_info.name}'. "
+                f"You have 'entry_replies' notifications enabled."
+            )
+        elif isinstance(event, LogEntryReplyUpdateEvent):
+            return (
+                f"This notification was sent because {event.event_triggered_by_username} "
+                f"updated a reply to your log entry in the document "
+                f"'{event.parent_log_document_info.name}'. You have 'entry_replies' notifications enabled."
+            )
+        elif isinstance(event, LogReactionAddEvent):
+            return (
+                f"This notification was sent because {event.event_triggered_by_username} "
+                f"added a reaction to your log entry in the document "
+                f"'{event.parent_log_document_info.name}'. You have 'reactions' notifications enabled."
+            )
+        elif isinstance(event, LogReactionDeleteEvent):
+            return (
+                f"This notification was sent because {event.event_triggered_by_username} "
+                f"removed a reaction from your log entry in the document "
+                f"'{event.parent_log_document_info.name}'. You have 'reactions' notifications enabled."
+            )
+        else:
+            return "This notification was sent due to activity on your BELY content."
+
+    @_append_permalink_and_trigger
     def _format_entry_added_body(self, event: LogEntryAddEvent) -> str:
         """Format notification body for new log entry."""
         return (
@@ -624,7 +677,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             f"<br/>Entry markdown: {self._format_text_diff_pre(event.text_diff)}"
         )
 
-    @_append_permalink
+    @_append_permalink_and_trigger
     def _format_entry_updated_body(self, event: LogEntryUpdateEvent) -> str:
         """Format notification body for updated log entry."""
         return (
@@ -635,7 +688,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             f"<br/>Entry markdown changes: {self._format_text_diff_pre(event.text_diff)}"
         )
 
-    @_append_permalink
+    @_append_permalink_and_trigger
     def _format_reply_added_body(self, event: LogEntryReplyAddEvent) -> str:
         """Format notification body for new reply."""
         return (
@@ -645,7 +698,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             f"<br/>Reply markdown: {self._format_text_diff_pre(event.text_diff)}"
         )
 
-    @_append_permalink
+    @_append_permalink_and_trigger
     def _format_reply_updated_body(self, event: LogEntryReplyUpdateEvent) -> str:
         """Format notification body for updated reply."""
         return (
@@ -668,12 +721,12 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             f"Description: {event.description}"
         )
 
-    @_append_permalink
+    @_append_permalink_and_trigger
     def _format_reaction_added_body(self, event: LogReactionAddEvent) -> str:
         """Format notification body for added reaction."""
         return self._format_reaction_body(event, is_removed=False)
 
-    @_append_permalink
+    @_append_permalink_and_trigger
     def _format_reaction_deleted_body(self, event: LogReactionDeleteEvent) -> str:
         """Format notification body for deleted reaction."""
         return self._format_reaction_body(event, is_removed=True)
