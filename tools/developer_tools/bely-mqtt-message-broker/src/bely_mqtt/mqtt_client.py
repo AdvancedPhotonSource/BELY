@@ -5,7 +5,7 @@ MQTT client for connecting to BELY message broker.
 import asyncio
 import json
 import logging
-from typing import Any, Optional, NamedTuple
+from typing import Any, Optional
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.client import ReasonCodes

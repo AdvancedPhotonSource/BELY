@@ -341,7 +341,7 @@ class PluginManager:
         # Instantiate handler with configuration
         try:
             # First try with all arguments
-            handler = handler_class(**constructor_args) # type: ignore[arg-type]
+            handler = handler_class(**constructor_args)  # type: ignore[arg-type]
             if global_config:
                 self.logger.debug(f"Instantiated {handler_name} with global configuration")
             if handler_config:
@@ -364,7 +364,7 @@ class PluginManager:
             filtered_args = {k: v for k, v in constructor_args.items() if k in accepted_params}
 
             try:
-                handler = handler_class(**filtered_args) # type: ignore[arg-type]
+                handler = handler_class(**filtered_args)  # type: ignore[arg-type]
                 self.logger.debug(
                     f"Instantiated {handler_name} with filtered parameters: {filtered_args.keys()}"
                 )
