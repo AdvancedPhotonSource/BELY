@@ -33,6 +33,10 @@ users:
       entry_replies: true
       # Notify when someone else creates an entry in a document
       new_entries: true
+      # Notify when someone replies to any entry in your document
+      document_replies: true
+      # Notify when someone reacts to your log entry
+      reactions: true
 
   # Example user with Slack notifications only
   jane_smith:

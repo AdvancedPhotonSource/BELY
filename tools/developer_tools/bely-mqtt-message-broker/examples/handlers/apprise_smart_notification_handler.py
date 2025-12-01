@@ -8,6 +8,7 @@ from a YAML file. It supports:
 2. Log Entry Replies - Notify when someone else replies to a log entry
 3. New Log Entries - Notify when someone else creates an entry in a document
 4. Log Reactions - Notify when someone reacts to a log entry
+5. Document Replies - Notify document owners when someone replies to any entry in their document
 
 Configuration is loaded from a YAML file with the following structure:
 
@@ -41,6 +42,7 @@ Configuration is loaded from a YAML file with the following structure:
           entry_replies: true
           new_entries: true
           reactions: true
+          document_replies: true  # Notify when anyone replies in owned documents
 
       jane_smith:
         apprise_urls:
@@ -52,6 +54,7 @@ Configuration is loaded from a YAML file with the following structure:
           entry_replies: false
           new_entries: true
           reactions: true
+          document_replies: true
 
       # User with custom mail server (overrides global)
       custom_user:
@@ -63,6 +66,7 @@ Configuration is loaded from a YAML file with the following structure:
           entry_replies: true
           new_entries: true
           reactions: false
+          document_replies: false  # Don't notify about replies in owned documents
 
 Example usage:
     handler = ApprisSmartNotificationHandler(
@@ -247,6 +251,9 @@ class AppriseSmartNotificationHandler(MQTTHandler):
                     "entry_replies": notifications.get("entry_replies", True),
                     "new_entries": notifications.get("new_entries", True),
                     "reactions": notifications.get("reactions", True),
+                    "document_replies": notifications.get(
+                        "document_replies", True
+                    ),  # NEW: replies in owned documents
                 }
 
             except Exception as e:
@@ -317,27 +324,38 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         """
         Handle log entry reply events.
 
-        Notify the original entry creator if someone else replies.
+        Notify:
+        1. The original entry creator if someone else replies
+        2. The document owner if someone replies to any entry in their document
 
         Args:
             event: The log entry reply add event
         """
         try:
-            # Don't notify the replier
-            if event.event_triggered_by_username == event.parent_log_info.entered_by_username:
-                return
+            notifications_sent = []
 
-            # Check if we should notify about replies
+            # 1. Notify the original entry creator (existing logic)
             creator_username = event.parent_log_info.entered_by_username
-            if not self._should_notify(creator_username, "entry_replies"):
-                return
+            if event.event_triggered_by_username != creator_username and self._should_notify(
+                creator_username, "entry_replies"
+            ):
 
-            # Build notification
-            title = f"Reply to Your Log Entry in {event.parent_log_document_info.name}"
-            body = self._format_reply_added_body(event)
+                title = f"Reply to Your Log Entry in {event.parent_log_document_info.name}"
+                body = self._format_reply_added_body(event)
+                await self._send_notification(creator_username, title, body)
+                notifications_sent.append(creator_username)
 
-            # Send notification
-            await self._send_notification(creator_username, title, body)
+            # 2. Notify the document owner about new replies in their document
+            owner_username = event.parent_log_document_info.owner_username
+            if (
+                event.event_triggered_by_username != owner_username
+                and owner_username not in notifications_sent  # Avoid duplicate notifications
+                and self._should_notify(owner_username, "document_replies")
+            ):
+
+                title = f"New Reply in Your Document: {event.parent_log_document_info.name}"
+                body = self._format_document_reply_body(event)
+                await self._send_notification(owner_username, title, body)
 
         except Exception as e:
             self.logger.error(f"Error processing log entry reply add: {e}", exc_info=True)
@@ -589,7 +607,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
     def _append_permalink_and_trigger(format_method):
         """Decorator to append permalink and trigger description to notification body."""
 
-        def wrapper(self, event):
+        def wrapper(self, event, notification_context=None):
             body = format_method(self, event)
 
             # Generate permalink if bely_url is available
@@ -610,19 +628,20 @@ class AppriseSmartNotificationHandler(MQTTHandler):
                     body += f"<br/><br/>View entry: {link}"
 
             # Add trigger description
-            trigger_description = self._get_trigger_description(event)
+            trigger_description = self._get_trigger_description(event, notification_context)
             body += f"<br/><br/><hr/><small><i>{trigger_description}</i></small>"
 
             return body
 
         return wrapper
 
-    def _get_trigger_description(self, event) -> str:
+    def _get_trigger_description(self, event, notification_context=None) -> str:
         """
         Get a description of why this notification was triggered.
 
         Args:
             event: The event that triggered the notification
+            notification_context: Optional context about the notification type
 
         Returns:
             A human-readable description of the trigger
@@ -640,11 +659,19 @@ class AppriseSmartNotificationHandler(MQTTHandler):
                 f"'{event.parent_log_document_info.name}'. You have 'entry_updates' notifications enabled."
             )
         elif isinstance(event, LogEntryReplyAddEvent):
-            return (
-                f"This notification was sent because {event.event_triggered_by_username} "
-                f"replied to your log entry in the document '{event.parent_log_document_info.name}'. "
-                f"You have 'entry_replies' notifications enabled."
-            )
+            # Check the notification context to determine the type
+            if notification_context == "document_owner":
+                return (
+                    f"This notification was sent because {event.event_triggered_by_username} "
+                    f"added a reply to an entry in your document '{event.parent_log_document_info.name}'. "
+                    f"You have 'document_replies' notifications enabled."
+                )
+            else:
+                return (
+                    f"This notification was sent because {event.event_triggered_by_username} "
+                    f"replied to your log entry in the document '{event.parent_log_document_info.name}'. "
+                    f"You have 'entry_replies' notifications enabled."
+                )
         elif isinstance(event, LogEntryReplyUpdateEvent):
             return (
                 f"This notification was sent because {event.event_triggered_by_username} "
@@ -707,6 +734,29 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             f"Time: {event.event_timestamp}<br/>"
             f"<br/>Reply markdown changes: {self._format_text_diff_pre(event.text_diff)}"
         )
+
+    def _format_document_reply_body(self, event: LogEntryReplyAddEvent) -> str:
+        """Format notification body for document owner about new reply."""
+        body = (
+            f"New reply added in your document {event.parent_log_document_info.name}<br/>"
+            f"Reply by: {event.event_triggered_by_username}<br/>"
+            f"To entry by: {event.parent_log_info.entered_by_username}<br/>"
+            f"Time: {event.event_timestamp}<br/>"
+            f"<br/>Reply markdown: {self._format_text_diff_pre(event.text_diff)}"
+        )
+
+        # Manually add permalink and trigger with context
+        if self.bely_url:
+            link = self._generate_log_entry_link(
+                event.parent_log_document_info.id, event.parent_log_info.id
+            )
+            body += f"<br/><br/>View entry: {link}"
+
+        # Add trigger description with document owner context
+        trigger_description = self._get_trigger_description(event, "document_owner")
+        body += f"<br/><br/><hr/><small><i>{trigger_description}</i></small>"
+
+        return body
 
     def _format_reaction_body(self, event: LogReactionEventBase, is_removed: bool) -> str:
         """Format notification body for reaction events."""
