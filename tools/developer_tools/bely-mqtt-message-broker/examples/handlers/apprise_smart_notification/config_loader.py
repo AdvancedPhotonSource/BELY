@@ -2,7 +2,7 @@
 Configuration loader for Apprise Smart Notification Handler.
 """
 
-import logging
+from logging import Logger
 from pathlib import Path
 from typing import Any, Dict
 
@@ -17,18 +17,18 @@ except ImportError:
 class ConfigLoader:
     """Handles loading and processing of YAML configuration files."""
 
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: Logger):
         """
         Initialize the config loader.
 
         Args:
             logger: Logger instance for output
         """
+        self.logger = logger
+
         if not YAML_AVAILABLE:
             self.logger.warning("PyYAML not installed. Install with: pip install pyyaml")
             raise ImportError("PyYAML is required for this handler")
-
-        self.logger = logger
 
     def load_config(self, config_path: str) -> Dict[str, Any]:
         """

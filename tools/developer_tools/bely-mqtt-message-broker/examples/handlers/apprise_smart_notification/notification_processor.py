@@ -2,7 +2,7 @@
 Notification processor for Apprise Smart Notification Handler.
 """
 
-import logging
+from logging import Logger
 from typing import Any, Dict, List, Optional
 
 try:
@@ -16,7 +16,7 @@ except ImportError:
 class NotificationProcessor:
     """Handles processing and sending of notifications."""
 
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: Logger):
         """
         Initialize the notification processor.
 
@@ -24,11 +24,12 @@ class NotificationProcessor:
             logger: Logger instance for output
         """
 
+        self.logger = logger
+
         if not APPRISE_AVAILABLE:
             self.logger.warning("Apprise not installed. Install with: pip install apprise")
             raise ImportError("Apprise is required for this handler")
 
-        self.logger = logger
         self.user_apprise_instances: Dict[str, apprise.Apprise] = {}
         self.user_notification_settings: Dict[str, Dict[str, bool]] = {}
 
