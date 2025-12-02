@@ -80,7 +80,7 @@ Example usage:
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 try:
     import apprise
@@ -272,25 +272,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             event: The log entry add event
         """
         try:
-            # Don't notify the creator
-            if (
-                event.event_triggered_by_username
-                == event.parent_log_document_info.created_by_username
-            ):
-                return
-
-            # Check if we should notify about new entries
-            owner_username = event.parent_log_document_info.owner_username
-            if not self._should_notify(owner_username, "new_entries"):
-                return
-
-            # Build notification
-            title = f"New Log Entry in {event.parent_log_document_info.name}"
-            body = self._format_entry_added_body(event)
-
-            # Send notification
-            await self._send_notification(owner_username, title, body)
-
+            await self._handle_add_event(event, is_reply=False)
         except Exception as e:
             self.logger.error(f"Error processing log entry add: {e}", exc_info=True)
 
@@ -306,35 +288,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             event: The log entry update event
         """
         try:
-            notifications_sent = []
-
-            # 1. Check if we should notify the original entry creator (own_entry_edits)
-            creator_username = event.log_info.entered_by_username
-            if event.event_triggered_by_username != creator_username and self._should_notify(
-                creator_username, "own_entry_edits"
-            ):
-                # Build notification for the entry creator
-                title = f"Your Log Entry Was Edited: {event.parent_log_document_info.name}"
-                body = self._format_own_entry_edited_body(event)
-
-                # Send notification
-                await self._send_notification(creator_username, title, body)
-                notifications_sent.append(creator_username)
-
-            # 2. Check if document owners should be notified about a change in log entry.
-            owner_username = event.parent_log_document_info.owner_username
-            if (
-                event.event_triggered_by_username != owner_username
-                and owner_username not in notifications_sent  # Avoid duplicate notifications
-                and self._should_notify(owner_username, "entry_updates")
-            ):
-                # Build notification for document owner
-                title = f"Log Entry Updated: {event.parent_log_document_info.name}"
-                body = self._format_entry_updated_body(event)
-
-                # Send notification
-                await self._send_notification(owner_username, title, body)
-
+            await self._handle_update_event(event, is_reply=False)
         except Exception as e:
             self.logger.error(f"Error processing log entry update: {e}", exc_info=True)
 
@@ -350,31 +304,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             event: The log entry reply add event
         """
         try:
-            notifications_sent = []
-
-            # 1. Notify the original entry creator (existing logic)
-            creator_username = event.parent_log_info.entered_by_username
-            if event.event_triggered_by_username != creator_username and self._should_notify(
-                creator_username, "entry_replies"
-            ):
-
-                title = f"Reply to Your Log Entry in {event.parent_log_document_info.name}"
-                body = self._format_reply_added_body(event)
-                await self._send_notification(creator_username, title, body)
-                notifications_sent.append(creator_username)
-
-            # 2. Notify the document owner about new replies in their document
-            owner_username = event.parent_log_document_info.owner_username
-            if (
-                event.event_triggered_by_username != owner_username
-                and owner_username not in notifications_sent  # Avoid duplicate notifications
-                and self._should_notify(owner_username, "document_replies")
-            ):
-
-                title = f"New Reply in Your Document: {event.parent_log_document_info.name}"
-                body = self._format_document_reply_body(event)
-                await self._send_notification(owner_username, title, body)
-
+            await self._handle_add_event(event, is_reply=True)
         except Exception as e:
             self.logger.error(f"Error processing log entry reply add: {e}", exc_info=True)
 
@@ -390,38 +320,170 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             event: The log entry reply update event
         """
         try:
-            notifications_sent = []
-
-            # 1. Check if we should notify the original entry creator (own_entry_edits)
-            # This uses own_entry_edits since it's about modifications to content related to the user's entry
-            creator_username = event.parent_log_info.entered_by_username
-            if event.event_triggered_by_username != creator_username and self._should_notify(
-                creator_username, "own_entry_edits"
-            ):
-                # Build notification for the entry creator
-                title = f"Reply Updated on Your Log Entry in {event.parent_log_document_info.name}"
-                body = self._format_own_reply_updated_body(event)
-
-                # Send notification
-                await self._send_notification(creator_username, title, body)
-                notifications_sent.append(creator_username)
-
-            # 2. Check if Document owners should be notified.
-            owner_username = event.parent_log_document_info.owner_username
-            if (
-                event.event_triggered_by_username != owner_username
-                and owner_username not in notifications_sent  # Avoid duplicate notifications
-                and self._should_notify(owner_username, "entry_replies")
-            ):
-                # Build notification for document owner
-                title = f"Reply Updated in {event.parent_log_document_info.name}"
-                body = self._format_reply_updated_body(event)
-
-                # Send notification
-                await self._send_notification(owner_username, title, body)
-
+            await self._handle_update_event(event, is_reply=True)
         except Exception as e:
             self.logger.error(f"Error processing log entry reply update: {e}", exc_info=True)
+
+    async def _handle_add_event(
+        self, event: Union[LogEntryAddEvent, LogEntryReplyAddEvent], is_reply: bool = False
+    ) -> None:
+        """
+        Unified handler for add events (entry or reply adds).
+
+        Args:
+            event: The add event
+            is_reply: Whether this is a reply add
+        """
+        notification_configs = []
+
+        if is_reply:
+            # Cast for type checking
+            reply_event = event  # type: LogEntryReplyAddEvent
+
+            # Notify the original entry creator
+            creator_username = reply_event.parent_log_info.entered_by_username
+            notification_configs.append(
+                {
+                    "username": creator_username,
+                    "notification_type": "entry_replies",
+                    "title": f"Reply to Your Log Entry in {reply_event.parent_log_document_info.name}",
+                    "body": self._format_reply_added_body(reply_event),
+                    "context": None,
+                }
+            )
+
+            # Notify the document owner
+            owner_username = reply_event.parent_log_document_info.owner_username
+            notification_configs.append(
+                {
+                    "username": owner_username,
+                    "notification_type": "document_replies",
+                    "title": f"New Reply in Your Document: {reply_event.parent_log_document_info.name}",
+                    "body": self._format_document_reply_body(reply_event),
+                    "context": "document_owner",
+                }
+            )
+        else:
+            # Cast for type checking
+            entry_event = event  # type: LogEntryAddEvent
+
+            # Don't notify if the creator is also the document creator
+            if (
+                entry_event.event_triggered_by_username
+                == entry_event.parent_log_document_info.created_by_username
+            ):
+                return
+
+            # Notify document owner about new entry
+            owner_username = entry_event.parent_log_document_info.owner_username
+            notification_configs.append(
+                {
+                    "username": owner_username,
+                    "notification_type": "new_entries",
+                    "title": f"New Log Entry in {entry_event.parent_log_document_info.name}",
+                    "body": self._format_entry_added_body(entry_event),
+                    "context": None,
+                }
+            )
+
+        await self._process_notifications(event, notification_configs)
+
+    async def _handle_update_event(
+        self, event: Union[LogEntryUpdateEvent, LogEntryReplyUpdateEvent], is_reply: bool = False
+    ) -> None:
+        """
+        Unified handler for update events (entry or reply updates).
+
+        Args:
+            event: The update event
+            is_reply: Whether this is a reply update
+        """
+        notification_configs = []
+
+        if is_reply:
+            # Cast for type checking
+            reply_event = event  # type: LogEntryReplyUpdateEvent
+
+            creator_username = reply_event.parent_log_info.entered_by_username
+            own_edit_title = (
+                f"Reply Updated on Your Log Entry in {reply_event.parent_log_document_info.name}"
+            )
+            own_edit_body = self._format_own_reply_updated_body(reply_event)
+            owner_title = f"Reply Updated in {reply_event.parent_log_document_info.name}"
+            owner_body = self._format_reply_updated_body(reply_event)
+            owner_notification_type = "entry_replies"
+        else:
+            # Cast for type checking
+            entry_event = event  # type: LogEntryUpdateEvent
+
+            creator_username = entry_event.log_info.entered_by_username
+            own_edit_title = (
+                f"Your Log Entry Was Edited: {entry_event.parent_log_document_info.name}"
+            )
+            own_edit_body = self._format_own_entry_edited_body(entry_event)
+            owner_title = f"Log Entry Updated: {entry_event.parent_log_document_info.name}"
+            owner_body = self._format_entry_updated_body(entry_event)
+            owner_notification_type = "entry_updates"
+
+        # Config for notifying the original creator
+        notification_configs.append(
+            {
+                "username": creator_username,
+                "notification_type": "own_entry_edits",
+                "title": own_edit_title,
+                "body": own_edit_body,
+                "context": "own_entry_edit" if not is_reply else "own_reply_update",
+            }
+        )
+
+        # Config for notifying the document owner
+        owner_username = event.parent_log_document_info.owner_username
+        notification_configs.append(
+            {
+                "username": owner_username,
+                "notification_type": owner_notification_type,
+                "title": owner_title,
+                "body": owner_body,
+                "context": None,
+            }
+        )
+
+        await self._process_notifications(event, notification_configs)
+
+    async def _process_notifications(
+        self, event: Any, notification_configs: List[Dict[str, Any]]
+    ) -> None:
+        """
+        Process and send notifications based on configuration.
+
+        Args:
+            event: The event to process
+            notification_configs: List of dicts with:
+                - username: User to notify
+                - notification_type: Type of notification setting to check
+                - title: Notification title
+                - body: Notification body
+                - context: Optional context for trigger description
+        """
+        notifications_sent = []
+
+        for config in notification_configs:
+            username = config["username"]
+            notification_type = config["notification_type"]
+
+            # Skip if already notified or shouldn't notify
+            if username in notifications_sent:
+                continue
+            if not self._should_notify(username, notification_type):
+                continue
+            if event.event_triggered_by_username == username:
+                continue
+
+            title = config["title"]
+            body = config["body"]
+
+            await self._send_notification(username, title, body)
+            notifications_sent.append(username)
 
     async def _handle_log_reaction_event(self, event: LogReactionEventBase) -> None:
         """
