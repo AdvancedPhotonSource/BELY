@@ -15,6 +15,7 @@ help:
 	@echo "  make lint             Run linting checks"
 	@echo "  make format           Format code with black"
 	@echo "  make type-check       Run type checking with mypy"
+	@echo "  make type-check-handlers  Type check example handlers"
 	@echo "  make quality          Run all quality checks"
 	@echo ""
 	@echo "Utilities:"
@@ -35,15 +36,22 @@ test-cov:
 	pytest --cov=src/bely_mqtt --cov-report=html --cov-report=term-missing
 
 lint:
-	ruff check src/ tests/
-	black --check src/ tests/
+	ruff check src/ tests/ examples/handlers/apprise_smart_notification/
+	black --check src/ tests/ examples/handlers/apprise_smart_notification/
 
 format:
-	black src/ tests/
-	ruff check --fix src/ tests/
+	black src/ tests/ examples/handlers/apprise_smart_notification/
+	ruff check --fix src/ tests/ examples/handlers/apprise_smart_notification/
 
 type-check:
 	mypy src/bely_mqtt
+	@echo "Type checking apprise_smart_notification handler..."
+	mypy examples/handlers/apprise_smart_notification --ignore-missing-imports
+
+type-check-handlers:
+	@echo "Type checking all example handlers..."
+	mypy examples/handlers/apprise_smart_notification --ignore-missing-imports
+	# Add other handlers here as they are converted to packages
 
 quality: lint type-check test
 
