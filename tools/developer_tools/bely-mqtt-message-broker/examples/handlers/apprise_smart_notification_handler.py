@@ -9,6 +9,7 @@ from a YAML file. It supports:
 3. New Log Entries - Notify when someone else creates an entry in a document
 4. Log Reactions - Notify when someone reacts to a log entry
 5. Document Replies - Notify document owners when someone replies to any entry in their document
+6. Own Entry Edits - Notify when someone else edits YOUR log entry (different from entry_updates)
 
 Configuration is loaded from a YAML file with the following structure:
 
@@ -38,7 +39,8 @@ Configuration is loaded from a YAML file with the following structure:
           # Other notification services
           - "discord://webhook-id/webhook-token"
         notifications:
-          entry_updates: true
+          entry_updates: true       # Notify when any log entry is updated (typically for document owners)
+          own_entry_edits: true     # Notify when YOUR log entries are edited by others
           entry_replies: true
           new_entries: true
           reactions: true
@@ -51,6 +53,7 @@ Configuration is loaded from a YAML file with the following structure:
           - "slack://token-a/token-b/token-c"
         notifications:
           entry_updates: true
+          own_entry_edits: false   # Don't notify about edits to own entries
           entry_replies: false
           new_entries: true
           reactions: true
@@ -63,6 +66,7 @@ Configuration is loaded from a YAML file with the following structure:
           - "mailto://custom_user:password@custom.server.com:465?to=user@example.com"
         notifications:
           entry_updates: true
+          own_entry_edits: true
           entry_replies: true
           new_entries: true
           reactions: false
@@ -248,12 +252,11 @@ class AppriseSmartNotificationHandler(MQTTHandler):
                 notifications = user_config.get("notifications", {})
                 self.user_notification_settings[username] = {
                     "entry_updates": notifications.get("entry_updates", True),
+                    "own_entry_edits": notifications.get("own_entry_edits", True),
                     "entry_replies": notifications.get("entry_replies", True),
                     "new_entries": notifications.get("new_entries", True),
                     "reactions": notifications.get("reactions", True),
-                    "document_replies": notifications.get(
-                        "document_replies", True
-                    ),  # NEW: replies in owned documents
+                    "document_replies": notifications.get("document_replies", True),
                 }
 
             except Exception as e:
@@ -295,27 +298,42 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         """
         Handle log entry update events.
 
-        Notify the original creator if entry is updated by someone else.
+        Notify:
+        1. The original creator if their entry is updated by someone else (own_entry_edits)
+        2. Document owners about any updates
 
         Args:
             event: The log entry update event
         """
         try:
-            # Don't notify the updater
-            if event.event_triggered_by_username == event.log_info.entered_by_username:
-                return
+            notifications_sent = []
 
-            # Check if we should notify about updates
+            # 1. Check if we should notify the original entry creator (own_entry_edits)
             creator_username = event.log_info.entered_by_username
-            if not self._should_notify(creator_username, "entry_updates"):
-                return
+            if event.event_triggered_by_username != creator_username and self._should_notify(
+                creator_username, "own_entry_edits"
+            ):
+                # Build notification for the entry creator
+                title = f"Your Log Entry Was Edited: {event.parent_log_document_info.name}"
+                body = self._format_own_entry_edited_body(event)
 
-            # Build notification
-            title = f"Log Entry Updated: {event.parent_log_document_info.name}"
-            body = self._format_entry_updated_body(event)
+                # Send notification
+                await self._send_notification(creator_username, title, body)
+                notifications_sent.append(creator_username)
 
-            # Send notification
-            await self._send_notification(creator_username, title, body)
+            # 2. Check if document owners should be notified about a change in log entry.
+            owner_username = event.parent_log_document_info.owner_username
+            if (
+                event.event_triggered_by_username != owner_username
+                and owner_username not in notifications_sent  # Avoid duplicate notifications
+                and self._should_notify(owner_username, "entry_updates")
+            ):
+                # Build notification for document owner
+                title = f"Log Entry Updated: {event.parent_log_document_info.name}"
+                body = self._format_entry_updated_body(event)
+
+                # Send notification
+                await self._send_notification(owner_username, title, body)
 
         except Exception as e:
             self.logger.error(f"Error processing log entry update: {e}", exc_info=True)
@@ -364,27 +382,43 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         """
         Handle log entry reply update events.
 
-        Notify the original entry creator if someone else updates a reply.
+        Notify:
+        1. The original entry creator if someone else updates a reply on their entry (own_entry_edits)
+        2. Document owners about any reply updates
 
         Args:
             event: The log entry reply update event
         """
         try:
-            # Don't notify the updater
-            if event.event_triggered_by_username == event.parent_log_info.entered_by_username:
-                return
+            notifications_sent = []
 
-            # Check if we should notify about replies
+            # 1. Check if we should notify the original entry creator (own_entry_edits)
+            # This uses own_entry_edits since it's about modifications to content related to the user's entry
             creator_username = event.parent_log_info.entered_by_username
-            if not self._should_notify(creator_username, "entry_replies"):
-                return
+            if event.event_triggered_by_username != creator_username and self._should_notify(
+                creator_username, "own_entry_edits"
+            ):
+                # Build notification for the entry creator
+                title = f"Reply Updated on Your Log Entry in {event.parent_log_document_info.name}"
+                body = self._format_own_reply_updated_body(event)
 
-            # Build notification
-            title = f"Reply Updated on Your Log Entry in {event.parent_log_document_info.name}"
-            body = self._format_reply_updated_body(event)
+                # Send notification
+                await self._send_notification(creator_username, title, body)
+                notifications_sent.append(creator_username)
 
-            # Send notification
-            await self._send_notification(creator_username, title, body)
+            # 2. Check if Document owners should be notified.
+            owner_username = event.parent_log_document_info.owner_username
+            if (
+                event.event_triggered_by_username != owner_username
+                and owner_username not in notifications_sent  # Avoid duplicate notifications
+                and self._should_notify(owner_username, "entry_replies")
+            ):
+                # Build notification for document owner
+                title = f"Reply Updated in {event.parent_log_document_info.name}"
+                body = self._format_reply_updated_body(event)
+
+                # Send notification
+                await self._send_notification(owner_username, title, body)
 
         except Exception as e:
             self.logger.error(f"Error processing log entry reply update: {e}", exc_info=True)
@@ -519,7 +553,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
 
         Args:
             username: Username to check
-            notification_type: Type of notification (entry_updates, entry_replies, new_entries, reactions)
+            notification_type: Type of notification (entry_updates, own_entry_edits, entry_replies, new_entries, reactions, document_replies)
 
         Returns:
             True if user should be notified, False otherwise
@@ -653,11 +687,19 @@ class AppriseSmartNotificationHandler(MQTTHandler):
                 f"which you own. You have 'new_entries' notifications enabled."
             )
         elif isinstance(event, LogEntryUpdateEvent):
-            return (
-                f"This notification was sent because {event.event_triggered_by_username} "
-                f"updated a log entry that you originally created in the document "
-                f"'{event.parent_log_document_info.name}'. You have 'entry_updates' notifications enabled."
-            )
+            # Check the notification context to determine the type
+            if notification_context == "own_entry_edit":
+                return (
+                    f"This notification was sent because {event.event_triggered_by_username} "
+                    f"edited a log entry that you originally created in the document "
+                    f"'{event.parent_log_document_info.name}'. You have 'own_entry_edits' notifications enabled."
+                )
+            else:
+                return (
+                    f"This notification was sent because {event.event_triggered_by_username} "
+                    f"updated a log entry in the document '{event.parent_log_document_info.name}' "
+                    f"which you own. You have 'entry_updates' notifications enabled."
+                )
         elif isinstance(event, LogEntryReplyAddEvent):
             # Check the notification context to determine the type
             if notification_context == "document_owner":
@@ -673,11 +715,19 @@ class AppriseSmartNotificationHandler(MQTTHandler):
                     f"You have 'entry_replies' notifications enabled."
                 )
         elif isinstance(event, LogEntryReplyUpdateEvent):
-            return (
-                f"This notification was sent because {event.event_triggered_by_username} "
-                f"updated a reply to your log entry in the document "
-                f"'{event.parent_log_document_info.name}'. You have 'entry_replies' notifications enabled."
-            )
+            # Check the notification context to determine the type
+            if notification_context == "own_reply_update":
+                return (
+                    f"This notification was sent because {event.event_triggered_by_username} "
+                    f"updated a reply on your log entry in the document "
+                    f"'{event.parent_log_document_info.name}'. You have 'own_entry_edits' notifications enabled."
+                )
+            else:
+                return (
+                    f"This notification was sent because {event.event_triggered_by_username} "
+                    f"updated a reply in the document '{event.parent_log_document_info.name}' "
+                    f"which you own. You have 'entry_replies' notifications enabled."
+                )
         elif isinstance(event, LogReactionAddEvent):
             return (
                 f"This notification was sent because {event.event_triggered_by_username} "
@@ -706,14 +756,38 @@ class AppriseSmartNotificationHandler(MQTTHandler):
 
     @_append_permalink_and_trigger
     def _format_entry_updated_body(self, event: LogEntryUpdateEvent) -> str:
-        """Format notification body for updated log entry."""
+        """Format notification body for updated log entry (document owner notification)."""
         return (
             f"Entry updated in {event.parent_log_document_info.name}<br/>"
             f"Updated by: {event.event_triggered_by_username}<br/>"
+            f"Original author: {event.log_info.entered_by_username}<br/>"
             f"Time: {event.event_timestamp}<br/>"
             f"Description: {event.description}<br/>"
             f"<br/>Entry markdown changes: {self._format_text_diff_pre(event.text_diff)}"
         )
+
+    def _format_own_entry_edited_body(self, event: LogEntryUpdateEvent) -> str:
+        """Format notification body for when user's own entry is edited by someone else."""
+        body = (
+            f"Your entry was edited in {event.parent_log_document_info.name}<br/>"
+            f"Edited by: {event.event_triggered_by_username}<br/>"
+            f"Time: {event.event_timestamp}<br/>"
+            f"Description: {event.description}<br/>"
+            f"<br/>Entry markdown changes: {self._format_text_diff_pre(event.text_diff)}"
+        )
+
+        # Manually add permalink and trigger with context
+        if self.bely_url:
+            link = self._generate_log_entry_link(
+                event.parent_log_document_info.id, event.log_info.id
+            )
+            body += f"<br/><br/>View entry: {link}"
+
+        # Add trigger description with own_entry_edit context
+        trigger_description = self._get_trigger_description(event, "own_entry_edit")
+        body += f"<br/><br/><hr/><small><i>{trigger_description}</i></small>"
+
+        return body
 
     @_append_permalink_and_trigger
     def _format_reply_added_body(self, event: LogEntryReplyAddEvent) -> str:
@@ -727,13 +801,36 @@ class AppriseSmartNotificationHandler(MQTTHandler):
 
     @_append_permalink_and_trigger
     def _format_reply_updated_body(self, event: LogEntryReplyUpdateEvent) -> str:
-        """Format notification body for updated reply."""
+        """Format notification body for updated reply (document owner notification)."""
         return (
-            f"Reply updated on your entry in {event.parent_log_document_info.name}<br/>"
+            f"Reply updated in {event.parent_log_document_info.name}<br/>"
+            f"Updated by: {event.event_triggered_by_username}<br/>"
+            f"On entry by: {event.parent_log_info.entered_by_username}<br/>"
+            f"Time: {event.event_timestamp}<br/>"
+            f"<br/>Reply markdown changes: {self._format_text_diff_pre(event.text_diff)}"
+        )
+
+    def _format_own_reply_updated_body(self, event: LogEntryReplyUpdateEvent) -> str:
+        """Format notification body for when a reply on user's own entry is updated by someone else."""
+        body = (
+            f"A reply on your entry was updated in {event.parent_log_document_info.name}<br/>"
             f"Updated by: {event.event_triggered_by_username}<br/>"
             f"Time: {event.event_timestamp}<br/>"
             f"<br/>Reply markdown changes: {self._format_text_diff_pre(event.text_diff)}"
         )
+
+        # Manually add permalink and trigger with context
+        if self.bely_url:
+            link = self._generate_log_entry_link(
+                event.parent_log_document_info.id, event.parent_log_info.id
+            )
+            body += f"<br/><br/>View entry: {link}"
+
+        # Add trigger description with own_reply_update context
+        trigger_description = self._get_trigger_description(event, "own_reply_update")
+        body += f"<br/><br/><hr/><small><i>{trigger_description}</i></small>"
+
+        return body
 
     def _format_document_reply_body(self, event: LogEntryReplyAddEvent) -> str:
         """Format notification body for document owner about new reply."""

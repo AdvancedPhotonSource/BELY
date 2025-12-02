@@ -27,8 +27,10 @@ users:
     
     # Which types of notifications to send
     notifications:
-      # Notify when someone else updates a log entry
+      # Notify when someone else updates any log entry (typically for document owners)
       entry_updates: true
+      # Notify when someone else edits YOUR log entries specifically
+      own_entry_edits: true
       # Notify when someone else replies to a log entry
       entry_replies: true
       # Notify when someone else creates an entry in a document
@@ -46,6 +48,8 @@ users:
     
     notifications:
       entry_updates: true
+      # Only get notified about general updates, not specifically own entries
+      own_entry_edits: false
       entry_replies: false  # Don't notify about replies
       new_entries: true
 
@@ -94,3 +98,4 @@ users:
 #   - gotify://hostname/token
 #
 # See https://github.com/caronc/apprise/wiki for complete list
+
