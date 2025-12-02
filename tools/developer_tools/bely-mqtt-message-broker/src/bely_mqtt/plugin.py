@@ -382,8 +382,12 @@ class PluginManager:
         """
         Dynamically load handlers from a directory.
 
-        Looks for Python files in the directory and imports any classes
+        Looks for Python files and packages in the directory and imports any classes
         that inherit from MQTTHandler.
+
+        Supports:
+        - Single Python files (*.py)
+        - Python packages (directories with __init__.py)
 
         Args:
             directory: Path to the directory containing handler modules.
@@ -393,6 +397,7 @@ class PluginManager:
             self.logger.warning(f"Handler directory does not exist: {directory}")
             return
 
+        # Load handlers from Python files
         for py_file in directory.glob("*.py"):
             if py_file.name.startswith("_"):
                 continue
@@ -418,6 +423,44 @@ class PluginManager:
 
             except Exception as e:
                 self.logger.error(f"Failed to load handlers from {py_file}: {e}")
+
+        # Load handlers from Python packages (directories with __init__.py)
+        for item in directory.iterdir():
+            if not item.is_dir() or item.name.startswith("_") or item.name.startswith("."):
+                continue
+
+            init_file = item / "__init__.py"
+            if not init_file.exists():
+                continue
+
+            module_name = item.name
+            try:
+                # Add parent directory to sys.path temporarily
+                import sys
+
+                old_path = sys.path.copy()
+                sys.path.insert(0, str(directory))
+
+                try:
+                    # Import the package
+                    module = importlib.import_module(module_name)
+
+                    # Find all MQTTHandler subclasses in the package
+                    for name, obj in inspect.getmembers(module):
+                        if (
+                            inspect.isclass(obj)
+                            and issubclass(obj, MQTTHandler)
+                            and obj is not MQTTHandler
+                        ):
+                            self.register_handler_class(obj)
+                            self.logger.info(f"Loaded handler from package {item}: {name}")
+
+                finally:
+                    # Restore original sys.path
+                    sys.path = old_path
+
+            except Exception as e:
+                self.logger.error(f"Failed to load handlers from package {item}: {e}")
 
     async def handle_message(self, message: MQTTMessage) -> None:
         """
