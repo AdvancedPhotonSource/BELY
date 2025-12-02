@@ -5,10 +5,11 @@ This module provides a configuration system that allows handlers to receive
 configuration parameters when they are instantiated.
 """
 
-import json
 import logging
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -110,31 +111,29 @@ class ConfigManager:
 
     def load_from_file(self, config_file: Path) -> None:
         """
-        Load configuration from a JSON file.
+        Load configuration from a YAML file.
 
         File format:
-            {
-              "global": {
-                "shared_param": "value",
-                "another_param": "value"
-              },
-              "handlers": {
-                "AdvancedLoggingHandler": {
-                  "logging_dir": "/var/log/bely"
-                },
-                "MyHandler": {
-                  "param1": "value1",
-                  "param2": "value2"
-                }
-              }
-            }
+            global:
+              shared_param: value
+              another_param: value
+              bely_url: https://bely.example.com
+
+            handlers:
+              AdvancedLoggingHandler:
+                logging_dir: /var/log/bely
+              MyHandler:
+                param1: value1
+                param2: value2
+              AppriseSmartNotificationHandler:
+                config_path: /path/to/apprise_config.yaml
 
         Args:
-            config_file: Path to the configuration file.
+            config_file: Path to the YAML configuration file.
 
         Raises:
             FileNotFoundError: If the configuration file doesn't exist.
-            json.JSONDecodeError: If the file is not valid JSON.
+            yaml.YAMLError: If the file is not valid YAML.
         """
         config_file = Path(config_file)
         if not config_file.exists():
@@ -142,7 +141,7 @@ class ConfigManager:
 
         try:
             with open(config_file) as f:
-                data = json.load(f)
+                data = yaml.safe_load(f)
 
             # Load global configuration if present
             if "global" in data:
@@ -155,8 +154,8 @@ class ConfigManager:
                 self.set_config(handler_name, config)
 
             self.logger.info(f"Loaded configuration from {config_file}")
-        except json.JSONDecodeError as e:
-            self.logger.error(f"Invalid JSON in configuration file: {e}")
+        except yaml.YAMLError as e:
+            self.logger.error(f"Invalid YAML in configuration file: {e}")
             raise
 
     def load_from_dict(self, config_dict: Dict[str, Any]) -> None:

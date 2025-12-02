@@ -106,7 +106,7 @@ def cli() -> None:
     type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
     default=None,
     envvar="BELY_CONFIG",
-    help="Path to configuration file for handlers (JSON format).",
+    help="Path to configuration file for handlers (YAML format).",
 )
 def start(
     broker_host: str,

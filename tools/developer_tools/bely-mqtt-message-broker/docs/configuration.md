@@ -10,16 +10,16 @@ bely-mqtt start [OPTIONS]
 
 ### MQTT Options
 
-- `--mqtt-host TEXT` - MQTT broker hostname (default: localhost)
-- `--mqtt-port INTEGER` - MQTT broker port (default: 1883)
-- `--mqtt-username TEXT` - MQTT username for authentication
-- `--mqtt-password TEXT` - MQTT password for authentication
-- `--mqtt-topic TEXT` - MQTT topic pattern to subscribe (default: bely/#)
+- `--broker-host TEXT` - MQTT broker hostname (default: localhost)
+- `--broker-port INTEGER` - MQTT broker port (default: 1883)
+- `--username TEXT` - MQTT username for authentication
+- `--password TEXT` - MQTT password for authentication
+- `--topic TEXT` - MQTT topic pattern to subscribe (default: bely/#)
 
 ### Handler Options
 
 - `--handlers-dir PATH` - Directory containing handler files (default: ./handlers)
-- `--handler-config PATH` - JSON configuration file for handlers
+- `--config PATH` - YAML configuration file for handlers
 
 ### API Options
 
@@ -29,33 +29,37 @@ bely-mqtt start [OPTIONS]
 ### Logging Options
 
 - `--log-level TEXT` - Logging level: DEBUG, INFO, WARNING, ERROR (default: INFO)
-- `--log-file PATH` - Log to file instead of console
 
 ## Environment Variables
 
 All command-line options can be set via environment variables:
 
 ```bash
-export MQTT_HOST=broker.example.com
-export MQTT_PORT=1883
+export MQTT_BROKER_HOST=broker.example.com
+export MQTT_BROKER_PORT=1883
+export MQTT_CLIENT_ID=bely-mqtt-client
 export MQTT_USERNAME=myuser
 export MQTT_PASSWORD=mypass
 export BELY_API_URL=https://api.bely.dev
 export BELY_API_KEY=your-api-key
+export BELY_HANDLERS_DIR=./handlers
+export BELY_CONFIG=./config.yaml
 export LOG_LEVEL=DEBUG
 ```
 
-## Configuration File
+## Configuration Files
 
-Create a `.env` file in your project root:
+### Environment File (.env)
+
+Create a `.env` file in your project root for environment variables:
 
 ```bash
 # MQTT Configuration
-MQTT_HOST=localhost
-MQTT_PORT=1883
+MQTT_BROKER_HOST=localhost
+MQTT_BROKER_PORT=1883
+MQTT_CLIENT_ID=bely-mqtt-client
 MQTT_USERNAME=
 MQTT_PASSWORD=
-MQTT_TOPIC=bely/#
 
 # BELY API Configuration
 BELY_API_URL=https://api.bely.dev
@@ -65,29 +69,43 @@ BELY_API_KEY=your-api-key-here
 LOG_LEVEL=INFO
 
 # Handler Configuration
-HANDLERS_DIR=./handlers
+BELY_HANDLERS_DIR=./handlers
+BELY_CONFIG=./config.yaml
 ```
 
-## Handler Configuration
+### Handler Configuration (YAML)
 
-Handlers can be configured via JSON file:
+Handlers can be configured via a YAML file to provide both global and handler-specific settings:
 
-```json
-{
-  "handlers": [
-    {
-      "module": "notification_handler",
-      "class": "NotificationHandler",
-      "config": {
-        "webhook_url": "https://hooks.slack.com/services/YOUR/WEBHOOK",
-        "enabled": true
-      }
-    }
-  ]
-}
+```yaml
+# Global configuration shared across all handlers
+global:
+  # BELY API URL for querying additional information
+  bely_url: https://bely.example.com/bely
+  # Add any other global parameters here
+  shared_param: value
+
+# Handler-specific configurations
+handlers:
+  # Configure the AdvancedLoggingHandler
+  AdvancedLoggingHandler:
+    logging_dir: /var/log/bely
+    log_level: DEBUG
+    rotate_logs: true
+    max_size_mb: 100
+  
+  # Configure the NotificationHandler
+  NotificationHandler:
+    webhook_url: https://hooks.slack.com/services/YOUR/WEBHOOK
+    enabled: true
+    timeout: 30
+  
+  # Configure the AppriseSmartNotificationHandler
+  AppriseSmartNotificationHandler:
+    config_path: /path/to/apprise_notification_config.yaml
 ```
 
-Use with: `--handler-config config.json`
+Use with: `--config config.yaml`
 
 ## SSL/TLS Configuration
 
