@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test lint format type-check clean docs
+.PHONY: help install install-dev test test-handlers test-apprise test-apprise-integration test-all lint format type-check clean docs
 
 help:
 	@echo "BELY MQTT Framework - Development Commands"
@@ -8,8 +8,12 @@ help:
 	@echo "  make install-dev      Install with development dependencies"
 	@echo ""
 	@echo "Testing:"
-	@echo "  make test             Run tests"
-	@echo "  make test-cov         Run tests with coverage"
+	@echo "  make test             Run core framework tests"
+	@echo "  make test-handlers    Run all handler tests"
+	@echo "  make test-apprise     Run Apprise handler unit tests"
+	@echo "  make test-apprise-integration  Run Apprise integration tests"
+	@echo "  make test-all         Run all tests (framework + handlers)"
+	@echo "  make test-cov         Run all tests with coverage"
 	@echo ""
 	@echo "Code Quality:"
 	@echo "  make lint             Run linting checks"
@@ -30,10 +34,33 @@ install-dev:
 	pip install -e ".[dev]"
 
 test:
-	pytest
+	pytest tests/
+
+test-handlers:
+	@echo "Running Apprise Smart Notification Handler tests..."
+	pytest examples/handlers/apprise_smart_notification/test_handler.py \
+		examples/handlers/apprise_smart_notification/test_integration.py \
+		--asyncio-mode=auto -v
+
+test-apprise:
+	@echo "Running Apprise handler unit tests..."
+	pytest examples/handlers/apprise_smart_notification/test_handler.py --asyncio-mode=auto -v
+
+test-apprise-integration:
+	@echo "Running Apprise handler integration tests..."
+	pytest examples/handlers/apprise_smart_notification/test_integration.py --asyncio-mode=auto -v
+
+test-all: test test-handlers
 
 test-cov:
-	pytest --cov=src/bely_mqtt --cov-report=html --cov-report=term-missing
+	pytest tests/ \
+		examples/handlers/apprise_smart_notification/test_handler.py \
+		examples/handlers/apprise_smart_notification/test_integration.py \
+		--cov=src/bely_mqtt \
+		--cov=examples/handlers/apprise_smart_notification \
+		--cov-report=html \
+		--cov-report=term-missing \
+		--asyncio-mode=auto
 
 lint:
 	ruff check src/ tests/ examples/handlers/apprise_smart_notification/
@@ -53,7 +80,7 @@ type-check-handlers:
 	mypy examples/handlers/apprise_smart_notification --ignore-missing-imports
 	# Add other handlers here as they are converted to packages
 
-quality: lint type-check test
+quality: lint type-check test-all
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
