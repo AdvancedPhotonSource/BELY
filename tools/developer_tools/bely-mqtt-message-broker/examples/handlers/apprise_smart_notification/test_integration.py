@@ -20,22 +20,22 @@ if src_path.exists():
 # Mock apprise before importing handler
 sys.modules["apprise"] = MagicMock()
 
-from bely_mqtt import (
+from bely_mqtt import (  # noqa: E402
     LogEntryAddEvent,
     LogEntryUpdateEvent,
     LogEntryReplyAddEvent,
     LogReactionAddEvent,
 )
-from bely_mqtt.models import (
+from bely_mqtt.models import (  # noqa: E402
     LogInfo,
     LogDocumentInfo,
     LogReactionInfo,
     ReactionInfo,
     LogbookInfo,
 )
-from bely_mqtt.config import GlobalConfig
+from bely_mqtt.config import GlobalConfig  # noqa: E402
 
-from apprise_smart_notification import AppriseSmartNotificationHandler
+from apprise_smart_notification import AppriseSmartNotificationHandler  # noqa: E402
 
 
 class TestScenarios:
@@ -302,14 +302,14 @@ class TestScenarios:
             lastModifiedOnDateTime=base_time.isoformat(),
         )
 
-        # Emma's initial bug report entry
-        emma_entry = LogInfo(
-            id=301,
-            enteredByUsername="emma",
-            lastModifiedByUsername="emma",
-            enteredOnDateTime=base_time.isoformat(),
-            lastModifiedOnDateTime=base_time.isoformat(),
-        )
+        # Emma's initial bug report entry (not used in this test scenario)
+        # emma_entry = LogInfo(
+        #     id=301,
+        #     enteredByUsername="emma",
+        #     lastModifiedByUsername="emma",
+        #     enteredOnDateTime=base_time.isoformat(),
+        #     lastModifiedOnDateTime=base_time.isoformat(),
+        # )
 
         # 1. John adds investigation findings
         event1 = LogEntryAddEvent(

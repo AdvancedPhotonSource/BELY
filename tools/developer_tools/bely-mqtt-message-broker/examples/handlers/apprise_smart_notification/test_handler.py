@@ -20,7 +20,7 @@ if src_path.exists():
 # Mock apprise before importing handler
 sys.modules["apprise"] = MagicMock()
 
-from bely_mqtt import (
+from bely_mqtt import (  # noqa: E402
     LogEntryAddEvent,
     LogEntryUpdateEvent,
     LogEntryReplyAddEvent,
@@ -28,15 +28,15 @@ from bely_mqtt import (
     LogReactionAddEvent,
     LogReactionDeleteEvent,
 )
-from bely_mqtt.models import (
+from bely_mqtt.models import (  # noqa: E402
     LogInfo,
     LogDocumentInfo,
     LogReactionInfo,
     ReactionInfo,
 )
-from bely_mqtt.config import GlobalConfig
+from bely_mqtt.config import GlobalConfig  # noqa: E402
 
-from apprise_smart_notification import AppriseSmartNotificationHandler
+from apprise_smart_notification import AppriseSmartNotificationHandler  # noqa: E402
 
 
 class MockEventFactory:
