@@ -608,11 +608,16 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     public void destroyLogEntry(Log entry) {
         if (isSaveLogLockoutsForCurrent(entry)) {
-            LogController instance = LogController.getInstance();
-            instance.destroy(entry);
+            ItemDomainLogbookControllerUtility utility = getControllerUtility();
+            UserInfo user = SessionUtility.getUser();
+            try {
+                utility.destroyLogEntry(entry, user);
+            } catch (CdbException ex) {
+                logger.error(ex);
+                SessionUtility.addErrorMessage("Error", ex.getErrorMessage());
+            }
+            updateModifiedDateForCurrent();
         }
-
-        updateModifiedDateForCurrent();
     }
 
     public String getAddedReactionsString(Log entry) {

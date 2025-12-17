@@ -6,6 +6,7 @@ package gov.anl.aps.logr.portal.controllers.utilities;
 
 import gov.anl.aps.logr.common.exceptions.CdbException;
 import gov.anl.aps.logr.common.exceptions.InvalidObjectState;
+import gov.anl.aps.logr.common.mqtt.constants.ChangeType;
 import gov.anl.aps.logr.common.mqtt.model.LogEntryEvent;
 import gov.anl.aps.logr.common.mqtt.model.ReplyLogEntryEvent;
 import gov.anl.aps.logr.common.utilities.CollectionUtility;
@@ -481,9 +482,14 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
 
     }
 
-    public Log saveLog(Log logEntity, UserInfo user, Log originalLog) throws CdbException {
-        LogControllerUtility utility = new LogControllerUtility();
+    public void destroyLogEntry(Log logEntity, UserInfo user) throws CdbException {
+        addLogEntryMqttEvent(logEntity, null, user, true);
 
+        LogControllerUtility utility = new LogControllerUtility();
+        utility.destroy(logEntity, user);
+    }
+
+    private void addLogEntryMqttEvent(Log logEntity, Log originalLog, UserInfo user, boolean isDestroy) {
         String logDiffString = getLogDiffString(originalLog, logEntity);
 
         // Avoid duplicates
@@ -493,25 +499,34 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
 
         Log parentLog = logEntity.getParentLog();
         Integer id = logEntity.getId();
-        boolean isNew;
+        ChangeType changeType;
 
         String description = "";
-        if (id == null) {
+        if (isDestroy) {
+            description += "log entry was deleted";
+            changeType = ChangeType.DELETE;
+        } else if (id == null) {
             description += "log entry was added";
-            isNew = true;
+            changeType = ChangeType.ADD;
         } else {
             description += "log entry id [" + id + "] was modified";
-            isNew = false;
+            changeType = ChangeType.UPDATE;
         }
 
         if (parentLog != null) {
             description = "reply " + description;
 
             // Reply
-            logEntity.addActionEvent(new ReplyLogEntryEvent(parentLogbook, logEntity, user, description, logDiffString, isNew));
+            logEntity.addActionEvent(new ReplyLogEntryEvent(parentLogbook, logEntity, user, description, logDiffString, changeType));
         } else {
-            logEntity.addActionEvent(new LogEntryEvent(parentLogbook, logEntity, user, description, logDiffString, isNew));
+            logEntity.addActionEvent(new LogEntryEvent(parentLogbook, logEntity, user, description, logDiffString, changeType));
         }
+    }
+
+    public Log saveLog(Log logEntity, UserInfo user, Log originalLog) throws CdbException {
+        LogControllerUtility utility = new LogControllerUtility();
+
+        addLogEntryMqttEvent(logEntity, originalLog, user, false);
 
         // Add a generic log entry.
         return utility.saveLogEntry(logEntity, user);
