@@ -4,6 +4,7 @@
  */
 package gov.anl.aps.logr.common.mqtt.model;
 
+import gov.anl.aps.logr.common.mqtt.constants.ChangeType;
 import gov.anl.aps.logr.common.mqtt.constants.MqttTopic;
 import gov.anl.aps.logr.common.mqtt.model.entities.LogInfo;
 import gov.anl.aps.logr.common.mqtt.model.entities.LogbookDocumentInfo;
@@ -25,13 +26,13 @@ public class LogEntryEvent extends MqttEvent<Log> {
     LogInfo logInfo;
     List<LogbookInfo> logbookList;
     String textDiff;
-    protected boolean isNew;
+    protected ChangeType changeType;
 
-    public LogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, UserInfo eventTriggedByUser, String description, String textDiff, boolean isNew) {
+    public LogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, UserInfo eventTriggedByUser, String description, String textDiff, ChangeType changeType) {
         super(entity, eventTriggedByUser, description);
         this.logInfo = new LogInfo(entity);
         this.textDiff = textDiff;
-        this.isNew = isNew;
+        this.changeType = changeType;
 
         if (parentLogbook != null) {
             parentLogDocumentInfo = new LogbookDocumentInfo(parentLogbook);
@@ -47,8 +48,10 @@ public class LogEntryEvent extends MqttEvent<Log> {
 
     @Override
     public final MqttTopic getTopic() {
-        if (isNew) {
+        if (changeType == ChangeType.ADD) {
             return getAddEventTopic();
+        } else if (changeType == ChangeType.DELETE) {
+            return getDeletedEventTopic();
         }
         return getUpdateEventTopic();
     }
@@ -59,6 +62,10 @@ public class LogEntryEvent extends MqttEvent<Log> {
 
     protected MqttTopic getUpdateEventTopic() {
         return MqttTopic.LOGENTRYUPDATE;
+    }
+
+    protected MqttTopic getDeletedEventTopic() {
+        return MqttTopic.LOGENTRYDELETE;
     }
 
     public LogInfo getLogInfo() {

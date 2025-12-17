@@ -5,6 +5,7 @@
 package gov.anl.aps.logr.common.mqtt.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import gov.anl.aps.logr.common.mqtt.constants.ChangeType;
 import gov.anl.aps.logr.common.mqtt.constants.MqttTopic;
 import gov.anl.aps.logr.common.mqtt.model.entities.LogInfo;
 import gov.anl.aps.logr.portal.model.db.entities.ItemDomainLogbook;
@@ -19,8 +20,8 @@ public class ReplyLogEntryEvent extends LogEntryEvent {
 
     LogInfo parentLogInfo;
 
-    public ReplyLogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, UserInfo eventTriggedByUser, String description, String textDiff, boolean isNew) {
-        super(parentLogbook, entity, eventTriggedByUser, description, textDiff, isNew);
+    public ReplyLogEntryEvent(ItemDomainLogbook parentLogbook, Log entity, UserInfo eventTriggedByUser, String description, String textDiff, ChangeType changeType) {
+        super(parentLogbook, entity, eventTriggedByUser, description, textDiff, changeType);
 
         Log parentLogObject = getParentLogObject();
 
@@ -37,6 +38,11 @@ public class ReplyLogEntryEvent extends LogEntryEvent {
     @Override
     protected MqttTopic getUpdateEventTopic() {
         return MqttTopic.LOGENTRYREPLYUPDATE;
+    }
+
+    @Override
+    protected MqttTopic getDeletedEventTopic() {
+        return MqttTopic.LOGENTRYREPLYDELETE;
     }
 
     @JsonIgnore
