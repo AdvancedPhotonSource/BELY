@@ -21,6 +21,7 @@ import com.vladsch.flexmark.util.data.MutableDataSet;
 import com.vladsch.flexmark.util.misc.Extension;
 import com.vladsch.flexmark.util.sequence.BasedSequence;
 import com.vladsch.flexmark.util.sequence.Escaping;
+import com.vladsch.flexmark.ext.tables.TablesExtension;
 import gov.anl.aps.logr.common.constants.CdbPropertyValue;
 
 import java.util.HashSet;
@@ -79,7 +80,8 @@ public class MarkdownParser {
     private static MutableDataHolder options = new MutableDataSet()
             .set(Parser.EXTENSIONS, Arrays.asList(
                     new Extension[]{
-                        LogrFlexmarkExtension.create()
+                        LogrFlexmarkExtension.create(),
+                        TablesExtension.create()
                     }
             ));
 
