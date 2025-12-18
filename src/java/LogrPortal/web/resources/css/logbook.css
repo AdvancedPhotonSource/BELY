@@ -133,7 +133,30 @@ pre:has([class^="language-"]) {
 }
 
 .logEntry img {
-    max-width: 450px; 
+    max-width: 450px;
+}
+
+/* Markdown table styles */
+.logEntry table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+}
+
+.logEntry th,
+.logEntry td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.logEntry th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.logEntry tr:nth-child(even) {
+    background-color: #f9f9f9;
 }
 
 .activeLogEntry {
