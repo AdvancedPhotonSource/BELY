@@ -8,8 +8,10 @@ from typing import Optional, Union
 from bely_mqtt import (
     LogEntryAddEvent,
     LogEntryUpdateEvent,
+    LogEntryDeleteEvent,
     LogEntryReplyAddEvent,
     LogEntryReplyUpdateEvent,
+    LogEntryReplyDeleteEvent,
     LogReactionAddEvent,
     LogReactionDeleteEvent,
     LogEntryEventBase,
@@ -131,6 +133,50 @@ class NotificationFormatter:
             f"Description: {event.description}"
         )
         return self._append_permalink_and_trigger(body, event)
+
+    def format_entry_deleted(self, event: LogEntryDeleteEvent) -> str:
+        """Format notification body for deleted log entry (document owner notification)."""
+        body = (
+            f"Entry deleted from {event.parent_log_document_info.name}<br/>"
+            f"Deleted by: {event.event_triggered_by_username}<br/>"
+            f"Original author: {event.log_info.entered_by_username}<br/>"
+            f"Time: {event.event_timestamp}<br/>"
+            f"Description: {event.description}<br/>"
+            f"<br/>Deleted entry content: {self._format_text_diff_pre(event.text_diff)}"
+        )
+        return self._append_permalink_and_trigger(body, event, "entry_delete")
+
+    def format_own_entry_deleted(self, event: LogEntryDeleteEvent) -> str:
+        """Format notification body for when user's own entry is deleted by someone else."""
+        body = (
+            f"Your entry was deleted from {event.parent_log_document_info.name}<br/>"
+            f"Deleted by: {event.event_triggered_by_username}<br/>"
+            f"Time: {event.event_timestamp}<br/>"
+            f"Description: {event.description}<br/>"
+            f"<br/>Deleted entry content: {self._format_text_diff_pre(event.text_diff)}"
+        )
+        return self._append_permalink_and_trigger(body, event, "own_entry_delete")
+
+    def format_reply_deleted(self, event: LogEntryReplyDeleteEvent) -> str:
+        """Format notification body for deleted reply (entry creator notification)."""
+        body = (
+            f"Reply deleted from your entry in {event.parent_log_document_info.name}<br/>"
+            f"Deleted by: {event.event_triggered_by_username}<br/>"
+            f"Time: {event.event_timestamp}<br/>"
+            f"<br/>Deleted reply content: {self._format_text_diff_pre(event.text_diff)}"
+        )
+        return self._append_permalink_and_trigger(body, event, "reply_delete")
+
+    def format_document_reply_deleted(self, event: LogEntryReplyDeleteEvent) -> str:
+        """Format notification body for document owner about deleted reply."""
+        body = (
+            f"Reply deleted from your document {event.parent_log_document_info.name}<br/>"
+            f"Deleted by: {event.event_triggered_by_username}<br/>"
+            f"On entry by: {event.parent_log_info.entered_by_username}<br/>"
+            f"Time: {event.event_timestamp}<br/>"
+            f"<br/>Deleted reply content: {self._format_text_diff_pre(event.text_diff)}"
+        )
+        return self._append_permalink_and_trigger(body, event, "document_owner")
 
     def _format_text_diff_pre(self, text_diff: str, max_height: str = "200px") -> str:
         """
@@ -281,5 +327,33 @@ class NotificationFormatter:
                 f"removed a reaction from your log entry in the document "
                 f"'{event.parent_log_document_info.name}'. You have 'reactions' notifications enabled."
             )
+        elif isinstance(event, LogEntryDeleteEvent):
+            # Check the notification context to determine the type
+            if notification_context == "own_entry_delete":
+                return (
+                    f"This notification was sent because {event.event_triggered_by_username} "
+                    f"deleted a log entry that you originally created in the document "
+                    f"'{event.parent_log_document_info.name}'. You have 'own_entry_edits' notifications enabled."
+                )
+            else:
+                return (
+                    f"This notification was sent because {event.event_triggered_by_username} "
+                    f"deleted a log entry in the document '{event.parent_log_document_info.name}' "
+                    f"which you own. You have 'entry_updates' notifications enabled."
+                )
+        elif isinstance(event, LogEntryReplyDeleteEvent):
+            # Check the notification context to determine the type
+            if notification_context == "reply_delete":
+                return (
+                    f"This notification was sent because {event.event_triggered_by_username} "
+                    f"deleted a reply from your log entry in the document "
+                    f"'{event.parent_log_document_info.name}'. You have 'entry_replies' notifications enabled."
+                )
+            else:
+                return (
+                    f"This notification was sent because {event.event_triggered_by_username} "
+                    f"deleted a reply in the document '{event.parent_log_document_info.name}' "
+                    f"which you own. You have 'document_replies' notifications enabled."
+                )
         else:
             return "This notification was sent due to activity on your BELY content."

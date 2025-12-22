@@ -23,8 +23,10 @@ sys.modules["apprise"] = MagicMock()
 from bely_mqtt import (  # noqa: E402
     LogEntryAddEvent,
     LogEntryUpdateEvent,
+    LogEntryDeleteEvent,
     LogEntryReplyAddEvent,
     LogEntryReplyUpdateEvent,
+    LogEntryReplyDeleteEvent,
     LogReactionAddEvent,
     LogReactionDeleteEvent,
 )
@@ -256,6 +258,61 @@ class MockEventFactory:
             parentLogInfo=self.alice_entry,
             logReaction=self._create_reaction("✅", "check"),
             description="Marking as complete",
+        )
+
+    def create_entry_delete_by_bob_on_alice(self) -> LogEntryDeleteEvent:
+        """Bob deletes Alice's entry."""
+        from bely_mqtt.models import LogbookInfo
+
+        return LogEntryDeleteEvent(
+            eventTimestamp=self.timestamp,
+            eventTriggedByUsername=self.bob,
+            entityName="LogEntry",
+            entityId=1,
+            parentLogDocumentInfo=self.document,
+            logInfo=self.alice_entry,
+            description="Deleted outdated entry",
+            textDiff="- Deleted content: This was the original entry text",
+            logbookList=[LogbookInfo(id=1, name="Project Alpha", displayName="Project Alpha")],
+        )
+
+    def create_entry_delete_by_charlie_on_bob(self) -> LogEntryDeleteEvent:
+        """Charlie deletes Bob's entry in Alice's document."""
+        from bely_mqtt.models import LogbookInfo
+
+        return LogEntryDeleteEvent(
+            eventTimestamp=self.timestamp,
+            eventTriggedByUsername=self.charlie,
+            entityName="LogEntry",
+            entityId=2,
+            parentLogDocumentInfo=self.document,
+            logInfo=self.bob_entry,
+            description="Removed duplicate entry",
+            textDiff="- Deleted content: Bob's test results",
+            logbookList=[LogbookInfo(id=1, name="Project Alpha", displayName="Project Alpha")],
+        )
+
+    def create_reply_delete_by_charlie_on_bob_entry(self) -> LogEntryReplyDeleteEvent:
+        """Charlie deletes a reply on Bob's entry in Alice's document."""
+        from bely_mqtt.models import LogbookInfo
+
+        return LogEntryReplyDeleteEvent(
+            eventTimestamp=self.timestamp,
+            eventTriggedByUsername=self.charlie,
+            entityName="LogEntryReply",
+            entityId=3,
+            parentLogDocumentInfo=self.document,
+            parentLogInfo=self.bob_entry,
+            logInfo=LogInfo(
+                id=3,
+                enteredByUsername=self.charlie,
+                lastModifiedByUsername=self.charlie,
+                enteredOnDateTime=self.timestamp,
+                lastModifiedOnDateTime=self.timestamp,
+            ),
+            textDiff="- Deleted reply: This comment is no longer relevant",
+            logbookList=[LogbookInfo(id=1, name="Project Alpha", displayName="Project Alpha")],
+            description="Deleted outdated reply",
         )
 
 
@@ -602,6 +659,73 @@ class TestAppriseSmartNotificationHandler:
                 assert mock_logger.error.called
 
     @pytest.mark.asyncio
+    async def test_entry_delete_by_collaborator(self, handler, mock_factory):
+        """Test: Bob deletes Alice's entry -> Alice gets notified."""
+        event = mock_factory.create_entry_delete_by_bob_on_alice()
+
+        with patch.object(
+            handler.processor, "send_notification", new_callable=AsyncMock
+        ) as mock_send:
+            await handler.handle_log_entry_delete(event)
+
+            # Alice should be notified as both owner and original creator (deduplicated)
+            assert mock_send.call_count == 1
+
+            call_args = mock_send.call_args
+            assert call_args[0][0] == "alice"
+            assert "Your Log Entry Was Deleted" in call_args[0][1]
+            assert "bob" in call_args[0][2]
+            assert "Deleted content" in call_args[0][2]
+
+    @pytest.mark.asyncio
+    async def test_entry_delete_by_third_party(self, handler, mock_factory):
+        """Test: Charlie deletes Bob's entry in Alice's document -> Both Alice and Bob get notified."""
+        event = mock_factory.create_entry_delete_by_charlie_on_bob()
+
+        with patch.object(
+            handler.processor, "send_notification", new_callable=AsyncMock
+        ) as mock_send:
+            await handler.handle_log_entry_delete(event)
+
+            # Bob should be notified his entry was deleted
+            # Alice should also be notified as document owner
+            assert mock_send.call_count == 2
+
+            calls = mock_send.call_args_list
+            usernames = [call[0][0] for call in calls]
+            assert "bob" in usernames
+            assert "alice" in usernames
+
+            # Check notification content
+            for call in calls:
+                assert "charlie" in call[0][2].lower()
+                assert "deleted" in call[0][2].lower()
+
+    @pytest.mark.asyncio
+    async def test_reply_delete(self, handler, mock_factory):
+        """Test: Charlie deletes reply on Bob's entry in Alice's document -> Both Alice and Bob get notified."""
+        event = mock_factory.create_reply_delete_by_charlie_on_bob_entry()
+
+        with patch.object(
+            handler.processor, "send_notification", new_callable=AsyncMock
+        ) as mock_send:
+            await handler.handle_log_entry_reply_delete(event)
+
+            # Bob should be notified as entry creator
+            # Alice should be notified as document owner
+            assert mock_send.call_count == 2
+
+            calls = mock_send.call_args_list
+            usernames = [call[0][0] for call in calls]
+            assert "bob" in usernames  # Entry creator
+            assert "alice" in usernames  # Document owner
+
+            # Check that charlie is mentioned in notifications
+            for call in calls:
+                assert "charlie" in call[0][2].lower()
+                assert "deleted" in call[0][2].lower()
+
+    @pytest.mark.asyncio
     async def test_no_config_handler(self):
         """Test: Handler works without config (no notifications sent)."""
         # Create handler without config - should not raise an error
@@ -620,6 +744,10 @@ class TestAppriseSmartNotificationHandler:
         await handler.handle_log_entry_update(factory.create_entry_update_by_bob_on_alice())
         await handler.handle_log_entry_reply_add(factory.create_reply_add_by_charlie_to_bob())
         await handler.handle_log_reaction_add(factory.create_reaction_add_by_bob_to_alice())
+        await handler.handle_log_entry_delete(factory.create_entry_delete_by_bob_on_alice())
+        await handler.handle_log_entry_reply_delete(
+            factory.create_reply_delete_by_charlie_on_bob_entry()
+        )
 
         # Verify handler can process events without config
         # (it just won't send notifications)

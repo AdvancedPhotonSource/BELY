@@ -23,7 +23,9 @@ sys.modules["apprise"] = MagicMock()
 from bely_mqtt import (  # noqa: E402
     LogEntryAddEvent,
     LogEntryUpdateEvent,
+    LogEntryDeleteEvent,
     LogEntryReplyAddEvent,
+    LogEntryReplyDeleteEvent,
     LogReactionAddEvent,
 )
 from bely_mqtt.models import (  # noqa: E402
@@ -511,6 +513,96 @@ class TestScenarios:
 
         # No notification should be sent (John is both creator and document owner)
         assert len(notification_tracker) == 0
+
+    @pytest.mark.asyncio
+    async def test_scenario_content_deletion(self, handler, notification_tracker):
+        """
+        Scenario: Content Deletion
+
+        Test notifications for entry and reply deletions.
+        """
+        base_time = datetime.now()
+
+        # Sarah's document
+        doc = LogDocumentInfo(
+            id=600,
+            name="Team Retrospective",
+            ownerUsername="sarah",
+            createdByUsername="sarah",
+            lastModifiedByUsername="sarah",
+            enteredOnDateTime=base_time.isoformat(),
+            lastModifiedOnDateTime=base_time.isoformat(),
+        )
+
+        # John's entry in Sarah's document
+        john_entry = LogInfo(
+            id=601,
+            enteredByUsername="john",
+            lastModifiedByUsername="john",
+            enteredOnDateTime=base_time.isoformat(),
+            lastModifiedOnDateTime=base_time.isoformat(),
+        )
+
+        # 1. Emma deletes John's entry
+        event1 = LogEntryDeleteEvent(
+            eventTimestamp=(base_time + timedelta(minutes=5)).isoformat(),
+            eventTriggedByUsername="emma",
+            entityName="LogEntry",
+            entityId=601,
+            parentLogDocumentInfo=doc,
+            logInfo=john_entry,
+            description="Removed duplicate entry",
+            textDiff="- Deleted content: This was a duplicate of entry #599",
+            logbookList=[LogbookInfo(id=5, name="Retrospective", displayName="Retrospective")],
+        )
+
+        await handler.handle_log_entry_delete(event1)
+
+        # John should be notified (his entry was deleted)
+        # Sarah should be notified (document owner)
+        assert len(notification_tracker) == 2
+        usernames = {n["username"] for n in notification_tracker}
+        assert usernames == {"john", "sarah"}
+
+        # Check John's notification
+        john_notification = [n for n in notification_tracker if n["username"] == "john"][0]
+        assert "Your Log Entry Was Deleted" in john_notification["title"]
+        assert "emma" in john_notification["body"].lower()
+
+        # Check Sarah's notification
+        sarah_notification = [n for n in notification_tracker if n["username"] == "sarah"][0]
+        assert "Log Entry Deleted" in sarah_notification["title"]
+
+        # 2. Sarah deletes a reply on John's entry
+        event2 = LogEntryReplyDeleteEvent(
+            eventTimestamp=(base_time + timedelta(minutes=10)).isoformat(),
+            eventTriggedByUsername="sarah",
+            entityName="LogEntryReply",
+            entityId=602,
+            parentLogDocumentInfo=doc,
+            parentLogInfo=john_entry,
+            logInfo=LogInfo(
+                id=602,
+                enteredByUsername="emma",
+                lastModifiedByUsername="emma",
+                enteredOnDateTime=base_time.isoformat(),
+                lastModifiedOnDateTime=base_time.isoformat(),
+            ),
+            textDiff="- Deleted reply: This comment was off-topic",
+            logbookList=[LogbookInfo(id=5, name="Retrospective", displayName="Retrospective")],
+            description="Removed off-topic comment",
+        )
+
+        await handler.handle_log_entry_reply_delete(event2)
+
+        # John should be notified (reply on his entry was deleted)
+        # Sarah is the one deleting and is the document owner, so she gets one notification
+        # (deduplicated since she's both the actor and the owner)
+        assert len(notification_tracker) == 3  # 2 previous + 1 new
+        new_notification = notification_tracker[-1]
+        assert new_notification["username"] == "john"
+        assert "Reply Deleted from Your Log Entry" in new_notification["title"]
+        assert "sarah" in new_notification["body"].lower()
 
 
 class TestErrorHandling:

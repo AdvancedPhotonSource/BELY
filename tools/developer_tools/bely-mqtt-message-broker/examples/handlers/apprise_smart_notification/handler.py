@@ -8,8 +8,10 @@ from bely_mqtt import (
     MQTTHandler,
     LogEntryAddEvent,
     LogEntryUpdateEvent,
+    LogEntryDeleteEvent,
     LogEntryReplyAddEvent,
     LogEntryReplyUpdateEvent,
+    LogEntryReplyDeleteEvent,
     LogReactionAddEvent,
     LogReactionDeleteEvent,
 )
@@ -156,6 +158,38 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         except Exception as e:
             self.logger.error(f"Error processing log reaction delete: {e}", exc_info=True)
 
+    async def handle_log_entry_delete(self, event: LogEntryDeleteEvent) -> None:
+        """
+        Handle log entry delete events.
+
+        Notify:
+        1. The original creator if their entry is deleted by someone else
+        2. Document owners about any deletions
+
+        Args:
+            event: The log entry delete event
+        """
+        try:
+            await self._handle_delete_event(event, is_reply=False)
+        except Exception as e:
+            self.logger.error(f"Error processing log entry delete: {e}", exc_info=True)
+
+    async def handle_log_entry_reply_delete(self, event: LogEntryReplyDeleteEvent) -> None:
+        """
+        Handle log entry reply delete events.
+
+        Notify:
+        1. The original entry creator if someone deletes a reply on their entry
+        2. Document owners about any reply deletions
+
+        Args:
+            event: The log entry reply delete event
+        """
+        try:
+            await self._handle_delete_event(event, is_reply=True)
+        except Exception as e:
+            self.logger.error(f"Error processing log entry reply delete: {e}", exc_info=True)
+
     async def _handle_add_event(
         self, event: Union[LogEntryAddEvent, LogEntryReplyAddEvent], is_reply: bool = False
     ) -> None:
@@ -301,3 +335,66 @@ class AppriseSmartNotificationHandler(MQTTHandler):
 
         # Send notification
         await self.processor.send_notification(creator_username, title, body)
+
+    async def _handle_delete_event(
+        self, event: Union[LogEntryDeleteEvent, LogEntryReplyDeleteEvent], is_reply: bool = False
+    ) -> None:
+        """
+        Unified handler for delete events (entry or reply deletes).
+
+        Args:
+            event: The delete event
+            is_reply: Whether this is a reply delete
+        """
+        notification_configs = []
+
+        if is_reply:
+            # Notify the original entry creator about reply deletion
+            creator_username = event.parent_log_info.entered_by_username
+            notification_configs.append(
+                {
+                    "username": creator_username,
+                    "notification_type": "entry_replies",
+                    "title": f"Reply Deleted from Your Log Entry in {event.parent_log_document_info.name}",
+                    "body": self.formatter.format_reply_deleted(event),
+                    "context": "reply_delete",
+                }
+            )
+
+            # Notify the document owner about reply deletion
+            owner_username = event.parent_log_document_info.owner_username
+            notification_configs.append(
+                {
+                    "username": owner_username,
+                    "notification_type": "document_replies",
+                    "title": f"Reply Deleted in Your Document: {event.parent_log_document_info.name}",
+                    "body": self.formatter.format_document_reply_deleted(event),
+                    "context": "document_owner",
+                }
+            )
+        else:
+            # Notify the original entry creator about their entry being deleted
+            creator_username = event.log_info.entered_by_username
+            notification_configs.append(
+                {
+                    "username": creator_username,
+                    "notification_type": "own_entry_edits",
+                    "title": f"Your Log Entry Was Deleted: {event.parent_log_document_info.name}",
+                    "body": self.formatter.format_own_entry_deleted(event),
+                    "context": "own_entry_delete",
+                }
+            )
+
+            # Notify the document owner about entry deletion
+            owner_username = event.parent_log_document_info.owner_username
+            notification_configs.append(
+                {
+                    "username": owner_username,
+                    "notification_type": "entry_updates",
+                    "title": f"Log Entry Deleted: {event.parent_log_document_info.name}",
+                    "body": self.formatter.format_entry_deleted(event),
+                    "context": "entry_delete",
+                }
+            )
+
+        await self.processor.process_notifications(event, notification_configs)
