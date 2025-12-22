@@ -37,7 +37,12 @@ from bely_mqtt.models import (  # noqa: E402
 )
 from bely_mqtt.config import GlobalConfig  # noqa: E402
 
-from apprise_smart_notification import AppriseSmartNotificationHandler  # noqa: E402
+# Add parent directory to path to import handler module
+handler_path = Path(__file__).parent.parent
+if handler_path.exists():
+    sys.path.insert(0, str(handler_path))
+
+from handler import AppriseSmartNotificationHandler  # noqa: E402
 
 
 class TestScenarios:
@@ -115,7 +120,7 @@ class TestScenarios:
         """Create handler with test configuration."""
         global_config = GlobalConfig({"bely_url": "https://bely.company.com"})
 
-        with patch("apprise_smart_notification.notification_processor.APPRISE_AVAILABLE", True):
+        with patch("notification_processor.APPRISE_AVAILABLE", True):
             handler = AppriseSmartNotificationHandler(
                 config_path=str(test_config), global_config=global_config
             )
@@ -624,7 +629,7 @@ class TestErrorHandling:
         with open(config_path, "w") as f:
             yaml.dump(config, f)
 
-        with patch("apprise_smart_notification.notification_processor.APPRISE_AVAILABLE", True):
+        with patch("notification_processor.APPRISE_AVAILABLE", True):
             handler = AppriseSmartNotificationHandler(config_path=str(config_path))
 
         # Event from unconfigured user "bob"
@@ -678,7 +683,7 @@ class TestErrorHandling:
         with open(config_path, "w") as f:
             yaml.dump(config, f)
 
-        with patch("apprise_smart_notification.notification_processor.APPRISE_AVAILABLE", True):
+        with patch("notification_processor.APPRISE_AVAILABLE", True):
             handler = AppriseSmartNotificationHandler(config_path=str(config_path))
 
             # Mock the Apprise notify method

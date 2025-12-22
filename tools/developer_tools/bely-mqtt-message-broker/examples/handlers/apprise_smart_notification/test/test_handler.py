@@ -38,7 +38,12 @@ from bely_mqtt.models import (  # noqa: E402
 )
 from bely_mqtt.config import GlobalConfig  # noqa: E402
 
-from apprise_smart_notification import AppriseSmartNotificationHandler  # noqa: E402
+# Add parent directory to path to import handler module
+handler_path = Path(__file__).parent.parent
+if handler_path.exists():
+    sys.path.insert(0, str(handler_path))
+
+from handler import AppriseSmartNotificationHandler  # noqa: E402
 
 
 class MockEventFactory:
@@ -394,7 +399,7 @@ class TestAppriseSmartNotificationHandler:
         """Create a handler instance with mocked Apprise."""
         global_config = GlobalConfig({"bely_url": "https://bely.example.com"})
 
-        with patch("apprise_smart_notification.notification_processor.APPRISE_AVAILABLE", True):
+        with patch("notification_processor.APPRISE_AVAILABLE", True):
             handler = AppriseSmartNotificationHandler(
                 config_path=str(config_file), global_config=global_config
             )
@@ -759,7 +764,7 @@ class TestNotificationContent:
     @pytest.fixture
     def formatter(self):
         """Create a formatter instance."""
-        from apprise_smart_notification.formatters import NotificationFormatter
+        from formatters import NotificationFormatter
 
         return NotificationFormatter(
             bely_url="https://bely.example.com", logger=logging.getLogger("test")

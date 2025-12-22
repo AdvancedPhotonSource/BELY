@@ -38,8 +38,7 @@ test:
 
 test-handlers:
 	@echo "Running Apprise Smart Notification Handler tests..."
-	pytest examples/handlers/apprise_smart_notification/test_handler.py \
-		examples/handlers/apprise_smart_notification/test_integration.py \
+	pytest examples/handlers/apprise_smart_notification/test/ \
 		--asyncio-mode=auto -v
 
 test-apprise:

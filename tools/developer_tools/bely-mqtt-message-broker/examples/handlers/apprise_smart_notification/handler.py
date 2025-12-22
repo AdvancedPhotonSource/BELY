@@ -17,9 +17,16 @@ from bely_mqtt import (
 )
 from bely_mqtt.config import GlobalConfig
 
-from .config_loader import ConfigLoader
-from .notification_processor import NotificationProcessor
-from .formatters import NotificationFormatter
+try:
+    # Try relative imports first (when used as a package)
+    from .config_loader import ConfigLoader
+    from .notification_processor import NotificationProcessor
+    from .formatters import NotificationFormatter
+except ImportError:
+    # Fall back to absolute imports (when imported directly from tests)
+    from config_loader import ConfigLoader
+    from notification_processor import NotificationProcessor
+    from formatters import NotificationFormatter
 
 
 class AppriseSmartNotificationHandler(MQTTHandler):

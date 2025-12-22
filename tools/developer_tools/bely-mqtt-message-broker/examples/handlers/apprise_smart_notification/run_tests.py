@@ -30,7 +30,7 @@ def main():
             env["PYTHONPATH"] = str(src_path)
 
     # Base pytest command
-    cmd = [sys.executable, "-m", "pytest", "test_handler.py"]
+    cmd = [sys.executable, "-m", "pytest", "test/"]
 
     # Add common options
     cmd.extend(
