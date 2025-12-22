@@ -12,16 +12,24 @@ try:
 except ImportError:
     APPRISE_AVAILABLE = False
 
+try:
+    # Try relative imports first (when used as a package)
+    from .email_threading import EmailThreadingStrategy, NotificationEventType, detect_event_type
+except ImportError:
+    # Fall back to absolute imports (when imported directly from tests)
+    from email_threading import EmailThreadingStrategy, NotificationEventType
+
 
 class NotificationProcessor:
     """Handles processing and sending of notifications."""
 
-    def __init__(self, logger: Logger):
+    def __init__(self, logger: Logger, domain: str = "notifications.bely.app"):
         """
         Initialize the notification processor.
 
         Args:
             logger: Logger instance for output
+            domain: Domain for email threading IDs (default: notifications.bely.app)
         """
 
         self.logger = logger
@@ -32,6 +40,10 @@ class NotificationProcessor:
 
         self.user_apprise_instances: Dict[str, apprise.Apprise] = {}
         self.user_notification_settings: Dict[str, Dict[str, bool]] = {}
+        self.user_has_email: Dict[str, bool] = {}  # Track which users have email notifications
+
+        # Initialize email threading strategy
+        self.email_threading = EmailThreadingStrategy(domain=domain)
 
     def initialize_from_config(self, config: Dict[str, Any], config_loader: Any) -> None:
         """
@@ -57,15 +69,23 @@ class NotificationProcessor:
                 if isinstance(apprise_urls, str):
                     apprise_urls = [apprise_urls]
 
+                has_email = False
                 for url in apprise_urls:
                     # Process mailto URLs to use global mail server settings if available
                     processed_url = config_loader.process_apprise_url(url, global_config)
                     if not apobj.add(processed_url):
                         self.logger.warning(f"Failed to add Apprise URL for user {username}: {url}")
+                    else:
+                        # Check if this is an email notification
+                        if EmailThreadingStrategy.is_email_notification(processed_url):
+                            has_email = True
 
                 if apobj:
                     self.user_apprise_instances[username] = apobj
-                    self.logger.debug(f"Initialized Apprise for user: {username}")
+                    self.user_has_email[username] = has_email
+                    self.logger.debug(
+                        f"Initialized Apprise for user: {username} (has_email: {has_email})"
+                    )
                 else:
                     self.logger.warning(f"No valid Apprise URLs for user: {username}")
 
@@ -109,6 +129,7 @@ class NotificationProcessor:
         username: Optional[str],
         title: str,
         body: str,
+        headers: Optional[Dict[str, str]] = None,
     ) -> None:
         """
         Send notification to user via Apprise.
@@ -117,6 +138,7 @@ class NotificationProcessor:
             username: Username to notify
             title: Notification title
             body: Notification body
+            headers: Optional headers (used for email threading)
         """
         if not username or username not in self.user_apprise_instances:
             self.logger.debug(f"No notification endpoints for user: {username}")
@@ -125,11 +147,22 @@ class NotificationProcessor:
         try:
             apobj = self.user_apprise_instances[username]
 
-            # Send notification
-            result = apobj.notify(
-                body=body,
-                title=title,
-            )
+            # Only include headers if user has email notifications
+            # Apprise will ignore headers for non-email notification types
+            if headers and self.user_has_email.get(username, False):
+                # Send notification with headers for email threading
+                result = apobj.notify(
+                    body=body,
+                    title=title,
+                    headers=headers,
+                )
+                self.logger.debug(f"Sent notification with email threading headers to {username}")
+            else:
+                # Send notification without headers
+                result = apobj.notify(
+                    body=body,
+                    title=title,
+                )
 
             if result:
                 self.logger.info(f"Notification sent to {username}: {title}")
@@ -138,6 +171,66 @@ class NotificationProcessor:
 
         except Exception as e:
             self.logger.error(f"Error sending notification to {username}: {e}", exc_info=True)
+
+    async def send_notification_with_threading(
+        self,
+        username: Optional[str],
+        title: str,
+        body: str,
+        event_type: NotificationEventType,
+        document_id: str,
+        document_name: str,
+        entry_id: Optional[str] = None,
+        parent_entry_id: Optional[str] = None,
+        action_by: Optional[str] = None,
+    ) -> None:
+        """
+        Send notification with email threading support.
+
+        Args:
+            username: Username to notify
+            title: Notification title (will be overridden for threading)
+            body: Notification body
+            event_type: Type of notification event
+            document_id: The document ID
+            document_name: The document name
+            entry_id: The log entry ID (if applicable)
+            parent_entry_id: The parent entry ID (for replies)
+            action_by: User who performed the action
+        """
+        if not username or username not in self.user_apprise_instances:
+            self.logger.debug(f"No notification endpoints for user: {username}")
+            return
+
+        # Check if user has email notifications
+        has_email = self.user_has_email.get(username, False)
+
+        # Generate appropriate subject based on notification type
+        action_desc = f"by {action_by}" if action_by else None
+        threaded_subject = self.email_threading.generate_subject(
+            event_type=event_type,
+            document_title=document_name,
+            action_description=action_desc,
+            is_email=has_email,
+        )
+
+        # Generate email headers if user has email notifications
+        headers = None
+        if has_email:
+            try:
+                headers = self.email_threading.get_email_headers(
+                    event_type=event_type,
+                    document_id=document_id,
+                    document_name=document_name,
+                    entry_id=entry_id,
+                    parent_entry_id=parent_entry_id,
+                )
+                self.logger.debug(f"Generated email threading headers for {username}: {headers}")
+            except ValueError as e:
+                self.logger.warning(f"Failed to generate email headers: {e}")
+
+        # Send notification with threading support
+        await self.send_notification(username, threaded_subject, body, headers)
 
     async def process_notifications(
         self, event: Any, notification_configs: List[Dict[str, Any]]
@@ -153,6 +246,9 @@ class NotificationProcessor:
                 - title: Notification title
                 - body: Notification body
                 - context: Optional context for trigger description
+                - event_type: Optional NotificationEventType for threading
+                - entry_id: Optional entry ID for threading
+                - parent_entry_id: Optional parent entry ID for threading
         """
         notifications_sent = []
 
@@ -171,5 +267,22 @@ class NotificationProcessor:
             title = config["title"]
             body = config["body"]
 
-            await self.send_notification(username, title, body)
+            # Check if we have threading information
+            if "event_type" in config and hasattr(event, "parent_log_document_info"):
+                # Use threading-aware notification
+                await self.send_notification_with_threading(
+                    username=username,
+                    title=title,
+                    body=body,
+                    event_type=config["event_type"],
+                    document_id=event.parent_log_document_info.id,
+                    document_name=event.parent_log_document_info.name,
+                    entry_id=config.get("entry_id"),
+                    parent_entry_id=config.get("parent_entry_id"),
+                    action_by=event.event_triggered_by_username,
+                )
+            else:
+                # Fall back to simple notification
+                await self.send_notification(username, title, body)
+
             notifications_sent.append(username)

@@ -22,11 +22,13 @@ try:
     from .config_loader import ConfigLoader
     from .notification_processor import NotificationProcessor
     from .formatters import NotificationFormatter
+    from .email_threading import NotificationEventType, detect_event_type
 except ImportError:
     # Fall back to absolute imports (when imported directly from tests)
     from config_loader import ConfigLoader
     from notification_processor import NotificationProcessor
     from formatters import NotificationFormatter
+    from email_threading import NotificationEventType
 
 
 class AppriseSmartNotificationHandler(MQTTHandler):
@@ -209,6 +211,17 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         """
         notification_configs = []
 
+        # Determine event type for threading
+        event_type = (
+            NotificationEventType.ENTRY_REPLY if is_reply else NotificationEventType.ENTRY_ADD
+        )
+
+        # Extract IDs for threading
+        entry_id = event.log_info.id if hasattr(event, "log_info") else None
+        parent_entry_id = (
+            event.parent_log_info.id if is_reply and hasattr(event, "parent_log_info") else None
+        )
+
         if is_reply:
             # Notify the original entry creator
             creator_username = event.parent_log_info.entered_by_username
@@ -219,6 +232,9 @@ class AppriseSmartNotificationHandler(MQTTHandler):
                     "title": f"Reply to Your Log Entry in {event.parent_log_document_info.name}",
                     "body": self.formatter.format_reply_added(event),
                     "context": None,
+                    "event_type": event_type,
+                    "entry_id": entry_id,
+                    "parent_entry_id": parent_entry_id,
                 }
             )
 
@@ -231,6 +247,9 @@ class AppriseSmartNotificationHandler(MQTTHandler):
                     "title": f"New Reply in Your Document: {event.parent_log_document_info.name}",
                     "body": self.formatter.format_document_reply(event),
                     "context": "document_owner",
+                    "event_type": event_type,
+                    "entry_id": entry_id,
+                    "parent_entry_id": parent_entry_id,
                 }
             )
         else:
@@ -250,6 +269,8 @@ class AppriseSmartNotificationHandler(MQTTHandler):
                     "title": f"New Log Entry in {event.parent_log_document_info.name}",
                     "body": self.formatter.format_entry_added(event),
                     "context": None,
+                    "event_type": event_type,
+                    "entry_id": entry_id,
                 }
             )
 
@@ -266,6 +287,17 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             is_reply: Whether this is a reply update
         """
         notification_configs = []
+
+        # Determine event type for threading
+        event_type = (
+            NotificationEventType.REPLY_UPDATE if is_reply else NotificationEventType.ENTRY_UPDATE
+        )
+
+        # Extract IDs for threading
+        entry_id = event.log_info.id if hasattr(event, "log_info") else None
+        parent_entry_id = (
+            event.parent_log_info.id if is_reply and hasattr(event, "parent_log_info") else None
+        )
 
         if is_reply:
             creator_username = event.parent_log_info.entered_by_username
@@ -294,6 +326,9 @@ class AppriseSmartNotificationHandler(MQTTHandler):
                 "title": own_edit_title,
                 "body": own_edit_body,
                 "context": own_context,
+                "event_type": event_type,
+                "entry_id": entry_id,
+                "parent_entry_id": parent_entry_id,
             }
         )
 
@@ -306,6 +341,9 @@ class AppriseSmartNotificationHandler(MQTTHandler):
                 "title": owner_title,
                 "body": owner_body,
                 "context": None,
+                "event_type": event_type,
+                "entry_id": entry_id,
+                "parent_entry_id": parent_entry_id,
             }
         )
 
@@ -332,6 +370,14 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         if not self.processor.should_notify(creator_username, "reactions"):
             return
 
+        # Determine event type for threading
+        event_type = (
+            NotificationEventType.REACTION_ADD if is_add else NotificationEventType.REACTION_DELETE
+        )
+
+        # Extract entry ID for threading
+        entry_id = event.parent_log_info.id if hasattr(event, "parent_log_info") else None
+
         # Build notification
         if is_add:
             title = f"Reaction to Your Log Entry in {event.parent_log_document_info.name}"
@@ -340,8 +386,17 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             title = f"Reaction Removed from Your Log Entry in {event.parent_log_document_info.name}"
             body = self.formatter.format_reaction_deleted(event)
 
-        # Send notification
-        await self.processor.send_notification(creator_username, title, body)
+        # Send notification with threading support
+        await self.processor.send_notification_with_threading(
+            username=creator_username,
+            title=title,
+            body=body,
+            event_type=event_type,
+            document_id=event.parent_log_document_info.id,
+            document_name=event.parent_log_document_info.name,
+            entry_id=entry_id,
+            action_by=event.event_triggered_by_username,
+        )
 
     async def _handle_delete_event(
         self, event: Union[LogEntryDeleteEvent, LogEntryReplyDeleteEvent], is_reply: bool = False
@@ -355,6 +410,17 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         """
         notification_configs = []
 
+        # Determine event type for threading
+        event_type = (
+            NotificationEventType.REPLY_DELETE if is_reply else NotificationEventType.ENTRY_DELETE
+        )
+
+        # Extract IDs for threading
+        entry_id = event.log_info.id if hasattr(event, "log_info") else None
+        parent_entry_id = (
+            event.parent_log_info.id if is_reply and hasattr(event, "parent_log_info") else None
+        )
+
         if is_reply:
             # Notify the original entry creator about reply deletion
             creator_username = event.parent_log_info.entered_by_username
@@ -365,6 +431,9 @@ class AppriseSmartNotificationHandler(MQTTHandler):
                     "title": f"Reply Deleted from Your Log Entry in {event.parent_log_document_info.name}",
                     "body": self.formatter.format_reply_deleted(event),
                     "context": "reply_delete",
+                    "event_type": event_type,
+                    "entry_id": entry_id,
+                    "parent_entry_id": parent_entry_id,
                 }
             )
 
@@ -377,6 +446,9 @@ class AppriseSmartNotificationHandler(MQTTHandler):
                     "title": f"Reply Deleted in Your Document: {event.parent_log_document_info.name}",
                     "body": self.formatter.format_document_reply_deleted(event),
                     "context": "document_owner",
+                    "event_type": event_type,
+                    "entry_id": entry_id,
+                    "parent_entry_id": parent_entry_id,
                 }
             )
         else:
@@ -389,6 +461,8 @@ class AppriseSmartNotificationHandler(MQTTHandler):
                     "title": f"Your Log Entry Was Deleted: {event.parent_log_document_info.name}",
                     "body": self.formatter.format_own_entry_deleted(event),
                     "context": "own_entry_delete",
+                    "event_type": event_type,
+                    "entry_id": entry_id,
                 }
             )
 
@@ -401,6 +475,8 @@ class AppriseSmartNotificationHandler(MQTTHandler):
                     "title": f"Log Entry Deleted: {event.parent_log_document_info.name}",
                     "body": self.formatter.format_entry_deleted(event),
                     "context": "entry_delete",
+                    "event_type": event_type,
+                    "entry_id": entry_id,
                 }
             )
 
