@@ -58,15 +58,6 @@ class EmailThreadingStrategy:
     EMAIL_SCHEMES = {
         "mailto",
         "mailtos",  # Generic email
-        "mailgun",
-        "sendgrid",
-        "ses",  # Email services
-        "smtp",
-        "smtp2go",
-        "sparkpost",
-        "mandrill",  # SMTP and more email services
-        "email",
-        "emails",  # Alternative email schemes
     }
 
     def __init__(self, domain: str = "notifications.bely.app"):

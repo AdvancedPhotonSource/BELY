@@ -62,12 +62,7 @@ class TestEmailThreadingStrategy:
         # Email URLs that should be detected
         email_urls = [
             "mailto://user:pass@gmail.com",
-            "mailtos://user:pass@mail.example.com:587",
-            "mailgun://api_key@domain.com",
-            "sendgrid://api_key@/",
-            "ses://access_key/secret_key@region",
-            "smtp://user:pass@smtp.gmail.com",
-            "smtp2go://user:pass@/",
+            "mailtos://user:pass@mail.example.com:587",        
         ]
 
         # Non-email URLs that should not be detected
