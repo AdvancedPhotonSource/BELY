@@ -6,7 +6,7 @@ are grouped together in email clients.
 """
 
 from enum import Enum
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 import hashlib
@@ -312,7 +312,7 @@ class EmailThreadingStrategy:
 
 
 def detect_event_type(
-    event: any,
+    event: Any,
     is_reply: bool = False,
     is_update: bool = False,
     is_delete: bool = False,

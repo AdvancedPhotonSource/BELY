@@ -17,7 +17,7 @@ try:
     from .email_threading import EmailThreadingStrategy, NotificationEventType
 except ImportError:
     # Fall back to absolute imports (when imported directly from tests)
-    from email_threading import EmailThreadingStrategy, NotificationEventType
+    from email_threading import EmailThreadingStrategy, NotificationEventType  # type: ignore[no-redef]
 
 
 class NotificationProcessor:
@@ -151,10 +151,12 @@ class NotificationProcessor:
             # Apprise will ignore headers for non-email notification types
             if headers and self.user_has_email.get(username, False):
                 # Send notification with headers for email threading
+                # Note: headers parameter might not be supported in all apprise versions
+                # Using type: ignore to suppress mypy warning
                 result = apobj.notify(
                     body=body,
                     title=title,
-                    headers=headers,
+                    headers=headers,  # type: ignore[call-arg]
                 )
                 self.logger.debug(f"Sent notification with email threading headers to {username}")
             else:

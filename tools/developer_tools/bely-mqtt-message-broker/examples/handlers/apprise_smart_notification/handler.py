@@ -25,10 +25,10 @@ try:
     from .email_threading import NotificationEventType
 except ImportError:
     # Fall back to absolute imports (when imported directly from tests)
-    from config_loader import ConfigLoader
-    from notification_processor import NotificationProcessor
-    from formatters import NotificationFormatter
-    from email_threading import NotificationEventType
+    from config_loader import ConfigLoader  # type: ignore[no-redef]
+    from notification_processor import NotificationProcessor  # type: ignore[no-redef]
+    from formatters import NotificationFormatter  # type: ignore[no-redef]
+    from email_threading import NotificationEventType  # type: ignore[no-redef]
 
 
 class AppriseSmartNotificationHandler(MQTTHandler):
