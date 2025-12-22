@@ -84,6 +84,18 @@ class LogEntryEventBase(BaseEvent):
     text_diff: str = Field(alias="textDiff")
 
 
+class LogEntryReplyEventBase(LogEntryEventBase):
+    """Base class for log entry reply events.
+
+    Extends LogEntryEventBase with parent log information for replies.
+    """
+
+    parent_log_info: LogInfo = Field(alias="parentLogInfo")
+
+
+# Log Entry Events (Add/Update/Delete)
+
+
 class LogEntryAddEvent(LogEntryEventBase):
     """Event triggered when a log entry is added."""
 
@@ -102,22 +114,28 @@ class LogEntryDeleteEvent(LogEntryEventBase):
     pass
 
 
-class LogEntryReplyAddEvent(LogEntryEventBase):
+# Log Entry Reply Events (Add/Update/Delete)
+
+
+class LogEntryReplyAddEvent(LogEntryReplyEventBase):
     """Event triggered when a reply to a log entry is added."""
 
-    parent_log_info: LogInfo = Field(alias="parentLogInfo")
+    pass
 
 
-class LogEntryReplyUpdateEvent(LogEntryEventBase):
+class LogEntryReplyUpdateEvent(LogEntryReplyEventBase):
     """Event triggered when a reply to a log entry is updated."""
 
-    parent_log_info: LogInfo = Field(alias="parentLogInfo")
+    pass
 
 
-class LogEntryReplyDeleteEvent(LogEntryEventBase):
+class LogEntryReplyDeleteEvent(LogEntryReplyEventBase):
     """Event triggered when a reply to a log entry is deleted."""
 
-    parent_log_info: LogInfo = Field(alias="parentLogInfo")
+    pass
+
+
+# Reaction Models
 
 
 class ReactionInfo(BaseModel):
