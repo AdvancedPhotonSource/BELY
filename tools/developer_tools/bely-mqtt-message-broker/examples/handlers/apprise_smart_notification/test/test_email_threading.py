@@ -62,7 +62,7 @@ class TestEmailThreadingStrategy:
         # Email URLs that should be detected
         email_urls = [
             "mailto://user:pass@gmail.com",
-            "mailtos://user:pass@mail.example.com:587",        
+            "mailtos://user:pass@mail.example.com:587",
         ]
 
         # Non-email URLs that should not be detected

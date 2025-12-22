@@ -14,7 +14,7 @@ except ImportError:
 
 try:
     # Try relative imports first (when used as a package)
-    from .email_threading import EmailThreadingStrategy, NotificationEventType, detect_event_type
+    from .email_threading import EmailThreadingStrategy, NotificationEventType
 except ImportError:
     # Fall back to absolute imports (when imported directly from tests)
     from email_threading import EmailThreadingStrategy, NotificationEventType

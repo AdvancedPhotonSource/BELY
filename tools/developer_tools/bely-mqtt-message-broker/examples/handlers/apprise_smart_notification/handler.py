@@ -22,7 +22,7 @@ try:
     from .config_loader import ConfigLoader
     from .notification_processor import NotificationProcessor
     from .formatters import NotificationFormatter
-    from .email_threading import NotificationEventType, detect_event_type
+    from .email_threading import NotificationEventType
 except ImportError:
     # Fall back to absolute imports (when imported directly from tests)
     from config_loader import ConfigLoader
