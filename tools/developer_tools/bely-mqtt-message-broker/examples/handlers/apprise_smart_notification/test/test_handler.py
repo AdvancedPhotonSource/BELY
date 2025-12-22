@@ -424,8 +424,9 @@ class TestAppriseSmartNotificationHandler:
             mock_send.assert_called_once()
             call_args = mock_send.call_args
             assert call_args[0][0] == "alice"
-            assert "New Log Entry" in call_args[0][1]
-            assert "bob" in call_args[0][2]
+            # Alice has email configured, so should get email-style subject
+            assert "Re: Log: Project Alpha Documentation" in call_args[0][1]
+            assert "bob" in call_args[0][1] or "bob" in call_args[0][2]
             assert "Performance improved by 20%" in call_args[0][2]
 
     @pytest.mark.asyncio
@@ -546,7 +547,9 @@ class TestAppriseSmartNotificationHandler:
             mock_send.assert_called_once()
             call_args = mock_send.call_args
             assert call_args[0][0] == "alice"
-            assert "Reaction to Your Log Entry" in call_args[0][1]
+            # Alice has email configured, so should get email-style subject with action
+            assert "Re: Log: Project Alpha Documentation" in call_args[0][1]
+            assert "bob" in call_args[0][1]  # Action by bob should be in subject
             assert "🎉" in call_args[0][2]
             assert "tada" in call_args[0][2]
 
@@ -564,7 +567,9 @@ class TestAppriseSmartNotificationHandler:
             mock_send.assert_called_once()
             call_args = mock_send.call_args
             assert call_args[0][0] == "alice"
-            assert "Reaction Removed" in call_args[0][1]
+            # Alice has email configured, so should get email-style subject with action
+            assert "Re: Log: Project Alpha Documentation" in call_args[0][1]
+            assert "bob" in call_args[0][1]  # Action by bob should be in subject
             assert "👍" in call_args[0][2]
 
     @pytest.mark.asyncio
@@ -678,7 +683,9 @@ class TestAppriseSmartNotificationHandler:
 
             call_args = mock_send.call_args
             assert call_args[0][0] == "alice"
-            assert "Your Log Entry Was Deleted" in call_args[0][1]
+            # Alice has email configured, so should get email-style subject
+            assert "Re: Log: Project Alpha Documentation" in call_args[0][1]
+            assert "[Entry Deleted]" in call_args[0][1]
             assert "bob" in call_args[0][2]
             assert "Deleted content" in call_args[0][2]
 

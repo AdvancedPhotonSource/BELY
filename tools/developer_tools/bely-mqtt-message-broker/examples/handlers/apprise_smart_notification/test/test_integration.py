@@ -136,12 +136,13 @@ class TestScenarios:
         """Track all notifications sent during tests."""
         notifications = []
 
-        async def track_notification(username, title, body):
+        async def track_notification(username, title, body, headers=None):
             notifications.append(
                 {
                     "username": username,
                     "title": title,
                     "body": body,
+                    "headers": headers,
                     "timestamp": datetime.now().isoformat(),
                 }
             )
@@ -200,7 +201,8 @@ class TestScenarios:
         # Sarah should be notified (document owner, new_entries enabled)
         assert len(notification_tracker) == 1
         assert notification_tracker[0]["username"] == "sarah"
-        assert "New Log Entry" in notification_tracker[0]["title"]
+        # Sarah has email configured, so should get email-style subject
+        assert "Re: Log: Sprint 23 Planning" in notification_tracker[0]["title"]
 
         # 2. Emma adds a QA consideration as a reply
         event2 = LogEntryReplyAddEvent(
@@ -253,7 +255,9 @@ class TestScenarios:
 
         # Check John's notification
         assert new_notification["username"] == "john"
-        assert "Your Log Entry Was Edited" in new_notification["title"]
+        # John has email configured, so should get email-style subject
+        assert "Re: Log: Sprint 23 Planning" in new_notification["title"]
+        assert "[Entry Updated]" in new_notification["title"]
         assert "sarah" in new_notification["body"].lower()
 
         # 4. John reacts to Emma's QA comment with thumbs up
@@ -375,7 +379,8 @@ class TestScenarios:
         # Emma should be notified (document owner, but document_replies disabled)
         assert len(notification_tracker) == 1
         assert notification_tracker[0]["username"] == "john"
-        assert "Reply to Your Log Entry" in notification_tracker[0]["title"]
+        # John has email configured, so should get email-style subject
+        assert "Re: Log: BUG-1234: API Response Timeout" in notification_tracker[0]["title"]
 
         # 3. John updates his own entry with fix status
         event3 = LogEntryUpdateEvent(
@@ -571,12 +576,16 @@ class TestScenarios:
 
         # Check John's notification
         john_notification = [n for n in notification_tracker if n["username"] == "john"][0]
-        assert "Your Log Entry Was Deleted" in john_notification["title"]
+        # John has email configured, so should get email-style subject
+        assert "Re: Log: Team Retrospective" in john_notification["title"]
+        assert "[Entry Deleted]" in john_notification["title"]
         assert "emma" in john_notification["body"].lower()
 
         # Check Sarah's notification
         sarah_notification = [n for n in notification_tracker if n["username"] == "sarah"][0]
-        assert "Log Entry Deleted" in sarah_notification["title"]
+        # Sarah has email configured, so should get email-style subject
+        assert "Re: Log: Team Retrospective" in sarah_notification["title"]
+        assert "[Entry Deleted]" in sarah_notification["title"]
 
         # 2. Sarah deletes a reply on John's entry
         event2 = LogEntryReplyDeleteEvent(
@@ -606,7 +615,9 @@ class TestScenarios:
         assert len(notification_tracker) == 3  # 2 previous + 1 new
         new_notification = notification_tracker[-1]
         assert new_notification["username"] == "john"
-        assert "Reply Deleted from Your Log Entry" in new_notification["title"]
+        # John has email configured, so should get email-style subject
+        assert "Re: Log: Team Retrospective" in new_notification["title"]
+        assert "[Reply Deleted]" in new_notification["title"]
         assert "sarah" in new_notification["body"].lower()
 
 
