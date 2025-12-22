@@ -65,8 +65,10 @@ class MQTTHandler(ABC):
         - handle_generic_delete(event: CoreEvent) - Generic delete events (bely/delete)
         - handle_log_entry_add(event: LogEntryAddEvent) - Log entry added (bely/logEntry/Add)
         - handle_log_entry_update(event: LogEntryUpdateEvent) - Log entry updated (bely/logEntry/Update)
+        - handle_log_entry_delete(event: LogEntryDeleteEvent) - Log entry deleted (bely/logEntry/Delete)
         - handle_log_entry_reply_add(event: LogEntryReplyAddEvent) - Reply added (bely/logEntryReply/Add)
         - handle_log_entry_reply_update(event: LogEntryReplyUpdateEvent) - Reply updated (bely/logEntryReply/Update)
+        - handle_log_entry_reply_delete(event: LogEntryReplyDeleteEvent) - Reply deleted (bely/logEntryReply/Delete)
         - handle_log_reaction_add(event: LogReactionAddEvent) - Reaction added (bely/logReaction/Add)
         - handle_log_reaction_delete(event: LogReactionDeleteEvent) - Reaction deleted (bely/logReaction/Delete)
 
@@ -192,8 +194,10 @@ class MQTTHandler(ABC):
             CoreEvent,
             LogEntryAddEvent,
             LogEntryUpdateEvent,
+            LogEntryDeleteEvent,
             LogEntryReplyAddEvent,
             LogEntryReplyUpdateEvent,
+            LogEntryReplyDeleteEvent,
             LogReactionAddEvent,
             LogReactionDeleteEvent,
         )
@@ -204,8 +208,10 @@ class MQTTHandler(ABC):
             EventType.GENERIC_DELETE: CoreEvent,
             EventType.LOG_ENTRY_ADD: LogEntryAddEvent,
             EventType.LOG_ENTRY_UPDATE: LogEntryUpdateEvent,
+            EventType.LOG_ENTRY_DELETE: LogEntryDeleteEvent,
             EventType.LOG_ENTRY_REPLY_ADD: LogEntryReplyAddEvent,
             EventType.LOG_ENTRY_REPLY_UPDATE: LogEntryReplyUpdateEvent,
+            EventType.LOG_ENTRY_REPLY_DELETE: LogEntryReplyDeleteEvent,
             EventType.LOG_REACTION_ADD: LogReactionAddEvent,
             EventType.LOG_REACTION_DELETE: LogReactionDeleteEvent,
         }

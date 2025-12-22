@@ -96,6 +96,12 @@ class LogEntryUpdateEvent(LogEntryEventBase):
     pass
 
 
+class LogEntryDeleteEvent(LogEntryEventBase):
+    """Event triggered when a log entry is deleted."""
+
+    pass
+
+
 class LogEntryReplyAddEvent(LogEntryEventBase):
     """Event triggered when a reply to a log entry is added."""
 
@@ -104,6 +110,12 @@ class LogEntryReplyAddEvent(LogEntryEventBase):
 
 class LogEntryReplyUpdateEvent(LogEntryEventBase):
     """Event triggered when a reply to a log entry is updated."""
+
+    parent_log_info: LogInfo = Field(alias="parentLogInfo")
+
+
+class LogEntryReplyDeleteEvent(LogEntryEventBase):
+    """Event triggered when a reply to a log entry is deleted."""
 
     parent_log_info: LogInfo = Field(alias="parentLogInfo")
 

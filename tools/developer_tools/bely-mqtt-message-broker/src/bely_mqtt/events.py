@@ -23,10 +23,12 @@ class EventType(Enum):
     Log Entry Events:
         LOG_ENTRY_ADD - Log entry added (bely/logEntry/Add)
         LOG_ENTRY_UPDATE - Log entry updated (bely/logEntry/Update)
+        LOG_ENTRY_DELETE - Log entry deleted (bely/logEntry/Delete)
 
     Log Entry Reply Events:
         LOG_ENTRY_REPLY_ADD - Reply added (bely/logEntryReply/Add)
         LOG_ENTRY_REPLY_UPDATE - Reply updated (bely/logEntryReply/Update)
+        LOG_ENTRY_REPLY_DELETE - Reply deleted (bely/logEntryReply/Delete)
 
     Log Reaction Events:
         LOG_REACTION_ADD - Reaction added (bely/logReaction/Add)
@@ -41,10 +43,12 @@ class EventType(Enum):
     # Log entry events
     LOG_ENTRY_ADD = "bely/logEntry/Add"
     LOG_ENTRY_UPDATE = "bely/logEntry/Update"
+    LOG_ENTRY_DELETE = "bely/logEntry/Delete"
 
     # Log entry reply events
     LOG_ENTRY_REPLY_ADD = "bely/logEntryReply/Add"
     LOG_ENTRY_REPLY_UPDATE = "bely/logEntryReply/Update"
+    LOG_ENTRY_REPLY_DELETE = "bely/logEntryReply/Delete"
 
     # Log reaction events
     LOG_REACTION_ADD = "bely/logReaction/Add"
