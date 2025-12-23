@@ -8,12 +8,7 @@ to email notifications without modifying the Apprise library.
 from typing import Dict, Optional
 from urllib.parse import urlparse
 
-try:
-    import apprise
-
-    APPRISE_AVAILABLE = True
-except ImportError:
-    APPRISE_AVAILABLE = False
+import apprise
 
 
 class EmailNotificationWrapper:
@@ -31,9 +26,6 @@ class EmailNotificationWrapper:
         Args:
             apprise_url: The Apprise email URL (mailto:// or mailtos://)
         """
-        if not APPRISE_AVAILABLE:
-            raise ImportError("Apprise is required for email notifications")
-
         self.apprise_url = apprise_url
         self._parse_email_config()
 
@@ -67,9 +59,6 @@ class EmailNotificationWrapper:
         Returns:
             True if notification was sent successfully, False otherwise
         """
-        if not APPRISE_AVAILABLE:
-            return False
-
         try:
             # Create a NotifyEmail instance directly
             email_instance = apprise.Apprise.instantiate(self.apprise_url)
@@ -115,9 +104,6 @@ class AppriseWithEmailHeaders:
 
     def __init__(self):
         """Initialize the wrapper."""
-        if not APPRISE_AVAILABLE:
-            raise ImportError("Apprise is required")
-
         self.apprise = apprise.Apprise()
         self.email_wrappers = {}
         self.non_email_urls = []

@@ -22,8 +22,6 @@ sys.modules["apprise.plugins.email.base"] = MagicMock()
 
 import apprise_email_wrapper  # noqa: E402
 
-apprise_email_wrapper.APPRISE_AVAILABLE = True
-
 
 class TestEmailNotificationWrapper:
     """Test suite for EmailNotificationWrapper class."""

@@ -6,13 +6,6 @@ from logging import Logger
 from typing import Any, Dict, List, Optional
 
 try:
-    import apprise
-
-    APPRISE_AVAILABLE = True
-except ImportError:
-    APPRISE_AVAILABLE = False
-
-try:
     # Try relative imports first (when used as a package)
     from .email_threading import EmailThreadingStrategy, NotificationEventType
     from .apprise_email_wrapper import AppriseWithEmailHeaders, is_email_notification
@@ -36,10 +29,6 @@ class NotificationProcessor:
 
         self.logger = logger
 
-        if not APPRISE_AVAILABLE:
-            self.logger.warning("Apprise not installed. Install with: pip install apprise")
-            raise ImportError("Apprise is required for this handler")
-
         self.user_apprise_instances: Dict[str, AppriseWithEmailHeaders] = {}
         self.user_notification_settings: Dict[str, Dict[str, bool]] = {}
         self.user_has_email: Dict[str, bool] = {}  # Track which users have email notifications
@@ -55,9 +44,6 @@ class NotificationProcessor:
             config: Configuration dictionary
             config_loader: ConfigLoader instance for URL processing
         """
-        if not APPRISE_AVAILABLE:
-            raise ImportError("Apprise is required for notification processing")
-
         global_config = config.get("global", {})
         users_config = config.get("users", {})
 

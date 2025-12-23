@@ -126,11 +126,7 @@ class TestScenarios:
         mock_apprise_wrapper.return_value.add = MagicMock(return_value=True)
         mock_apprise_wrapper.return_value.__bool__ = MagicMock(return_value=True)
 
-        with (
-            patch("notification_processor.APPRISE_AVAILABLE", True),
-            patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_wrapper),
-            patch("apprise_email_wrapper.APPRISE_AVAILABLE", True),
-        ):
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_wrapper):
             handler = AppriseSmartNotificationHandler(
                 config_path=str(test_config), global_config=global_config
             )
@@ -650,7 +646,6 @@ class TestErrorHandling:
         with open(config_path, "w") as f:
             yaml.dump(config, f)
 
-        with patch("notification_processor.APPRISE_AVAILABLE", True):
             handler = AppriseSmartNotificationHandler(config_path=str(config_path))
 
         # Event from unconfigured user "bob"
@@ -704,7 +699,6 @@ class TestErrorHandling:
         with open(config_path, "w") as f:
             yaml.dump(config, f)
 
-        with patch("notification_processor.APPRISE_AVAILABLE", True):
             handler = AppriseSmartNotificationHandler(config_path=str(config_path))
 
             # Mock the Apprise notify method
