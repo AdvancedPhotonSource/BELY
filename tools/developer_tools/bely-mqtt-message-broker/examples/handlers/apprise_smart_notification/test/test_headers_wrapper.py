@@ -8,7 +8,7 @@ are properly passed through the wrapper to enable email threading.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch, Mock
+from unittest.mock import MagicMock, patch
 import pytest
 
 # Add parent directory to path for imports
@@ -17,11 +17,12 @@ if handler_path.exists():
     sys.path.insert(0, str(handler_path))
 
 # Mock apprise at module level before importing apprise_email_wrapper
-sys.modules['apprise'] = MagicMock()
-sys.modules['apprise.plugins.email.base'] = MagicMock()
+sys.modules["apprise"] = MagicMock()
+sys.modules["apprise.plugins.email.base"] = MagicMock()
 
 # Now we can safely import the module
 import apprise_email_wrapper
+
 apprise_email_wrapper.APPRISE_AVAILABLE = True
 
 
@@ -64,7 +65,7 @@ class TestEmailNotificationWrapper:
         mock_apprise_module, mock_email_instance = mock_apprise
 
         # Patch the apprise module that's already imported
-        with patch.object(apprise_email_wrapper, 'apprise', mock_apprise_module):
+        with patch.object(apprise_email_wrapper, "apprise", mock_apprise_module):
             wrapper = apprise_email_wrapper.EmailNotificationWrapper("mailto://test@example.com")
 
             # Define custom headers for email threading
@@ -97,7 +98,7 @@ class TestEmailNotificationWrapper:
         """Test sending email without custom headers."""
         mock_apprise_module, mock_email_instance = mock_apprise
 
-        with patch.object(apprise_email_wrapper, 'apprise', mock_apprise_module):
+        with patch.object(apprise_email_wrapper, "apprise", mock_apprise_module):
             wrapper = apprise_email_wrapper.EmailNotificationWrapper("mailto://test@example.com")
 
             # Send notification without headers
@@ -118,7 +119,7 @@ class TestEmailNotificationWrapper:
         # Pre-populate headers with existing values
         mock_email_instance.headers = {"Old-Header": "old-value"}
 
-        with patch.object(apprise_email_wrapper, 'apprise', mock_apprise_module):
+        with patch.object(apprise_email_wrapper, "apprise", mock_apprise_module):
             wrapper = apprise_email_wrapper.EmailNotificationWrapper("mailto://test@example.com")
 
             # Send with new headers
@@ -143,7 +144,7 @@ class TestEmailNotificationWrapper:
         mock_apprise_instance.notify = MagicMock(return_value=True)
         mock_apprise_module.Apprise.return_value = mock_apprise_instance
 
-        with patch.object(apprise_email_wrapper, 'apprise', mock_apprise_module):
+        with patch.object(apprise_email_wrapper, "apprise", mock_apprise_module):
             wrapper = apprise_email_wrapper.EmailNotificationWrapper("mailto://test@example.com")
 
             # Send notification (should fall back to regular Apprise)
@@ -163,7 +164,7 @@ class TestEmailNotificationWrapper:
         # Make send raise an exception
         mock_email_instance.send.side_effect = Exception("Network error")
 
-        with patch.object(apprise_email_wrapper, 'apprise', mock_apprise_module):
+        with patch.object(apprise_email_wrapper, "apprise", mock_apprise_module):
             wrapper = apprise_email_wrapper.EmailNotificationWrapper("mailto://test@example.com")
 
             # Should return False on error
@@ -197,7 +198,7 @@ class TestAppriseWithEmailHeaders:
         """Test adding email URLs creates wrapper instances."""
         mock_apprise, mock_apprise_instance = mock_setup
 
-        with patch.object(apprise_email_wrapper, 'apprise', mock_apprise):
+        with patch.object(apprise_email_wrapper, "apprise", mock_apprise):
             wrapper = apprise_email_wrapper.AppriseWithEmailHeaders()
 
             # Mock EmailNotificationWrapper
@@ -223,7 +224,7 @@ class TestAppriseWithEmailHeaders:
         """Test adding non-email URLs uses regular Apprise."""
         mock_apprise, mock_apprise_instance = mock_setup
 
-        with patch.object(apprise_email_wrapper, 'apprise', mock_apprise):
+        with patch.object(apprise_email_wrapper, "apprise", mock_apprise):
             wrapper = apprise_email_wrapper.AppriseWithEmailHeaders()
             wrapper.apprise = mock_apprise_instance
 
@@ -243,7 +244,7 @@ class TestAppriseWithEmailHeaders:
         """Test notify with both email and non-email URLs."""
         mock_apprise, mock_apprise_instance = mock_setup
 
-        with patch.object(apprise_email_wrapper, 'apprise', mock_apprise):
+        with patch.object(apprise_email_wrapper, "apprise", mock_apprise):
             wrapper = apprise_email_wrapper.AppriseWithEmailHeaders()
             wrapper.apprise = mock_apprise_instance
 
@@ -289,7 +290,7 @@ class TestAppriseWithEmailHeaders:
         """Test notify without headers still works."""
         mock_apprise, mock_apprise_instance = mock_setup
 
-        with patch.object(apprise_email_wrapper, 'apprise', mock_apprise):
+        with patch.object(apprise_email_wrapper, "apprise", mock_apprise):
             wrapper = apprise_email_wrapper.AppriseWithEmailHeaders()
 
             # Create mock email wrapper
@@ -310,7 +311,7 @@ class TestAppriseWithEmailHeaders:
         """Test __bool__ operator returns correct values."""
         mock_apprise, _ = mock_setup
 
-        with patch.object(apprise_email_wrapper, 'apprise', mock_apprise):
+        with patch.object(apprise_email_wrapper, "apprise", mock_apprise):
             wrapper = apprise_email_wrapper.AppriseWithEmailHeaders()
 
             # Empty wrapper should be False
@@ -329,7 +330,7 @@ class TestAppriseWithEmailHeaders:
         """Test handling when some notifications fail."""
         mock_apprise, mock_apprise_instance = mock_setup
 
-        with patch.object(apprise_email_wrapper, 'apprise', mock_apprise):
+        with patch.object(apprise_email_wrapper, "apprise", mock_apprise):
             wrapper = apprise_email_wrapper.AppriseWithEmailHeaders()
 
             # Create mock email wrappers with different results
@@ -361,9 +362,7 @@ class TestUtilityFunctions:
         # Test email URLs
         assert apprise_email_wrapper.is_email_notification("mailto://user@example.com")
         assert apprise_email_wrapper.is_email_notification("mailtos://secure@example.com")
-        assert apprise_email_wrapper.is_email_notification(
-            "mailto://user:pass@smtp.gmail.com:587"
-        )
+        assert apprise_email_wrapper.is_email_notification("mailto://user:pass@smtp.gmail.com:587")
 
         # Test non-email URLs
         assert not apprise_email_wrapper.is_email_notification("slack://token")
@@ -399,7 +398,7 @@ class TestIntegrationScenarios:
         mock_email = MockEmailInstance()
         mock_apprise.Apprise.instantiate = MagicMock(return_value=mock_email)
 
-        with patch.object(apprise_email_wrapper, 'apprise', mock_apprise):
+        with patch.object(apprise_email_wrapper, "apprise", mock_apprise):
             # Create wrapper for email notification
             wrapper = apprise_email_wrapper.EmailNotificationWrapper(
                 "mailto://notifications@example.com"
@@ -500,7 +499,7 @@ class TestIntegrationScenarios:
 
         mock_apprise.Apprise.instantiate = create_email_instance
 
-        with patch.object(apprise_email_wrapper, 'apprise', mock_apprise):
+        with patch.object(apprise_email_wrapper, "apprise", mock_apprise):
             # Create wrapper with multiple email endpoints
             wrapper = apprise_email_wrapper.AppriseWithEmailHeaders()
 
@@ -555,7 +554,7 @@ class TestEdgeCases:
         mock_email.send = MagicMock(return_value=True)
         mock_apprise.Apprise.instantiate = MagicMock(return_value=mock_email)
 
-        with patch.object(apprise_email_wrapper, 'apprise', mock_apprise):
+        with patch.object(apprise_email_wrapper, "apprise", mock_apprise):
             wrapper = apprise_email_wrapper.EmailNotificationWrapper("mailto://test@example.com")
 
             # Headers with special characters
@@ -580,7 +579,7 @@ class TestEdgeCases:
         mock_email.send = MagicMock(return_value=True)
         mock_apprise.Apprise.instantiate = MagicMock(return_value=mock_email)
 
-        with patch.object(apprise_email_wrapper, 'apprise', mock_apprise):
+        with patch.object(apprise_email_wrapper, "apprise", mock_apprise):
             wrapper = apprise_email_wrapper.EmailNotificationWrapper("mailto://test@example.com")
 
             # Create a very long References header (common in long email threads)
