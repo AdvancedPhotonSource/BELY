@@ -120,7 +120,17 @@ class TestScenarios:
         """Create handler with test configuration."""
         global_config = GlobalConfig({"bely_url": "https://bely.company.com"})
 
-        with patch("notification_processor.APPRISE_AVAILABLE", True):
+        # Mock AppriseWithEmailHeaders class
+        mock_apprise_wrapper = MagicMock()
+        mock_apprise_wrapper.return_value.notify = MagicMock(return_value=True)
+        mock_apprise_wrapper.return_value.add = MagicMock(return_value=True)
+        mock_apprise_wrapper.return_value.__bool__ = MagicMock(return_value=True)
+
+        with (
+            patch("notification_processor.APPRISE_AVAILABLE", True),
+            patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_wrapper),
+            patch("apprise_email_wrapper.APPRISE_AVAILABLE", True),
+        ):
             handler = AppriseSmartNotificationHandler(
                 config_path=str(test_config), global_config=global_config
             )

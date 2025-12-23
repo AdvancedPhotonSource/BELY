@@ -15,9 +15,11 @@ except ImportError:
 try:
     # Try relative imports first (when used as a package)
     from .email_threading import EmailThreadingStrategy, NotificationEventType
+    from .apprise_email_wrapper import AppriseWithEmailHeaders, is_email_notification
 except ImportError:
     # Fall back to absolute imports (when imported directly from tests)
     from email_threading import EmailThreadingStrategy, NotificationEventType  # type: ignore[no-redef]
+    from apprise_email_wrapper import AppriseWithEmailHeaders, is_email_notification  # type: ignore[no-redef]
 
 
 class NotificationProcessor:
@@ -38,7 +40,7 @@ class NotificationProcessor:
             self.logger.warning("Apprise not installed. Install with: pip install apprise")
             raise ImportError("Apprise is required for this handler")
 
-        self.user_apprise_instances: Dict[str, apprise.Apprise] = {}
+        self.user_apprise_instances: Dict[str, AppriseWithEmailHeaders] = {}
         self.user_notification_settings: Dict[str, Dict[str, bool]] = {}
         self.user_has_email: Dict[str, bool] = {}  # Track which users have email notifications
 
@@ -61,8 +63,8 @@ class NotificationProcessor:
 
         for username, user_config in users_config.items():
             try:
-                # Create Apprise instance
-                apobj = apprise.Apprise()
+                # Create AppriseWithEmailHeaders instance for better email header support
+                apobj = AppriseWithEmailHeaders()
 
                 # Add URLs from config
                 apprise_urls = user_config.get("apprise_urls", [])
@@ -77,7 +79,7 @@ class NotificationProcessor:
                         self.logger.warning(f"Failed to add Apprise URL for user {username}: {url}")
                     else:
                         # Check if this is an email notification
-                        if EmailThreadingStrategy.is_email_notification(processed_url):
+                        if is_email_notification(processed_url):
                             has_email = True
 
                 if apobj:
@@ -147,16 +149,14 @@ class NotificationProcessor:
         try:
             apobj = self.user_apprise_instances[username]
 
-            # Only include headers if user has email notifications
-            # Apprise will ignore headers for non-email notification types
+            # The AppriseWithEmailHeaders wrapper handles headers automatically
+            # It will only apply headers to email notifications and ignore them for others
             if headers and self.user_has_email.get(username, False):
                 # Send notification with headers for email threading
-                # Note: headers parameter might not be supported in all apprise versions
-                # Using type: ignore to suppress mypy warning
                 result = apobj.notify(
                     body=body,
                     title=title,
-                    headers=headers,  # type: ignore[call-arg]
+                    headers=headers,
                 )
                 self.logger.debug(f"Sent notification with email threading headers to {username}")
             else:

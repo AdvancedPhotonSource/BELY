@@ -18,7 +18,8 @@ if src_path.exists():
     sys.path.insert(0, str(src_path))
 
 # Mock apprise before importing handler
-sys.modules["apprise"] = MagicMock()
+mock_apprise = MagicMock()
+sys.modules["apprise"] = mock_apprise
 
 from bely_mqtt import (  # noqa: E402
     LogEntryAddEvent,
@@ -399,12 +400,22 @@ class TestAppriseSmartNotificationHandler:
         """Create a handler instance with mocked Apprise."""
         global_config = GlobalConfig({"bely_url": "https://bely.example.com"})
 
-        with patch("notification_processor.APPRISE_AVAILABLE", True):
+        # Mock AppriseWithEmailHeaders class
+        mock_apprise_wrapper = MagicMock()
+        mock_apprise_wrapper.return_value.notify = MagicMock(return_value=True)
+        mock_apprise_wrapper.return_value.add = MagicMock(return_value=True)
+        mock_apprise_wrapper.return_value.__bool__ = MagicMock(return_value=True)
+
+        with (
+            patch("notification_processor.APPRISE_AVAILABLE", True),
+            patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_wrapper),
+            patch("apprise_email_wrapper.APPRISE_AVAILABLE", True),
+        ):
             handler = AppriseSmartNotificationHandler(
                 config_path=str(config_file), global_config=global_config
             )
 
-            # Mock the Apprise notify method for all users
+            # Mock the notify method for all user instances
             for username, apobj in handler.processor.user_apprise_instances.items():
                 apobj.notify = MagicMock(return_value=True)
 
@@ -740,29 +751,40 @@ class TestAppriseSmartNotificationHandler:
     @pytest.mark.asyncio
     async def test_no_config_handler(self):
         """Test: Handler works without config (no notifications sent)."""
-        # Create handler without config - should not raise an error
-        handler = AppriseSmartNotificationHandler()
+        # Mock AppriseWithEmailHeaders class
+        mock_apprise_wrapper = MagicMock()
+        mock_apprise_wrapper.return_value.notify = MagicMock(return_value=True)
+        mock_apprise_wrapper.return_value.add = MagicMock(return_value=True)
+        mock_apprise_wrapper.return_value.__bool__ = MagicMock(return_value=True)
 
-        # Verify processor has no user configurations
-        assert handler.processor.user_apprise_instances == {}
+        with (
+            patch("notification_processor.APPRISE_AVAILABLE", True),
+            patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_wrapper),
+            patch("apprise_email_wrapper.APPRISE_AVAILABLE", True),
+        ):
+            # Create handler without config - should not raise an error
+            handler = AppriseSmartNotificationHandler()
 
-        factory = MockEventFactory()
-        event = factory.create_entry_add_by_bob()
+            # Verify processor has no user configurations
+            assert handler.processor.user_apprise_instances == {}
 
-        # Should handle event without error even without config
-        await handler.handle_log_entry_add(event)
+            factory = MockEventFactory()
+            event = factory.create_entry_add_by_bob()
 
-        # Try other event types too - all should work without errors
-        await handler.handle_log_entry_update(factory.create_entry_update_by_bob_on_alice())
-        await handler.handle_log_entry_reply_add(factory.create_reply_add_by_charlie_to_bob())
-        await handler.handle_log_reaction_add(factory.create_reaction_add_by_bob_to_alice())
-        await handler.handle_log_entry_delete(factory.create_entry_delete_by_bob_on_alice())
-        await handler.handle_log_entry_reply_delete(
-            factory.create_reply_delete_by_charlie_on_bob_entry()
-        )
+            # Should handle event without error even without config
+            await handler.handle_log_entry_add(event)
 
-        # Verify handler can process events without config
-        # (it just won't send notifications)
+            # Try other event types too - all should work without errors
+            await handler.handle_log_entry_update(factory.create_entry_update_by_bob_on_alice())
+            await handler.handle_log_entry_reply_add(factory.create_reply_add_by_charlie_to_bob())
+            await handler.handle_log_reaction_add(factory.create_reaction_add_by_bob_to_alice())
+            await handler.handle_log_entry_delete(factory.create_entry_delete_by_bob_on_alice())
+            await handler.handle_log_entry_reply_delete(
+                factory.create_reply_delete_by_charlie_on_bob_entry()
+            )
+
+            # Verify handler can process events without config
+            # (it just won't send notifications)
 
 
 class TestNotificationContent:

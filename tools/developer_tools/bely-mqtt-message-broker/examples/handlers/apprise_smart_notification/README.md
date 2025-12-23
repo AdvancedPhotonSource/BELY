@@ -1,6 +1,6 @@
 # Apprise Smart Notification Handler
 
-A modular BELY MQTT handler for sending smart notifications via Apprise.
+A modular BELY MQTT handler for sending smart notifications via Apprise with enhanced email threading support.
 
 ## Structure
 
@@ -8,12 +8,14 @@ This handler is organized as a Python package with the following modules:
 
 ```
 apprise_smart_notification/
-├── __init__.py           # Package initialization and exports
-├── handler.py            # Main handler class implementation
-├── config_loader.py      # YAML configuration loading and processing
-├── notification_processor.py  # Notification routing and sending logic
-├── formatters.py         # Message formatting utilities
-└── README.md            # This file
+├── __init__.py               # Package initialization and exports
+├── handler.py                # Main handler class implementation
+├── config_loader.py          # YAML configuration loading and processing
+├── notification_processor.py # Notification routing and sending logic
+├── formatters.py             # Message formatting utilities
+├── email_threading.py        # Email threading header generation
+├── apprise_email_wrapper.py  # Custom wrapper for email headers support
+└── README.md                # This file
 ```
 
 ## Module Responsibilities
