@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test test-handlers test-apprise test-apprise-integration test-all lint format type-check clean docs quality quality-fix
+.PHONY: help install install-dev test test-handlers test-apprise test-apprise-integration test-all lint format fix type-check clean docs quality quality-fix
 
 help:
 	@echo "BELY MQTT Framework - Development Commands"
@@ -18,6 +18,7 @@ help:
 	@echo "Code Quality:"
 	@echo "  make lint             Run linting checks"
 	@echo "  make format           Format code with black"
+	@echo "  make fix              Auto-fix formatting and linting issues"
 	@echo "  make type-check       Run type checking with mypy"
 	@echo "  make type-check-handlers  Type check example handlers"
 	@echo "  make quality          Run all quality checks"
@@ -82,13 +83,16 @@ type-check-handlers:
 
 quality: lint type-check test-all
 
-quality-fix:
-	@echo "Fixing code formatting and linting issues..."
+fix:
+	@echo "Auto-fixing code formatting and linting issues..."
 	@echo "Running black formatter..."
-	black src/ tests/ examples/handlers/apprise_smart_notification/
+	@black src/ tests/ examples/handlers/apprise_smart_notification/
 	@echo "Running ruff auto-fixes..."
-	-ruff check --fix src/ tests/ examples/handlers/apprise_smart_notification/
+	@-ruff check --fix src/ tests/ examples/handlers/apprise_smart_notification/
 	@echo ""
+	@echo "Auto-fix complete. Run 'make lint' to see remaining issues."
+
+quality-fix: fix
 	@echo "Running quality checks after fixes..."
 	@echo "======================================="
 	@$(MAKE) quality || (echo ""; echo "Some issues could not be automatically fixed. Please review the errors above."; exit 1)
