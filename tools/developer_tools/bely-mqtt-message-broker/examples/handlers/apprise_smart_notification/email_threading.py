@@ -119,6 +119,8 @@ class EmailThreadingStrategy:
         Returns:
             Thread ID for the document
         """
+        # Ensure document_id is a string
+        document_id = str(document_id)
         return self._generate_stable_id(f"doc.{document_id}")
 
     def generate_entry_thread_id(self, entry_id: str) -> str:
@@ -131,6 +133,8 @@ class EmailThreadingStrategy:
         Returns:
             Thread ID for the entry
         """
+        # Ensure entry_id is a string
+        entry_id = str(entry_id)
         return self._generate_stable_id(f"entry.{entry_id}")
 
     def get_email_headers(
@@ -155,6 +159,13 @@ class EmailThreadingStrategy:
             Dictionary of email threading headers
         """
         headers = {}
+
+        # Ensure all IDs are strings
+        document_id = str(document_id)
+        if entry_id is not None:
+            entry_id = str(entry_id)
+        if parent_entry_id is not None:
+            parent_entry_id = str(parent_entry_id)
 
         # Thread-Topic helps some email clients group messages
         # Use document name for better readability
