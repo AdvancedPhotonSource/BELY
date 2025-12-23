@@ -10,7 +10,6 @@ from urllib.parse import urlparse
 
 try:
     import apprise
-    from apprise.plugins.email.base import NotifyEmail
 
     APPRISE_AVAILABLE = True
 except ImportError:
@@ -81,23 +80,25 @@ class EmailNotificationWrapper:
                 # Fall back to regular Apprise if not an email notification
                 apobj = apprise.Apprise()
                 apobj.add(self.apprise_url)
-                return apobj.notify(body=body, title=title)
+                result = apobj.notify(body=body, title=title)
+                return bool(result)
 
             # If we have headers, inject them into the email instance
             if headers:
                 # Ensure the email instance has a headers attribute
                 if not hasattr(email_instance, "headers"):
-                    email_instance.headers = {}
+                    setattr(email_instance, "headers", {})  # type: ignore[attr-defined]
                 # Clear any existing headers and set our custom ones
-                email_instance.headers.clear()
-                email_instance.headers.update(headers)
+                getattr(email_instance, "headers").clear()  # type: ignore[attr-defined]
+                getattr(email_instance, "headers").update(headers)  # type: ignore[attr-defined]
             else:
                 # Ensure headers is at least an empty dict
                 if not hasattr(email_instance, "headers"):
-                    email_instance.headers = {}
+                    setattr(email_instance, "headers", {})  # type: ignore[attr-defined]
 
             # Send the notification using the email instance
-            return email_instance.send(body=body, title=title)
+            result = email_instance.send(body=body, title=title)
+            return bool(result)
 
         except Exception as e:
             print(f"Error sending email with headers: {e}")
@@ -141,11 +142,13 @@ class AppriseWithEmailHeaders:
                 return True
             except Exception:
                 # If wrapper creation fails, fall back to regular Apprise
-                return self.apprise.add(url)
+                result = self.apprise.add(url)
+                return bool(result)
         else:
             # For non-email URLs, use regular Apprise
             self.non_email_urls.append(url)
-            return self.apprise.add(url)
+            result = self.apprise.add(url)
+            return bool(result)
 
     def _is_email_url(self, url: str) -> bool:
         """Check if a URL is an email notification URL."""
@@ -177,7 +180,7 @@ class AppriseWithEmailHeaders:
         # Send to non-email endpoints (without headers)
         if self.non_email_urls:
             result = self.apprise.notify(body=body, title=title)
-            success = success and result
+            success = success and bool(result)
 
         return success
 

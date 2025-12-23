@@ -20,8 +20,7 @@ if handler_path.exists():
 sys.modules["apprise"] = MagicMock()
 sys.modules["apprise.plugins.email.base"] = MagicMock()
 
-# Now we can safely import the module
-import apprise_email_wrapper
+import apprise_email_wrapper  # noqa: E402
 
 apprise_email_wrapper.APPRISE_AVAILABLE = True
 
