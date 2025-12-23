@@ -60,7 +60,8 @@ class NotificationFormatter:
     def format_own_entry_edited(self, event: LogEntryUpdateEvent) -> str:
         """Format notification body for when user's own entry is edited by someone else."""
         body = (
-            f"Your entry was edited in {event.parent_log_document_info.name}<br/>"
+            f"Entry edited in {event.parent_log_document_info.name}<br/>"
+            f"Original author: {event.log_info.entered_by_username}<br/>"
             f"Edited by: {event.event_triggered_by_username}<br/>"
             f"Time: {event.event_timestamp}<br/>"
             f"Description: {event.description}<br/>"
@@ -71,8 +72,9 @@ class NotificationFormatter:
     def format_reply_added(self, event: LogEntryReplyAddEvent) -> str:
         """Format notification body for new reply."""
         body = (
-            f"New reply to your entry in {event.parent_log_document_info.name}<br/>"
-            f"By: {event.event_triggered_by_username}<br/>"
+            f"New reply to entry in {event.parent_log_document_info.name}<br/>"
+            f"Entry by: {event.parent_log_info.entered_by_username}<br/>"
+            f"Reply by: {event.event_triggered_by_username}<br/>"
             f"Time: {event.event_timestamp}<br/>"
             f"<br/>Reply markdown: {self._format_text_diff_pre(event.text_diff)}"
         )
@@ -92,7 +94,8 @@ class NotificationFormatter:
     def format_own_reply_updated(self, event: LogEntryReplyUpdateEvent) -> str:
         """Format notification body for when a reply on user's own entry is updated by someone else."""
         body = (
-            f"A reply on your entry was updated in {event.parent_log_document_info.name}<br/>"
+            f"Reply updated on entry in {event.parent_log_document_info.name}<br/>"
+            f"Entry by: {event.parent_log_info.entered_by_username}<br/>"
             f"Updated by: {event.event_triggered_by_username}<br/>"
             f"Time: {event.event_timestamp}<br/>"
             f"<br/>Reply markdown changes: {self._format_text_diff_pre(event.text_diff)}"
@@ -102,7 +105,7 @@ class NotificationFormatter:
     def format_document_reply(self, event: LogEntryReplyAddEvent) -> str:
         """Format notification body for document owner about new reply."""
         body = (
-            f"New reply added in your document {event.parent_log_document_info.name}<br/>"
+            f"New reply added in document {event.parent_log_document_info.name}<br/>"
             f"Reply by: {event.event_triggered_by_username}<br/>"
             f"To entry by: {event.parent_log_info.entered_by_username}<br/>"
             f"Time: {event.event_timestamp}<br/>"
@@ -114,7 +117,7 @@ class NotificationFormatter:
         """Format notification body for added reaction."""
         reaction_info = event.log_reaction.reaction
         body = (
-            f"New reaction added to your entry in {event.parent_log_document_info.name}<br/>"
+            f"New reaction added to entry in {event.parent_log_document_info.name}<br/>"
             f"By: {event.event_triggered_by_username}<br/>"
             f"Time: {event.event_timestamp}<br/>"
             f"Reaction: {reaction_info.emoji} {reaction_info.name}<br/>"
@@ -126,7 +129,7 @@ class NotificationFormatter:
         """Format notification body for deleted reaction."""
         reaction_info = event.log_reaction.reaction
         body = (
-            f"Reaction removed from your entry in {event.parent_log_document_info.name}<br/>"
+            f"Reaction removed from entry in {event.parent_log_document_info.name}<br/>"
             f"By: {event.event_triggered_by_username}<br/>"
             f"Time: {event.event_timestamp}<br/>"
             f"Reaction: {reaction_info.emoji} {reaction_info.name}<br/>"
@@ -149,7 +152,7 @@ class NotificationFormatter:
     def format_own_entry_deleted(self, event: LogEntryDeleteEvent) -> str:
         """Format notification body for when user's own entry is deleted by someone else."""
         body = (
-            f"Your entry was deleted from {event.parent_log_document_info.name}<br/>"
+            f"Entry was deleted from {event.parent_log_document_info.name}<br/>"
             f"Deleted by: {event.event_triggered_by_username}<br/>"
             f"Time: {event.event_timestamp}<br/>"
             f"Description: {event.description}<br/>"
@@ -160,7 +163,7 @@ class NotificationFormatter:
     def format_reply_deleted(self, event: LogEntryReplyDeleteEvent) -> str:
         """Format notification body for deleted reply (entry creator notification)."""
         body = (
-            f"Reply deleted from your entry in {event.parent_log_document_info.name}<br/>"
+            f"Reply deleted from entry in {event.parent_log_document_info.name}<br/>"
             f"Deleted by: {event.event_triggered_by_username}<br/>"
             f"Time: {event.event_timestamp}<br/>"
             f"<br/>Deleted reply content: {self._format_text_diff_pre(event.text_diff)}"
@@ -170,7 +173,7 @@ class NotificationFormatter:
     def format_document_reply_deleted(self, event: LogEntryReplyDeleteEvent) -> str:
         """Format notification body for document owner about deleted reply."""
         body = (
-            f"Reply deleted from your document {event.parent_log_document_info.name}<br/>"
+            f"Reply deleted from document {event.parent_log_document_info.name}<br/>"
             f"Deleted by: {event.event_triggered_by_username}<br/>"
             f"On entry by: {event.parent_log_info.entered_by_username}<br/>"
             f"Time: {event.event_timestamp}<br/>"

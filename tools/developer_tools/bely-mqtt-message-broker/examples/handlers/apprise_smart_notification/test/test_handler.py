@@ -810,7 +810,7 @@ class TestNotificationContent:
 
         body = formatter.format_reaction_added(event)
 
-        assert "New reaction added to your entry" in body
+        assert "New reaction added to entry" in body
         assert "By: bob" in body
         assert "🎉 tada" in body
         assert "Celebrating the achievement" in body
