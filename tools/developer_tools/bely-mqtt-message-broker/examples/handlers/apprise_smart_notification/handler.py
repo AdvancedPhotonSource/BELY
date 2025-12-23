@@ -67,7 +67,12 @@ class AppriseSmartNotificationHandler(MQTTHandler):
 
         # Initialize components
         self.config_loader = ConfigLoader(self.logger)
-        self.formatter = NotificationFormatter(self.bely_url, self.logger)
+
+        # Initialize formatter with timezone from config if available
+        self.timezone = None
+        self.formatter = NotificationFormatter(
+            self.bely_url, self.logger
+        )  # Will be updated after config load
         self.processor = NotificationProcessor(self.logger)
 
         # Load configuration

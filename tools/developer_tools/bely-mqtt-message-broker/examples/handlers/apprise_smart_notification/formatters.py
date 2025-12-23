@@ -3,7 +3,9 @@ Notification formatters for Apprise Smart Notification Handler.
 """
 
 import logging
+from datetime import datetime
 from typing import Optional, Union
+from zoneinfo import ZoneInfo
 
 from bely_mqtt import (
     LogEntryAddEvent,
@@ -23,23 +25,64 @@ from bely_mqtt.models import CoreEvent
 class NotificationFormatter:
     """Handles formatting of notification messages."""
 
-    def __init__(self, bely_url: Optional[str], logger: logging.Logger):
+    def __init__(
+        self, bely_url: Optional[str], logger: logging.Logger, timezone: Optional[str] = None
+    ):
         """
         Initialize the formatter.
 
         Args:
             bely_url: Base URL for BELY instance
             logger: Logger instance for output
+            timezone: Timezone string (e.g., 'America/New_York'). If None, uses system local timezone.
         """
         self.bely_url = bely_url
         self.logger = logger
+
+        # Set timezone - use provided timezone, or try to detect local timezone
+        if timezone:
+            try:
+                self.timezone = ZoneInfo(timezone)
+            except Exception as e:
+                self.logger.warning(f"Invalid timezone '{timezone}': {e}. Using UTC.")
+                self.timezone = ZoneInfo("UTC")
+        else:
+            # Try to detect local timezone
+            try:
+                import tzlocal
+
+                self.timezone = tzlocal.get_localzone()
+            except (ImportError, Exception) as e:
+                self.logger.debug(f"Could not detect local timezone: {e}. Using UTC.")
+                self.timezone = ZoneInfo("UTC")
+
+    def _format_timestamp(self, timestamp: datetime) -> str:
+        """
+        Format a timestamp for display in notifications.
+
+        Args:
+            timestamp: The datetime object to format
+
+        Returns:
+            Formatted timestamp string in local timezone
+        """
+        # Ensure timestamp is timezone-aware
+        if timestamp.tzinfo is None:
+            # Assume UTC if no timezone info
+            timestamp = timestamp.replace(tzinfo=ZoneInfo("UTC"))
+
+        # Convert to local timezone
+        local_timestamp = timestamp.astimezone(self.timezone)
+
+        # Format as readable string with timezone
+        return local_timestamp.strftime("%Y-%m-%d %H:%M:%S %Z")
 
     def format_entry_added(self, event: LogEntryAddEvent) -> str:
         """Format notification body for new log entry."""
         body = (
             f"New entry added to {event.parent_log_document_info.name}<br/>"
             f"By: {event.event_triggered_by_username}<br/>"
-            f"Time: {event.event_timestamp}<br/>"
+            f"Time: {self._format_timestamp(event.event_timestamp)}<br/>"
             f"Description: {event.description}<br/>"
             f"<br/>Entry markdown: {self._format_text_diff_pre(event.text_diff)}"
         )
@@ -51,7 +94,7 @@ class NotificationFormatter:
             f"Entry updated in {event.parent_log_document_info.name}<br/>"
             f"Updated by: {event.event_triggered_by_username}<br/>"
             f"Original author: {event.log_info.entered_by_username}<br/>"
-            f"Time: {event.event_timestamp}<br/>"
+            f"Time: {self._format_timestamp(event.event_timestamp)}<br/>"
             f"Description: {event.description}<br/>"
             f"<br/>Entry markdown changes: {self._format_text_diff_pre(event.text_diff)}"
         )
@@ -63,7 +106,7 @@ class NotificationFormatter:
             f"Entry edited in {event.parent_log_document_info.name}<br/>"
             f"Original author: {event.log_info.entered_by_username}<br/>"
             f"Edited by: {event.event_triggered_by_username}<br/>"
-            f"Time: {event.event_timestamp}<br/>"
+            f"Time: {self._format_timestamp(event.event_timestamp)}<br/>"
             f"Description: {event.description}<br/>"
             f"<br/>Entry markdown changes: {self._format_text_diff_pre(event.text_diff)}"
         )
@@ -75,7 +118,7 @@ class NotificationFormatter:
             f"New reply to entry in {event.parent_log_document_info.name}<br/>"
             f"Entry by: {event.parent_log_info.entered_by_username}<br/>"
             f"Reply by: {event.event_triggered_by_username}<br/>"
-            f"Time: {event.event_timestamp}<br/>"
+            f"Time: {self._format_timestamp(event.event_timestamp)}<br/>"
             f"<br/>Reply markdown: {self._format_text_diff_pre(event.text_diff)}"
         )
         return self._append_permalink_and_trigger(body, event)
@@ -86,7 +129,7 @@ class NotificationFormatter:
             f"Reply updated in {event.parent_log_document_info.name}<br/>"
             f"Updated by: {event.event_triggered_by_username}<br/>"
             f"On entry by: {event.parent_log_info.entered_by_username}<br/>"
-            f"Time: {event.event_timestamp}<br/>"
+            f"Time: {self._format_timestamp(event.event_timestamp)}<br/>"
             f"<br/>Reply markdown changes: {self._format_text_diff_pre(event.text_diff)}"
         )
         return self._append_permalink_and_trigger(body, event)
@@ -97,7 +140,7 @@ class NotificationFormatter:
             f"Reply updated on entry in {event.parent_log_document_info.name}<br/>"
             f"Entry by: {event.parent_log_info.entered_by_username}<br/>"
             f"Updated by: {event.event_triggered_by_username}<br/>"
-            f"Time: {event.event_timestamp}<br/>"
+            f"Time: {self._format_timestamp(event.event_timestamp)}<br/>"
             f"<br/>Reply markdown changes: {self._format_text_diff_pre(event.text_diff)}"
         )
         return self._append_permalink_and_trigger(body, event, "own_reply_update")
@@ -108,7 +151,7 @@ class NotificationFormatter:
             f"New reply added in document {event.parent_log_document_info.name}<br/>"
             f"Reply by: {event.event_triggered_by_username}<br/>"
             f"To entry by: {event.parent_log_info.entered_by_username}<br/>"
-            f"Time: {event.event_timestamp}<br/>"
+            f"Time: {self._format_timestamp(event.event_timestamp)}<br/>"
             f"<br/>Reply markdown: {self._format_text_diff_pre(event.text_diff)}"
         )
         return self._append_permalink_and_trigger(body, event, "document_owner")
@@ -119,7 +162,7 @@ class NotificationFormatter:
         body = (
             f"New reaction added to entry in {event.parent_log_document_info.name}<br/>"
             f"By: {event.event_triggered_by_username}<br/>"
-            f"Time: {event.event_timestamp}<br/>"
+            f"Time: {self._format_timestamp(event.event_timestamp)}<br/>"
             f"Reaction: {reaction_info.emoji} {reaction_info.name}<br/>"
             f"Description: {event.description}"
         )
@@ -131,7 +174,7 @@ class NotificationFormatter:
         body = (
             f"Reaction removed from entry in {event.parent_log_document_info.name}<br/>"
             f"By: {event.event_triggered_by_username}<br/>"
-            f"Time: {event.event_timestamp}<br/>"
+            f"Time: {self._format_timestamp(event.event_timestamp)}<br/>"
             f"Reaction: {reaction_info.emoji} {reaction_info.name}<br/>"
             f"Description: {event.description}"
         )
@@ -143,7 +186,7 @@ class NotificationFormatter:
             f"Entry deleted from {event.parent_log_document_info.name}<br/>"
             f"Deleted by: {event.event_triggered_by_username}<br/>"
             f"Original author: {event.log_info.entered_by_username}<br/>"
-            f"Time: {event.event_timestamp}<br/>"
+            f"Time: {self._format_timestamp(event.event_timestamp)}<br/>"
             f"Description: {event.description}<br/>"
             f"<br/>Deleted entry content: {self._format_text_diff_pre(event.text_diff)}"
         )
@@ -154,7 +197,7 @@ class NotificationFormatter:
         body = (
             f"Entry was deleted from {event.parent_log_document_info.name}<br/>"
             f"Deleted by: {event.event_triggered_by_username}<br/>"
-            f"Time: {event.event_timestamp}<br/>"
+            f"Time: {self._format_timestamp(event.event_timestamp)}<br/>"
             f"Description: {event.description}<br/>"
             f"<br/>Deleted entry content: {self._format_text_diff_pre(event.text_diff)}"
         )
@@ -165,7 +208,7 @@ class NotificationFormatter:
         body = (
             f"Reply deleted from entry in {event.parent_log_document_info.name}<br/>"
             f"Deleted by: {event.event_triggered_by_username}<br/>"
-            f"Time: {event.event_timestamp}<br/>"
+            f"Time: {self._format_timestamp(event.event_timestamp)}<br/>"
             f"<br/>Deleted reply content: {self._format_text_diff_pre(event.text_diff)}"
         )
         return self._append_permalink_and_trigger(body, event, "reply_delete")
@@ -176,7 +219,7 @@ class NotificationFormatter:
             f"Reply deleted from document {event.parent_log_document_info.name}<br/>"
             f"Deleted by: {event.event_triggered_by_username}<br/>"
             f"On entry by: {event.parent_log_info.entered_by_username}<br/>"
-            f"Time: {event.event_timestamp}<br/>"
+            f"Time: {self._format_timestamp(event.event_timestamp)}<br/>"
             f"<br/>Deleted reply content: {self._format_text_diff_pre(event.text_diff)}"
         )
         return self._append_permalink_and_trigger(body, event, "document_owner")
