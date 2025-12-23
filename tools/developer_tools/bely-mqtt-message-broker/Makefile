@@ -45,18 +45,17 @@ test-handlers:
 
 test-apprise:
 	@echo "Running Apprise handler unit tests..."
-	pytest examples/handlers/apprise_smart_notification/test_handler.py --asyncio-mode=auto -v
+	pytest examples/handlers/apprise_smart_notification/test/test_handler.py --asyncio-mode=auto -v
 
 test-apprise-integration:
 	@echo "Running Apprise handler integration tests..."
-	pytest examples/handlers/apprise_smart_notification/test_integration.py --asyncio-mode=auto -v
+	pytest examples/handlers/apprise_smart_notification/test/test_integration.py --asyncio-mode=auto -v
 
 test-all: test test-handlers
 
 test-cov:
 	pytest tests/ \
-		examples/handlers/apprise_smart_notification/test_handler.py \
-		examples/handlers/apprise_smart_notification/test_integration.py \
+		examples/handlers/apprise_smart_notification/test/ \
 		--cov=src/bely_mqtt \
 		--cov=examples/handlers/apprise_smart_notification \
 		--cov-report=html \
