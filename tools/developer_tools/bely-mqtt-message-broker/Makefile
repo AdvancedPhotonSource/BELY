@@ -84,10 +84,14 @@ quality: lint type-check test-all
 
 quality-fix:
 	@echo "Fixing code formatting and linting issues..."
+	@echo "Running black formatter..."
 	black src/ tests/ examples/handlers/apprise_smart_notification/
-	ruff check --fix src/ tests/ examples/handlers/apprise_smart_notification/
+	@echo "Running ruff auto-fixes..."
+	-ruff check --fix src/ tests/ examples/handlers/apprise_smart_notification/
+	@echo ""
 	@echo "Running quality checks after fixes..."
-	@$(MAKE) lint type-check test-all
+	@echo "======================================="
+	@$(MAKE) quality || (echo ""; echo "Some issues could not be automatically fixed. Please review the errors above."; exit 1)
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
