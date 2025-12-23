@@ -3,7 +3,7 @@ Notification formatters for Apprise Smart Notification Handler.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, tzinfo
 from typing import Optional, Union
 from zoneinfo import ZoneInfo
 
@@ -38,8 +38,9 @@ class NotificationFormatter:
         """
         self.bely_url = bely_url
         self.logger = logger
+        self.timezone: tzinfo  # Declare the type
 
-        # Set timezone - use provided timezone, or try to detect local timezone
+        # Set timezone - use provided timezone, or detect local timezone
         if timezone:
             try:
                 self.timezone = ZoneInfo(timezone)
@@ -47,12 +48,15 @@ class NotificationFormatter:
                 self.logger.warning(f"Invalid timezone '{timezone}': {e}. Using UTC.")
                 self.timezone = ZoneInfo("UTC")
         else:
-            # Try to detect local timezone
+            # Detect local timezone using datetime
             try:
-                import tzlocal
-
-                self.timezone = tzlocal.get_localzone()
-            except (ImportError, Exception) as e:
+                # Get the local timezone from the system
+                local_tz = datetime.now().astimezone().tzinfo
+                if local_tz is not None:
+                    self.timezone = local_tz
+                else:
+                    self.timezone = ZoneInfo("UTC")
+            except Exception as e:
                 self.logger.debug(f"Could not detect local timezone: {e}. Using UTC.")
                 self.timezone = ZoneInfo("UTC")
 
