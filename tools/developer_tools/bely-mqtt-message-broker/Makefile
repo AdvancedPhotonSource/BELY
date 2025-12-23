@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test test-handlers test-apprise test-apprise-integration test-all lint format type-check clean docs
+.PHONY: help install install-dev test test-handlers test-apprise test-apprise-integration test-all lint format type-check clean docs quality quality-fix
 
 help:
 	@echo "BELY MQTT Framework - Development Commands"
@@ -21,6 +21,7 @@ help:
 	@echo "  make type-check       Run type checking with mypy"
 	@echo "  make type-check-handlers  Type check example handlers"
 	@echo "  make quality          Run all quality checks"
+	@echo "  make quality-fix      Fix issues then run quality checks"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  make clean            Clean build artifacts"
@@ -80,6 +81,13 @@ type-check-handlers:
 	# Add other handlers here as they are converted to packages
 
 quality: lint type-check test-all
+
+quality-fix:
+	@echo "Fixing code formatting and linting issues..."
+	black src/ tests/ examples/handlers/apprise_smart_notification/
+	ruff check --fix src/ tests/ examples/handlers/apprise_smart_notification/
+	@echo "Running quality checks after fixes..."
+	@$(MAKE) lint type-check test-all
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
