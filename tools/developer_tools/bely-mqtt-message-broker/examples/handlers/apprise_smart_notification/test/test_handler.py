@@ -636,9 +636,12 @@ class TestAppriseSmartNotificationHandler:
             call_args = mock_send.call_args
             body = call_args[0][2]
 
-            # Check for permalink
+            # Check for permalink as hyperlink
             assert "https://bely.example.com/views/item/view?id=100&logId=2" in body
-            assert "View entry:" in body
+            assert (
+                '<a href="https://bely.example.com/views/item/view?id=100&logId=2">View entry</a>'
+                in body
+            )
 
     @pytest.mark.asyncio
     async def test_trigger_description(self, handler, mock_factory):
