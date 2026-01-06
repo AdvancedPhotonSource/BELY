@@ -296,7 +296,7 @@ class NotificationFormatter:
 
             if log_id and document_id:
                 link = self._generate_log_entry_link(document_id, log_id)
-                body += f"<br/><br/><a href=\"{link}\">View entry</a>"
+                body += f'<br/><br/><a href="{link}">View entry</a>'
 
         # Add trigger description
         trigger_description = self._get_trigger_description(event, notification_context)
