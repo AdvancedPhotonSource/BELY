@@ -4,14 +4,7 @@
  */
 package gov.anl.aps.logr.common.mqtt.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import java.util.Date;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import gov.anl.aps.logr.common.mqtt.constants.MqttTopic;
 import gov.anl.aps.logr.portal.model.db.entities.CdbEntity;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 
@@ -29,7 +22,6 @@ public abstract class MqttEntityEvent<Entity extends CdbEntity> extends MqttEven
         super();
         this.entity = entity;
         this.description = description;
-        this.eventTimestamp = new Date();
         this.eventTriggedByUser = eventTriggedByUser;
     }
 
