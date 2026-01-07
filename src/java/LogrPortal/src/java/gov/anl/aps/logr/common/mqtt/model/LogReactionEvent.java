@@ -16,7 +16,7 @@ import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
  *
  * @author djarosz
  */
-public class LogReactionEvent extends MqttEvent<LogReaction> {
+public class LogReactionEvent extends MqttEntityEvent<LogReaction> {
 
     boolean isDelete;
 

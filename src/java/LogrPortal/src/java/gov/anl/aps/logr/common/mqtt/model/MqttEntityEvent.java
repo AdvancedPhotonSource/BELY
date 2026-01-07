@@ -19,22 +19,19 @@ import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
  *
  * @author djarosz
  */
-public abstract class MqttEvent<Entity extends CdbEntity> {
+public abstract class MqttEntityEvent<Entity extends CdbEntity> extends MqttEvent {
 
     Entity entity;
     String description;
-    Date eventTimestamp;
     UserInfo eventTriggedByUser;
 
-    public MqttEvent(Entity entity, UserInfo eventTriggedByUser, String description) {
+    public MqttEntityEvent(Entity entity, UserInfo eventTriggedByUser, String description) {
+        super();
         this.entity = entity;
         this.description = description;
         this.eventTimestamp = new Date();
         this.eventTriggedByUser = eventTriggedByUser;
     }
-
-    @JsonIgnore
-    public abstract MqttTopic getTopic();
 
     @JsonIgnore
     public CdbEntity getEntity() {
@@ -53,21 +50,11 @@ public abstract class MqttEvent<Entity extends CdbEntity> {
         return description;
     }
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING)
-    public Date getEventTimestamp() {
-        return eventTimestamp;
-    }
-
     public String getEventTriggedByUsername() {
         if (eventTriggedByUser == null) {
             return null;
         }
 
         return eventTriggedByUser.getUsername();
-    }
-
-    public String toJson() throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.writeValueAsString(this);
     }
 }

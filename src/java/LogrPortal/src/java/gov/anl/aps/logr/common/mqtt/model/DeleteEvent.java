@@ -12,7 +12,7 @@ import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
  *
  * @author djarosz
  */
-public class DeleteEvent extends MqttEvent {
+public class DeleteEvent extends MqttEntityEvent {
 
     public DeleteEvent(CdbEntity entity, UserInfo eventTriggedByUser, String description) {
         super(entity, eventTriggedByUser, description);

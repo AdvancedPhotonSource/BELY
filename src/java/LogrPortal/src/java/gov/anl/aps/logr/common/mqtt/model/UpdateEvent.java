@@ -12,7 +12,7 @@ import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
  *
  * @author djarosz
  */
-public class UpdateEvent extends MqttEvent {
+public class UpdateEvent extends MqttEntityEvent {
 
     public UpdateEvent(CdbEntity entity, UserInfo eventTriggedByUser, String description) {
         super(entity, eventTriggedByUser, description);

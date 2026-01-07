@@ -6,7 +6,7 @@ package gov.anl.aps.logr.portal.model.db.entities;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import gov.anl.aps.logr.common.mqtt.model.MqttEvent;
+import gov.anl.aps.logr.common.mqtt.model.MqttEntityEvent;
 import gov.anl.aps.logr.portal.controllers.utilities.CdbEntityControllerUtility;
 import gov.anl.aps.logr.portal.import_export.import_.objects.ValidInfo;
 import gov.anl.aps.logr.portal.model.db.beans.PropertyTypeFacade;
@@ -26,7 +26,7 @@ import org.apache.logging.log4j.Logger;
  * Base class for all CDB entities.
  * @param <ActionEvent> describes an optional additional specific mqtt event that can be specified for the entity.
  */
-public class CdbEntity<ActionEvent extends MqttEvent> implements Serializable, Cloneable {
+public class CdbEntity<ActionEvent extends MqttEntityEvent> implements Serializable, Cloneable {
     
     private static final Logger LOGGER = LogManager.getLogger(CdbEntity.class.getName());
     

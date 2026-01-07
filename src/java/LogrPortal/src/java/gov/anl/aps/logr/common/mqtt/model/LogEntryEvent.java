@@ -20,7 +20,7 @@ import java.util.List;
  *
  * @author djarosz
  */
-public class LogEntryEvent extends MqttEvent<Log> {
+public class LogEntryEvent extends MqttEntityEvent<Log> {
 
     LogbookDocumentInfo parentLogDocumentInfo;
     LogInfo logInfo;
