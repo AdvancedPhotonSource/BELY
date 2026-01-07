@@ -11,7 +11,7 @@ import gov.anl.aps.logr.common.exceptions.CdbException;
 import gov.anl.aps.logr.common.mqtt.model.AddEvent;
 import gov.anl.aps.logr.common.mqtt.model.DeleteEvent;
 import gov.anl.aps.logr.common.mqtt.model.UpdateEvent;
-import gov.anl.aps.logr.common.mqtt.model.MqttEvent;
+import gov.anl.aps.logr.common.mqtt.model.MqttEntityEvent;
 import gov.anl.aps.logr.common.utilities.StringUtility;
 import gov.anl.aps.logr.portal.constants.SystemLogLevel;
 import gov.anl.aps.logr.portal.model.db.beans.CdbEntityFacade;
@@ -42,7 +42,7 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
 
     private static final Logger logger = LogManager.getLogger(CdbEntityControllerUtility.class.getName());
 
-    protected void publishMqttEvent(MqttEvent event) {
+    protected void publishMqttEvent(MqttEntityEvent event) {
         MQTTConnectionFactory mqttFactory = SessionUtility.fetchMQTTConnectionFactory();
         String jsonMessage;
 
@@ -71,12 +71,12 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
         }
     }
 
-    private void _publishActionEvents(MQTTConnection activeConnection, List<MqttEvent> events) {
+    private void _publishActionEvents(MQTTConnection activeConnection, List<MqttEntityEvent> events) {
         if (events == null) {
             return;
         }
 
-        for (MqttEvent event : events) {
+        for (MqttEntityEvent event : events) {
             try {
                 String jsonMessage = event.toJson();
                 activeConnection.publish(event.getTopic().getValue(), jsonMessage.getBytes(), 0, false);

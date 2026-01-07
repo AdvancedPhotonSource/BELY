@@ -5,7 +5,7 @@
 package gov.anl.aps.logr.portal.controllers.utilities;
 
 import gov.anl.aps.logr.common.exceptions.CdbException;
-import gov.anl.aps.logr.common.mqtt.model.MqttEvent;
+import gov.anl.aps.logr.common.mqtt.model.MqttEntityEvent;
 import gov.anl.aps.logr.portal.constants.SystemLogLevel;
 import gov.anl.aps.logr.portal.model.db.beans.LogFacade;
 import gov.anl.aps.logr.portal.model.db.beans.LogLevelFacade;
@@ -137,7 +137,7 @@ public class LogControllerUtility extends CdbEntityControllerUtility<Log, LogFac
     }
 
     @Override
-    protected void publishMqttEvent(MqttEvent event) {
+    protected void publishMqttEvent(MqttEntityEvent event) {
         CdbEntity entity = event.getEntity();
         if (entity instanceof Log) {
             if (((Log) entity).isSystemLog()) {

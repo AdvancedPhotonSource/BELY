@@ -5,11 +5,14 @@
 package gov.anl.aps.logr.rest.routes;
 
 import gov.anl.aps.logr.common.exceptions.InvalidRequest;
+import gov.anl.aps.logr.common.mqtt.constants.CallSource;
+import gov.anl.aps.logr.common.mqtt.model.entities.SearchOptions;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemCategoryControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemElementControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemTypeControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.PropertyTypeCategoryControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.PropertyTypeControllerUtility;
+import gov.anl.aps.logr.portal.controllers.utilities.SearchControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.SourceControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.UserGroupControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.UserInfoControllerUtility;
@@ -18,12 +21,16 @@ import gov.anl.aps.logr.rest.entities.SearchEntitiesOptions;
 import gov.anl.aps.logr.rest.entities.SearchEntitiesResults;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -32,6 +39,8 @@ import javax.ws.rs.core.MediaType;
 @Path("/Search")
 @Tag(name = "Search")
 public class SearchRoute {
+
+    private static final Logger logger = LogManager.getLogger(SearchRoute.class.getName());
 
     @POST
     @Path("/Entities")
@@ -44,7 +53,20 @@ public class SearchRoute {
         if (searchText == null) {
             throw new InvalidRequest("Search text must be specified.");
         }
-        
+
+        // Publish anonymous MQTT event for API search
+        SearchOptions searchOptions = new SearchOptions(
+                searchEntitiesOptions.isIncludeItemElement(),
+                searchEntitiesOptions.isIncludeItemType(),
+                searchEntitiesOptions.isIncludeItemCategoy(),
+                searchEntitiesOptions.isIncludePropertyType(),
+                searchEntitiesOptions.isIncludePropertyTypeCategory(),
+                searchEntitiesOptions.isIncludeSource(),
+                searchEntitiesOptions.isIncludeUser(),
+                searchEntitiesOptions.isIncludeUserGroup()
+        );
+        SearchControllerUtility.publishSearchMqttEvent(searchText, searchOptions, CallSource.API);
+
         if (searchEntitiesOptions.isIncludeItemElement()) {
             ItemElementControllerUtility itemElementControllerUtility = new ItemElementControllerUtility();
             LinkedList<SearchResult> itemElementResults = itemElementControllerUtility.performEntitySearch(searchText, true);

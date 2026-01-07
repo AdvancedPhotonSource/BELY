@@ -8,19 +8,18 @@ package gov.anl.aps.logr.common.mqtt.constants;
  *
  * @author djarosz
  */
-public enum ChangeType {
+public enum CallSource {
 
-    ADD(1),
-    UPDATE(2),
-    DELETE(3);
+    API("API"),
+    Portal("Portal");
 
-    private final int value;
+    private final String value;
 
-    ChangeType(int value) {
+    CallSource(String value) {
         this.value = value;
     }
 
-    public int getValue() {
+    public String getValue() {
         return value;
     }
 

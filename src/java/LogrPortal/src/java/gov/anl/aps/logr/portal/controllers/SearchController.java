@@ -5,14 +5,19 @@
 package gov.anl.aps.logr.portal.controllers;
 
 import gov.anl.aps.logr.common.constants.CdbProperty;
+import gov.anl.aps.logr.common.mqtt.constants.CallSource;
+import gov.anl.aps.logr.common.mqtt.model.entities.SearchOptions;
 import gov.anl.aps.logr.portal.controllers.settings.SearchSettings;
+import gov.anl.aps.logr.portal.controllers.utilities.SearchControllerUtility;
 import gov.anl.aps.logr.portal.utilities.ConfigurationUtility;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
@@ -31,12 +36,12 @@ public class SearchController implements Serializable {
     public static final String controllerNamed = "searchController";
 
     private static final Logger logger = LogManager.getLogger(SearchController.class.getName());
-        
-    private static final String SEARCH_TEXT_URL_KEY = "searchString"; 
-        
+
+    private static final String SEARCH_TEXT_URL_KEY = "searchString";
+
     private String searchString = null;
-    
-    private String searchOpts = null; 
+
+    private String searchOpts = null;
 
     private Boolean performSearch = false;
     private Boolean performExternallyInitializedSearch = false;
@@ -44,7 +49,7 @@ public class SearchController implements Serializable {
     private SearchSettings searchSettings;
 
     private final Set<CdbEntityController> searchableControllers;
-    
+
     protected String contextRootPermanentUrl;
 
     /**
@@ -73,9 +78,9 @@ public class SearchController implements Serializable {
         getSearchSettings().setAdvancedSearch(true);
         return performInputBoxSearch(false);
     }
-    
+
     public String getSearchPath() {
-        return "/views/search/search"; 
+        return "/views/search/search";
     }
 
     public String performInputBoxSearch() {
@@ -100,7 +105,7 @@ public class SearchController implements Serializable {
     }
 
     public void setInputBoxSearchString(String searchString) {
-        setSearchString(searchString);        
+        setSearchString(searchString);
     }
 
     public void prepareSearch() {
@@ -112,6 +117,19 @@ public class SearchController implements Serializable {
 
     public void search() {
         if (performSearch) {
+            // Publish anonymous MQTT event for search
+            SearchOptions searchOptions = new SearchOptions(
+                    searchSettings.getDisplayItemElements(),
+                    searchSettings.getDisplayItemTypes(),
+                    searchSettings.getDisplayItemCategories(),
+                    searchSettings.getDisplayPropertyTypes(),
+                    searchSettings.getDisplayPropertyTypeCategories(),
+                    searchSettings.getDisplaySources(),
+                    searchSettings.getDisplayUsers(),
+                    searchSettings.getDisplayUserGroups()
+            );
+            SearchControllerUtility.publishSearchMqttEvent(searchString, searchOptions, CallSource.Portal);
+
             for (CdbEntityController controller : searchableControllers) {
                 // Check if controller needs to be skipped.                               
                 if (controller instanceof ItemTypeController) {
@@ -203,7 +221,7 @@ public class SearchController implements Serializable {
 
     public void setSearchString(String searchString) {
         this.searchString = searchString;
-        searchOpts = null; 
+        searchOpts = null;
     }
 
     public SearchSettings getSearchSettings() {
@@ -213,27 +231,26 @@ public class SearchController implements Serializable {
     public void processPreRender() {
         searchSettings.updateSettings();
     }
-        
+
     public void processSearchRequestParams() {
         // User friendly search string in URL. 
-        String text = SessionUtility.getRequestParameterValue(SEARCH_TEXT_URL_KEY);        
+        String text = SessionUtility.getRequestParameterValue(SEARCH_TEXT_URL_KEY);
         if (text != null && !text.isEmpty()) {
             searchString = text;
-            performExternallyInitializedSearch = true; 
-            return; 
-        }                
+            performExternallyInitializedSearch = true;
+            return;
+        }
     }
-    
+
     public String getSearchOpts() {
-        if (searchOpts == null) {            
-            searchOpts = URLEncoder.encode(searchString, StandardCharsets.UTF_8); 
+        if (searchOpts == null) {
+            searchOpts = URLEncoder.encode(searchString, StandardCharsets.UTF_8);
             searchOpts = String.format("%s=%s", SEARCH_TEXT_URL_KEY, searchOpts);
         }
-        return searchOpts; 
+        return searchOpts;
     }
-    
+
     public String getSearchPermaLink() {
         return String.format("%s%s?%s", contextRootPermanentUrl, getSearchPath(), getSearchOpts());
     }
-
 }
