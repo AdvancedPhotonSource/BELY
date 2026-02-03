@@ -24,7 +24,7 @@ fi
 . ${LOGR_ENV_FILE} > /dev/null
 
 # Use first argument as db name, if provided
-LOGR_DB_NAME=${LOGR_DB_NAME:=cdb}
+LOGR_DB_NAME=${LOGR_DB_NAME:=logr}
 if [ ! -z "$1" ]; then
     LOGR_DB_NAME=$1
 fi

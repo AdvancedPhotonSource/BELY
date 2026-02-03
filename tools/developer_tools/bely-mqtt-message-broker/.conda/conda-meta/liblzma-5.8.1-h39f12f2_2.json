@@ -1,0 +1,43 @@
+{
+  "build": "h39f12f2_2",
+  "build_number": 2,
+  "channel": "https://conda.anaconda.org/conda-forge/osx-arm64",
+  "constrains": [
+    "xz 5.8.1.*"
+  ],
+  "depends": [
+    "__osx >=11.0"
+  ],
+  "extracted_package_dir": "/Users/djarosz/miniconda3/pkgs/liblzma-5.8.1-h39f12f2_2",
+  "files": [
+    "lib/liblzma.5.dylib"
+  ],
+  "fn": "liblzma-5.8.1-h39f12f2_2.conda",
+  "license": "0BSD",
+  "link": {
+    "source": "/Users/djarosz/miniconda3/pkgs/liblzma-5.8.1-h39f12f2_2",
+    "type": 1
+  },
+  "md5": "d6df911d4564d77c4374b02552cb17d1",
+  "name": "liblzma",
+  "package_tarball_full_path": "/Users/djarosz/miniconda3/pkgs/liblzma-5.8.1-h39f12f2_2.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "lib/liblzma.5.dylib",
+        "path_type": "hardlink",
+        "sha256": "5a159a99b616687d4335ce3bed2aac4fd348cb730a34bb1614c03254a65d6ae8",
+        "sha256_in_prefix": "5a159a99b616687d4335ce3bed2aac4fd348cb730a34bb1614c03254a65d6ae8",
+        "size_in_bytes": 201152
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "0cb92a9e026e7bd4842f410a5c5c665c89b2eb97794ffddba519a626b8ce7285",
+  "size": 92286,
+  "subdir": "osx-arm64",
+  "timestamp": 1749230283517,
+  "url": "https://conda.anaconda.org/conda-forge/osx-arm64/liblzma-5.8.1-h39f12f2_2.conda",
+  "version": "5.8.1"
+}
