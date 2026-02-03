@@ -1,0 +1,42 @@
+Metadata-Version: 2.1
+Name: types-paho-mqtt
+Version: 1.6.0.20240321
+Summary: Typing stubs for paho-mqtt
+Home-page: https://github.com/python/typeshed
+License: Apache-2.0 license
+Project-URL: GitHub, https://github.com/python/typeshed
+Project-URL: Changes, https://github.com/typeshed-internal/stub_uploader/blob/main/data/changelogs/paho-mqtt.md
+Project-URL: Issue tracker, https://github.com/python/typeshed/issues
+Project-URL: Chat, https://gitter.im/python/typing
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3
+Classifier: Typing :: Stubs Only
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+
+## Typing stubs for paho-mqtt
+
+This is a [PEP 561](https://peps.python.org/pep-0561/)
+type stub package for the [`paho-mqtt`](https://github.com/eclipse/paho.mqtt.python) package.
+It can be used by type-checking tools like
+[mypy](https://github.com/python/mypy/),
+[pyright](https://github.com/microsoft/pyright),
+[pytype](https://github.com/google/pytype/),
+PyCharm, etc. to check code that uses
+`paho-mqtt`.
+
+This version of `types-paho-mqtt` aims to provide accurate annotations
+for `paho-mqtt==1.6.*`.
+The source for this package can be found at
+https://github.com/python/typeshed/tree/main/stubs/paho-mqtt. All fixes for
+types and metadata should be contributed there.
+
+*Note:* The `paho-mqtt` package includes type annotations or type stubs
+since version 2.0.0. Please uninstall the `types-paho-mqtt`
+package if you use this or a newer version.
+
+
+See https://github.com/python/typeshed/blob/main/README.md for more details.
+This package was generated from typeshed commit `5c75292f26aec8e6348a17d32077f408a1337988` and was tested
+with mypy 1.9.0, pyright 1.1.354, and
+pytype 2024.3.19.

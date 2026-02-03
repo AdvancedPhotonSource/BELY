@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: 0BSD
+# Author: Lasse Collin
+
+prefix=/Users/djarosz/development/cdb/bely/tools/developer_tools/bely-mqtt-message-broker/.conda
+exec_prefix=/Users/djarosz/development/cdb/bely/tools/developer_tools/bely-mqtt-message-broker/.conda
+libdir=/Users/djarosz/development/cdb/bely/tools/developer_tools/bely-mqtt-message-broker/.conda/lib
+includedir=/Users/djarosz/development/cdb/bely/tools/developer_tools/bely-mqtt-message-broker/.conda/include
+
+Name: liblzma
+Description: General purpose data compression library
+URL: https://tukaani.org/xz/
+Version: 5.8.1
+Cflags: -I${includedir}
+Cflags.private: -DLZMA_API_STATIC
+Libs: -L${libdir} -llzma
+Libs.private: -pthread -lpthread 

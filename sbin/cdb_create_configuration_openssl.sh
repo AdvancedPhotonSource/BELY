@@ -13,26 +13,26 @@
 #
 
 MY_DIR=`dirname $0` && cd $MY_DIR && MY_DIR=`pwd`
-if [ -z "${CDB_ROOT_DIR}" ]; then
-    CDB_ROOT_DIR=$MY_DIR/..
+if [ -z "${LOGR_ROOT_DIR}" ]; then
+    LOGR_ROOT_DIR=$MY_DIR/..
 fi
-CDB_ENV_FILE=${CDB_ROOT_DIR}/setup.sh
-if [ ! -f ${CDB_ENV_FILE} ]; then
-    echo "Environment file ${CDB_ENV_FILE} does not exist."
+LOGR_ENV_FILE=${LOGR_ROOT_DIR}/setup.sh
+if [ ! -f ${LOGR_ENV_FILE} ]; then
+    echo "Environment file ${LOGR_ENV_FILE} does not exist."
     exit 2
 fi
-. ${CDB_ENV_FILE} > /dev/null
+. ${LOGR_ENV_FILE} > /dev/null
 
-CDB_ETC_DIR=$CDB_INSTALL_DIR/etc
+LOGR_ETC_DIR=$LOGR_INSTALL_DIR/etc
 
-OPENSSL_CONFIG_FILE=$CDB_ETC_DIR/cdb.openssl.cnf
+OPENSSL_CONFIG_FILE=$LOGR_ETC_DIR/cdb.openssl.cnf
 
 if [ -f $OPENSSL_CONFIG_FILE ]; then
     echo "Configuration file $OPENSSL_CONFIG_FILE has already been created"
     exit 0;
 fi
 
-OPEN_SSL_TEMPLATE_FILE=$CDB_ROOT_DIR/etc/cdb.openssl.cnf.template
+OPEN_SSL_TEMPLATE_FILE=$LOGR_ROOT_DIR/etc/cdb.openssl.cnf.template
 
 echo "Creating the cdb openSSL configuration file."
 read -p "Enter the organizational name [company]: " SSL_ORG_NAME

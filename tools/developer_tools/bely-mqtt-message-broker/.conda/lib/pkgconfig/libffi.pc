@@ -1,0 +1,11 @@
+prefix=/Users/djarosz/development/cdb/bely/tools/developer_tools/bely-mqtt-message-broker/.conda
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+toolexeclibdir=${libdir}
+includedir=/Users/djarosz/development/cdb/bely/tools/developer_tools/bely-mqtt-message-broker/.conda/include
+
+Name: libffi
+Description: Library supporting Foreign Function Interfaces
+Version: 3.5.2
+Libs: -L${toolexeclibdir} -lffi
+Cflags: -I${includedir}

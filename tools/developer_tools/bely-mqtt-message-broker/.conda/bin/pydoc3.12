@@ -1,0 +1,5 @@
+#!/Users/djarosz/development/cdb/bely/tools/developer_tools/bely-mqtt-message-broker/.conda/bin/python3.12
+
+import pydoc
+if __name__ == '__main__':
+    pydoc.cli()
