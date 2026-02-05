@@ -62,17 +62,14 @@ public class MarkdownParser {
             + "```\n"
             + "\n\n"
             + "### Table\n\n"
-            + "| Left     | Center   | Right    |\n"
-            + "| :------- | :------: | -------: |\n"
-            + "| Cell 1   | Cell 2   | Cell 3   |\n"
+            + "| Column1 | Column2 | Column3 |\n"
+            + "| --- | --- | --- |\n"
+            + "| Cell 1 | Cell 2 | Cell 3 |\n"
             + "\n\n"
-            + "# Heading Levels:\n"
+            + "### Heading Levels\n"
             + "# Level 1 Heading\n"
             + "## Level 2 Heading\n"
-            + "### Level 3 Heading\n"
-            + "#### Level 4 Heading\n"
-            + "##### Level 5 Heading\n"
-            + "###### Level 6 Heading\n";
+            + "### Level 3 Heading\n";
             
 
     private static String contextRoot = null;
