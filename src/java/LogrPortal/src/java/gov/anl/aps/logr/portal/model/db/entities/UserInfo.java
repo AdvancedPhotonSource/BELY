@@ -10,6 +10,7 @@ import gov.anl.aps.logr.portal.controllers.CdbEntityController;
 import gov.anl.aps.logr.portal.controllers.LoginController;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.persistence.Basic;
@@ -78,12 +79,14 @@ public class UserInfo extends SettingEntity implements Serializable {
     @Column(name = "middle_name")
     private String middleName;
     // @Pattern(regexp="[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?", message="Invalid email")//if the field contains email address consider using this annotation to enforce field validation
-    @Size(max = 64)
+    @Size(max = 64)    
     private String email;
-    @Size(max = 256)
+    @Size(max = 256)    
     private String password;
-    @Size(max = 256)
+    @Size(max = 256)    
     private String description;
+    @OneToMany(mappedBy = "userId")
+    private Collection<NotificationConfiguration> notificationConfigurationCollection;  
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "userInfo")
     private List<UserSession> userSessions;
     @JoinTable(name = "user_list", joinColumns = {
@@ -522,6 +525,15 @@ public class UserInfo extends SettingEntity implements Serializable {
     @Override
     public EntitySetting createNewEntitySetting() {
         return new UserSetting();
+    }   
+
+    @XmlTransient
+    public Collection<NotificationConfiguration> getNotificationConfigurationCollection() {
+        return notificationConfigurationCollection;
+    }
+
+    public void setNotificationConfigurationCollection(Collection<NotificationConfiguration> notificationConfigurationCollection) {
+        this.notificationConfigurationCollection = notificationConfigurationCollection;
     }
 
 }
