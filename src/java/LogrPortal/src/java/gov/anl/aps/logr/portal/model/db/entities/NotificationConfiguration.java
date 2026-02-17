@@ -60,13 +60,13 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
     private String notificationEndpoint;
     @JoinColumn(name = "notification_provider_id", referencedColumnName = "id")
     @ManyToOne(optional = false)
-    private NotificationProvider notificationProviderId;
+    private NotificationProvider notificationProvider;
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     @ManyToOne(optional = true)
     private UserInfo userInfo;
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationConfigurationId")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationConfiguration")
     private Collection<NotificationConfigurationHandlerSetting> notificationConfigurationHandlerSettingCollection;
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationConfigurationId")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationConfiguration")
     private Collection<NotificationConfigurationSetting> notificationConfigurationSettingCollection;
 
     public NotificationConfiguration() {
@@ -114,12 +114,12 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
         this.notificationEndpoint = notificationEndpoint;
     }
 
-    public NotificationProvider getNotificationProviderId() {
-        return notificationProviderId;
+    public NotificationProvider getNotificationProvider() {
+        return notificationProvider;
     }
 
-    public void setNotificationProviderId(NotificationProvider notificationProviderId) {
-        this.notificationProviderId = notificationProviderId;
+    public void setNotificationProvider(NotificationProvider notificationProvider) {
+        this.notificationProvider = notificationProvider;
     }
 
     public UserInfo getUserInfo() {

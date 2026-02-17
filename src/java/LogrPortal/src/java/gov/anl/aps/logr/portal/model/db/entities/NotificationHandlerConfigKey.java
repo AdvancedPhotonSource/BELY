@@ -67,7 +67,7 @@ public class NotificationHandlerConfigKey implements Serializable {
     private String defaultValue;
     @Column(name = "display_order")
     private Integer displayOrder;
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationHandlerConfigKeyId")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationHandlerConfigKey")
     private Collection<NotificationConfigurationHandlerSetting> notificationConfigurationHandlerSettingCollection;
 
     public NotificationHandlerConfigKey() {
@@ -172,5 +172,5 @@ public class NotificationHandlerConfigKey implements Serializable {
     public String toString() {
         return "gov.anl.aps.logr.portal.model.db.entities.NotificationHandlerConfigKey[ id=" + id + " ]";
     }
-    
+
 }

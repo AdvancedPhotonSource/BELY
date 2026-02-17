@@ -47,7 +47,7 @@ public class NotificationConfigurationHandlerSettingFacade extends CdbEntityFaca
      */
     public List<NotificationConfigurationHandlerSetting> findByNotificationConfiguration(NotificationConfiguration notificationConfiguration) {
         return em.createQuery(
-                "SELECT n FROM NotificationConfigurationHandlerSetting n WHERE n.notificationConfigurationId = :notificationConfiguration",
+                "SELECT n FROM NotificationConfigurationHandlerSetting n WHERE n.notificationConfiguration = :notificationConfiguration",
                 NotificationConfigurationHandlerSetting.class)
                 .setParameter("notificationConfiguration", notificationConfiguration)
                 .getResultList();
@@ -65,7 +65,7 @@ public class NotificationConfigurationHandlerSettingFacade extends CdbEntityFaca
             NotificationHandlerConfigKey notificationHandlerConfigKey) {
         try {
             return em.createQuery(
-                    "SELECT n FROM NotificationConfigurationHandlerSetting n WHERE n.notificationConfigurationId = :notificationConfiguration AND n.notificationHandlerConfigKeyId = :notificationHandlerConfigKey",
+                    "SELECT n FROM NotificationConfigurationHandlerSetting n WHERE n.notificationConfiguration = :notificationConfiguration AND n.notificationHandlerConfigKeyId = :notificationHandlerConfigKey",
                     NotificationConfigurationHandlerSetting.class)
                     .setParameter("notificationConfiguration", notificationConfiguration)
                     .setParameter("notificationHandlerConfigKey", notificationHandlerConfigKey)

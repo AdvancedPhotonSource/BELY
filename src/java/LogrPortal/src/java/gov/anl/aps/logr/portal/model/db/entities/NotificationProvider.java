@@ -50,9 +50,9 @@ public class NotificationProvider implements Serializable {
     @Size(max = 256)
     @Column(name = "description")
     private String description;
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationProviderId")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationProvider")
     private Collection<NotificationProviderConfigKey> notificationProviderConfigKeyCollection;
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationProviderId")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationProvider")
     private Collection<NotificationConfiguration> notificationConfigurationCollection;
 
     public NotificationProvider() {
@@ -133,5 +133,5 @@ public class NotificationProvider implements Serializable {
     public String toString() {
         return "gov.anl.aps.logr.portal.model.db.entities.NotificationProvider[ id=" + id + " ]";
     }
-    
+
 }

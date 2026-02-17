@@ -46,10 +46,10 @@ public class NotificationConfigurationHandlerSetting implements Serializable {
     private String configValue;
     @JoinColumn(name = "notification_configuration_id", referencedColumnName = "id")
     @ManyToOne(optional = false)
-    private NotificationConfiguration notificationConfigurationId;
+    private NotificationConfiguration notificationConfiguration;
     @JoinColumn(name = "notification_handler_config_key_id", referencedColumnName = "id")
     @ManyToOne(optional = false)
-    private NotificationHandlerConfigKey notificationHandlerConfigKeyId;
+    private NotificationHandlerConfigKey notificationHandlerConfigKey;
 
     public NotificationConfigurationHandlerSetting() {
     }
@@ -79,20 +79,20 @@ public class NotificationConfigurationHandlerSetting implements Serializable {
         this.configValue = configValue;
     }
 
-    public NotificationConfiguration getNotificationConfigurationId() {
-        return notificationConfigurationId;
+    public NotificationConfiguration getNotificationConfiguration() {
+        return notificationConfiguration;
     }
 
-    public void setNotificationConfigurationId(NotificationConfiguration notificationConfigurationId) {
-        this.notificationConfigurationId = notificationConfigurationId;
+    public void setNotificationConfiguration(NotificationConfiguration notificationConfiguration) {
+        this.notificationConfiguration = notificationConfiguration;
     }
 
-    public NotificationHandlerConfigKey getNotificationHandlerConfigKeyId() {
-        return notificationHandlerConfigKeyId;
+    public NotificationHandlerConfigKey getNotificationHandlerConfigKey() {
+        return notificationHandlerConfigKey;
     }
 
-    public void setNotificationHandlerConfigKeyId(NotificationHandlerConfigKey notificationHandlerConfigKeyId) {
-        this.notificationHandlerConfigKeyId = notificationHandlerConfigKeyId;
+    public void setNotificationHandlerConfigKey(NotificationHandlerConfigKey notificationHandlerConfigKey) {
+        this.notificationHandlerConfigKey = notificationHandlerConfigKey;
     }
 
     @Override
@@ -119,5 +119,5 @@ public class NotificationConfigurationHandlerSetting implements Serializable {
     public String toString() {
         return "gov.anl.aps.logr.portal.model.db.entities.NotificationConfigurationHandlerSetting[ id=" + id + " ]";
     }
-    
+
 }

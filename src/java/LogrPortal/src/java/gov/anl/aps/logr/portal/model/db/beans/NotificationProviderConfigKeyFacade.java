@@ -46,7 +46,7 @@ public class NotificationProviderConfigKeyFacade extends CdbEntityFacade<Notific
      */
     public List<NotificationProviderConfigKey> findByProvider(NotificationProvider provider) {
         return em.createQuery(
-                "SELECT n FROM NotificationProviderConfigKey n WHERE n.notificationProviderId = :provider ORDER BY n.displayOrder",
+                "SELECT n FROM NotificationProviderConfigKey n WHERE n.notificationProvider = :provider ORDER BY n.displayOrder",
                 NotificationProviderConfigKey.class)
                 .setParameter("provider", provider)
                 .getResultList();
@@ -62,7 +62,7 @@ public class NotificationProviderConfigKeyFacade extends CdbEntityFacade<Notific
     public NotificationProviderConfigKey findByProviderAndKey(NotificationProvider provider, String configKey) {
         try {
             return em.createQuery(
-                    "SELECT n FROM NotificationProviderConfigKey n WHERE n.notificationProviderId = :provider AND n.configKey = :configKey",
+                    "SELECT n FROM NotificationProviderConfigKey n WHERE n.notificationProvider = :provider AND n.configKey = :configKey",
                     NotificationProviderConfigKey.class)
                     .setParameter("provider", provider)
                     .setParameter("configKey", configKey)

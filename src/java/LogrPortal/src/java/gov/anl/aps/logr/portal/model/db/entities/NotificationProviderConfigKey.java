@@ -62,8 +62,8 @@ public class NotificationProviderConfigKey implements Serializable {
     private Integer displayOrder;
     @JoinColumn(name = "notification_provider_id", referencedColumnName = "id")
     @ManyToOne(optional = false)
-    private NotificationProvider notificationProviderId;
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationProviderConfigKeyId")
+    private NotificationProvider notificationProvider;
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationProviderConfigKey")
     private Collection<NotificationConfigurationSetting> notificationConfigurationSettingCollection;
 
     public NotificationProviderConfigKey() {
@@ -119,12 +119,12 @@ public class NotificationProviderConfigKey implements Serializable {
         this.displayOrder = displayOrder;
     }
 
-    public NotificationProvider getNotificationProviderId() {
-        return notificationProviderId;
+    public NotificationProvider getNotificationProvider() {
+        return notificationProvider;
     }
 
-    public void setNotificationProviderId(NotificationProvider notificationProviderId) {
-        this.notificationProviderId = notificationProviderId;
+    public void setNotificationProvider(NotificationProvider notificationProvider) {
+        this.notificationProvider = notificationProvider;
     }
 
     @XmlTransient
@@ -160,5 +160,5 @@ public class NotificationProviderConfigKey implements Serializable {
     public String toString() {
         return "gov.anl.aps.logr.portal.model.db.entities.NotificationProviderConfigKey[ id=" + id + " ]";
     }
-    
+
 }
