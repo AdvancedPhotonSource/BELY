@@ -5,7 +5,11 @@
 package gov.anl.aps.logr.portal.model.db.entities;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -68,6 +72,11 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
     private Collection<NotificationConfigurationHandlerSetting> notificationConfigurationHandlerSettingCollection;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationConfiguration")
     private Collection<NotificationConfigurationSetting> notificationConfigurationSettingCollection;
+
+    // Variables for create/update notificaiton configuration  
+    private transient List<NotificationProviderConfigKey> providerConfigKeys = new ArrayList<>();
+    private transient Map<Integer, String> configSettings = new HashMap<>();  // config key ID -> value
+    private transient Map<Integer, Boolean> handlerPreferences = new HashMap<>();    // handler key ID -> enabled
 
     public NotificationConfiguration() {
     }
@@ -148,6 +157,34 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
         this.notificationConfigurationSettingCollection = notificationConfigurationSettingCollection;
     }
 
+    public boolean isNewEntity() {
+        return getId() == null;
+    }
+
+    public List<NotificationProviderConfigKey> getProviderConfigKeys() {
+        return providerConfigKeys;
+    }
+
+    public void setProviderConfigKeys(List<NotificationProviderConfigKey> providerConfigKeys) {
+        this.providerConfigKeys = providerConfigKeys;
+    }
+
+    public Map<Integer, String> getConfigSettings() {
+        return configSettings;
+    }
+
+    public void setConfigSettings(Map<Integer, String> configSettings) {
+        this.configSettings = configSettings;
+    }
+
+    public Map<Integer, Boolean> getHandlerPreferences() {
+        return handlerPreferences;
+    }
+
+    public void setHandlerPreferences(Map<Integer, Boolean> handlerPreferences) {
+        this.handlerPreferences = handlerPreferences;
+    }
+
     @Override
     public int hashCode() {
         int hash = 0;
@@ -172,5 +209,5 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
     public String toString() {
         return "gov.anl.aps.logr.portal.model.db.entities.NotificationConfiguration[ id=" + id + " ]";
     }
-    
+
 }
