@@ -37,7 +37,7 @@ import javax.xml.bind.annotation.XmlTransient;
     @NamedQuery(name = "NotificationConfiguration.findByName", query = "SELECT n FROM NotificationConfiguration n WHERE n.name = :name"),
     @NamedQuery(name = "NotificationConfiguration.findByDescription", query = "SELECT n FROM NotificationConfiguration n WHERE n.description = :description"),
     @NamedQuery(name = "NotificationConfiguration.findByNotificationEndpoint", query = "SELECT n FROM NotificationConfiguration n WHERE n.notificationEndpoint = :notificationEndpoint")})
-public class NotificationConfiguration implements Serializable {
+public class NotificationConfiguration extends CdbEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
     @Id
@@ -62,8 +62,8 @@ public class NotificationConfiguration implements Serializable {
     @ManyToOne(optional = false)
     private NotificationProvider notificationProviderId;
     @JoinColumn(name = "user_id", referencedColumnName = "id")
-    @ManyToOne
-    private UserInfo userId;
+    @ManyToOne(optional = true)
+    private UserInfo userInfo;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationConfigurationId")
     private Collection<NotificationConfigurationHandlerSetting> notificationConfigurationHandlerSettingCollection;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationConfigurationId")
@@ -122,12 +122,12 @@ public class NotificationConfiguration implements Serializable {
         this.notificationProviderId = notificationProviderId;
     }
 
-    public UserInfo getUserId() {
-        return userId;
+    public UserInfo getUserInfo() {
+        return userInfo;
     }
 
-    public void setUserId(UserInfo userId) {
-        this.userId = userId;
+    public void setUserInfo(UserInfo userInfo) {
+        this.userInfo = userInfo;
     }
 
     @XmlTransient

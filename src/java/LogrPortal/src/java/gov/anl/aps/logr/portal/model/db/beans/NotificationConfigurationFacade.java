@@ -46,7 +46,7 @@ public class NotificationConfigurationFacade extends CdbEntityFacade<Notificatio
      */
     public List<NotificationConfiguration> findByUser(UserInfo user) {
         return em.createQuery(
-                "SELECT n FROM NotificationConfiguration n WHERE n.userId = :user ORDER BY n.name",
+                "SELECT n FROM NotificationConfiguration n WHERE n.userInfo = :user ORDER BY n.name",
                 NotificationConfiguration.class)
                 .setParameter("user", user)
                 .getResultList();
@@ -62,7 +62,7 @@ public class NotificationConfigurationFacade extends CdbEntityFacade<Notificatio
     public NotificationConfiguration findByUserAndName(UserInfo user, String name) {
         try {
             return em.createQuery(
-                    "SELECT n FROM NotificationConfiguration n WHERE n.userId = :user AND n.name = :name",
+                    "SELECT n FROM NotificationConfiguration n WHERE n.userInfo = :user AND n.name = :name",
                     NotificationConfiguration.class)
                     .setParameter("user", user)
                     .setParameter("name", name)

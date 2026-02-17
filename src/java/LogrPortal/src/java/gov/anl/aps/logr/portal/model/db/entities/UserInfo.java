@@ -85,7 +85,7 @@ public class UserInfo extends SettingEntity implements Serializable {
     private String password;
     @Size(max = 256)    
     private String description;
-    @OneToMany(mappedBy = "userId")
+    @OneToMany(mappedBy = "userInfo")
     private Collection<NotificationConfiguration> notificationConfigurationCollection;  
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "userInfo")
     private List<UserSession> userSessions;
