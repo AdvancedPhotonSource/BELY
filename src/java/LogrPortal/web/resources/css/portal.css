@@ -509,6 +509,10 @@ tr:hover .actionLink {
     width: 30px;
 }
 
+.fullWidthInput {
+    width: 100%;
+}
+
 select {
     width: 150px;
 }
