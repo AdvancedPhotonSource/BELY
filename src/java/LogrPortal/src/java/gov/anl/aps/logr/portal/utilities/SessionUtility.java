@@ -65,6 +65,10 @@ public class SessionUtility {
         addMessage(MESSAGES_KEY, new FacesMessage(FacesMessage.SEVERITY_ERROR, summary, detail), isAjax);
     }
 
+    public static void setValidationFailed() {
+        FacesContext.getCurrentInstance().validationFailed();
+    }
+
     public static void addWarningMessage(String summary, String detail) {
         addWarningMessage(summary, detail, false);
     }
