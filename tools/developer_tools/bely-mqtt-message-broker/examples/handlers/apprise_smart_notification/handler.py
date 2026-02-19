@@ -14,6 +14,7 @@ from bely_mqtt import (
     LogEntryReplyDeleteEvent,
     LogReactionAddEvent,
     LogReactionDeleteEvent,
+    TestNotificationEvent,
 )
 from bely_mqtt.config import GlobalConfig
 
@@ -23,12 +24,14 @@ try:
     from .notification_processor import NotificationProcessor
     from .formatters import NotificationFormatter
     from .email_threading import NotificationEventType
+    from .apprise_email_wrapper import AppriseWithEmailHeaders
 except ImportError:
     # Fall back to absolute imports (when imported directly from tests)
     from config_loader import ConfigLoader  # type: ignore[no-redef]
     from notification_processor import NotificationProcessor  # type: ignore[no-redef]
     from formatters import NotificationFormatter  # type: ignore[no-redef]
     from email_threading import NotificationEventType  # type: ignore[no-redef]
+    from apprise_email_wrapper import AppriseWithEmailHeaders  # type: ignore[no-redef]
 
 
 class AppriseSmartNotificationHandler(MQTTHandler):
@@ -76,8 +79,10 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         self.processor = NotificationProcessor(self.logger)
 
         # Load configuration
+        self.global_config_data = {}
         if config_path:
             config = self.config_loader.load_config(config_path)
+            self.global_config_data = config.get("global", {})
             self.processor.initialize_from_config(config, self.config_loader)
         else:
             self.logger.warning("No config path provided. Handler will not send notifications.")
@@ -203,6 +208,64 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             await self._handle_delete_event(event, is_reply=True)
         except Exception as e:
             self.logger.error(f"Error processing log entry reply delete: {e}", exc_info=True)
+
+    async def handle_notification_test(self, event: TestNotificationEvent) -> None:
+        """
+        Handle test notification events.
+
+        Sends a test notification directly to the configured endpoint.
+
+        Args:
+            event: The test notification event
+        """
+        try:
+            # Create a temporary Apprise instance for this test
+            apobj = AppriseWithEmailHeaders()
+
+            # Process the notification endpoint URL through config_loader
+            # to apply global SMTP settings for mailto URLs
+            processed_url = self.config_loader.process_apprise_url(
+                event.notification_endpoint, self.global_config_data
+            )
+
+            if not apobj.add(processed_url):
+                self.logger.error(
+                    f"Failed to add notification endpoint: {event.notification_endpoint}"
+                )
+                return
+
+            # Send the test notification
+            title = "BELY Test Notification"
+            body = (
+                f"This is a test notification for configuration: "
+                f"{event.configuration_name}\n\n"
+                f"Triggered by: {event.event_triggered_by_username}\n"
+                f"Timestamp: {event.event_timestamp}"
+            )
+
+            if event.configuration_id is not None:
+                body += f"\nConfiguration ID: {event.configuration_id}"
+
+            if event.provider_settings:
+                body += "\n\nProvider Settings:"
+                for key, value in event.provider_settings.items():
+                    body += f"\n  {key}: {value}"
+
+            result = apobj.notify(body=body, title=title)
+
+            if result:
+                self.logger.info(
+                    f"Test notification sent successfully for configuration: "
+                    f"{event.configuration_name}"
+                )
+            else:
+                self.logger.warning(
+                    f"Failed to send test notification for configuration: "
+                    f"{event.configuration_name}"
+                )
+
+        except Exception as e:
+            self.logger.error(f"Error sending test notification: {e}", exc_info=True)
 
     async def _handle_add_event(
         self, event: Union[LogEntryAddEvent, LogEntryReplyAddEvent], is_reply: bool = False
