@@ -20,7 +20,8 @@ public enum MqttTopic {
     LOGENTRYREPLYDELETE("bely/logEntryReply/Delete"),
     LOGREACTIONADD("bely/logReaction/Add"),
     LOGREACTIONDELETE("bely/logReaction/Delete"),
-    SEARCH("bely/search");
+    SEARCH("bely/search"),
+    NOTIFICATIONTEST("bely/notification/test");
 
     private final String value;
 

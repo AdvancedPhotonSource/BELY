@@ -6,6 +6,9 @@ package gov.anl.aps.logr.portal.controllers;
 
 import gov.anl.aps.logr.portal.controllers.settings.NotificationConfigurationSettings;
 import gov.anl.aps.logr.portal.controllers.utilities.NotificationConfigurationControllerUtility;
+import fish.payara.cloud.connectors.mqtt.api.MQTTConnection;
+import fish.payara.cloud.connectors.mqtt.api.MQTTConnectionFactory;
+import gov.anl.aps.logr.common.mqtt.model.TestNotificationEvent;
 import gov.anl.aps.logr.portal.model.db.beans.NotificationConfigurationFacade;
 import gov.anl.aps.logr.portal.model.db.beans.NotificationConfigurationHandlerSettingFacade;
 import gov.anl.aps.logr.portal.model.db.beans.NotificationConfigurationSettingFacade;
@@ -22,6 +25,8 @@ import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.ejb.EJB;
@@ -252,13 +257,61 @@ public class NotificationConfigurationController extends CdbEntityController<Not
     }
 
     /**
-     * Send a test notification.
+     * Send a test notification via MQTT.
+     *
      * @param config
      */
     public void sendTestNotification(NotificationConfiguration config) {
         try {
-            // TODO: Implement test notification logic
-            // This would call the Python handler or send a test message directly
+            // Get current username
+            UserInfoController userInfoController = UserInfoController.getInstance();
+            String username = userInfoController.getCurrent().getUsername();
+
+            // Build provider settings map from persisted configuration settings
+            Map<String, String> providerSettings = new HashMap<>();
+            Collection<NotificationConfigurationSetting> settingsCollection
+                    = config.getNotificationConfigurationSettingCollection();
+            if (settingsCollection != null) {
+                for (NotificationConfigurationSetting setting : settingsCollection) {
+                    String key = setting.getNotificationProviderConfigKey().getConfigKey();
+                    String value = setting.getConfigValue();
+                    if (key != null && value != null && !value.isEmpty()) {
+                        providerSettings.put(key, value);
+                    }
+                }
+            }
+
+            // Create test notification event
+            TestNotificationEvent event = new TestNotificationEvent(
+                    config.getNotificationEndpoint(),
+                    config.getName(),
+                    config.getId(),
+                    providerSettings.isEmpty() ? null : providerSettings,
+                    username
+            );
+
+            // Get MQTT connection factory
+            MQTTConnectionFactory mqttFactory = SessionUtility.fetchMQTTConnectionFactory();
+            if (mqttFactory == null) {
+                SessionUtility.addWarningMessage("MQTT Not Configured",
+                        "MQTT is not configured. Cannot send test notification.");
+                return;
+            }
+
+            // Publish the event
+            MQTTConnection connection = mqttFactory.getConnection();
+            try {
+                String jsonMessage = event.toJson();
+                connection.publish(event.getTopic().getValue(), jsonMessage.getBytes(), 0, false);
+                logger.debug("Published test notification MQTT event: {}", jsonMessage);
+                connection.close();
+            } catch (Exception ex) {
+                logger.error("Failed to publish test notification MQTT event: {}", ex.getMessage());
+                SessionUtility.addErrorMessage("Error",
+                        "Failed to send test notification: " + ex.getMessage());
+                return;
+            }
+
             SessionUtility.addInfoMessage("Test Sent",
                     "Test notification sent to: " + config.getName());
         } catch (Exception ex) {
