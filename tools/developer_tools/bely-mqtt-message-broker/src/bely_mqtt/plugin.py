@@ -17,33 +17,12 @@ from bely_mqtt.config import GlobalConfig
 from bely_mqtt.events import EventType
 from bely_mqtt.models import MQTTMessage
 
+try:
+    from BelyApiFactory import BelyApiFactory
+except ImportError:
+    BelyApiFactory = None  # type: ignore[misc,assignment]
+
 logger = logging.getLogger(__name__)
-
-
-class BelyAPIClient:
-    """
-    Interface for BELY API client.
-
-    This is a placeholder interface. The actual implementation should be
-    provided by the bely-api library.
-    """
-
-    def __init__(self, base_url: str, api_key: Optional[str] = None):
-        """Initialize the BELY API client."""
-        self.base_url = base_url
-        self.api_key = api_key
-
-    def get_log_entry(self, log_id: int) -> Dict[str, Any]:
-        """Get a log entry by ID."""
-        raise NotImplementedError("Implement in actual BELY API library")
-
-    def get_log_document(self, doc_id: int) -> Dict[str, Any]:
-        """Get a log document by ID."""
-        raise NotImplementedError("Implement in actual BELY API library")
-
-    def get_user(self, username: str) -> Dict[str, Any]:
-        """Get user information."""
-        raise NotImplementedError("Implement in actual BELY API library")
 
 
 class MQTTHandler(ABC):
@@ -98,17 +77,17 @@ class MQTTHandler(ABC):
 
     def __init__(
         self,
-        api_client: Optional[BelyAPIClient] = None,
+        api_factory=None,
         global_config: Optional[GlobalConfig] = None,
     ):
         """
         Initialize the handler.
 
         Args:
-            api_client: Optional BELY API client for querying additional information.
+            api_factory: Optional BelyApiFactory instance for querying the BELY API.
             global_config: Optional global configuration shared across all handlers.
         """
-        self.api_client = api_client
+        self.api_factory = api_factory
         self.global_config = global_config
         self.logger = logging.getLogger(self.__class__.__name__)
 
@@ -283,17 +262,17 @@ class PluginManager:
 
     def __init__(
         self,
-        api_client: Optional[BelyAPIClient] = None,
+        api_factory=None,
         config_manager: Optional[Any] = None,
     ):
         """
         Initialize the plugin manager.
 
         Args:
-            api_client: Optional BELY API client to pass to handlers.
+            api_factory: Optional BelyApiFactory instance to pass to handlers.
             config_manager: Optional ConfigManager for handler configuration.
         """
-        self.api_client = api_client
+        self.api_factory = api_factory
         self.config_manager = config_manager
         self.handlers: List[MQTTHandler] = []
         self.logger = logging.getLogger(__name__)
@@ -335,7 +314,7 @@ class PluginManager:
 
         # Prepare constructor arguments
         constructor_args = {
-            "api_client": self.api_client,
+            "api_factory": self.api_factory,
         }
 
         # Add global_config if the handler accepts it

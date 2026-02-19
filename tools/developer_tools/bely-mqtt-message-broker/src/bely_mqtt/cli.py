@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 from bely_mqtt import __version__
 from bely_mqtt.config import ConfigManager
 from bely_mqtt.mqtt_client import BelyMQTTClient
-from bely_mqtt.plugin import BelyAPIClient, PluginManager
+from bely_mqtt.plugin import PluginManager
 
 # Configure logging
 logging.basicConfig(
@@ -134,11 +134,15 @@ def start(
     logger.info(f"Broker: {broker_host}:{broker_port}")
     logger.info(f"Topics: {', '.join(topic)}")
 
-    # Initialize API client if URL is provided
-    api_client = None
+    # Initialize API factory if URL is provided
+    api_factory = None
     if api_url:
-        api_client = BelyAPIClient(base_url=api_url, api_key=api_key)
-        logger.info(f"BELY API client initialized: {api_url}")
+        try:
+            from BelyApiFactory import BelyApiFactory
+            api_factory = BelyApiFactory(api_url)
+            logger.info(f"BELY API factory initialized: {api_url}")
+        except ImportError:
+            logger.warning("BelyApiFactory not available. API features disabled.")
 
     # Initialize configuration manager
     config_manager = None
@@ -152,7 +156,7 @@ def start(
             sys.exit(1)
 
     # Initialize plugin manager
-    plugin_manager = PluginManager(api_client=api_client, config_manager=config_manager)
+    plugin_manager = PluginManager(api_factory=api_factory, config_manager=config_manager)
 
     # Load handlers from directory if provided
     if handlers_dir:
