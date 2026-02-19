@@ -33,6 +33,9 @@ class EventType(Enum):
     Log Reaction Events:
         LOG_REACTION_ADD - Reaction added (bely/logReaction/Add)
         LOG_REACTION_DELETE - Reaction deleted (bely/logReaction/Delete)
+
+    Notification Events:
+        NOTIFICATION_TEST - Test notification (bely/notification/test)
     """
 
     # Generic events
@@ -53,6 +56,9 @@ class EventType(Enum):
     # Log reaction events
     LOG_REACTION_ADD = "bely/logReaction/Add"
     LOG_REACTION_DELETE = "bely/logReaction/Delete"
+
+    # Notification events
+    NOTIFICATION_TEST = "bely/notification/test"
 
     def __str__(self) -> str:
         """Return the topic pattern for this event type."""

@@ -200,6 +200,7 @@ class MQTTHandler(ABC):
             LogEntryReplyDeleteEvent,
             LogReactionAddEvent,
             LogReactionDeleteEvent,
+            TestNotificationEvent,
         )
 
         event_type_map = {
@@ -214,6 +215,7 @@ class MQTTHandler(ABC):
             EventType.LOG_ENTRY_REPLY_DELETE: LogEntryReplyDeleteEvent,
             EventType.LOG_REACTION_ADD: LogReactionAddEvent,
             EventType.LOG_REACTION_DELETE: LogReactionDeleteEvent,
+            EventType.NOTIFICATION_TEST: TestNotificationEvent,
         }
 
         event_class = event_type_map.get(event_type)

@@ -190,6 +190,19 @@ class LogReactionDeleteEvent(LogReactionEventBase):
     pass
 
 
+class TestNotificationEvent(BaseModel):
+    """Event triggered when a test notification is requested."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    notification_endpoint: str = Field(alias="notificationEndpoint")
+    configuration_name: str = Field(alias="configurationName")
+    configuration_id: Optional[int] = Field(None, alias="configurationId")
+    provider_settings: Optional[Dict[str, str]] = Field(None, alias="providerSettings")
+    event_triggered_by_username: str = Field(alias="eventTriggedByUsername")
+    event_timestamp: datetime = Field(alias="eventTimestamp")
+
+
 class MQTTMessage(BaseModel):
     """Wrapper for an MQTT message with topic and payload."""
 
