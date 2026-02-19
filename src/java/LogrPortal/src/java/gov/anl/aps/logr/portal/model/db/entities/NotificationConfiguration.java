@@ -4,6 +4,7 @@
  */
 package gov.anl.aps.logr.portal.model.db.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -123,6 +124,11 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
         this.notificationEndpoint = notificationEndpoint;
     }
 
+    public String getNotificationProviderName() {
+        return notificationProvider.getName();
+    }
+
+    @JsonIgnore
     public NotificationProvider getNotificationProvider() {
         return notificationProvider;
     }
@@ -131,6 +137,16 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
         this.notificationProvider = notificationProvider;
     }
 
+    public String getUsername() {
+        if (userInfo == null) {
+            return null;
+        }
+
+        return userInfo.getUsername();
+
+    }
+
+    @JsonIgnore
     public UserInfo getUserInfo() {
         return userInfo;
     }
@@ -161,6 +177,7 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
         return getId() == null;
     }
 
+    @JsonIgnore
     public List<NotificationProviderConfigKey> getProviderConfigKeys() {
         return providerConfigKeys;
     }
@@ -169,6 +186,7 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
         this.providerConfigKeys = providerConfigKeys;
     }
 
+    @JsonIgnore
     public Map<Integer, String> getConfigSettings() {
         return configSettings;
     }
@@ -177,6 +195,7 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
         this.configSettings = configSettings;
     }
 
+    @JsonIgnore
     public Map<Integer, Boolean> getHandlerPreferences() {
         return handlerPreferences;
     }
