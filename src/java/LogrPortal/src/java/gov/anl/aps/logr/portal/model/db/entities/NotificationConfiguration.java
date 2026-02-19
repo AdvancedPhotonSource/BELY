@@ -74,10 +74,14 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationConfiguration")
     private Collection<NotificationConfigurationSetting> notificationConfigurationSettingCollection;
 
-    // Variables for create/update notificaiton configuration  
+    // Variables for create/update notificaiton configuration
     private transient List<NotificationProviderConfigKey> providerConfigKeys = new ArrayList<>();
     private transient Map<Integer, String> configSettings = new HashMap<>();  // config key ID -> value
     private transient Map<Integer, Boolean> handlerPreferences = new HashMap<>();    // handler key ID -> enabled
+
+    // Self-populating maps keyed by name for API serialization
+    private transient Map<String, Boolean> handlerPreferencesByName = new HashMap<>();
+    private transient Map<String, String> configSettingsByName = new HashMap<>();
 
     public NotificationConfiguration() {
     }
@@ -155,6 +159,7 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
         this.userInfo = userInfo;
     }
 
+    @JsonIgnore
     @XmlTransient
     public Collection<NotificationConfigurationHandlerSetting> getNotificationConfigurationHandlerSettingCollection() {
         return notificationConfigurationHandlerSettingCollection;
@@ -164,6 +169,7 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
         this.notificationConfigurationHandlerSettingCollection = notificationConfigurationHandlerSettingCollection;
     }
 
+    @JsonIgnore
     @XmlTransient
     public Collection<NotificationConfigurationSetting> getNotificationConfigurationSettingCollection() {
         return notificationConfigurationSettingCollection;
@@ -202,6 +208,40 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
 
     public void setHandlerPreferences(Map<Integer, Boolean> handlerPreferences) {
         this.handlerPreferences = handlerPreferences;
+    }
+
+    public Map<String, Boolean> getHandlerPreferencesByName() {
+        if (handlerPreferencesByName.isEmpty()
+                && notificationConfigurationHandlerSettingCollection != null) {
+            for (NotificationConfigurationHandlerSetting setting
+                    : notificationConfigurationHandlerSettingCollection) {
+                handlerPreferencesByName.put(
+                        setting.getNotificationHandlerConfigKey().getConfigKey(),
+                        "true".equalsIgnoreCase(setting.getConfigValue()));
+            }
+        }
+        return handlerPreferencesByName;
+    }
+
+    public void setHandlerPreferencesByName(Map<String, Boolean> handlerPreferencesByName) {
+        this.handlerPreferencesByName = handlerPreferencesByName;
+    }
+
+    public Map<String, String> getConfigSettingsByName() {
+        if (configSettingsByName.isEmpty()
+                && notificationConfigurationSettingCollection != null) {
+            for (NotificationConfigurationSetting setting
+                    : notificationConfigurationSettingCollection) {
+                configSettingsByName.put(
+                        setting.getNotificationProviderConfigKey().getConfigKey(),
+                        setting.getConfigValue());
+            }
+        }
+        return configSettingsByName;
+    }
+
+    public void setConfigSettingsByName(Map<String, String> configSettingsByName) {
+        this.configSettingsByName = configSettingsByName;
     }
 
     @Override
