@@ -5,6 +5,7 @@
 package gov.anl.aps.logr.portal.model.db.beans;
 
 import gov.anl.aps.logr.portal.model.db.entities.NotificationConfiguration;
+import gov.anl.aps.logr.portal.model.db.entities.NotificationProvider;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.util.List;
@@ -49,6 +50,32 @@ public class NotificationConfigurationFacade extends CdbEntityFacade<Notificatio
                 "SELECT n FROM NotificationConfiguration n WHERE n.userInfo = :user ORDER BY n.name",
                 NotificationConfiguration.class)
                 .setParameter("user", user)
+                .getResultList();
+    }
+
+    /**
+     * Find notification configurations by name.
+     *
+     * @param name The configuration name
+     * @return List of notification configurations with the given name
+     */
+    public List<NotificationConfiguration> findByName(String name) {
+        return em.createNamedQuery("NotificationConfiguration.findByName", NotificationConfiguration.class)
+                .setParameter("name", name)
+                .getResultList();
+    }
+
+    /**
+     * Find all notification configurations for a specific provider.
+     *
+     * @param provider The notification provider
+     * @return List of notification configurations for the provider
+     */
+    public List<NotificationConfiguration> findByProvider(NotificationProvider provider) {
+        return em.createQuery(
+                "SELECT n FROM NotificationConfiguration n WHERE n.notificationProvider = :provider ORDER BY n.name",
+                NotificationConfiguration.class)
+                .setParameter("provider", provider)
                 .getResultList();
     }
 
