@@ -253,6 +253,7 @@ public class NotificationConfigurationController extends CdbEntityController<Not
 
     /**
      * Send a test notification.
+     * @param config
      */
     public void sendTestNotification(NotificationConfiguration config) {
         try {

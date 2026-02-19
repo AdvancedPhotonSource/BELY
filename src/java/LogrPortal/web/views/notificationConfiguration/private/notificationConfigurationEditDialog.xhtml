@@ -107,6 +107,13 @@
                              oncomplete="if (args &amp;&amp; !args.validationFailed) PF('notificationConfigurationEditDialogWidget').hide()"
                              icon="fa fa-save"
                              />
+
+            <p:commandButton value="Send Test Notification"
+                             icon="fa fa-paper-plane"
+                             action="#{notificationConfigurationController.sendTestNotification(currentConfiguration)}"                             >
+                <p:tooltip for="@parent" value="Send Test Notification"/>
+            </p:commandButton>
+
             <p:commandButton value="Cancel"
                              onclick="PF('notificationConfigurationEditDialogWidget').hide(); return false;"
                              type="button"
