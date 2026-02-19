@@ -275,6 +275,12 @@ public class NotificationConfigurationController extends CdbEntityController<Not
         return notificationProviderFacade.find(id);
     }
 
+    @Override
+    public String destroy() {
+        super.destroy();
+        return null;
+    }
+
     public static NotificationConfigurationController getInstance() {
         return (NotificationConfigurationController) SessionUtility.findBean(NotificationConfigurationController.CONTROLLER_NAMED);
     }
