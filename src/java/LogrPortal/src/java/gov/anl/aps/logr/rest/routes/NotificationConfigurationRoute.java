@@ -28,8 +28,8 @@ import org.apache.logging.log4j.Logger;
  *
  * @author djarosz
  */
-@Path("/NotificationConfigurations")
-@Tag(name = "NotificationConfigurations")
+@Path("/NotificationConfiguration")
+@Tag(name = "NotificationConfiguration")
 public class NotificationConfigurationRoute extends BaseRoute {
 
     private static final Logger LOGGER = LogManager.getLogger(NotificationConfigurationRoute.class.getName());
