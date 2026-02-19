@@ -6,8 +6,6 @@ package gov.anl.aps.logr.portal.controllers;
 
 import gov.anl.aps.logr.portal.controllers.settings.NotificationConfigurationSettings;
 import gov.anl.aps.logr.portal.controllers.utilities.NotificationConfigurationControllerUtility;
-import fish.payara.cloud.connectors.mqtt.api.MQTTConnection;
-import fish.payara.cloud.connectors.mqtt.api.MQTTConnectionFactory;
 import gov.anl.aps.logr.common.mqtt.model.TestNotificationEvent;
 import gov.anl.aps.logr.portal.model.db.beans.NotificationConfigurationFacade;
 import gov.anl.aps.logr.portal.model.db.beans.NotificationConfigurationHandlerSettingFacade;
@@ -290,28 +288,7 @@ public class NotificationConfigurationController extends CdbEntityController<Not
                     username
             );
 
-            // Get MQTT connection factory
-            MQTTConnectionFactory mqttFactory = SessionUtility.fetchMQTTConnectionFactory();
-            if (mqttFactory == null) {
-                SessionUtility.addWarningMessage("MQTT Not Configured",
-                        "MQTT is not configured. Cannot send test notification.");
-                return;
-            }
-
-            // Publish the event
-            MQTTConnection connection = mqttFactory.getConnection();
-            try {
-                String jsonMessage = event.toJson();
-                connection.publish(event.getTopic().getValue(), jsonMessage.getBytes(), 0, false);
-                logger.debug("Published test notification MQTT event: {}", jsonMessage);
-                connection.close();
-            } catch (Exception ex) {
-                logger.error("Failed to publish test notification MQTT event: {}", ex.getMessage());
-                SessionUtility.addErrorMessage("Error",
-                        "Failed to send test notification: " + ex.getMessage());
-                return;
-            }
-
+            SessionUtility.publishMqttEvent(event);
             SessionUtility.addInfoMessage("Test Sent",
                     "Test notification sent to: " + config.getName());
         } catch (Exception ex) {
