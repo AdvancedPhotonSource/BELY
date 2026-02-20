@@ -21,6 +21,7 @@ setup(
         "pydantic>=2.0.0",
         "python-dotenv>=1.0.0",
         "pluggy>=1.3.0",
+        "bely-api>=2025.3.dev0",
     ],
     extras_require={
         "dev": [

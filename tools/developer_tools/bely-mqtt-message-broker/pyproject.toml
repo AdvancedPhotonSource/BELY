@@ -33,7 +33,8 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "pluggy>=1.3.0",
     "PyYAML>=6.0.0",
-    "apprise>=1.4.0"
+    "apprise>=1.4.0",
+    "bely-api>=2025.3.dev0"
 ]
 
 [project.urls]
