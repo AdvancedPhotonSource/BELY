@@ -17,11 +17,6 @@ from bely_mqtt.config import GlobalConfig
 from bely_mqtt.events import EventType
 from bely_mqtt.models import MQTTMessage
 
-try:
-    from BelyApiFactory import BelyApiFactory
-except ImportError:
-    BelyApiFactory = None  # type: ignore[misc,assignment]
-
 logger = logging.getLogger(__name__)
 
 

@@ -126,7 +126,7 @@ class ConfigLoader:
 
         configs = nc_api.get_all()
 
-        users = {}
+        users: Dict[str, Any] = {}
         for config in configs:
             username = config.username
             if not username:
