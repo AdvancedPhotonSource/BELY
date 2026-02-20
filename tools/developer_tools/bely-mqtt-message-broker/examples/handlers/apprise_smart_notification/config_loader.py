@@ -138,14 +138,15 @@ class ConfigLoader:
             # handler_preferences_by_name is already {str: bool} from the API
             notifications = config.handler_preferences_by_name or {}
 
-            users[username]["configs"].append({
-                "apprise_url": config.notification_endpoint,
-                "notifications": notifications,
-            })
+            users[username]["configs"].append(
+                {
+                    "apprise_url": config.notification_endpoint,
+                    "notifications": notifications,
+                }
+            )
 
         self.logger.info(
-            f"Loaded {len(configs)} notification configurations "
-            f"for {len(users)} users from API"
+            f"Loaded {len(configs)} notification configurations " f"for {len(users)} users from API"
         )
         return {"users": users}
 

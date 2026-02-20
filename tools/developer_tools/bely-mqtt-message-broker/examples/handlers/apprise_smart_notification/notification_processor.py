@@ -117,15 +117,15 @@ class NotificationProcessor:
         if username not in self.user_endpoint_configs:
             self.user_endpoint_configs[username] = []
 
-        self.user_endpoint_configs[username].append({
-            "apprise": apobj,
-            "settings": settings,
-            "has_email": has_email,
-        })
-
-        self.logger.debug(
-            f"Added endpoint for user: {username} (has_email: {has_email})"
+        self.user_endpoint_configs[username].append(
+            {
+                "apprise": apobj,
+                "settings": settings,
+                "has_email": has_email,
+            }
         )
+
+        self.logger.debug(f"Added endpoint for user: {username} (has_email: {has_email})")
 
     def should_notify(self, username: Optional[str], notification_type: str) -> bool:
         """
@@ -148,9 +148,7 @@ class NotificationProcessor:
         if not endpoints:
             return False
 
-        return any(
-            ep["settings"].get(notification_type, True) for ep in endpoints
-        )
+        return any(ep["settings"].get(notification_type, True) for ep in endpoints)
 
     async def send_notification(
         self,
@@ -208,9 +206,7 @@ class NotificationProcessor:
                     self.logger.warning(f"Failed to send notification to {username}")
 
             except Exception as e:
-                self.logger.error(
-                    f"Error sending notification to {username}: {e}", exc_info=True
-                )
+                self.logger.error(f"Error sending notification to {username}: {e}", exc_info=True)
 
     async def send_notification_with_threading(
         self,
@@ -273,9 +269,7 @@ class NotificationProcessor:
                 self.logger.warning(f"Failed to generate email headers: {e}")
 
         # Send notification with threading support
-        await self.send_notification(
-            username, threaded_subject, body, headers, notification_type
-        )
+        await self.send_notification(username, threaded_subject, body, headers, notification_type)
 
     async def process_notifications(
         self, event: Any, notification_configs: List[Dict[str, Any]]

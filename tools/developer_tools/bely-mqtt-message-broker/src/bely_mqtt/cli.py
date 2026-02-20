@@ -139,6 +139,7 @@ def start(
     if api_url:
         try:
             from BelyApiFactory import BelyApiFactory
+
             api_factory = BelyApiFactory(api_url)
             logger.info(f"BELY API factory initialized: {api_url}")
         except ImportError:

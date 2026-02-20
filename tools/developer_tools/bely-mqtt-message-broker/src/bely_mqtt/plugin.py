@@ -11,7 +11,7 @@ import inspect
 import logging
 from abc import ABC
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, List, Optional, Type
 
 from bely_mqtt.config import GlobalConfig
 from bely_mqtt.events import EventType
