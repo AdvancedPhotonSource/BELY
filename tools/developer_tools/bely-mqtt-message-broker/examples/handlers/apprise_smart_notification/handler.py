@@ -48,7 +48,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
     def __init__(
         self,
         config_path: Optional[str] = None,
-        api_client: Optional[Any] = None,
+        api_factory: Optional[Any] = None,
         global_config: Optional[GlobalConfig] = None,
     ):
         """
@@ -56,7 +56,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
 
         Args:
             config_path: Path to YAML configuration file
-            api_client: Optional BELY API client
+            api_factory: Optional BelyApiFactory instance for querying the BELY API
             global_config: Optional global configuration containing bely_url and other settings
 
         Raises:
@@ -64,9 +64,9 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             FileNotFoundError: If config file not found
             ValueError: If config is invalid
         """
-        super().__init__(api_client=api_client)
+        super().__init__(api_factory=api_factory)
 
-        self.bely_url = global_config.bely_url if global_config else None
+        self.bely_url = self.api_factory.bely_url if self.api_factory else None
 
         # Initialize components
         self.config_loader = ConfigLoader(self.logger)
@@ -78,13 +78,27 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         )  # Will be updated after config load
         self.processor = NotificationProcessor(self.logger)
 
-        # Load configuration
+        # Load configuration: prefer API, fall back to YAML
         self.global_config_data = {}
-        if config_path:
+        api_config_loaded = False
+
+        if self.api_factory:
+            try:
+                api_config = self.config_loader.load_config_from_api(self.api_factory)
+                if config_path:
+                    file_config = self.config_loader.load_config(config_path)
+                    self.global_config_data = file_config.get("global", {})
+                    api_config["global"] = self.global_config_data
+                self.processor.initialize_from_config(api_config, self.config_loader)
+                api_config_loaded = True
+            except Exception as e:
+                self.logger.warning(f"Failed to load from API: {e}")
+
+        if not api_config_loaded and config_path:
             config = self.config_loader.load_config(config_path)
             self.global_config_data = config.get("global", {})
             self.processor.initialize_from_config(config, self.config_loader)
-        else:
+        elif not api_config_loaded:
             self.logger.warning("No config path provided. Handler will not send notifications.")
 
     async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
