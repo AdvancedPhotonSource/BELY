@@ -64,9 +64,9 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             FileNotFoundError: If config file not found
             ValueError: If config is invalid
         """
-        super().__init__(api_factory=api_factory)
+        super().__init__(api_factory=api_factory, global_config=global_config)
 
-        self.bely_url = self.api_factory.bely_url if self.api_factory else None
+        self.bely_url = self.global_config.bely_url if self.global_config else None
 
         # Initialize components
         self.config_loader = ConfigLoader(self.logger)

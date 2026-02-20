@@ -313,8 +313,9 @@ class TestEmailThreadingIntegration:
             )
 
             # Mock Apprise notify for all users
-            for username, apobj in handler.processor.user_apprise_instances.items():
-                apobj.notify = MagicMock(return_value=True)
+            for username, endpoints in handler.processor.user_endpoint_configs.items():
+                for ep in endpoints:
+                    ep["apprise"].notify = MagicMock(return_value=True)
 
             return handler
 
@@ -326,7 +327,7 @@ class TestEmailThreadingIntegration:
         # Track all notifications sent
         notifications = []
 
-        async def track_notification(username, title, body, attach=None):
+        async def track_notification(username, title, body, attach=None, notification_type=None):
             notifications.append(
                 {
                     "username": username,
@@ -455,7 +456,7 @@ class TestEmailThreadingIntegration:
         # Track notifications with their types
         notifications = []
 
-        async def track_notification(username, title, body, attach=None):
+        async def track_notification(username, title, body, attach=None, notification_type=None):
             # Determine if this is an email notification based on user config
             is_email = False
             if username in ["alice", "bob"]:  # These users have email configured
@@ -517,7 +518,7 @@ class TestEmailThreadingIntegration:
 
         notifications = []
 
-        async def track_notification(username, title, body, attach=None):
+        async def track_notification(username, title, body, attach=None, notification_type=None):
             notifications.append(
                 {
                     "username": username,
