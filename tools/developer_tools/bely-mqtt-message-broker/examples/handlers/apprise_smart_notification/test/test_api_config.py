@@ -34,8 +34,15 @@ from config_loader import ConfigLoader  # noqa: E402
 from handler import AppriseSmartNotificationHandler  # noqa: E402
 
 
-def make_mock_nc(username, notification_endpoint, handler_preferences_by_name=None,
-                 notification_provider_name="email", name="config", description="", id=1):
+def make_mock_nc(
+    username,
+    notification_endpoint,
+    handler_preferences_by_name=None,
+    notification_provider_name="email",
+    name="config",
+    description="",
+    id=1,
+):
     """Create a mock NotificationConfiguration object matching the API model."""
     mock = MagicMock()
     mock.username = username
@@ -141,14 +148,15 @@ class TestLoadConfigFromApi:
     def test_load_config_from_api_multiple_users(self, loader):
         """Configs for different users are grouped correctly."""
         configs = [
-            make_mock_nc("logr", "mailto://logr@example.com",
-                         {"entry_updates": True}, id=1),
-            make_mock_nc("djarosz", "mailto://dj@example.com",
-                         {"entry_updates": True, "reactions": False}, id=2),
-            make_mock_nc("logr", "slack://token/a/b/",
-                         {"entry_updates": False}, id=3),
-            make_mock_nc("djarosz", "discord://webhook/token",
-                         {"new_entries": True}, id=4),
+            make_mock_nc("logr", "mailto://logr@example.com", {"entry_updates": True}, id=1),
+            make_mock_nc(
+                "djarosz",
+                "mailto://dj@example.com",
+                {"entry_updates": True, "reactions": False},
+                id=2,
+            ),
+            make_mock_nc("logr", "slack://token/a/b/", {"entry_updates": False}, id=3),
+            make_mock_nc("djarosz", "discord://webhook/token", {"new_entries": True}, id=4),
         ]
         factory = make_mock_api_factory(configs)
         result = loader.load_config_from_api(factory)
@@ -179,8 +187,9 @@ class TestLoadConfigFromApi:
     def test_load_config_from_api_empty_preferences(self, loader):
         """Configs with None handler_preferences_by_name default to empty dict."""
         configs = [
-            make_mock_nc("logr", "mailto://logr@example.com",
-                         handler_preferences_by_name=None, id=1),
+            make_mock_nc(
+                "logr", "mailto://logr@example.com", handler_preferences_by_name=None, id=1
+            ),
         ]
         factory = make_mock_api_factory(configs)
         result = loader.load_config_from_api(factory)
@@ -215,7 +224,8 @@ class TestHandlerApiInit:
 
         with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
             handler = AppriseSmartNotificationHandler(
-                api_factory=factory, global_config=global_config,
+                api_factory=factory,
+                global_config=global_config,
             )
 
         # logr should have 3 endpoint configs
@@ -248,8 +258,7 @@ class TestHandlerApiInit:
             yaml.dump(yaml_config, f)
 
         api_configs = [
-            make_mock_nc("logr", "mailto://logr@example.com",
-                         {"entry_updates": True}, id=1),
+            make_mock_nc("logr", "mailto://logr@example.com", {"entry_updates": True}, id=1),
         ]
         factory = make_mock_api_factory(api_configs)
         global_config = GlobalConfig({"bely_url": "https://bely.example.com"})
@@ -321,37 +330,53 @@ class TestHandlerApiEventProcessing:
     def api_handler(self, mock_apprise_cls):
         """Create a handler initialized via API with two users."""
         configs = [
-            make_mock_nc("alice", "mailto://alice@example.com", {
-                "entry_updates": True,
-                "own_entry_edits": True,
-                "entry_replies": True,
-                "new_entries": True,
-                "reactions": True,
-                "document_replies": True,
-            }, id=1),
-            make_mock_nc("alice", "slack://tokenA/tokenB/tokenC/", {
-                "entry_updates": True,
-                "own_entry_edits": False,
-                "entry_replies": True,
-                "new_entries": True,
-                "reactions": False,
-                "document_replies": True,
-            }, id=2),
-            make_mock_nc("bob", "mailto://bob@example.com", {
-                "entry_updates": True,
-                "own_entry_edits": True,
-                "entry_replies": True,
-                "new_entries": False,
-                "reactions": False,
-                "document_replies": True,
-            }, id=3),
+            make_mock_nc(
+                "alice",
+                "mailto://alice@example.com",
+                {
+                    "entry_updates": True,
+                    "own_entry_edits": True,
+                    "entry_replies": True,
+                    "new_entries": True,
+                    "reactions": True,
+                    "document_replies": True,
+                },
+                id=1,
+            ),
+            make_mock_nc(
+                "alice",
+                "slack://tokenA/tokenB/tokenC/",
+                {
+                    "entry_updates": True,
+                    "own_entry_edits": False,
+                    "entry_replies": True,
+                    "new_entries": True,
+                    "reactions": False,
+                    "document_replies": True,
+                },
+                id=2,
+            ),
+            make_mock_nc(
+                "bob",
+                "mailto://bob@example.com",
+                {
+                    "entry_updates": True,
+                    "own_entry_edits": True,
+                    "entry_replies": True,
+                    "new_entries": False,
+                    "reactions": False,
+                    "document_replies": True,
+                },
+                id=3,
+            ),
         ]
         factory = make_mock_api_factory(configs)
         global_config = GlobalConfig({"bely_url": "https://bely.example.com"})
 
         with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
             handler = AppriseSmartNotificationHandler(
-                api_factory=factory, global_config=global_config,
+                api_factory=factory,
+                global_config=global_config,
             )
             # Mock notify on all endpoint apprise objects
             for username, endpoints in handler.processor.user_endpoint_configs.items():
