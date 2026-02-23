@@ -177,10 +177,8 @@ public class NotificationConfigurationController extends CdbEntityController<Not
 
         NotificationConfiguration current = getCurrent();
 
-        Map<Integer, Boolean> handlerPreferences = current.getHandlerPreferences();
         Map<Integer, String> configSettings = current.getConfigSettings();
 
-        handlerPreferences.clear();
         configSettings.clear();
 
         // Load provider info
@@ -197,12 +195,19 @@ public class NotificationConfigurationController extends CdbEntityController<Not
             }
 
             // Load existing handler preferences
-            List<NotificationConfigurationHandlerSetting> handlerSettings
-                    = notificationConfigurationHandlerSettingFacade.findByNotificationConfiguration(config);
-            for (NotificationConfigurationHandlerSetting setting : handlerSettings) {
-                handlerPreferences.put(setting.getNotificationHandlerConfigKey().getId(),
-                        "true".equalsIgnoreCase(setting.getConfigValue()));
-            }
+            populateHandlerPreferences(config);
+        }
+    }
+
+    private void populateHandlerPreferences(NotificationConfiguration config) {
+        Map<Integer, Boolean> handlerPreferences = config.getHandlerPreferences();
+        handlerPreferences.clear();
+
+        List<NotificationConfigurationHandlerSetting> handlerSettings
+                = notificationConfigurationHandlerSettingFacade.findByNotificationConfiguration(config);
+        for (NotificationConfigurationHandlerSetting setting : handlerSettings) {
+            handlerPreferences.put(setting.getNotificationHandlerConfigKey().getId(),
+                    "true".equalsIgnoreCase(setting.getConfigValue()));
         }
     }
 
@@ -296,6 +301,130 @@ public class NotificationConfigurationController extends CdbEntityController<Not
                     "Failed to send test notification: " + ex.getMessage());
             logger.error("Failed to send test notification", ex);
         }
+    }
+
+    /**
+     * Process unsubscribe request from URL parameters. Called by f:viewAction
+     * on page load.
+     */
+    public void processUnsubscribeRequest() {
+        LoginController loginController = LoginController.getInstance();
+        if (!loginController.isLoggedIn()) {
+            return;
+        }
+
+        String configIdStr = SessionUtility.getRequestParameterValue("configId");
+        String notificationType = SessionUtility.getRequestParameterValue("notificationType");
+
+        if (configIdStr == null || notificationType == null) {
+            SessionUtility.addErrorMessage("Error", "Invalid unsubscribe request. Missing required parameters.");
+            return;
+        }
+
+        Integer configId;
+        try {
+            configId = Integer.valueOf(configIdStr);
+        } catch (NumberFormatException ex) {
+            SessionUtility.addErrorMessage("Error", "Invalid configuration ID.");
+            return;
+        }
+
+        NotificationConfiguration config = findById(configId);
+        setCurrent(config);
+        populateHandlerPreferences(config);
+
+        if (config == null) {
+            SessionUtility.addErrorMessage("Error", "Notification configuration not found.");
+            return;
+        }
+
+        // Verify ownership or admin
+        UserInfo currentUser = SessionUtility.getUser();
+        boolean isAdmin = loginController.isLoggedInAsAdmin();
+        boolean isOwner = currentUser != null && config.getUserInfo() != null
+                && currentUser.getId().equals(config.getUserInfo().getId());
+        if (!isAdmin && !isOwner) {
+            String ownerName = config.getUserInfo() != null ? config.getUserInfo().getUsername() : "unknown";
+            config.setUnsubscribeError("This notification configuration belongs to " + ownerName
+                    + ". You do not have permission to modify it.");
+            return;
+        }
+
+        if (isAdmin && !isOwner) {
+            config.setUnsubscribeForOtherUser(true);
+        }
+
+        // Find handler key
+        NotificationHandlerConfigKey handlerKey = notificationHandlerConfigKeyFacade.findByConfigKey(notificationType);
+        if (handlerKey == null) {
+            config.setUnsubscribeError("Unknown notification type: " + notificationType);
+            return;
+        }
+
+        config.setUnsubscribeHandlerConfigKey(handlerKey);
+
+        // Check if already unsubscribed
+        Boolean currentValue = getCurrent().getHandlerPreferences().get(handlerKey.getId());
+        if (currentValue != null && !currentValue) {
+            config.setAlreadyUnsubscribed(true);
+        }
+    }
+
+    /**
+     * Execute the unsubscribe action. Disables the notification type for the
+     * current configuration using the standard update flow.
+     */
+    public void executeUnsubscribe() {
+        NotificationConfiguration current = getCurrent();
+        if (current == null) {
+            current.setUnsubscribeError("No configuration selected.");
+            return;
+        }
+
+        NotificationHandlerConfigKey handlerKey = current.getUnsubscribeHandlerConfigKey();
+        if (handlerKey == null) {
+            current.setUnsubscribeError("No notification type selected.");
+            return;
+        }
+
+        try {
+            current.getHandlerPreferences().put(handlerKey.getId(), false);
+            update();
+
+            boolean unsubscribeForOtherUser = current.isUnsubscribeForOtherUser();
+
+            // Get updated current.
+            current = getCurrent();
+            current.setUnsubscribeComplete(true);
+            current.setUnsubscribeForOtherUser(unsubscribeForOtherUser);
+        } catch (Exception ex) {
+            current.setUnsubscribeError("Failed to update notification setting: " + ex.getMessage());
+            logger.error("Failed to execute unsubscribe", ex);
+        }
+    }
+
+    /**
+     * Cancel the unsubscribe action and return to user profile.
+     *
+     * @return Navigation outcome
+     */
+    public String cancelUnsubscribe() {
+        return redirectToSettingsForCurrentConfigurationUser();
+    }
+
+    public String redirectToSettingsForCurrentConfigurationUser() {
+        UserInfoController instance = UserInfoController.getInstance();
+
+        NotificationConfiguration current = getCurrent();
+        if (current != null) {
+            instance.prepareView(current.getUserInfo());
+
+            return "/views/userInfo/edit.xhtml?faces-redirect=true";
+        }
+
+        SessionUtility.addErrorMessage("Error", "No configuration");
+
+        return "/";
     }
 
     public NotificationProvider getSelectedProvider() {

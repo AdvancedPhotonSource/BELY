@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="../../templates/portalViewTemplate.xhtml">
+
+    <f:metadata>
+        <f:viewAction action="#{settingController.updateGlobalSettings()}" />
+        <f:viewAction action="#{notificationConfigurationController.processUnsubscribeRequest()}" />
+    </f:metadata>
+
+    <ui:define name="pageTitle">: Unsubscribe from Notifications</ui:define>
+
+    <ui:define name="middleCenter">
+        <h:form id="unsubscribeForm">
+
+            <ui:param name="currentConfiguration" value="#{notificationConfigurationController.current}" />
+
+            <div class="domainEntityLeftContent middleCenterLeftContent">
+                <div class="pageTitle">
+                    <h1>Unsubscribe from Notifications</h1>
+                </div>
+
+                <!-- Not logged in -->
+                <h:panelGroup rendered="#{!loginController.loggedIn}">
+                    <p:panel header="Login Required">
+                        <p>You must be logged in to manage notification preferences.</p>
+                        <p>Please log in and try again.</p>
+                    </p:panel>
+                </h:panelGroup>
+
+                <!-- Error -->
+                <h:panelGroup rendered="#{loginController.loggedIn and currentConfiguration.unsubscribeError != null}">
+                    <p:panel header="Error">
+                        <p>#{currentConfiguration.unsubscribeError}</p>
+                    </p:panel>
+                </h:panelGroup>
+
+                <!-- Already Unsubscribed -->
+                <h:panelGroup rendered="#{loginController.loggedIn
+                                          and currentConfiguration.unsubscribeError == null
+                                          and currentConfiguration.alreadyUnsubscribed}">
+                    <p:panel header="Already Unsubscribed">
+                        <p>You are already unsubscribed from
+                            <strong>#{currentConfiguration.unsubscribeHandlerConfigKey.displayName}</strong>
+                            notifications for configuration
+                            <strong>#{currentConfiguration.name}</strong>.
+                        </p>
+
+                        <p:commandButton value="Go to User Settings"
+                                         icon="fa fa-cogs"
+                                         action="#{notificationConfigurationController.redirectToSettingsForCurrentConfigurationUser()}"/>
+                    </p:panel>
+                </h:panelGroup>
+
+                <!-- Confirmation -->
+                <h:panelGroup id="confirmPanel"
+                              rendered="#{loginController.loggedIn
+                                          and currentConfiguration.unsubscribeError == null
+                                          and !currentConfiguration.alreadyUnsubscribed
+                                          and !currentConfiguration.unsubscribeComplete}">
+                    <p:panel header="Confirm Unsubscribe">
+                        <h:panelGroup rendered="#{currentConfiguration.unsubscribeForOtherUser}">
+                            <p><strong>Note:</strong> You are modifying notifications for user:
+                                <strong>#{currentConfiguration.username}</strong></p>
+                        </h:panelGroup>
+
+                        <p>You are about to disable the following notification type:</p>
+
+                        <p:panelGrid columns="2" styleClass="noBorderPanelGrid" style="margin: 10px 0;">
+                            <h:outputText value="Configuration:" style="font-weight: bold;" />
+                            <h:outputText value="#{currentConfiguration.name}" />
+
+                            <h:outputText value="Notification Type:" style="font-weight: bold;" />
+                            <h:outputText value="#{currentConfiguration.unsubscribeHandlerConfigKey.displayName}" />
+                        </p:panelGrid>
+
+                        <p>Are you sure you want to unsubscribe?</p>
+
+                        <p:commandButton value="Confirm Unsubscribe"
+                                         action="#{notificationConfigurationController.executeUnsubscribe()}"
+                                         update="unsubscribeForm"
+                                         styleClass="ui-priority-primary"
+                                         style="margin-right: 10px;" />
+
+                        <p:commandButton value="Cancel"
+                                         action="#{notificationConfigurationController.cancelUnsubscribe()}"/>
+                    </p:panel>
+                </h:panelGroup>
+
+                <!-- Success -->
+                <h:panelGroup rendered="#{loginController.loggedIn and currentConfiguration.unsubscribeComplete}">
+                    <p:panel header="Unsubscribed Successfully">
+                        <h:panelGroup rendered="#{currentConfiguration.unsubscribeForOtherUser}">
+                            <p><strong>Note:</strong> You modified notifications for user:
+                                <strong>#{notificationConfigurationController.current.username}</strong></p>
+                        </h:panelGroup>
+
+                        <p>You have been unsubscribed from
+                            <strong>#{currentConfiguration.unsubscribeHandlerConfigKey.displayName}</strong>
+                            notifications for configuration
+                            <strong>#{currentConfiguration.name}</strong>.
+                        </p>
+                        <p>You can re-enable this notification type from your settings.</p>
+
+                        <p:commandButton value="Go to User Settings"
+                                         icon="fa fa-cogs"
+                                         action="#{notificationConfigurationController.redirectToSettingsForCurrentConfigurationUser()}"/>
+                    </p:panel>
+                </h:panelGroup>
+
+            </div>
+        </h:form>
+    </ui:define>
+
+</ui:composition>

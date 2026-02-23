@@ -83,6 +83,13 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
     private transient Map<String, Boolean> handlerPreferencesByName = new HashMap<>();
     private transient Map<String, String> configSettingsByName = new HashMap<>();
 
+    // Transient field for unsubscribe flow
+    private transient NotificationHandlerConfigKey unsubscribeHandlerConfigKey;
+    private transient String unsubscribeError;
+    private transient boolean unsubscribeComplete = false;
+    private transient boolean alreadyUnsubscribed = false;
+    private transient boolean unsubscribeForOtherUser = false;
+
     public NotificationConfiguration() {
     }
 
@@ -242,6 +249,51 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
 
     public void setConfigSettingsByName(Map<String, String> configSettingsByName) {
         this.configSettingsByName = configSettingsByName;
+    }
+
+    @JsonIgnore
+    public NotificationHandlerConfigKey getUnsubscribeHandlerConfigKey() {
+        return unsubscribeHandlerConfigKey;
+    }
+
+    public void setUnsubscribeHandlerConfigKey(NotificationHandlerConfigKey unsubscribeHandlerConfigKey) {
+        this.unsubscribeHandlerConfigKey = unsubscribeHandlerConfigKey;
+    }
+
+    @JsonIgnore
+    public String getUnsubscribeError() {
+        return unsubscribeError;
+    }
+
+    public void setUnsubscribeError(String unsubscribeError) {
+        this.unsubscribeError = unsubscribeError;
+    }
+
+    @JsonIgnore
+    public boolean isUnsubscribeComplete() {
+        return unsubscribeComplete;
+    }
+
+    public void setUnsubscribeComplete(boolean unsubscribeComplete) {
+        this.unsubscribeComplete = unsubscribeComplete;
+    }
+
+    @JsonIgnore
+    public boolean isAlreadyUnsubscribed() {
+        return alreadyUnsubscribed;
+    }
+
+    public void setAlreadyUnsubscribed(boolean alreadyUnsubscribed) {
+        this.alreadyUnsubscribed = alreadyUnsubscribed;
+    }
+
+    @JsonIgnore
+    public boolean isUnsubscribeForOtherUser() {
+        return unsubscribeForOtherUser;
+    }
+
+    public void setUnsubscribeForOtherUser(boolean unsubscribeForOtherUser) {
+        this.unsubscribeForOtherUser = unsubscribeForOtherUser;
     }
 
     @Override
