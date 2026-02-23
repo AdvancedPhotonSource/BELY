@@ -78,7 +78,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         self.formatter = NotificationFormatter(
             self.bely_url, self.logger
         )  # Will be updated after config load
-        self.processor = NotificationProcessor(self.logger)
+        self.processor = NotificationProcessor(self.logger, bely_url=self.bely_url)
 
         # Load configuration: prefer API, fall back to YAML
         self.global_config_data = {}
@@ -151,7 +151,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             if self.global_config_data:
                 api_config["global"] = self.global_config_data
 
-            temp_processor = NotificationProcessor(self.logger)
+            temp_processor = NotificationProcessor(self.logger, bely_url=self.bely_url)
             temp_processor.initialize_from_config(api_config, self.config_loader)
 
             self.processor.user_endpoint_configs = temp_processor.user_endpoint_configs
@@ -539,6 +539,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             document_name=event.parent_log_document_info.name,
             entry_id=entry_id,
             action_by=event.event_triggered_by_username,
+            notification_type="reactions",
         )
 
     async def _handle_delete_event(

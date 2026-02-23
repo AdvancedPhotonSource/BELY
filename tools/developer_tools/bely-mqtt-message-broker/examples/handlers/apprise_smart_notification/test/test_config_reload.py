@@ -583,5 +583,229 @@ class TestEndToEnd:
         assert "bob" in handler.processor.user_endpoint_configs
 
 
+class TestUnsubscribeLink:
+    """Tests for per-endpoint unsubscribe link injection in email notifications."""
+
+    @pytest.mark.asyncio
+    async def test_email_endpoint_with_config_id_includes_unsubscribe_link(self, mock_apprise_cls):
+        """Email endpoint with config_id and bely_url includes unsubscribe URL in body."""
+        configs = [
+            make_mock_nc("alice", "mailto://alice@example.com", {"entry_updates": True}, id=42),
+        ]
+        factory = make_mock_api_factory(configs)
+        global_config = GlobalConfig({"bely_url": "https://bely.example.com/bely"})
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            with patch("notification_processor.is_email_notification", return_value=True):
+                handler = AppriseSmartNotificationHandler(
+                    api_factory=factory,
+                    global_config=global_config,
+                )
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            with patch("notification_processor.is_email_notification", return_value=True):
+                await handler.processor.send_notification(
+                    "alice", "Test", "<p>Body</p>", notification_type="entry_updates"
+                )
+
+        call_args = mock_apprise_cls.return_value.notify.call_args
+        body = call_args[1]["body"]
+        assert "Unsubscribe from entry updates notifications" in body
+        assert "configId=42" in body
+        assert "notificationType=entry_updates" in body
+        assert "bely.example.com/bely/views/notificationConfiguration/unsubscribe" in body
+
+    @pytest.mark.asyncio
+    async def test_non_email_endpoint_no_unsubscribe_link(self, mock_apprise_cls):
+        """Non-email endpoints do not get unsubscribe links."""
+        configs = [
+            make_mock_nc("alice", "slack://token", {"entry_updates": True}, id=42),
+        ]
+        factory = make_mock_api_factory(configs)
+        global_config = GlobalConfig({"bely_url": "https://bely.example.com/bely"})
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            with patch("notification_processor.is_email_notification", return_value=False):
+                handler = AppriseSmartNotificationHandler(
+                    api_factory=factory,
+                    global_config=global_config,
+                )
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            await handler.processor.send_notification(
+                "alice", "Test", "<p>Body</p>", notification_type="entry_updates"
+            )
+
+        call_args = mock_apprise_cls.return_value.notify.call_args
+        body = call_args[1]["body"]
+        assert "Unsubscribe" not in body
+
+    @pytest.mark.asyncio
+    async def test_config_id_none_no_unsubscribe_link(self, mock_apprise_cls):
+        """YAML configs with config_id=None do not get unsubscribe links."""
+        configs = [
+            make_mock_nc("alice", "mailto://alice@example.com", {"entry_updates": True}, id=10),
+        ]
+        factory = make_mock_api_factory(configs)
+        global_config = GlobalConfig({"bely_url": "https://bely.example.com/bely"})
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            with patch("notification_processor.is_email_notification", return_value=True):
+                handler = AppriseSmartNotificationHandler(
+                    api_factory=factory,
+                    global_config=global_config,
+                )
+
+        # Manually set config_id to None to simulate YAML config
+        handler.processor.user_endpoint_configs["alice"][0]["config_id"] = None
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            await handler.processor.send_notification(
+                "alice", "Test", "<p>Body</p>", notification_type="entry_updates"
+            )
+
+        call_args = mock_apprise_cls.return_value.notify.call_args
+        body = call_args[1]["body"]
+        assert "Unsubscribe" not in body
+
+    @pytest.mark.asyncio
+    async def test_bely_url_none_no_unsubscribe_link(self, mock_apprise_cls):
+        """When bely_url is None, no unsubscribe link is added."""
+        configs = [
+            make_mock_nc("alice", "mailto://alice@example.com", {"entry_updates": True}, id=42),
+        ]
+        factory = make_mock_api_factory(configs)
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            with patch("notification_processor.is_email_notification", return_value=True):
+                handler = AppriseSmartNotificationHandler(
+                    api_factory=factory,
+                )
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            await handler.processor.send_notification(
+                "alice", "Test", "<p>Body</p>", notification_type="entry_updates"
+            )
+
+        call_args = mock_apprise_cls.return_value.notify.call_args
+        body = call_args[1]["body"]
+        assert "Unsubscribe" not in body
+
+    @pytest.mark.asyncio
+    async def test_notification_type_none_no_unsubscribe_link(self, mock_apprise_cls):
+        """When notification_type is None, no unsubscribe link is added."""
+        configs = [
+            make_mock_nc("alice", "mailto://alice@example.com", {"entry_updates": True}, id=42),
+        ]
+        factory = make_mock_api_factory(configs)
+        global_config = GlobalConfig({"bely_url": "https://bely.example.com/bely"})
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            with patch("notification_processor.is_email_notification", return_value=True):
+                handler = AppriseSmartNotificationHandler(
+                    api_factory=factory,
+                    global_config=global_config,
+                )
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            await handler.processor.send_notification(
+                "alice", "Test", "<p>Body</p>", notification_type=None
+            )
+
+        call_args = mock_apprise_cls.return_value.notify.call_args
+        body = call_args[1]["body"]
+        assert "Unsubscribe" not in body
+
+    @pytest.mark.asyncio
+    async def test_two_email_endpoints_get_distinct_unsubscribe_urls(self, mock_apprise_cls):
+        """Two email endpoints with different config_ids get distinct unsubscribe URLs."""
+        configs = [
+            make_mock_nc("alice", "mailto://alice@work.com", {"entry_updates": True}, id=10),
+            make_mock_nc("alice", "mailto://alice@home.com", {"entry_updates": True}, id=20),
+        ]
+        factory = make_mock_api_factory(configs)
+        global_config = GlobalConfig({"bely_url": "https://bely.example.com/bely"})
+
+        # Each endpoint gets its own mock Apprise instance
+        mock_instances = [MagicMock(), MagicMock()]
+        for m in mock_instances:
+            m.add = MagicMock(return_value=True)
+            m.notify = MagicMock(return_value=True)
+        call_count = {"i": 0}
+
+        def create_mock():
+            idx = call_count["i"]
+            call_count["i"] += 1
+            return mock_instances[idx % len(mock_instances)]
+
+        mock_cls = MagicMock(side_effect=create_mock)
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_cls):
+            with patch("notification_processor.is_email_notification", return_value=True):
+                handler = AppriseSmartNotificationHandler(
+                    api_factory=factory,
+                    global_config=global_config,
+                )
+
+        await handler.processor.send_notification(
+            "alice", "Test", "<p>Body</p>", notification_type="entry_updates"
+        )
+
+        # Both endpoints should have been notified
+        assert mock_instances[0].notify.called
+        assert mock_instances[1].notify.called
+
+        body1 = mock_instances[0].notify.call_args[1]["body"]
+        body2 = mock_instances[1].notify.call_args[1]["body"]
+
+        assert "configId=10" in body1
+        assert "configId=20" in body2
+        assert "configId=20" not in body1
+        assert "configId=10" not in body2
+
+
+class TestReactionNotificationType:
+    """Tests that reaction events pass notification_type='reactions' for unsubscribe links."""
+
+    @pytest.mark.asyncio
+    async def test_reaction_event_passes_notification_type(self, mock_apprise_cls):
+        """Reaction add event should pass notification_type='reactions' to send_notification_with_threading."""
+        configs = [
+            make_mock_nc(
+                "alice",
+                "mailto://alice@example.com",
+                {"reactions": True, "entry_updates": True},
+                id=42,
+            ),
+        ]
+        factory = make_mock_api_factory(configs)
+        global_config = GlobalConfig({"bely_url": "https://bely.example.com/bely"})
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            with patch("notification_processor.is_email_notification", return_value=True):
+                handler = AppriseSmartNotificationHandler(
+                    api_factory=factory,
+                    global_config=global_config,
+                )
+
+        with patch.object(
+            handler.processor, "send_notification_with_threading", new_callable=AsyncMock
+        ) as mock_send:
+            # Create a mock reaction add event
+            event = MagicMock()
+            event.event_triggered_by_username = "bob"
+            event.parent_log_info.entered_by_username = "alice"
+            event.parent_log_info.id = "entry-1"
+            event.parent_log_document_info.id = "doc-1"
+            event.parent_log_document_info.name = "Test Doc"
+
+            await handler._handle_reaction_event(event, is_add=True)
+
+            mock_send.assert_called_once()
+            call_kwargs = mock_send.call_args[1]
+            assert call_kwargs["notification_type"] == "reactions"
+            assert call_kwargs["username"] == "alice"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--asyncio-mode=auto"])

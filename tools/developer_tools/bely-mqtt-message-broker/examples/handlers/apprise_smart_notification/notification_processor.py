@@ -18,16 +18,20 @@ except ImportError:
 class NotificationProcessor:
     """Handles processing and sending of notifications."""
 
-    def __init__(self, logger: Logger, domain: str = "notifications.bely.app"):
+    def __init__(
+        self, logger: Logger, domain: str = "notifications.bely.app", bely_url: Optional[str] = None
+    ):
         """
         Initialize the notification processor.
 
         Args:
             logger: Logger instance for output
             domain: Domain for email threading IDs (default: notifications.bely.app)
+            bely_url: Optional BELY application URL for generating unsubscribe links
         """
 
         self.logger = logger
+        self.bely_url = bely_url
 
         # Per-endpoint tracking: each entry is a dict with
         # {"apprise": AppriseWithEmailHeaders, "settings": Dict[str, bool], "has_email": bool,
@@ -244,10 +248,26 @@ class NotificationProcessor:
             try:
                 apobj = ep["apprise"]
                 has_email = ep["has_email"]
+                config_id = ep.get("config_id")
+
+                # Create per-endpoint body with unsubscribe link for email endpoints
+                ep_body = body
+                if has_email and notification_type and self.bely_url and config_id is not None:
+                    base = self.bely_url.rstrip("/")
+                    unsub_url = (
+                        f"{base}/views/notificationConfiguration/unsubscribe"
+                        f"?configId={config_id}&notificationType={notification_type}"
+                    )
+                    display_type = notification_type.replace("_", " ")
+                    ep_body += (
+                        f"<br/><small>"
+                        f'<a href="{unsub_url}">Unsubscribe from {display_type} notifications</a>'
+                        f"</small>"
+                    )
 
                 if headers and has_email:
                     result = apobj.notify(
-                        body=body,
+                        body=ep_body,
                         title=title,
                         headers=headers,
                     )
@@ -256,7 +276,7 @@ class NotificationProcessor:
                     )
                 else:
                     result = apobj.notify(
-                        body=body,
+                        body=ep_body,
                         title=title,
                     )
 
