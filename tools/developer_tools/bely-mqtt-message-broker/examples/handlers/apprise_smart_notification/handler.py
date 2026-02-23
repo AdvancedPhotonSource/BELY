@@ -2,10 +2,12 @@
 Main handler implementation for Apprise Smart Notifications.
 """
 
+import asyncio
 from typing import Any, Optional, Union
 
 from bely_mqtt import (
     MQTTHandler,
+    CoreEvent,
     LogEntryAddEvent,
     LogEntryUpdateEvent,
     LogEntryDeleteEvent,
@@ -100,6 +102,64 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             self.processor.initialize_from_config(config, self.config_loader)
         elif not api_config_loaded:
             self.logger.warning("No config path provided. Handler will not send notifications.")
+
+        # Debounced config reload state
+        self._reload_timer: Optional[asyncio.TimerHandle] = None
+        self._reload_debounce_seconds: float = 2.0
+
+    async def handle_generic_add(self, event: CoreEvent) -> None:
+        """Handle generic add events. Reloads config on NotificationConfiguration changes."""
+        if self._is_notification_config_event(event):
+            self._schedule_config_reload()
+
+    async def handle_generic_update(self, event: CoreEvent) -> None:
+        """Handle generic update events. Reloads config on NotificationConfiguration changes."""
+        if self._is_notification_config_event(event):
+            self._schedule_config_reload()
+
+    async def handle_generic_delete(self, event: CoreEvent) -> None:
+        """Handle generic delete events. Reloads config on NotificationConfiguration changes."""
+        if self._is_notification_config_event(event):
+            self._schedule_config_reload()
+
+    def _is_notification_config_event(self, event: CoreEvent) -> bool:
+        """Check if event is for a NotificationConfiguration entity."""
+        return bool(event.entity_name == "NotificationConfiguration")
+
+    def _schedule_config_reload(self) -> None:
+        """Schedule a debounced config reload. Resets timer on each call."""
+        if not self.api_factory:
+            self.logger.warning("Cannot reload config: no API factory configured")
+            return
+
+        if self._reload_timer is not None:
+            self._reload_timer.cancel()
+
+        loop = asyncio.get_event_loop()
+        self._reload_timer = loop.call_later(
+            self._reload_debounce_seconds, lambda: asyncio.ensure_future(self._reload_config())
+        )
+        self.logger.debug("Scheduled config reload (debounced)")
+
+    async def _reload_config(self) -> None:
+        """Reload notification config from API, swapping atomically on success."""
+        self._reload_timer = None
+        self.logger.info("Reloading notification configuration from API...")
+
+        try:
+            api_config = self.config_loader.load_config_from_api(self.api_factory)
+            if self.global_config_data:
+                api_config["global"] = self.global_config_data
+
+            temp_processor = NotificationProcessor(self.logger)
+            temp_processor.initialize_from_config(api_config, self.config_loader)
+
+            self.processor.user_endpoint_configs = temp_processor.user_endpoint_configs
+            self.logger.info(
+                f"Config reloaded: {len(self.processor.user_endpoint_configs)} users configured"
+            )
+        except Exception as e:
+            self.logger.error(f"Failed to reload config, keeping existing: {e}", exc_info=True)
 
     async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
         """
