@@ -362,6 +362,190 @@ class TestReloadConfig:
         assert "bob" not in handler.processor.user_endpoint_configs
 
 
+class TestConfigIdTracking:
+    """Tests for config_id storage, reverse index, and lookup/removal methods."""
+
+    def test_api_configs_store_config_id(self, mock_apprise_cls):
+        """Config IDs from API are stored in endpoint dicts."""
+        configs = [
+            make_mock_nc("alice", "mailto://alice@example.com", {"entry_updates": True}, id=42),
+        ]
+        factory = make_mock_api_factory(configs)
+        global_config = GlobalConfig({"bely_url": "https://bely.example.com"})
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            handler = AppriseSmartNotificationHandler(
+                api_factory=factory,
+                global_config=global_config,
+            )
+
+        endpoints = handler.processor.user_endpoint_configs["alice"]
+        assert endpoints[0]["config_id"] == 42
+
+    def test_reverse_index_maps_config_id_to_username(self, mock_apprise_cls):
+        """Reverse index maps config_id to username correctly."""
+        configs = [
+            make_mock_nc("alice", "mailto://alice@example.com", {}, id=10),
+            make_mock_nc("bob", "mailto://bob@example.com", {}, id=20),
+        ]
+        factory = make_mock_api_factory(configs)
+        global_config = GlobalConfig({"bely_url": "https://bely.example.com"})
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            handler = AppriseSmartNotificationHandler(
+                api_factory=factory,
+                global_config=global_config,
+            )
+
+        assert handler.processor._config_id_to_username == {10: "alice", 20: "bob"}
+
+    def test_get_username_by_config_id_returns_correct_username(self, mock_apprise_cls):
+        """get_username_by_config_id() returns correct username."""
+        configs = [
+            make_mock_nc("alice", "mailto://alice@example.com", {}, id=10),
+        ]
+        factory = make_mock_api_factory(configs)
+        global_config = GlobalConfig({"bely_url": "https://bely.example.com"})
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            handler = AppriseSmartNotificationHandler(
+                api_factory=factory,
+                global_config=global_config,
+            )
+
+        assert handler.processor.get_username_by_config_id(10) == "alice"
+
+    def test_get_username_by_config_id_returns_none_for_unknown(self, mock_apprise_cls):
+        """get_username_by_config_id() returns None for unknown ID."""
+        configs = [
+            make_mock_nc("alice", "mailto://alice@example.com", {}, id=10),
+        ]
+        factory = make_mock_api_factory(configs)
+        global_config = GlobalConfig({"bely_url": "https://bely.example.com"})
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            handler = AppriseSmartNotificationHandler(
+                api_factory=factory,
+                global_config=global_config,
+            )
+
+        assert handler.processor.get_username_by_config_id(999) is None
+
+    def test_remove_endpoint_by_config_id(self, mock_apprise_cls):
+        """remove_endpoint_by_config_id() removes correct endpoint and cleans up reverse index."""
+        configs = [
+            make_mock_nc("alice", "mailto://alice@example.com", {}, id=10),
+            make_mock_nc("alice", "slack://token", {}, id=11),
+        ]
+        factory = make_mock_api_factory(configs)
+        global_config = GlobalConfig({"bely_url": "https://bely.example.com"})
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            handler = AppriseSmartNotificationHandler(
+                api_factory=factory,
+                global_config=global_config,
+            )
+
+        assert len(handler.processor.user_endpoint_configs["alice"]) == 2
+        result = handler.processor.remove_endpoint_by_config_id(10)
+
+        assert result is True
+        assert len(handler.processor.user_endpoint_configs["alice"]) == 1
+        assert handler.processor.user_endpoint_configs["alice"][0]["config_id"] == 11
+        assert 10 not in handler.processor._config_id_to_username
+        assert handler.processor._config_id_to_username[11] == "alice"
+
+    def test_remove_last_endpoint_removes_user_key(self, mock_apprise_cls):
+        """remove_endpoint_by_config_id() removes user key when last endpoint removed."""
+        configs = [
+            make_mock_nc("alice", "mailto://alice@example.com", {}, id=10),
+        ]
+        factory = make_mock_api_factory(configs)
+        global_config = GlobalConfig({"bely_url": "https://bely.example.com"})
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            handler = AppriseSmartNotificationHandler(
+                api_factory=factory,
+                global_config=global_config,
+            )
+
+        result = handler.processor.remove_endpoint_by_config_id(10)
+
+        assert result is True
+        assert "alice" not in handler.processor.user_endpoint_configs
+        assert 10 not in handler.processor._config_id_to_username
+
+    def test_remove_unknown_config_id_returns_false(self, mock_apprise_cls):
+        """remove_endpoint_by_config_id() returns False for unknown ID."""
+        configs = [
+            make_mock_nc("alice", "mailto://alice@example.com", {}, id=10),
+        ]
+        factory = make_mock_api_factory(configs)
+        global_config = GlobalConfig({"bely_url": "https://bely.example.com"})
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            handler = AppriseSmartNotificationHandler(
+                api_factory=factory,
+                global_config=global_config,
+            )
+
+        result = handler.processor.remove_endpoint_by_config_id(999)
+        assert result is False
+
+    def test_yaml_configs_have_none_config_id(self, mock_apprise_cls, tmp_path):
+        """YAML-loaded configs have config_id: None and don't pollute reverse index."""
+        yaml_config = {
+            "users": {
+                "alice": {
+                    "apprise_urls": ["mailto://alice@example.com"],
+                    "notifications": {"entry_updates": True},
+                },
+            },
+        }
+        config_path = tmp_path / "config.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(yaml_config, f)
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            handler = AppriseSmartNotificationHandler(config_path=str(config_path))
+
+        endpoints = handler.processor.user_endpoint_configs["alice"]
+        assert endpoints[0]["config_id"] is None
+        assert handler.processor._config_id_to_username == {}
+
+    @pytest.mark.asyncio
+    async def test_reverse_index_rebuilt_on_reload(self, mock_apprise_cls):
+        """After full reload, reverse index is rebuilt correctly."""
+        initial_configs = [
+            make_mock_nc("alice", "mailto://alice@example.com", {}, id=10),
+        ]
+        factory = make_mock_api_factory(initial_configs)
+        global_config = GlobalConfig({"bely_url": "https://bely.example.com"})
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            handler = AppriseSmartNotificationHandler(
+                api_factory=factory,
+                global_config=global_config,
+            )
+
+        assert handler.processor._config_id_to_username == {10: "alice"}
+
+        # Update API to return different configs
+        new_configs = [
+            make_mock_nc("bob", "mailto://bob@example.com", {}, id=20),
+            make_mock_nc("bob", "slack://token", {}, id=21),
+        ]
+        nc_api = factory.getNotificationConfigurationApi()
+        nc_api.get_all.return_value = new_configs
+
+        with patch("notification_processor.AppriseWithEmailHeaders", mock_apprise_cls):
+            await handler._reload_config()
+
+        # Old index should be gone, new one built
+        assert 10 not in handler.processor._config_id_to_username
+        assert handler.processor._config_id_to_username == {20: "bob", 21: "bob"}
+
+
 class TestEndToEnd:
     """End-to-end test: event -> debounce -> reload."""
 

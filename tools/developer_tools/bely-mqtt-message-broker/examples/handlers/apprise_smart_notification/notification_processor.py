@@ -30,8 +30,12 @@ class NotificationProcessor:
         self.logger = logger
 
         # Per-endpoint tracking: each entry is a dict with
-        # {"apprise": AppriseWithEmailHeaders, "settings": Dict[str, bool], "has_email": bool}
+        # {"apprise": AppriseWithEmailHeaders, "settings": Dict[str, bool], "has_email": bool,
+        #  "config_id": Optional[int]}
         self.user_endpoint_configs: Dict[str, List[dict]] = {}
+
+        # Reverse index: config_id -> username for O(1) delete lookups
+        self._config_id_to_username: Dict[int, str] = {}
 
         # Initialize email threading strategy
         self.email_threading = EmailThreadingStrategy(domain=domain)
@@ -51,6 +55,8 @@ class NotificationProcessor:
         global_config = config.get("global", {})
         users_config = config.get("users", {})
 
+        self._config_id_to_username.clear()
+
         for username, user_config in users_config.items():
             try:
                 if "configs" in user_config:
@@ -62,6 +68,7 @@ class NotificationProcessor:
                             endpoint_config.get("notifications", {}),
                             config_loader,
                             global_config,
+                            config_id=endpoint_config.get("config_id"),
                         )
                 else:
                     # YAML format: shared notifications across all URLs
@@ -85,6 +92,7 @@ class NotificationProcessor:
         notifications: Dict[str, bool],
         config_loader: Any,
         global_config: Dict[str, Any],
+        config_id: Optional[int] = None,
     ) -> None:
         """
         Add a single notification endpoint for a user.
@@ -95,6 +103,7 @@ class NotificationProcessor:
             notifications: Notification preferences for this endpoint
             config_loader: ConfigLoader instance for URL processing
             global_config: Global configuration dictionary
+            config_id: Optional NotificationConfiguration ID from the API
         """
         apobj = AppriseWithEmailHeaders()
         processed_url = config_loader.process_apprise_url(url, global_config)
@@ -122,8 +131,12 @@ class NotificationProcessor:
                 "apprise": apobj,
                 "settings": settings,
                 "has_email": has_email,
+                "config_id": config_id,
             }
         )
+
+        if config_id is not None:
+            self._config_id_to_username[config_id] = username
 
         self.logger.debug(f"Added endpoint for user: {username} (has_email: {has_email})")
 
@@ -149,6 +162,53 @@ class NotificationProcessor:
             return False
 
         return any(ep["settings"].get(notification_type, True) for ep in endpoints)
+
+    def get_username_by_config_id(self, config_id: int) -> Optional[str]:
+        """
+        Look up which user owns a given NotificationConfiguration ID.
+
+        Args:
+            config_id: The NotificationConfiguration ID
+
+        Returns:
+            Username if found, None otherwise
+        """
+        return self._config_id_to_username.get(config_id)
+
+    def remove_endpoint_by_config_id(self, config_id: int) -> bool:
+        """
+        Remove a notification endpoint by its config ID.
+
+        Looks up the username via the reverse index, removes the matching
+        endpoint, and cleans up the reverse index. If the user has no
+        remaining endpoints, removes the user key entirely.
+
+        Args:
+            config_id: The NotificationConfiguration ID to remove
+
+        Returns:
+            True if found and removed, False otherwise
+        """
+        username = self._config_id_to_username.get(config_id)
+        if username is None:
+            return False
+
+        endpoints = self.user_endpoint_configs.get(username)
+        if not endpoints:
+            del self._config_id_to_username[config_id]
+            return False
+
+        for i, ep in enumerate(endpoints):
+            if ep.get("config_id") == config_id:
+                endpoints.pop(i)
+                del self._config_id_to_username[config_id]
+
+                if not endpoints:
+                    del self.user_endpoint_configs[username]
+
+                return True
+
+        return False
 
     async def send_notification(
         self,

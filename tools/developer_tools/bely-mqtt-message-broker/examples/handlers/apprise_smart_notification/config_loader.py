@@ -142,6 +142,7 @@ class ConfigLoader:
                 {
                     "apprise_url": config.notification_endpoint,
                     "notifications": notifications,
+                    "config_id": config.id,
                 }
             )
 

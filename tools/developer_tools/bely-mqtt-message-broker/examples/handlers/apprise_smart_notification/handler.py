@@ -155,6 +155,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             temp_processor.initialize_from_config(api_config, self.config_loader)
 
             self.processor.user_endpoint_configs = temp_processor.user_endpoint_configs
+            self.processor._config_id_to_username = temp_processor._config_id_to_username
             self.logger.info(
                 f"Config reloaded: {len(self.processor.user_endpoint_configs)} users configured"
             )
