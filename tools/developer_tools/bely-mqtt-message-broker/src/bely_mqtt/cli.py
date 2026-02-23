@@ -134,17 +134,6 @@ def start(
     logger.info(f"Broker: {broker_host}:{broker_port}")
     logger.info(f"Topics: {', '.join(topic)}")
 
-    # Initialize API factory if URL is provided
-    api_factory = None
-    if api_url:
-        try:
-            from BelyApiFactory import BelyApiFactory
-
-            api_factory = BelyApiFactory(api_url)
-            logger.info(f"BELY API factory initialized: {api_url}")
-        except ImportError:
-            logger.warning("BelyApiFactory not available. API features disabled.")
-
     # Initialize configuration manager
     config_manager = None
     if config:
@@ -155,6 +144,23 @@ def start(
         except Exception as e:
             logger.error(f"Failed to load configuration file: {e}")
             sys.exit(1)
+
+    # Fall back to bely_url from config if --api-url not provided
+    if not api_url and config_manager and config_manager.global_config:
+        api_url = config_manager.global_config.bely_url
+        if api_url:
+            logger.info(f"Using bely_url from config file: {api_url}")
+
+    # Initialize API factory if URL is provided
+    api_factory = None
+    if api_url:
+        try:
+            from BelyApiFactory import BelyApiFactory
+
+            api_factory = BelyApiFactory(api_url)
+            logger.info(f"BELY API factory initialized: {api_url}")
+        except ImportError:
+            logger.warning("BelyApiFactory not available. API features disabled.")
 
     # Initialize plugin manager
     plugin_manager = PluginManager(api_factory=api_factory, config_manager=config_manager)
