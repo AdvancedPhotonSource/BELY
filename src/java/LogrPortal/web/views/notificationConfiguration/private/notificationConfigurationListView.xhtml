@@ -6,6 +6,7 @@
 
 
     <p:commandButton value="Add Configuration"
+                     rendered="#{isEntityWriteable}"
                      action="#{notificationConfigurationController.prepareCreateDialog(userEntity)}"
                      update="notificationConfigurationEditDialog"
                      process="@this"

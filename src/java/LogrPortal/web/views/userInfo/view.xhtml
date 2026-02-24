@@ -47,6 +47,8 @@ See LICENSE file.
                         <ui:include src="../notificationConfiguration/private/notificationConfigurationListView.xhtml">
                             <ui:param name="userEntity"
                                       value="#{userInfoController.current}" />
+                            <ui:param name="isEntityWriteable"
+                                      value="#{isEntityWriteable}" />
                         </ui:include>
                     </p:tab>
                 </p:accordionPanel>

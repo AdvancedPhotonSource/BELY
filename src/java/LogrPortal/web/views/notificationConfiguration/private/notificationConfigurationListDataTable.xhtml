@@ -36,7 +36,7 @@
             </ui:repeat>
         </p:column>
 
-        <p:column headerText="Actions">
+        <p:column headerText="Actions" rendered="#{isEntityWriteable}">
             <p:commandLink styleClass="fa fa-link-icon fa-edit"
                            action="#{notificationConfigurationController.prepareEditDialog(config)}"
                            update="@form"
