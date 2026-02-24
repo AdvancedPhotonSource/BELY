@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+
+    <p:dialog id="notificationConfigurationEditDialog"
+              header="#{currentConfiguration.isNewEntity() ? 'Add' : 'Edit'} Notification Configuration"
+              widgetVar="notificationConfigurationEditDialogWidget"
+              styleClass="viewTransparentBackgroundDialog"
+              modal="true"
+              resizable="false">
+
+        <ui:param name="currentConfiguration" value="#{notificationConfigurationController.current}" />
+
+        <h:panelGroup id="notificationConfigurationEditDialogContent" styleClass="leftAlignedText">
+            <p:outputPanel rendered="#{currentConfiguration != null}">
+                <h:panelGroup rendered="#{currentConfiguration.newEntity}">
+                    <p:commandButton value="Populate Email Configuration"
+                                     action="#{notificationConfigurationController.populateEmailInfo()}"
+                                     process="@this"
+                                     update="notificationConfigurationEditDialogContent"
+                                     immediate="true"
+                                     icon="fa fa-plus"
+                                     title="Quick setup with your email address"/>
+                    <p:separator/>
+                </h:panelGroup>                        
+
+                <p:panelGrid columns="2" styleClass="noBorderPanelGrid" >
+
+                    <h:outputLabel value="Name*:" styleClass="outputLabelRequired"/>
+                    <p:inputText value="#{currentConfiguration.name}"
+                                 placeholder="Work Email, Personal Teams"
+                                 />
+
+                    <h:outputLabel value="Description:" />
+                    <p:inputTextarea value="#{currentConfiguration.description}"
+                                     rows="2"
+                                     placeholder="Optional description"
+                                     />
+
+                    <h:outputLabel value="Notification Provider*:" styleClass="outputLabelRequired"/>
+                    <p:selectOneMenu value="#{currentConfiguration.notificationProvider}"
+                                     converter="notificationProviderConverter">
+                        <f:selectItem itemLabel="Select Provider..." itemValue="#{null}"/>
+                        <f:selectItems value="#{notificationConfigurationController.availableProviders}"
+                                       var="provider"
+                                       itemLabel="#{provider.name}"
+                                       itemValue="#{provider}"/>
+                        <p:ajax update="providerConfigSection"
+                                listener="#{notificationConfigurationController.onProviderChange()}"/>
+                    </p:selectOneMenu>
+
+                </p:panelGrid>
+
+                <!-- Dynamic Provider Configuration Fields -->
+                <h:panelGroup id="providerConfigSection">
+                    <p:fieldset legend="Provider Configuration"
+                                rendered="#{notificationConfigurationController.selectedProvider != null}"
+                                >
+                        <p>#{notificationConfigurationController.selectedProvider.description}</p>
+                        <p:panelGrid columns="2" styleClass="fullWidthInput" >
+                            <h:outputLabel value="Notification URL*:" styleClass="outputLabelRequired"/>
+                            <p:inputText
+                                value="#{currentConfiguration.notificationEndpoint}"
+                                placeholder="Enter notification endpoint URL"
+                                styleClass="fullWidthInput"
+                                />
+
+                            <c:forEach items="#{currentConfiguration.providerConfigKeys}"
+                                       var="configKey">
+                                <h:outputLabel value="#{configKey.description}#{configKey.isRequired ? '*:' : ':'}"
+                                               styleClass="#{configKey.isRequired ? 'outputLabelRequired' : ''}"/>
+                                <p:inputText value="#{currentConfiguration.configSettings[configKey.id]}"
+                                             styleClass="fullWidthInput" />
+                            </c:forEach>
+                        </p:panelGrid>
+                    </p:fieldset>
+                </h:panelGroup>
+
+                <!-- Handler Preferences (What events trigger notifications) -->
+                <p:fieldset legend="Notification Preferences" >
+                    <p:outputLabel value="Select which events trigger notifications to this destination:"/>
+
+                    <p:panelGrid columns="2" styleClass="noBorderPanelGrid" >
+                        <c:forEach items="#{notificationConfigurationController.availableHandlerConfigKeys}"
+                                   var="handlerKey">
+                            <p:selectBooleanCheckbox
+                                value="#{currentConfiguration.handlerPreferences[handlerKey.id]}"                            
+                                title="#{handlerKey.description}"
+                                />
+
+                            <p:outputLabel value="#{handlerKey.displayName}"/> 
+                        </c:forEach>
+                    </p:panelGrid>
+                </p:fieldset>
+            </p:outputPanel>
+        </h:panelGroup>
+
+        <f:facet name="footer">
+            <p:commandButton value="Save"
+                             action="#{notificationConfigurationController.save()}"
+                             update="notificationConfigurationEditDialogContent,notificationConfigListDataTable"
+                             oncomplete="if (args &amp;&amp; !args.validationFailed) PF('notificationConfigurationEditDialogWidget').hide()"
+                             icon="fa fa-save"
+                             />
+
+            <p:commandButton value="Send Test Notification"
+                             icon="fa fa-paper-plane"
+                             action="#{notificationConfigurationController.sendTestNotification(currentConfiguration)}"                             >
+                <p:tooltip for="@parent" value="Send Test Notification"/>
+            </p:commandButton>
+
+            <p:commandButton value="Cancel"
+                             onclick="PF('notificationConfigurationEditDialogWidget').hide(); return false;"
+                             type="button"
+                             icon="fa fa-times"/>
+        </f:facet>
+    </p:dialog>
+
+</ui:composition>

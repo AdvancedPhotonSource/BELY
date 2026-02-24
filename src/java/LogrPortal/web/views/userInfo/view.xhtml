@@ -34,14 +34,20 @@ See LICENSE file.
 
             </div>
             <div class="middleCenterRightContent">
-                <p:accordionPanel multiple="true" activeIndex="0,1"
+                <p:accordionPanel multiple="true" activeIndex="0,1,2"
                                   rendered="#{loginController.loggedIn}">
                     <p:tab title="Settings">
                         <ui:include src="../userSetting/private/userSettingView.xhtml"/>
                     </p:tab>
                     <p:tab title="User Role">
                         <ui:include src="../userRole/private/userInfoUserRoleList.xhtml"/>
-                        
+
+                    </p:tab>
+                    <p:tab title="Notification Configurations">
+                        <ui:include src="../notificationConfiguration/private/notificationConfigurationListView.xhtml">
+                            <ui:param name="userEntity"
+                                      value="#{userInfoController.current}" />
+                        </ui:include>
                     </p:tab>
                 </p:accordionPanel>
             </div>

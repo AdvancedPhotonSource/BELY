@@ -933,12 +933,14 @@ public abstract class CdbEntityController<ControllerUtility extends CdbEntityCon
             if (!silent) {
                 SessionUtility.addErrorMessage("Error", "Could not create " + getDisplayEntityTypeName() + ": " + ex.getMessage());
             }
+            SessionUtility.setValidationFailed();
             return null;
         } catch (RuntimeException ex) {
             if (!silent) {
                 Throwable t = ExceptionUtils.getRootCause(ex);
                 SessionUtility.addErrorMessage("Error", "Could not create " + getDisplayEntityTypeName() + ": " + t.getMessage());
             }
+            SessionUtility.setValidationFailed();
             return null;
         }
     }
@@ -1057,10 +1059,12 @@ public abstract class CdbEntityController<ControllerUtility extends CdbEntityCon
             return viewForCurrentEntity();
         } catch (CdbException ex) {
             SessionUtility.addErrorMessage("Error", "Could not update " + getDisplayEntityTypeName() + ": " + ex.getMessage());
+            SessionUtility.setValidationFailed();
             return null;
         } catch (RuntimeException ex) {
             Throwable t = ExceptionUtils.getRootCause(ex);
             SessionUtility.addErrorMessage("Error", "Could not update " + getDisplayEntityTypeName() + ": " + t.getMessage());
+            SessionUtility.setValidationFailed();
             return null;
         }
     }

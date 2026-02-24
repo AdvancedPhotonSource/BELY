@@ -4,10 +4,8 @@
  */
 package gov.anl.aps.logr.portal.controllers.utilities;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import fish.payara.cloud.connectors.mqtt.api.MQTTConnection;
-import fish.payara.cloud.connectors.mqtt.api.MQTTConnectionFactory;
 import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.exceptions.MqttNotConfiguredException;
 import gov.anl.aps.logr.common.mqtt.model.AddEvent;
 import gov.anl.aps.logr.common.mqtt.model.DeleteEvent;
 import gov.anl.aps.logr.common.mqtt.model.UpdateEvent;
@@ -43,47 +41,26 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
     private static final Logger logger = LogManager.getLogger(CdbEntityControllerUtility.class.getName());
 
     protected void publishMqttEvent(MqttEntityEvent event) {
-        MQTTConnectionFactory mqttFactory = SessionUtility.fetchMQTTConnectionFactory();
-        String jsonMessage;
-
         try {
-            jsonMessage = event.toJson();
-        } catch (JsonProcessingException ex) {
+            SessionUtility.publishMqttEvent(event);
+        } catch (MqttNotConfiguredException ex) {
+            logger.debug(ex);
+            return;
+        } catch (CdbException ex) {
             logger.error(ex);
             return;
         }
 
-        if (mqttFactory == null) {
-            logger.warn("MQTT not configured. Skipping event: " + jsonMessage);
-            return;
-        }
-        MQTTConnection connection = mqttFactory.getConnection();
-        try {
-            connection.publish(event.getTopic().getValue(), jsonMessage.getBytes(), 0, false);
-            CdbEntity entity = event.getEntity();
-
-            List actionEvents = entity.getActionEvents();
-            _publishActionEvents(connection, actionEvents);
-
-            connection.close();
-        } catch (Exception ex) {
-            logger.error(ex);
-        }
-    }
-
-    private void _publishActionEvents(MQTTConnection activeConnection, List<MqttEntityEvent> events) {
-        if (events == null) {
-            return;
-        }
-
-        for (MqttEntityEvent event : events) {
-            try {
-                String jsonMessage = event.toJson();
-                activeConnection.publish(event.getTopic().getValue(), jsonMessage.getBytes(), 0, false);
-            } catch (Exception ex) {
-                logger.error(ex);
+        CdbEntity entity = event.getEntity();
+        List<MqttEntityEvent> actionEvents = entity.getActionEvents();
+        if (actionEvents != null) {
+            for (MqttEntityEvent actionEvent : actionEvents) {
+                try {
+                    SessionUtility.publishMqttEvent(actionEvent);
+                } catch (CdbException ex) {
+                    logger.error(ex);
+                }
             }
-
         }
     }
 

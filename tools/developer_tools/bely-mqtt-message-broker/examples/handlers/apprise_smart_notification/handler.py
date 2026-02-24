@@ -2,10 +2,12 @@
 Main handler implementation for Apprise Smart Notifications.
 """
 
+import asyncio
 from typing import Any, Optional, Union
 
 from bely_mqtt import (
     MQTTHandler,
+    CoreEvent,
     LogEntryAddEvent,
     LogEntryUpdateEvent,
     LogEntryDeleteEvent,
@@ -14,6 +16,7 @@ from bely_mqtt import (
     LogEntryReplyDeleteEvent,
     LogReactionAddEvent,
     LogReactionDeleteEvent,
+    TestNotificationEvent,
 )
 from bely_mqtt.config import GlobalConfig
 
@@ -23,12 +26,14 @@ try:
     from .notification_processor import NotificationProcessor
     from .formatters import NotificationFormatter
     from .email_threading import NotificationEventType
+    from .apprise_email_wrapper import AppriseWithEmailHeaders
 except ImportError:
     # Fall back to absolute imports (when imported directly from tests)
     from config_loader import ConfigLoader  # type: ignore[no-redef]
     from notification_processor import NotificationProcessor  # type: ignore[no-redef]
     from formatters import NotificationFormatter  # type: ignore[no-redef]
     from email_threading import NotificationEventType  # type: ignore[no-redef]
+    from apprise_email_wrapper import AppriseWithEmailHeaders  # type: ignore[no-redef]
 
 
 class AppriseSmartNotificationHandler(MQTTHandler):
@@ -45,7 +50,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
     def __init__(
         self,
         config_path: Optional[str] = None,
-        api_client: Optional[Any] = None,
+        api_factory: Optional[Any] = None,
         global_config: Optional[GlobalConfig] = None,
     ):
         """
@@ -53,7 +58,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
 
         Args:
             config_path: Path to YAML configuration file
-            api_client: Optional BELY API client
+            api_factory: Optional BelyApiFactory instance for querying the BELY API
             global_config: Optional global configuration containing bely_url and other settings
 
         Raises:
@@ -61,9 +66,9 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             FileNotFoundError: If config file not found
             ValueError: If config is invalid
         """
-        super().__init__(api_client=api_client)
+        super().__init__(api_factory=api_factory, global_config=global_config)
 
-        self.bely_url = global_config.bely_url if global_config else None
+        self.bely_url = self.global_config.bely_url if self.global_config else None
 
         # Initialize components
         self.config_loader = ConfigLoader(self.logger)
@@ -73,14 +78,89 @@ class AppriseSmartNotificationHandler(MQTTHandler):
         self.formatter = NotificationFormatter(
             self.bely_url, self.logger
         )  # Will be updated after config load
-        self.processor = NotificationProcessor(self.logger)
+        self.processor = NotificationProcessor(self.logger, bely_url=self.bely_url)
 
-        # Load configuration
-        if config_path:
+        # Load configuration: prefer API, fall back to YAML
+        self.global_config_data = {}
+        api_config_loaded = False
+
+        if self.api_factory:
+            try:
+                api_config = self.config_loader.load_config_from_api(self.api_factory)
+                if config_path:
+                    file_config = self.config_loader.load_config(config_path)
+                    self.global_config_data = file_config.get("global", {})
+                    api_config["global"] = self.global_config_data
+                self.processor.initialize_from_config(api_config, self.config_loader)
+                api_config_loaded = True
+            except Exception as e:
+                self.logger.warning(f"Failed to load from API: {e}")
+
+        if not api_config_loaded and config_path:
             config = self.config_loader.load_config(config_path)
+            self.global_config_data = config.get("global", {})
             self.processor.initialize_from_config(config, self.config_loader)
-        else:
+        elif not api_config_loaded:
             self.logger.warning("No config path provided. Handler will not send notifications.")
+
+        # Debounced config reload state
+        self._reload_timer: Optional[asyncio.TimerHandle] = None
+        self._reload_debounce_seconds: float = 2.0
+
+    async def handle_generic_add(self, event: CoreEvent) -> None:
+        """Handle generic add events. Reloads config on NotificationConfiguration changes."""
+        if self._is_notification_config_event(event):
+            self._schedule_config_reload()
+
+    async def handle_generic_update(self, event: CoreEvent) -> None:
+        """Handle generic update events. Reloads config on NotificationConfiguration changes."""
+        if self._is_notification_config_event(event):
+            self._schedule_config_reload()
+
+    async def handle_generic_delete(self, event: CoreEvent) -> None:
+        """Handle generic delete events. Reloads config on NotificationConfiguration changes."""
+        if self._is_notification_config_event(event):
+            self._schedule_config_reload()
+
+    def _is_notification_config_event(self, event: CoreEvent) -> bool:
+        """Check if event is for a NotificationConfiguration entity."""
+        return bool(event.entity_name == "NotificationConfiguration")
+
+    def _schedule_config_reload(self) -> None:
+        """Schedule a debounced config reload. Resets timer on each call."""
+        if not self.api_factory:
+            self.logger.warning("Cannot reload config: no API factory configured")
+            return
+
+        if self._reload_timer is not None:
+            self._reload_timer.cancel()
+
+        loop = asyncio.get_event_loop()
+        self._reload_timer = loop.call_later(
+            self._reload_debounce_seconds, lambda: asyncio.ensure_future(self._reload_config())
+        )
+        self.logger.debug("Scheduled config reload (debounced)")
+
+    async def _reload_config(self) -> None:
+        """Reload notification config from API, swapping atomically on success."""
+        self._reload_timer = None
+        self.logger.info("Reloading notification configuration from API...")
+
+        try:
+            api_config = self.config_loader.load_config_from_api(self.api_factory)
+            if self.global_config_data:
+                api_config["global"] = self.global_config_data
+
+            temp_processor = NotificationProcessor(self.logger, bely_url=self.bely_url)
+            temp_processor.initialize_from_config(api_config, self.config_loader)
+
+            self.processor.user_endpoint_configs = temp_processor.user_endpoint_configs
+            self.processor._config_id_to_username = temp_processor._config_id_to_username
+            self.logger.info(
+                f"Config reloaded: {len(self.processor.user_endpoint_configs)} users configured"
+            )
+        except Exception as e:
+            self.logger.error(f"Failed to reload config, keeping existing: {e}", exc_info=True)
 
     async def handle_log_entry_add(self, event: LogEntryAddEvent) -> None:
         """
@@ -203,6 +283,64 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             await self._handle_delete_event(event, is_reply=True)
         except Exception as e:
             self.logger.error(f"Error processing log entry reply delete: {e}", exc_info=True)
+
+    async def handle_notification_test(self, event: TestNotificationEvent) -> None:
+        """
+        Handle test notification events.
+
+        Sends a test notification directly to the configured endpoint.
+
+        Args:
+            event: The test notification event
+        """
+        try:
+            # Create a temporary Apprise instance for this test
+            apobj = AppriseWithEmailHeaders()
+
+            # Process the notification endpoint URL through config_loader
+            # to apply global SMTP settings for mailto URLs
+            processed_url = self.config_loader.process_apprise_url(
+                event.notification_endpoint, self.global_config_data
+            )
+
+            if not apobj.add(processed_url):
+                self.logger.error(
+                    f"Failed to add notification endpoint: {event.notification_endpoint}"
+                )
+                return
+
+            # Send the test notification
+            title = "BELY Test Notification"
+            body = (
+                f"This is a test notification for configuration: "
+                f"{event.configuration_name}\n\n"
+                f"Triggered by: {event.event_triggered_by_username}\n"
+                f"Timestamp: {event.event_timestamp}"
+            )
+
+            if event.configuration_id is not None:
+                body += f"\nConfiguration ID: {event.configuration_id}"
+
+            if event.provider_settings:
+                body += "\n\nProvider Settings:"
+                for key, value in event.provider_settings.items():
+                    body += f"\n  {key}: {value}"
+
+            result = apobj.notify(body=body, title=title)
+
+            if result:
+                self.logger.info(
+                    f"Test notification sent successfully for configuration: "
+                    f"{event.configuration_name}"
+                )
+            else:
+                self.logger.warning(
+                    f"Failed to send test notification for configuration: "
+                    f"{event.configuration_name}"
+                )
+
+        except Exception as e:
+            self.logger.error(f"Error sending test notification: {e}", exc_info=True)
 
     async def _handle_add_event(
         self, event: Union[LogEntryAddEvent, LogEntryReplyAddEvent], is_reply: bool = False
@@ -401,6 +539,7 @@ class AppriseSmartNotificationHandler(MQTTHandler):
             document_name=event.parent_log_document_info.name,
             entry_id=entry_id,
             action_by=event.event_triggered_by_username,
+            notification_type="reactions",
         )
 
     async def _handle_delete_event(

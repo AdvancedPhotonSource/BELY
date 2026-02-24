@@ -101,7 +101,19 @@ The framework can handle hundreds of handlers. Each handler runs asynchronously,
 
 ### Can I run multiple instances?
 
-Yes, you can run multiple framework instances. Each will receive all MQTT messages independently.
+By default, no. The framework uses a file lock (`/tmp/bely-mqtt.lock`) to enforce single-instance operation and prevent duplicate message processing. If you attempt to start a second instance, it will exit with an error.
+
+If you need multiple instances (e.g., subscribing to different topics with separate handler sets), specify a different lock file for each:
+
+```bash
+# Instance 1
+bely-mqtt start --lock-file /tmp/bely-mqtt-1.lock -t "bely/logEntry/#"
+
+# Instance 2
+bely-mqtt start --lock-file /tmp/bely-mqtt-2.lock -t "bely/logbook/#"
+```
+
+You can also set the lock file path via the `BELY_LOCK_FILE` environment variable.
 
 ### Is it production ready?
 

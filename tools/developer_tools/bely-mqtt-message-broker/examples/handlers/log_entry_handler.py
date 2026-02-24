@@ -38,11 +38,12 @@ class LogEntryAddHandler(MQTTHandler):
             self.logger.debug(f"Text: {event.text_diff}")
 
             # Example: Query BELY API for more information
-            if self.api_client:
+            if self.api_factory:
                 try:
-                    log_data = self.api_client.get_log_entry(event.log_info.id)
+                    log_api = self.api_factory.getLogApi()
+                    log_data = log_api.get_by_id(event.log_info.id)
                     self.logger.debug(f"Retrieved log entry data: {log_data}")
-                except NotImplementedError:
+                except Exception:
                     pass
 
         except Exception as e:

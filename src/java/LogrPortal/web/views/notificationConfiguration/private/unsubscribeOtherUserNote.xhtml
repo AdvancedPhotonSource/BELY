@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:ui="http://java.sun.com/jsf/facelets">
+
+    <!-- noteText: e.g., "modifying notifications for user:" or "modified notifications for user:" -->
+    <h:panelGroup rendered="#{currentConfiguration.unsubscribeForOtherUser}">
+        <p><strong>Note:</strong> You are #{noteText}
+            <strong>#{currentConfiguration.username}</strong></p>
+    </h:panelGroup>
+
+</ui:composition>

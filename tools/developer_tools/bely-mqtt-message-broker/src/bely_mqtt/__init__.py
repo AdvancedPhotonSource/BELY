@@ -30,15 +30,15 @@ from bely_mqtt.models import (
     MQTTMessage,
     ReactionId,
     ReactionInfo,
+    TestNotificationEvent,
 )
 from bely_mqtt.mqtt_client import BelyMQTTClient
-from bely_mqtt.plugin import BelyAPIClient, MQTTHandler, PluginManager
+from bely_mqtt.plugin import MQTTHandler, PluginManager
 
 __version__ = "0.1.0"
 
 __all__ = [
     "BelyMQTTClient",
-    "BelyAPIClient",
     "MQTTHandler",
     "PluginManager",
     "EventType",
@@ -61,4 +61,5 @@ __all__ = [
     "ReactionInfo",
     "ReactionId",
     "MQTTMessage",
+    "TestNotificationEvent",
 ]

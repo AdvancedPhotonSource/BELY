@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 from bely_mqtt import __version__
 from bely_mqtt.config import ConfigManager
 from bely_mqtt.mqtt_client import BelyMQTTClient
-from bely_mqtt.plugin import BelyAPIClient, PluginManager
+from bely_mqtt.plugin import PluginManager
 
 # Configure logging
 logging.basicConfig(
@@ -108,6 +108,13 @@ def cli() -> None:
     envvar="BELY_CONFIG",
     help="Path to configuration file for handlers (YAML format).",
 )
+@click.option(
+    "--lock-file",
+    type=click.Path(file_okay=True, dir_okay=False, path_type=Path),
+    default="/tmp/bely-mqtt.lock",
+    envvar="BELY_LOCK_FILE",
+    help="Path to lock file for single-instance enforcement.",
+)
 def start(
     broker_host: str,
     broker_port: int,
@@ -121,8 +128,25 @@ def start(
     log_level: str,
     env_file: Optional[Path],
     config: Optional[Path],
+    lock_file: Path,
 ) -> None:
     """Start the BELY MQTT client with registered handlers."""
+    # Acquire single-instance lock
+    import fcntl
+
+    try:
+        lock_fd = open(lock_file, "w")  # noqa: SIM115
+        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        logger.error(
+            f"Another instance of bely-mqtt is already running (lock file: {lock_file}). "
+            "Use --lock-file to specify a different lock file if you need multiple instances."
+        )
+        sys.exit(1)
+
+    # Keep lock_fd alive for the lifetime of the process
+    start._lock_fd = lock_fd  # type: ignore[attr-defined]
+
     # Load environment variables from file if provided
     if env_file:
         load_dotenv(env_file)
@@ -133,12 +157,6 @@ def start(
     logger.info("Starting BELY MQTT Framework")
     logger.info(f"Broker: {broker_host}:{broker_port}")
     logger.info(f"Topics: {', '.join(topic)}")
-
-    # Initialize API client if URL is provided
-    api_client = None
-    if api_url:
-        api_client = BelyAPIClient(base_url=api_url, api_key=api_key)
-        logger.info(f"BELY API client initialized: {api_url}")
 
     # Initialize configuration manager
     config_manager = None
@@ -151,8 +169,25 @@ def start(
             logger.error(f"Failed to load configuration file: {e}")
             sys.exit(1)
 
+    # Fall back to bely_url from config if --api-url not provided
+    if not api_url and config_manager and config_manager.global_config:
+        api_url = config_manager.global_config.bely_url
+        if api_url:
+            logger.info(f"Using bely_url from config file: {api_url}")
+
+    # Initialize API factory if URL is provided
+    api_factory = None
+    if api_url:
+        try:
+            from BelyApiFactory import BelyApiFactory
+
+            api_factory = BelyApiFactory(api_url)
+            logger.info(f"BELY API factory initialized: {api_url}")
+        except ImportError:
+            logger.warning("BelyApiFactory not available. API features disabled.")
+
     # Initialize plugin manager
-    plugin_manager = PluginManager(api_client=api_client, config_manager=config_manager)
+    plugin_manager = PluginManager(api_factory=api_factory, config_manager=config_manager)
 
     # Load handlers from directory if provided
     if handlers_dir:

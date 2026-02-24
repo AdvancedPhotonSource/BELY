@@ -132,8 +132,9 @@ class TestScenarios:
             )
 
             # Mock Apprise notify for all users
-            for username, apobj in handler.processor.user_apprise_instances.items():
-                apobj.notify = MagicMock(return_value=True)
+            for username, endpoints in handler.processor.user_endpoint_configs.items():
+                for ep in endpoints:
+                    ep["apprise"].notify = MagicMock(return_value=True)
 
             return handler
 
@@ -142,13 +143,14 @@ class TestScenarios:
         """Track all notifications sent during tests."""
         notifications = []
 
-        async def track_notification(username, title, body, headers=None):
+        async def track_notification(username, title, body, headers=None, notification_type=None):
             notifications.append(
                 {
                     "username": username,
                     "title": title,
                     "body": body,
                     "headers": headers,
+                    "notification_type": notification_type,
                     "timestamp": datetime.now().isoformat(),
                 }
             )
@@ -702,8 +704,9 @@ class TestErrorHandling:
             handler = AppriseSmartNotificationHandler(config_path=str(config_path))
 
             # Mock the Apprise notify method
-            for username, apobj in handler.processor.user_apprise_instances.items():
-                apobj.notify = MagicMock(return_value=True)
+            for username, endpoints in handler.processor.user_endpoint_configs.items():
+                for ep in endpoints:
+                    ep["apprise"].notify = MagicMock(return_value=True)
 
         # Create event with empty strings and edge case data
         from bely_mqtt.models import LogbookInfo

@@ -412,8 +412,9 @@ class TestAppriseSmartNotificationHandler:
             )
 
             # Mock the notify method for all user instances
-            for username, apobj in handler.processor.user_apprise_instances.items():
-                apobj.notify = MagicMock(return_value=True)
+            for username, endpoints in handler.processor.user_endpoint_configs.items():
+                for ep in endpoints:
+                    ep["apprise"].notify = MagicMock(return_value=True)
 
             return handler
 
@@ -761,7 +762,7 @@ class TestAppriseSmartNotificationHandler:
             handler = AppriseSmartNotificationHandler()
 
             # Verify processor has no user configurations
-            assert handler.processor.user_apprise_instances == {}
+            assert handler.processor.user_endpoint_configs == {}
 
             factory = MockEventFactory()
             event = factory.create_entry_add_by_bob()

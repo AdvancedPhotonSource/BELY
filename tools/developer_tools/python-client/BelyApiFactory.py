@@ -6,94 +6,113 @@ import base64
 import os
 
 from belyApi import Configuration, ApiClient
-from belyApi import DomainApi, DownloadsApi, UsersApi, PropertyValueApi, SystemLogApi, SearchApi, AuthenticationApi, LogbookApi
+from belyApi import (
+    DomainApi,
+    DownloadsApi,
+    UsersApi,
+    PropertyValueApi,
+    SystemLogApi,
+    SearchApi,
+    AuthenticationApi,
+    LogbookApi,
+    NotificationConfigurationApi,
+)
 from belyApi import ApiExceptionMessage
+
 
 class BelyApiFactory:
 
-	HEADER_TOKEN_KEY = "token"
-	URL_FORMAT = "%s/views/item/view?id=%s"
+    HEADER_TOKEN_KEY = "token"
+    URL_FORMAT = "%s/views/item/view?id=%s"
 
-	LOGBOOK_DOMAIN_ID = 1
-	
+    LOGBOOK_DOMAIN_ID = 1
 
-	def __init__(self, bely_url):
-		self.bely_url = bely_url
-		self.config = Configuration(host=self.bely_url)
-		self.api_client = ApiClient(configuration=self.config)
+    def __init__(self, bely_url):
+        self.bely_url = bely_url
+        self.config = Configuration(host=self.bely_url)
+        self.api_client = ApiClient(configuration=self.config)
 
-		self.logbook_api = LogbookApi(api_client=self.api_client)
+        self.logbook_api = LogbookApi(api_client=self.api_client)
+        self.notification_configuration_api = NotificationConfigurationApi(
+            api_client=self.api_client
+        )
 
-		self.downloadsApi = DownloadsApi(api_client=self.api_client)		
-		self.propertyValueApi = PropertyValueApi(api_client=self.api_client)
-		self.usersApi = UsersApi(api_client=self.api_client)
-		self.domainApi = DomainApi(api_client=self.api_client)
-		
-		self.systemlogApi = SystemLogApi(api_client=self.api_client)		
-		self.searchApi = SearchApi(api_client=self.api_client)
+        self.downloadsApi = DownloadsApi(api_client=self.api_client)
+        self.propertyValueApi = PropertyValueApi(api_client=self.api_client)
+        self.usersApi = UsersApi(api_client=self.api_client)
+        self.domainApi = DomainApi(api_client=self.api_client)
 
-		self.auth_api = AuthenticationApi(api_client=self.api_client)	
+        self.systemlogApi = SystemLogApi(api_client=self.api_client)
+        self.searchApi = SearchApi(api_client=self.api_client)
 
-	def get_lobook_api(self) -> LogbookApi:
-		return self.logbook_api
+        self.auth_api = AuthenticationApi(api_client=self.api_client)
 
-	def getDomainApi(self) -> DomainApi:
-		return self.domainApi
+    def get_lobook_api(self) -> LogbookApi:
+        return self.logbook_api
 
-	def getDownloadApi(self) -> DownloadsApi:
-		return self.downloadsApi
+    def getDomainApi(self) -> DomainApi:
+        return self.domainApi
 
-	def getPropertyValueApi(self) -> PropertyValueApi:
-		return self.propertyValueApi
+    def getDownloadApi(self) -> DownloadsApi:
+        return self.downloadsApi
 
-	def getUsersApi(self) -> UsersApi:
-		return self.usersApi
+    def getPropertyValueApi(self) -> PropertyValueApi:
+        return self.propertyValueApi
 
-	def getSearchApi(self) -> SearchApi:
-		return self.searchApi
+    def getUsersApi(self) -> UsersApi:
+        return self.usersApi
 
-	def generateCDBUrlForItemId(self, itemId):
-		return self.URL_FORMAT % (self.cdbUrl, str(itemId))
+    def getSearchApi(self) -> SearchApi:
+        return self.searchApi
 
-	def authenticate_user(self, username, password):
-		response = self.auth_api.authenticate_user_with_http_info(username=username, password=password)
+    def getNotificationConfigurationApi(self):
+        return self.notification_configuration_api
 
-		token = response[-1][self.HEADER_TOKEN_KEY]
-		self.__set_authenticate_token(token)
+    def generateCDBUrlForItemId(self, itemId):
+        return self.URL_FORMAT % (self.cdbUrl, str(itemId))
 
-	def __set_authenticate_token(self, token):
-		self.api_client.set_default_header(self.HEADER_TOKEN_KEY, token)
+    def authenticate_user(self, username, password):
+        response = self.auth_api.authenticate_user_with_http_info(
+            username=username, password=password
+        )
 
-	def getAuthenticateToken(self):
-		return self.apiClient.default_headers[self.HEADER_TOKEN_KEY]
+        token = response[-1][self.HEADER_TOKEN_KEY]
+        self.__set_authenticate_token(token)
 
-	def test_authenticated(self):
-		self.auth_api.verify_authenticated()
+    def __set_authenticate_token(self, token):
+        self.api_client.set_default_header(self.HEADER_TOKEN_KEY, token)
 
-	def logout_user(self):
-		self.auth_api.log_out()
+    def getAuthenticateToken(self):
+        return self.apiClient.default_headers[self.HEADER_TOKEN_KEY]
 
-	# Restore later 
-	# @classmethod
-	# def createFileUploadObject(cls, filePath):
-	# 	data = open(filePath, "rb").read()
-	# 	b64String = base64.b64encode(data).decode()
+    def test_authenticated(self):
+        self.auth_api.verify_authenticated()
 
-	# 	fileName = os.path.basename(filePath)
-	# 	return FileUploadObject(file_name=fileName, base64_binary=b64String)
+    def logout_user(self):
+        self.auth_api.log_out()
 
-	def parseApiException(self, openApiException):
-		responseType = ApiExceptionMessage.__name__
-		openApiException.data = openApiException.body
-		exObj = self.apiClient.deserialize(openApiException, responseType)
-		exObj.status = openApiException.status
-		return exObj
+    # Restore later
+    # @classmethod
+    # def createFileUploadObject(cls, filePath):
+    # 	data = open(filePath, "rb").read()
+    # 	b64String = base64.b64encode(data).decode()
+
+    # 	fileName = os.path.basename(filePath)
+    # 	return FileUploadObject(file_name=fileName, base64_binary=b64String)
+
+    def parseApiException(self, openApiException):
+        responseType = ApiExceptionMessage.__name__
+        openApiException.data = openApiException.body
+        exObj = self.apiClient.deserialize(openApiException, responseType)
+        exObj.status = openApiException.status
+        return exObj
+
 
 # def run_command():
-	# Example
+# Example
 # 	print("\nEnter cdb URL (ex: https://cdb.aps.anl.gov/cdb): ")
 # 	hostname = input()
-        
+
 # 	apiFactory = CdbApiFactory(hostname)
 # 	itemApi = apiFactory.getItemApi()
 
@@ -129,6 +148,6 @@ class BelyApiFactory:
 
 # 		print("Success!")
 
-if __name__ == '__main__':
-	pass
+if __name__ == "__main__":
+    pass
 # 	run_command()

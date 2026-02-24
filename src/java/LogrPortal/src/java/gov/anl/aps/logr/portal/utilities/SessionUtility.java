@@ -4,7 +4,12 @@
  */
 package gov.anl.aps.logr.portal.utilities;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import fish.payara.cloud.connectors.mqtt.api.MQTTConnection;
 import fish.payara.cloud.connectors.mqtt.api.MQTTConnectionFactory;
+import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.exceptions.MqttNotConfiguredException;
+import gov.anl.aps.logr.common.mqtt.model.MqttEvent;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import java.io.IOException;
 import java.util.HashMap;
@@ -63,6 +68,10 @@ public class SessionUtility {
 
     public static void addErrorMessage(String summary, String detail, boolean isAjax) {
         addMessage(MESSAGES_KEY, new FacesMessage(FacesMessage.SEVERITY_ERROR, summary, detail), isAjax);
+    }
+
+    public static void setValidationFailed() {
+        FacesContext.getCurrentInstance().validationFailed();
     }
 
     public static void addWarningMessage(String summary, String detail) {
@@ -338,6 +347,36 @@ public class SessionUtility {
         }
         return null;
 
+    }
+
+    public static void publishMqttEvent(MqttEvent event) throws CdbException {
+        MQTTConnectionFactory mqttFactory = fetchMQTTConnectionFactory();
+
+        String jsonMessage;
+        try {
+            jsonMessage = event.toJson();
+        } catch (JsonProcessingException ex) {
+            String msg = "Failed to serialize MQTT event: " + ex.getMessage();
+            logger.error(msg);
+            throw new CdbException(msg);
+        }
+
+        if (mqttFactory == null) {
+            String msg = "MQTT not configured. Skipping event: " + jsonMessage;
+            logger.debug(msg);
+            throw new MqttNotConfiguredException(msg);
+        }
+
+        try {
+            MQTTConnection connection = mqttFactory.getConnection();
+            connection.publish(event.getTopic().getValue(), jsonMessage.getBytes(), 0, false);
+            connection.close();
+            logger.debug("Published MQTT event to {}: {}", event.getTopic().getValue(), jsonMessage);
+        } catch (Exception ex) {
+            String msg = "Failed to publish MQTT event: " + ex.getMessage();
+            logger.error(msg);
+            throw new CdbException(msg);
+        }
     }
 
     public static Object findFacade(String facadeName) {

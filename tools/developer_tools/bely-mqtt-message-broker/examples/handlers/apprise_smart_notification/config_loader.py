@@ -108,6 +108,49 @@ class ConfigLoader:
                 "No global configuration found. Simple mailto:// URLs will need full configuration."
             )
 
+    def load_config_from_api(self, api_factory) -> Dict[str, Any]:
+        """
+        Load notification configurations from the BELY REST API.
+
+        Args:
+            api_factory: BelyApiFactory instance for accessing the BELY API
+
+        Returns:
+            Dictionary containing user configurations keyed by username,
+            with per-endpoint structure
+
+        Raises:
+            Exception: If API call fails
+        """
+        nc_api = api_factory.getNotificationConfigurationApi()
+
+        configs = nc_api.get_all()
+
+        users: Dict[str, Any] = {}
+        for config in configs:
+            username = config.username
+            if not username:
+                continue
+
+            if username not in users:
+                users[username] = {"configs": []}
+
+            # handler_preferences_by_name is already {str: bool} from the API
+            notifications = config.handler_preferences_by_name or {}
+
+            users[username]["configs"].append(
+                {
+                    "apprise_url": config.notification_endpoint,
+                    "notifications": notifications,
+                    "config_id": config.id,
+                }
+            )
+
+        self.logger.info(
+            f"Loaded {len(configs)} notification configurations " f"for {len(users)} users from API"
+        )
+        return {"users": users}
+
     def process_apprise_url(self, url: str, global_config: Dict[str, Any]) -> str:
         """
         Process Apprise URL to incorporate global settings.
