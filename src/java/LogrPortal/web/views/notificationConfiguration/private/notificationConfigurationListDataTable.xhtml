@@ -22,7 +22,8 @@
         </p:column>
 
         <p:column headerText="Endpoint" sortBy="#{config.notificationEndpoint}">
-            <h:outputText value="#{config.notificationEndpoint}"/>
+            <h:outputText id="endpointText" value="#{config.displayNotificationEndpoint}"/>
+            <p:tooltip for="endpointText" value="#{config.notificationEndpoint}"/>
         </p:column>
 
         <p:column headerText="Active Notifications">

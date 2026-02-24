@@ -5,6 +5,7 @@
 package gov.anl.aps.logr.portal.model.db.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import gov.anl.aps.logr.common.utilities.HttpLinkUtility;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -83,6 +84,8 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
     private transient Map<String, Boolean> handlerPreferencesByName = new HashMap<>();
     private transient Map<String, String> configSettingsByName = new HashMap<>();
 
+    private transient String displayNotificationEndpoint;
+
     // Transient fields for unsubscribe flow
     public enum UnsubscribeState {
         LOGIN_REQUIRED, ERROR, ALREADY_UNSUBSCRIBED, CONFIRM, SUCCESS
@@ -136,6 +139,14 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
 
     public void setNotificationEndpoint(String notificationEndpoint) {
         this.notificationEndpoint = notificationEndpoint;
+    }
+
+    @JsonIgnore
+    public String getDisplayNotificationEndpoint() {
+        if (displayNotificationEndpoint == null && notificationEndpoint != null) {
+            displayNotificationEndpoint = HttpLinkUtility.prepareHttpLinkDisplayValue(notificationEndpoint);
+        }
+        return displayNotificationEndpoint;
     }
 
     public String getNotificationProviderName() {
