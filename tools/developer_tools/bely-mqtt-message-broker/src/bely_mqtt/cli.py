@@ -108,6 +108,13 @@ def cli() -> None:
     envvar="BELY_CONFIG",
     help="Path to configuration file for handlers (YAML format).",
 )
+@click.option(
+    "--lock-file",
+    type=click.Path(file_okay=True, dir_okay=False, path_type=Path),
+    default="/tmp/bely-mqtt.lock",
+    envvar="BELY_LOCK_FILE",
+    help="Path to lock file for single-instance enforcement.",
+)
 def start(
     broker_host: str,
     broker_port: int,
@@ -121,8 +128,25 @@ def start(
     log_level: str,
     env_file: Optional[Path],
     config: Optional[Path],
+    lock_file: Path,
 ) -> None:
     """Start the BELY MQTT client with registered handlers."""
+    # Acquire single-instance lock
+    import fcntl
+
+    try:
+        lock_fd = open(lock_file, "w")  # noqa: SIM115
+        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        logger.error(
+            f"Another instance of bely-mqtt is already running (lock file: {lock_file}). "
+            "Use --lock-file to specify a different lock file if you need multiple instances."
+        )
+        sys.exit(1)
+
+    # Keep lock_fd alive for the lifetime of the process
+    start._lock_fd = lock_fd  # type: ignore[attr-defined]
+
     # Load environment variables from file if provided
     if env_file:
         load_dotenv(env_file)
