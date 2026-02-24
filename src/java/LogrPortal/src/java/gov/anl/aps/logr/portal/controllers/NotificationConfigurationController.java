@@ -14,6 +14,7 @@ import gov.anl.aps.logr.portal.model.db.beans.NotificationHandlerConfigKeyFacade
 import gov.anl.aps.logr.portal.model.db.beans.NotificationProviderConfigKeyFacade;
 import gov.anl.aps.logr.portal.model.db.beans.NotificationProviderFacade;
 import gov.anl.aps.logr.portal.model.db.entities.NotificationConfiguration;
+import gov.anl.aps.logr.portal.model.db.entities.NotificationConfiguration.UnsubscribeState;
 import gov.anl.aps.logr.portal.model.db.entities.NotificationConfigurationHandlerSetting;
 import gov.anl.aps.logr.portal.model.db.entities.NotificationConfigurationSetting;
 import gov.anl.aps.logr.portal.model.db.entities.NotificationHandlerConfigKey;
@@ -317,7 +318,10 @@ public class NotificationConfigurationController extends CdbEntityController<Not
         String notificationType = SessionUtility.getRequestParameterValue("notificationType");
 
         if (configIdStr == null || notificationType == null) {
-            SessionUtility.addErrorMessage("Error", "Invalid unsubscribe request. Missing required parameters.");
+            NotificationConfiguration config = new NotificationConfiguration();
+            config.setUnsubscribeState(UnsubscribeState.ERROR);
+            config.setUnsubscribeError("Invalid unsubscribe request. Missing required parameters.");
+            setCurrent(config);
             return;
         }
 
@@ -325,18 +329,24 @@ public class NotificationConfigurationController extends CdbEntityController<Not
         try {
             configId = Integer.valueOf(configIdStr);
         } catch (NumberFormatException ex) {
-            SessionUtility.addErrorMessage("Error", "Invalid configuration ID.");
+            NotificationConfiguration config = new NotificationConfiguration();
+            config.setUnsubscribeState(UnsubscribeState.ERROR);
+            config.setUnsubscribeError("Invalid configuration ID.");
+            setCurrent(config);
             return;
         }
 
         NotificationConfiguration config = findById(configId);
-        setCurrent(config);
-        populateHandlerPreferences(config);
-
         if (config == null) {
-            SessionUtility.addErrorMessage("Error", "Notification configuration not found.");
+            NotificationConfiguration errorConfig = new NotificationConfiguration();
+            errorConfig.setUnsubscribeState(UnsubscribeState.ERROR);
+            errorConfig.setUnsubscribeError("Notification configuration not found.");
+            setCurrent(errorConfig);
             return;
         }
+
+        setCurrent(config);
+        populateHandlerPreferences(config);
 
         // Verify ownership or admin
         UserInfo currentUser = SessionUtility.getUser();
@@ -345,6 +355,7 @@ public class NotificationConfigurationController extends CdbEntityController<Not
                 && currentUser.getId().equals(config.getUserInfo().getId());
         if (!isAdmin && !isOwner) {
             String ownerName = config.getUserInfo() != null ? config.getUserInfo().getUsername() : "unknown";
+            config.setUnsubscribeState(UnsubscribeState.ERROR);
             config.setUnsubscribeError("This notification configuration belongs to " + ownerName
                     + ". You do not have permission to modify it.");
             return;
@@ -357,6 +368,7 @@ public class NotificationConfigurationController extends CdbEntityController<Not
         // Find handler key
         NotificationHandlerConfigKey handlerKey = notificationHandlerConfigKeyFacade.findByConfigKey(notificationType);
         if (handlerKey == null) {
+            config.setUnsubscribeState(UnsubscribeState.ERROR);
             config.setUnsubscribeError("Unknown notification type: " + notificationType);
             return;
         }
@@ -366,8 +378,11 @@ public class NotificationConfigurationController extends CdbEntityController<Not
         // Check if already unsubscribed
         Boolean currentValue = getCurrent().getHandlerPreferences().get(handlerKey.getId());
         if (currentValue != null && !currentValue) {
-            config.setAlreadyUnsubscribed(true);
+            config.setUnsubscribeState(UnsubscribeState.ALREADY_UNSUBSCRIBED);
+            return;
         }
+
+        config.setUnsubscribeState(UnsubscribeState.CONFIRM);
     }
 
     /**
@@ -377,12 +392,16 @@ public class NotificationConfigurationController extends CdbEntityController<Not
     public void executeUnsubscribe() {
         NotificationConfiguration current = getCurrent();
         if (current == null) {
-            current.setUnsubscribeError("No configuration selected.");
+            NotificationConfiguration errorConfig = new NotificationConfiguration();
+            errorConfig.setUnsubscribeState(UnsubscribeState.ERROR);
+            errorConfig.setUnsubscribeError("No configuration selected.");
+            setCurrent(errorConfig);
             return;
         }
 
         NotificationHandlerConfigKey handlerKey = current.getUnsubscribeHandlerConfigKey();
         if (handlerKey == null) {
+            current.setUnsubscribeState(UnsubscribeState.ERROR);
             current.setUnsubscribeError("No notification type selected.");
             return;
         }
@@ -391,13 +410,15 @@ public class NotificationConfigurationController extends CdbEntityController<Not
             current.getHandlerPreferences().put(handlerKey.getId(), false);
             update();
 
+            // Preserve transient fields on the refreshed entity
             boolean unsubscribeForOtherUser = current.isUnsubscribeForOtherUser();
 
-            // Get updated current.
             current = getCurrent();
-            current.setUnsubscribeComplete(true);
+            current.setUnsubscribeState(UnsubscribeState.SUCCESS);
+            current.setUnsubscribeHandlerConfigKey(handlerKey);
             current.setUnsubscribeForOtherUser(unsubscribeForOtherUser);
         } catch (Exception ex) {
+            current.setUnsubscribeState(UnsubscribeState.ERROR);
             current.setUnsubscribeError("Failed to update notification setting: " + ex.getMessage());
             logger.error("Failed to execute unsubscribe", ex);
         }

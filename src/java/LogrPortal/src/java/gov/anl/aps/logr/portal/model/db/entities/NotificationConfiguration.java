@@ -83,11 +83,14 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
     private transient Map<String, Boolean> handlerPreferencesByName = new HashMap<>();
     private transient Map<String, String> configSettingsByName = new HashMap<>();
 
-    // Transient field for unsubscribe flow
+    // Transient fields for unsubscribe flow
+    public enum UnsubscribeState {
+        LOGIN_REQUIRED, ERROR, ALREADY_UNSUBSCRIBED, CONFIRM, SUCCESS
+    }
+
     private transient NotificationHandlerConfigKey unsubscribeHandlerConfigKey;
     private transient String unsubscribeError;
-    private transient boolean unsubscribeComplete = false;
-    private transient boolean alreadyUnsubscribed = false;
+    private transient UnsubscribeState unsubscribeState;
     private transient boolean unsubscribeForOtherUser = false;
 
     public NotificationConfiguration() {
@@ -270,21 +273,12 @@ public class NotificationConfiguration extends CdbEntity implements Serializable
     }
 
     @JsonIgnore
-    public boolean isUnsubscribeComplete() {
-        return unsubscribeComplete;
+    public UnsubscribeState getUnsubscribeState() {
+        return unsubscribeState;
     }
 
-    public void setUnsubscribeComplete(boolean unsubscribeComplete) {
-        this.unsubscribeComplete = unsubscribeComplete;
-    }
-
-    @JsonIgnore
-    public boolean isAlreadyUnsubscribed() {
-        return alreadyUnsubscribed;
-    }
-
-    public void setAlreadyUnsubscribed(boolean alreadyUnsubscribed) {
-        this.alreadyUnsubscribed = alreadyUnsubscribed;
+    public void setUnsubscribeState(UnsubscribeState unsubscribeState) {
+        this.unsubscribeState = unsubscribeState;
     }
 
     @JsonIgnore
