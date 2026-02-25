@@ -89,11 +89,19 @@
                         <c:forEach items="#{notificationConfigurationController.availableHandlerConfigKeys}"
                                    var="handlerKey">
                             <p:selectBooleanCheckbox
-                                value="#{currentConfiguration.handlerPreferences[handlerKey.id]}"                            
+                                value="#{currentConfiguration.handlerPreferences[handlerKey.id]}"
                                 title="#{handlerKey.description}"
                                 />
 
-                            <p:outputLabel value="#{handlerKey.displayName}"/> 
+                            <h:panelGroup>
+                                <p:outputLabel value="#{handlerKey.displayName}"/>
+                                <h:outputText id="handlerKeyInfo#{handlerKey.id}"
+                                              styleClass="fa fa-link-icon fa-info-circle"
+                                              rendered="#{handlerKey.description != null}"/>
+                                <p:tooltip for="handlerKeyInfo#{handlerKey.id}"
+                                           value="#{handlerKey.description}"
+                                           rendered="#{handlerKey.description != null}"/>
+                            </h:panelGroup>
                         </c:forEach>
                     </p:panelGrid>
                 </p:fieldset>

@@ -30,9 +30,11 @@
             <ui:repeat value="#{notificationConfigurationController.getActiveHandlerPreferences(config)}"
                        var="pref">
                 <div>
-                    <span class="ui-tag ui-tag-rounded" >
-                        #{pref.displayName}
-                    </span>
+                    <h:outputText id="activeNotif"
+                                  value="#{pref.displayName}"
+                                  styleClass="ui-tag ui-tag-rounded"/>
+                    <p:tooltip for="activeNotif"
+                               value="#{pref.description}"/>
                 </div>
             </ui:repeat>
         </p:column>

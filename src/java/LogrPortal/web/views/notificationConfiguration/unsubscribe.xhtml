@@ -67,11 +67,16 @@ See LICENSE file.
                             <p>You are about to disable the following notification type:</p>
 
                             <p:panelGrid columns="2" styleClass="noBorderPanelGrid" style="margin: 10px 0;">
-                                <h:outputText value="Configuration:" style="font-weight: bold;" />
+                                <p:outputLabel value="Configuration:" style="font-weight: bold;" />
                                 <h:outputText value="#{currentConfiguration.name}" />
 
-                                <h:outputText value="Notification Type:" style="font-weight: bold;" />
+                                <p:outputLabel value="Notification Type:" style="font-weight: bold;" />
                                 <h:outputText value="#{currentConfiguration.unsubscribeHandlerConfigKey.displayName}" />
+
+                                <p:outputLabel value="Description:" style="font-weight: bold;"
+                                              rendered="#{currentConfiguration.unsubscribeHandlerConfigKey.description != null}"/>
+                                <h:outputText value="#{currentConfiguration.unsubscribeHandlerConfigKey.description}"
+                                              rendered="#{currentConfiguration.unsubscribeHandlerConfigKey.description != null}"/>
                             </p:panelGrid>
 
                             <p>Are you sure you want to unsubscribe?</p>
