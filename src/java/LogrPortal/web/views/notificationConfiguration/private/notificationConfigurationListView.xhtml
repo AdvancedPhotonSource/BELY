@@ -5,14 +5,16 @@
                 xmlns:p="http://primefaces.org/ui">
 
 
-    <p:commandButton value="Add Configuration"
-                     rendered="#{isEntityWriteable}"
-                     action="#{notificationConfigurationController.prepareCreateDialog(userEntity)}"
-                     update="notificationConfigurationEditDialog"
-                     process="@this"
-                     oncomplete="PF('notificationConfigurationEditDialogWidget').show()"
-                     icon="fa fa-plus"
-                     immediate="true"/>
+    <div class="actionButton">
+        <p:commandButton value="Add Configuration"
+                         rendered="#{isEntityWriteable}"
+                         action="#{notificationConfigurationController.prepareCreateDialog(userEntity)}"
+                         update="notificationConfigurationEditDialog"
+                         process="@this"
+                         oncomplete="PF('notificationConfigurationEditDialogWidget').show()"
+                         icon="fa fa-plus"
+                         immediate="true"/>
+    </div>
 
     <ui:include src="notificationConfigurationListDataTable.xhtml"/>
 
