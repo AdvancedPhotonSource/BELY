@@ -13,6 +13,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
@@ -21,6 +22,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import gov.anl.aps.logr.portal.utilities.MarkdownParser;
 
 /**
  *
@@ -50,6 +52,10 @@ public class NotificationProvider implements Serializable {
     @Size(max = 256)
     @Column(name = "description")
     private String description;
+    @Lob
+    @Column(name = "instructions")
+    private String instructions;
+    private transient String htmlInstructions;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationProvider")
     private Collection<NotificationProviderConfigKey> notificationProviderConfigKeyCollection;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "notificationProvider")
@@ -89,6 +95,21 @@ public class NotificationProvider implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getInstructions() {
+        return instructions;
+    }
+
+    public void setInstructions(String instructions) {
+        this.instructions = instructions;
+    }
+
+    public String getHtmlInstructions() {
+        if (htmlInstructions == null && instructions != null) {
+            htmlInstructions = MarkdownParser.parseMarkdownAsHTML(instructions);
+        }
+        return htmlInstructions;
     }
 
     @XmlTransient

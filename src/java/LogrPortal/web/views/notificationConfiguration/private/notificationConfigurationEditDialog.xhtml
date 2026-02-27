@@ -61,7 +61,15 @@
                     <p:fieldset legend="Provider Configuration"
                                 rendered="#{notificationConfigurationController.selectedProvider != null}"
                                 >
-                        <p>#{notificationConfigurationController.selectedProvider.description}</p>
+                        <p>
+                            #{notificationConfigurationController.selectedProvider.description}
+                            <p:commandButton icon="fa fa-question-circle"
+                                             rendered="#{notificationConfigurationController.selectedProvider.instructions != null}"
+                                             onclick="PF('providerInstructionsDialogWidget').show(); return false;"
+                                             type="button"
+                                             styleClass="ui-button-flat"
+                                             title="View provider setup instructions"/>
+                        </p>
                         <p:panelGrid columns="2" styleClass="fullWidthInput" >
                             <h:outputLabel value="Notification URL*:" styleClass="outputLabelRequired"/>
                             <p:inputText
@@ -126,6 +134,31 @@
                              onclick="PF('notificationConfigurationEditDialogWidget').hide(); return false;"
                              type="button"
                              icon="fa fa-times"/>
+        </f:facet>
+    </p:dialog>
+
+    <h:outputStylesheet name="css/logbook.css"/>
+
+    <p:dialog id="providerInstructionsDialog"
+              widgetVar="providerInstructionsDialogWidget"
+              header="Provider Instructions"
+              styleClass="viewTransparentBackgroundDialog"
+              modal="true"
+              resizable="false"
+              dynamic="true">
+
+        <h:panelGroup styleClass="leftAlignedText">
+            <div class="logEntry">
+                <h:outputText escape="false"
+                              value="#{notificationConfigurationController.selectedProviderHtmlInstructions}"/>
+            </div>
+        </h:panelGroup>
+
+        <f:facet name="footer">
+            <p:commandButton value="Close"
+                             icon="fa fa-close"
+                             onclick="PF('providerInstructionsDialogWidget').hide(); return false;"
+                             type="button"/>
         </f:facet>
     </p:dialog>
 

@@ -452,6 +452,14 @@ public class NotificationConfigurationController extends CdbEntityController<Not
         return getCurrent().getNotificationProvider();
     }
 
+    public String getSelectedProviderHtmlInstructions() {
+        NotificationProvider provider = getSelectedProvider();
+        if (provider != null) {
+            return provider.getHtmlInstructions();
+        }
+        return null;
+    }
+
     public NotificationProvider findProviderById(Integer id) {
         return notificationProviderFacade.find(id);
     }
