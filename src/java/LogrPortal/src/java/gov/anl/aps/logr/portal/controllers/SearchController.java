@@ -5,10 +5,7 @@
 package gov.anl.aps.logr.portal.controllers;
 
 import gov.anl.aps.logr.common.constants.CdbProperty;
-import gov.anl.aps.logr.common.mqtt.constants.CallSource;
-import gov.anl.aps.logr.common.mqtt.model.entities.SearchOptions;
 import gov.anl.aps.logr.portal.controllers.settings.SearchSettings;
-import gov.anl.aps.logr.portal.controllers.utilities.SearchControllerUtility;
 import gov.anl.aps.logr.portal.utilities.ConfigurationUtility;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
 import java.io.IOException;
@@ -117,19 +114,6 @@ public class SearchController implements Serializable {
 
     public void search() {
         if (performSearch) {
-            // Publish anonymous MQTT event for search
-            SearchOptions searchOptions = new SearchOptions(
-                    searchSettings.getDisplayItemElements(),
-                    searchSettings.getDisplayItemTypes(),
-                    searchSettings.getDisplayItemCategories(),
-                    searchSettings.getDisplayPropertyTypes(),
-                    searchSettings.getDisplayPropertyTypeCategories(),
-                    searchSettings.getDisplaySources(),
-                    searchSettings.getDisplayUsers(),
-                    searchSettings.getDisplayUserGroups()
-            );
-            SearchControllerUtility.publishSearchMqttEvent(searchString, searchOptions, CallSource.Portal);
-
             for (CdbEntityController controller : searchableControllers) {
                 // Check if controller needs to be skipped.                               
                 if (controller instanceof ItemTypeController) {

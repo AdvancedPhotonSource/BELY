@@ -6,6 +6,8 @@ package gov.anl.aps.logr.portal.controllers;
 
 import gov.anl.aps.logr.common.exceptions.CdbException;
 import gov.anl.aps.logr.common.exceptions.InvalidObjectState;
+import gov.anl.aps.logr.common.mqtt.constants.CallSource;
+import gov.anl.aps.logr.common.mqtt.model.entities.LogbookSearchOptions;
 import gov.anl.aps.logr.common.utilities.CollectionUtility;
 import gov.anl.aps.logr.portal.constants.EntityTypeName;
 import gov.anl.aps.logr.portal.constants.LogDocumentSettings;
@@ -16,6 +18,7 @@ import gov.anl.aps.logr.portal.controllers.settings.SearchSettings;
 import gov.anl.aps.logr.portal.controllers.utilities.EntityInfoControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.EntityTypeControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
+import gov.anl.aps.logr.portal.controllers.utilities.SearchControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.LogReactionControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.PropertyTypeControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.SettingTypeControllerUtility;
@@ -1074,6 +1077,13 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         // Search log entries using shared utility method.
         logResults = utility.searchLogEntries(searchString, caseInsensitive, searchArgs);
+
+        // Publish MQTT search event with logbook-specific options
+        LogbookSearchOptions options = new LogbookSearchOptions(
+                searchLogbookTypeList, searchSystemList, searchUserList,
+                startModifiedTime, endModifiedTime,
+                startCreatedTime, endCreatedTime, caseInsensitive);
+        SearchControllerUtility.publishSearchMqttEvent(searchString, options, CallSource.Portal);
     }
 
     public String getSearchOpts() {

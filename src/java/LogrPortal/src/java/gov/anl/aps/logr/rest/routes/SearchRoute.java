@@ -7,6 +7,7 @@ package gov.anl.aps.logr.rest.routes;
 import gov.anl.aps.logr.common.exceptions.InvalidArgument;
 import gov.anl.aps.logr.common.exceptions.InvalidRequest;
 import gov.anl.aps.logr.common.mqtt.constants.CallSource;
+import gov.anl.aps.logr.common.mqtt.model.entities.LogbookSearchOptions;
 import gov.anl.aps.logr.portal.constants.EntityTypeName;
 import gov.anl.aps.logr.portal.constants.ItemDomainName;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemCategoryControllerUtility;
@@ -127,7 +128,11 @@ public class SearchRoute {
         results.setLogEntryResults(logEntryResults);
 
         // Publish MQTT search event
-        SearchControllerUtility.publishSearchMqttEvent(searchText, null, CallSource.API);
+        LogbookSearchOptions searchOptions = new LogbookSearchOptions(
+                entityTypeList, itemTypeList, userList,
+                startModifiedTime, endModifiedTime,
+                startCreatedTime, endCreatedTime, caseInsensitive);
+        SearchControllerUtility.publishSearchMqttEvent(searchText, searchOptions, CallSource.API);
 
         return results;
     }
