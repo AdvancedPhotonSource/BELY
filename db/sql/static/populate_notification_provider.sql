@@ -8,25 +8,19 @@ INSERT INTO `notification_provider` VALUES
 ## Email (SMTP)
 
 ```
-mailto://user:password@gmail.com
-```
-
-## Slack
-
-```
-slack://TokenA/TokenB/TokenC/#channel
-```
-
-## Discord
-
-```
-discord://WebhookID/WebhookToken
+mailto://user@gmail.com
 ```
 
 ## Microsoft Teams
 
 ```
 msteams://TokenA/TokenB/TokenC
+```
+
+## Slack
+
+```
+slack://TokenA/TokenB/TokenC/#channel
 ```
 
 ## Custom Webhooks
