@@ -7,6 +7,7 @@ CREATE TABLE `notification_provider` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(64) NOT NULL,
   `description` varchar(256) DEFAULT NULL,
+  `instructions` TEXT DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `notification_provider_u1` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
@@ -118,8 +119,35 @@ CREATE TABLE `notification_configuration_handler_setting` (
 --
 
 INSERT INTO `notification_provider` VALUES
-(1,'apprise', 'Apprise unified notification library supporting email, Discord, Slack, Teams, etc.');
+(1,'apprise', 'Apprise unified notification library supporting email, Discord, Slack, Teams, etc.', '# Apprise Notification URLs
 
+[Apprise](https://github.com/caronc/apprise) supports many notification services. Below are some common URL formats.
+
+## Email (SMTP)
+
+```
+mailto://user@gmail.com
+```
+
+## Microsoft Teams
+
+```
+msteams://TokenA/TokenB/TokenC
+```
+
+## Slack
+
+```
+slack://TokenA/TokenB/TokenC/#channel
+```
+
+## Custom Webhooks
+
+```
+json://hostname/path
+```
+
+For the full list of supported services, see the [Apprise Wiki](https://github.com/caronc/apprise/wiki).');
 --
 -- Populate notification_handler_config_key
 --
