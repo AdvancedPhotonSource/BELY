@@ -34,6 +34,9 @@ class EventType(Enum):
         LOG_REACTION_ADD - Reaction added (bely/logReaction/Add)
         LOG_REACTION_DELETE - Reaction deleted (bely/logReaction/Delete)
 
+    Search Events:
+        SEARCH - Search performed (bely/search)
+
     Notification Events:
         NOTIFICATION_TEST - Test notification (bely/notification/test)
     """
@@ -56,6 +59,9 @@ class EventType(Enum):
     # Log reaction events
     LOG_REACTION_ADD = "bely/logReaction/Add"
     LOG_REACTION_DELETE = "bely/logReaction/Delete"
+
+    # Search events
+    SEARCH = "bely/search"
 
     # Notification events
     NOTIFICATION_TEST = "bely/notification/test"

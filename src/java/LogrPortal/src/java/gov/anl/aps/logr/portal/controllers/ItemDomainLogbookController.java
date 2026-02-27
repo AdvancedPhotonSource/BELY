@@ -6,6 +6,8 @@ package gov.anl.aps.logr.portal.controllers;
 
 import gov.anl.aps.logr.common.exceptions.CdbException;
 import gov.anl.aps.logr.common.exceptions.InvalidObjectState;
+import gov.anl.aps.logr.common.mqtt.constants.CallSource;
+import gov.anl.aps.logr.common.mqtt.model.entities.LogbookSearchOptions;
 import gov.anl.aps.logr.common.utilities.CollectionUtility;
 import gov.anl.aps.logr.portal.constants.EntityTypeName;
 import gov.anl.aps.logr.portal.constants.LogDocumentSettings;
@@ -16,6 +18,7 @@ import gov.anl.aps.logr.portal.controllers.settings.SearchSettings;
 import gov.anl.aps.logr.portal.controllers.utilities.EntityInfoControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.EntityTypeControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
+import gov.anl.aps.logr.portal.controllers.utilities.SearchControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.LogReactionControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.PropertyTypeControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.SettingTypeControllerUtility;
@@ -52,13 +55,13 @@ import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Calendar;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
-import java.util.regex.Pattern;
+
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
 import javax.faces.component.UIComponent;
@@ -1049,26 +1052,19 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         SearchSettings searchSettings = searchCtrl.getSearchSettings();
         Boolean advancedSearch = searchSettings.getAdvancedSearch();
 
-        String entityTypeIdList = null;
-        String itemTypeIdList = null;
-        String userIdList = null;
         Date startModifiedTime = null;
         Date endModifiedTime = null;
         Date startCreatedTime = null;
         Date endCreatedTime = null;
 
         if (advancedSearch) {
-            entityTypeIdList = CollectionUtility.generateIdListString(searchLogbookTypeList);
-            itemTypeIdList = CollectionUtility.generateIdListString(searchSystemList);
-            userIdList = CollectionUtility.generateIdListString(searchUserList);
-
             startModifiedTime = searchModifiedStartDate;
             endModifiedTime = searchModifiedEndDate;
             startCreatedTime = searchCreatedStartDate;
             endCreatedTime = searchCreatedEndDate;
 
-            endModifiedTime = adjustEndTime(endModifiedTime);
-            endCreatedTime = adjustEndTime(endCreatedTime);
+            endModifiedTime = ItemDomainLogbookControllerUtility.adjustEndTimeForSearch(endModifiedTime);
+            endCreatedTime = ItemDomainLogbookControllerUtility.adjustEndTimeForSearch(endCreatedTime);
         }
 
         resetSearchVariables();
@@ -1079,67 +1075,15 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
         super.performEntitySearch(searchString, searchArgs, caseInsensitive);
 
-        // Search log entries. 
-        List<Object[]> results = itemDomainLogbookFacade.searchEntityLogs(searchString, itemTypeIdList, entityTypeIdList, userIdList,
-                startModifiedTime, endModifiedTime, startCreatedTime, endCreatedTime);
+        // Search log entries using shared utility method.
+        logResults = utility.searchLogEntries(searchString, caseInsensitive, searchArgs);
 
-        ItemDomainLogbookControllerUtility controllerUtility1 = getControllerUtility();
-        String patternString = controllerUtility1.generatePatternString(searchString);
-        Pattern searchPattern = controllerUtility1.getSearchPattern(patternString, caseInsensitive);
-
-        logResults = new ArrayList<>();
-
-        for (Object[] result : results) {
-            ItemDomainLogbook logbook = (ItemDomainLogbook) result[0];
-            Log log = (Log) result[1];
-            Long logId = (Long) result[2];
-
-            SearchResult searchResult = new SearchResult(logbook, logbook.getId(), logbook.getName(), log);
-            searchResult.setAdditionalAttribute("" + logId);
-
-            String text = log.getText();
-            String[] logLines = text.split("\n");
-            String matching_lines = "";
-
-            for (int i = 0; i < logLines.length; i++) {
-                String lineText = logLines[i];
-
-                if (searchPattern.matcher(lineText).find()) {
-                    matching_lines += lineText + "\n";
-                }
-            }
-            searchResult.addAttributeMatch("log entry", matching_lines);
-
-            controllerUtility1.addCommonLogEntryDocumentMatches(searchResult, searchLogbookTypeList, searchSystemList);
-
-            if (searchUserList != null && !searchUserList.isEmpty()) {
-                for (UserInfo ui : searchUserList) {
-                    Integer searchUserId = ui.getId();
-
-                    UserInfo enteredByUser = log.getEnteredByUser();
-                    UserInfo lastModifiedByUser = log.getLastModifiedByUser();
-
-                    if (Objects.equals(enteredByUser.getId(), searchUserId)) {
-                        searchResult.addAttributeMatch("Create User", enteredByUser.toString());
-                    }
-                    if (Objects.equals(lastModifiedByUser.getId(), searchUserId)) {
-                        searchResult.addAttributeMatch("Last Modify User", lastModifiedByUser.toString());
-                    }
-                }
-            }
-
-            if (startCreatedTime != null || endCreatedTime != null) {
-                Date enteredOnDateTime = log.getEnteredOnDateTime();
-                searchResult.addAttributeMatch("Created on", enteredOnDateTime.toString());
-            }
-
-            if (startModifiedTime != null || endModifiedTime != null) {
-                Date modifiedOnDateTime = log.getLastModifiedOnDateTime();
-                searchResult.addAttributeMatch("Modified on", modifiedOnDateTime.toString());
-            }
-
-            logResults.add(searchResult);
-        }
+        // Publish MQTT search event with logbook-specific options
+        LogbookSearchOptions options = new LogbookSearchOptions(
+                searchLogbookTypeList, searchSystemList, searchUserList,
+                startModifiedTime, endModifiedTime,
+                startCreatedTime, endCreatedTime, caseInsensitive);
+        SearchControllerUtility.publishSearchMqttEvent(searchString, options, CallSource.Portal);
     }
 
     public String getSearchOpts() {
@@ -1248,20 +1192,6 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
                 setSearchModifiedEndDate(new Date(unixTimestamp));
             }
         }
-    }
-
-    private Date adjustEndTime(Date endTime) {
-        if (endTime != null) {
-            // Add offset to the end of the selected date. 
-            Calendar endDateCal = Calendar.getInstance();
-            endDateCal.setTime(endTime);
-            endDateCal.set(Calendar.HOUR, 23);
-            endDateCal.set(Calendar.MINUTE, 59);
-            endDateCal.set(Calendar.SECOND, 59);
-            endTime = endDateCal.getTime();
-        }
-
-        return endTime;
     }
 
     public List<SearchResult> getLogResults() {

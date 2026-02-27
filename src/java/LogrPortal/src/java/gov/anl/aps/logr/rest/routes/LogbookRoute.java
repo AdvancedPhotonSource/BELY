@@ -12,7 +12,6 @@ import gov.anl.aps.logr.portal.constants.EntityTypeName;
 import gov.anl.aps.logr.portal.constants.ItemDomainName;
 import gov.anl.aps.logr.portal.controllers.utilities.EntityInfoControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
-import gov.anl.aps.logr.portal.controllers.utilities.LogControllerUtility;
 import gov.anl.aps.logr.portal.model.db.beans.DomainFacade;
 import gov.anl.aps.logr.portal.model.db.beans.ItemDomainLogbookFacade;
 import gov.anl.aps.logr.portal.model.db.beans.LogFacade;
