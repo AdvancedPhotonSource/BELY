@@ -32,6 +32,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -405,6 +406,120 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
                 }
             }
         }
+    }
+
+    /**
+     * Search log entries using the stored procedure and build search results
+     * with pattern matching. Shared between UI controller and REST API.
+     *
+     * @param searchString search text with wildcard support
+     * @param caseInsensitive whether to use case-insensitive matching
+     * @param searchOpts map of advanced search options (from createAdvancedSearchMap)
+     * @return list of search results for matching log entries
+     */
+    public LinkedList<SearchResult> searchLogEntries(String searchString, boolean caseInsensitive, Map searchOpts) {
+        LinkedList<SearchResult> logEntryResults = new LinkedList<>();
+
+        List<EntityType> searchEntityTypeList = null;
+        List<ItemType> searchItemTypeList = null;
+        List<UserInfo> searchUserList = null;
+        String entityTypeIdList = null;
+        String itemTypeIdList = null;
+        String userIdList = null;
+        Date startModifiedTime = null;
+        Date endModifiedTime = null;
+        Date startCreatedTime = null;
+        Date endCreatedTime = null;
+
+        if (searchOpts != null) {
+            searchEntityTypeList = (List<EntityType>) searchOpts.get(SEARCH_OPT_KEY_ENTITY_TYPE_LIST);
+            searchItemTypeList = (List<ItemType>) searchOpts.get(SEARCH_OPT_KEY_ITEM_TYPE_LIST);
+            searchUserList = (List<UserInfo>) searchOpts.get(SEARCH_OPT_KEY_USER_LIST);
+
+            entityTypeIdList = CollectionUtility.generateIdListString(searchEntityTypeList);
+            itemTypeIdList = CollectionUtility.generateIdListString(searchItemTypeList);
+            userIdList = CollectionUtility.generateIdListString(searchUserList);
+
+            startModifiedTime = (Date) searchOpts.get(SEARCH_OPT_KEY_START_MODIFIED_TIME);
+            endModifiedTime = (Date) searchOpts.get(SEARCH_OPT_KEY_END_MODIFIED_TIME);
+            startCreatedTime = (Date) searchOpts.get(SEARCH_OPT_KEY_START_CREATED_TIME);
+            endCreatedTime = (Date) searchOpts.get(SEARCH_OPT_KEY_END_CREATED_TIME);
+        }
+
+        List<Object[]> results = getEntityDbFacade().searchEntityLogs(
+                searchString, itemTypeIdList, entityTypeIdList, userIdList,
+                startModifiedTime, endModifiedTime, startCreatedTime, endCreatedTime);
+
+        String patternString = generatePatternString(searchString);
+        Pattern searchPattern = getSearchPattern(patternString, caseInsensitive);
+
+        for (Object[] result : results) {
+            ItemDomainLogbook logbook = (ItemDomainLogbook) result[0];
+            Log log = (Log) result[1];
+            Long logId = (Long) result[2];
+
+            SearchResult searchResult = new SearchResult(logbook, logbook.getId(), logbook.getName(), log);
+            searchResult.setAdditionalAttribute("" + logId);
+
+            String text = log.getText();
+            String[] logLines = text.split("\n");
+            String matchingLines = "";
+
+            for (String lineText : logLines) {
+                if (searchPattern.matcher(lineText).find()) {
+                    matchingLines += lineText + "\n";
+                }
+            }
+            searchResult.addAttributeMatch("log entry", matchingLines);
+
+            addCommonLogEntryDocumentMatches(searchResult, searchEntityTypeList, searchItemTypeList);
+
+            if (searchUserList != null && !searchUserList.isEmpty()) {
+                for (UserInfo ui : searchUserList) {
+                    Integer searchUserId = ui.getId();
+
+                    UserInfo enteredByUser = log.getEnteredByUser();
+                    UserInfo lastModifiedByUser = log.getLastModifiedByUser();
+
+                    if (Objects.equals(enteredByUser.getId(), searchUserId)) {
+                        searchResult.addAttributeMatch("Create User", enteredByUser.toString());
+                    }
+                    if (Objects.equals(lastModifiedByUser.getId(), searchUserId)) {
+                        searchResult.addAttributeMatch("Last Modify User", lastModifiedByUser.toString());
+                    }
+                }
+            }
+
+            if (startCreatedTime != null || endCreatedTime != null) {
+                Date enteredOnDateTime = log.getEnteredOnDateTime();
+                searchResult.addAttributeMatch("Created on", enteredOnDateTime.toString());
+            }
+
+            if (startModifiedTime != null || endModifiedTime != null) {
+                Date modifiedOnDateTime = log.getLastModifiedOnDateTime();
+                searchResult.addAttributeMatch("Modified on", modifiedOnDateTime.toString());
+            }
+
+            logEntryResults.add(searchResult);
+        }
+
+        return logEntryResults;
+    }
+
+    /**
+     * Adjust end time to end-of-day (23:59:59) for date range searches.
+     * Shared between UI controller and REST API.
+     */
+    public static Date adjustEndTimeForSearch(Date endTime) {
+        if (endTime != null) {
+            Calendar endDateCal = Calendar.getInstance();
+            endDateCal.setTime(endTime);
+            endDateCal.set(Calendar.HOUR, 23);
+            endDateCal.set(Calendar.MINUTE, 59);
+            endDateCal.set(Calendar.SECOND, 59);
+            endTime = endDateCal.getTime();
+        }
+        return endTime;
     }
 
     public static void copyLogs(ItemDomainLogbook oldLogDoc, ItemDomainLogbook newLogDoc) {
