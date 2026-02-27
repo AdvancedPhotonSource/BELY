@@ -106,12 +106,38 @@ pre:has(code) {
     font-family: 'Monaco', monospace;
     padding: 1em;
     border: 1px solid #cfcfcf;
+    position: relative;
 }
 
 pre:has([class^="language-"]) {
-    border: none; 
+    border: none;
     background: #273647;
     color: white;
+}
+
+.code-copy-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    padding: 3px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid #cfcfcf;
+    border-radius: 4px;
+    background: #f5f5f5;
+    color: #333;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+pre:hover .code-copy-btn {
+    opacity: 1;
+}
+
+pre:has([class^="language-"]) .code-copy-btn {
+    background: #3a4f65;
+    color: #ddd;
+    border-color: #5a7a96;
 }
 
 .logEntry h1 {

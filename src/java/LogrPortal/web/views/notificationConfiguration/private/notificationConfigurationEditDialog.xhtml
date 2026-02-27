@@ -138,6 +138,7 @@
     </p:dialog>
 
     <h:outputStylesheet name="css/logbook.css"/>
+    <h:outputScript library="javascript" name="codeBlockCopyButton.js" />
 
     <p:dialog id="providerInstructionsDialog"
               widgetVar="providerInstructionsDialogWidget"
@@ -145,7 +146,9 @@
               styleClass="viewTransparentBackgroundDialog"
               modal="true"
               resizable="false"
-              dynamic="true">
+              dynamic="true"
+              onShow="addCodeBlockCopyButtons(this.jq[0])"
+              >
 
         <h:panelGroup styleClass="leftAlignedText">
             <div class="logEntry">
