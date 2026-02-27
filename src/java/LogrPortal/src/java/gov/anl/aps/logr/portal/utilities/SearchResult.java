@@ -4,9 +4,14 @@
  */
 package gov.anl.aps.logr.portal.utilities;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import gov.anl.aps.logr.portal.model.db.entities.CdbEntity;
+import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
+import gov.anl.aps.logr.portal.model.db.entities.Item;
+import gov.anl.aps.logr.portal.model.db.entities.Log;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.regex.Pattern;
 
@@ -97,6 +102,48 @@ public class SearchResult {
 
     public void setAdditionalAttribute(String additionalAttribute) {
         this.additionalAttribute = additionalAttribute;
+    }
+
+    public Integer getLogDocumentId() {
+        if (cdbEntity instanceof Item) {
+            return ((Item) cdbEntity).getId();
+        }
+        return null;
+    }
+
+    public Integer getLogEntryId() {
+        if (additionalEntity instanceof Log) {
+            return ((Log) additionalEntity).getId();
+        }
+        return null;
+    }
+
+    public String getLogbookType() {
+        if (cdbEntity instanceof Item) {
+            return ((Item) cdbEntity).getLongEntityTypeString();
+        }
+        return null;
+    }
+
+    public String getSystem() {
+        if (cdbEntity instanceof Item) {
+            return ((Item) cdbEntity).getItemTypeString();
+        }
+        return null;
+    }
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    public Date getLastModifiedOn() {
+        if (additionalEntity instanceof Log) {
+            return ((Log) additionalEntity).getLastModifiedOnDateTime();
+        }
+        if (cdbEntity instanceof Item) {
+            EntityInfo entityInfo = ((Item) cdbEntity).getEntityInfo();
+            if (entityInfo != null) {
+                return entityInfo.getLastModifiedOnDateTime();
+            }
+        }
+        return null;
     }
 
     public boolean doesValueContainPattern(String key, Object value, Pattern searchPattern) {
