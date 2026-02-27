@@ -7,7 +7,7 @@ package gov.anl.aps.logr.common.mqtt.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import gov.anl.aps.logr.common.mqtt.constants.CallSource;
 import gov.anl.aps.logr.common.mqtt.constants.MqttTopic;
-import gov.anl.aps.logr.common.mqtt.model.entities.SearchOptions;
+import gov.anl.aps.logr.common.mqtt.model.entities.LogbookSearchOptions;
 
 /**
  * MQTT event for search operations.
@@ -17,10 +17,10 @@ import gov.anl.aps.logr.common.mqtt.model.entities.SearchOptions;
 public class SearchEvent extends MqttEvent {
 
     private String searchText;
-    private SearchOptions searchOptions;
+    private LogbookSearchOptions searchOptions;
     private CallSource source; // "API" or "Portal"
 
-    public SearchEvent(String searchText, SearchOptions searchOptions, CallSource searchSource) {
+    public SearchEvent(String searchText, LogbookSearchOptions searchOptions, CallSource searchSource) {
         super();
         this.searchText = searchText;
         this.searchOptions = searchOptions;
@@ -38,7 +38,7 @@ public class SearchEvent extends MqttEvent {
         return searchText;
     }
 
-    public SearchOptions getSearchOptions() {
+    public LogbookSearchOptions getSearchOptions() {
         return searchOptions;
     }
 
