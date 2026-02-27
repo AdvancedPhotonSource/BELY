@@ -203,6 +203,42 @@ class TestNotificationEvent(BaseModel):
     event_timestamp: datetime = Field(alias="eventTimestamp")
 
 
+# Search Models
+
+
+class FilterItem(BaseModel):
+    """A filter item with id and name (used in search options)."""
+
+    id: int
+    name: str
+
+
+class LogbookSearchOptions(BaseModel):
+    """Search options for logbook search events."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    logbook_types: Optional[List[FilterItem]] = Field(None, alias="logbookTypes")
+    systems: Optional[List[FilterItem]] = None
+    users: Optional[List[FilterItem]] = None
+    start_modified_date: Optional[datetime] = Field(None, alias="startModifiedDate")
+    end_modified_date: Optional[datetime] = Field(None, alias="endModifiedDate")
+    start_created_date: Optional[datetime] = Field(None, alias="startCreatedDate")
+    end_created_date: Optional[datetime] = Field(None, alias="endCreatedDate")
+    case_insensitive: bool = Field(alias="caseInsensitive")
+
+
+class SearchEvent(BaseModel):
+    """Event triggered when a search is performed."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    search_text: str = Field(alias="searchText")
+    search_options: Optional[LogbookSearchOptions] = Field(None, alias="searchOptions")
+    source: str
+    event_timestamp: datetime = Field(alias="eventTimestamp")
+
+
 class MQTTMessage(BaseModel):
     """Wrapper for an MQTT message with topic and payload."""
 
