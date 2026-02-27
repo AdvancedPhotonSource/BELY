@@ -1209,6 +1209,7 @@ CREATE TABLE `notification_provider` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(64) NOT NULL,
   `description` varchar(256) DEFAULT NULL,
+  `instructions` TEXT DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `notification_provider_u1` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
