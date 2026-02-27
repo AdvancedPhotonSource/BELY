@@ -52,6 +52,7 @@ public class SearchResult {
         return cdbEntity;
     }
 
+    @JsonIgnore
     public CdbEntity getAdditionalEntity() {
         return additionalEntity;
     }
@@ -85,6 +86,7 @@ public class SearchResult {
         this.objectAttributeMatchMap = objectAttributeMatchMap;
     }
    
+    @JsonIgnore
     public boolean isEmpty() {
         return objectAttributeMatchMap.isEmpty();
     }
@@ -115,6 +117,7 @@ public class SearchResult {
         return searchResult;
     }
     
+    @JsonIgnore
     public ArrayList<String> getShortDisplayList() {
         ArrayList<String> stringList = new ArrayList<>(); 
         
@@ -125,6 +128,7 @@ public class SearchResult {
         return stringList; 
     }
     
+    @JsonIgnore
     public ArrayList<String> getDisplayList() {
         ArrayList<String> stringList = new ArrayList<>(); 
         
@@ -136,6 +140,7 @@ public class SearchResult {
         return stringList; 
     }
 
+    @JsonIgnore
     public String getDisplay() {
         String result = "";
         String keyDelimiter = ": ";
