@@ -137,29 +137,6 @@
         </f:facet>
     </p:dialog>
 
-    <h:outputStylesheet name="css/logbook.css"/>
-
-    <p:dialog id="providerInstructionsDialog"
-              widgetVar="providerInstructionsDialogWidget"
-              header="Provider Instructions"
-              styleClass="viewTransparentBackgroundDialog"
-              modal="true"
-              resizable="false"
-              dynamic="true">
-
-        <h:panelGroup styleClass="leftAlignedText">
-            <div class="logEntry">
-                <h:outputText escape="false"
-                              value="#{notificationConfigurationController.selectedProviderHtmlInstructions}"/>
-            </div>
-        </h:panelGroup>
-
-        <f:facet name="footer">
-            <p:commandButton value="Close"
-                             icon="fa fa-close"
-                             onclick="PF('providerInstructionsDialogWidget').hide(); return false;"
-                             type="button"/>
-        </f:facet>
-    </p:dialog>
+    <ui:include src="providerInstructionsDialog.xhtml" />
 
 </ui:composition>
