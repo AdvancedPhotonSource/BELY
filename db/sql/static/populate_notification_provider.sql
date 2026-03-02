@@ -29,6 +29,6 @@ slack://TokenA/TokenB/TokenC/#channel
 json://hostname/path
 ```
 
-For the full list of supported services, see the [Apprise Wiki](https://github.com/caronc/apprise/wiki).');
+For the full list of supported services, see the [Apprise Serivces Page](https://appriseit.com/services).');
 /*!40000 ALTER TABLE `notification_provider` ENABLE KEYS */;
 UNLOCK TABLES;

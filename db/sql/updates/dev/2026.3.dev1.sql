@@ -33,5 +33,5 @@ slack://TokenA/TokenB/TokenC/#channel
 json://hostname/path
 ```
 
-For the full list of supported services, see the [Apprise Wiki](https://github.com/caronc/apprise/wiki).'
+For the full list of supported services, see the [Apprise Serivces Page](https://appriseit.com/services).'
 WHERE `name` = 'apprise';
