@@ -1,0 +1,36 @@
+name: Test Plugin Utilities
+
+on:
+  pull_request:
+    paths:
+      - 'tools/developer_tools/logr_plugins/**'
+      - '.github/workflows/test-plugin-utilities.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run Plugin Utility Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: tools/developer_tools/logr_plugins
+
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install pytest
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Run tests
+        run: python -m pytest test/ -v
