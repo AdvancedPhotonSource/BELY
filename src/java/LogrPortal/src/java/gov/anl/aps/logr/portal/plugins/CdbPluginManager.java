@@ -110,6 +110,17 @@ public class CdbPluginManager implements Serializable {
         }
     }
 
+    public List<Object> getAllMenuBarItems() {
+        List<Object> allItems = new ArrayList<>();
+        for (PluginManagerBase pluginManager : pluginManagerSet) {
+            List<?> items = pluginManager.getMenuBarItems();
+            if (items != null && !items.isEmpty()) {
+                allItems.addAll(items);
+            }
+        }
+        return allItems;
+    }
+
     public PluginManagerBase getPluginManagerByName(String pluginName) {
         for (PluginManagerBase pluginManager : pluginManagerSet) {
             if (pluginManager.getPluginName().equals(pluginName)) {
