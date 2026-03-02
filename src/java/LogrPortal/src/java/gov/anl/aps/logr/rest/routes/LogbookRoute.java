@@ -12,9 +12,9 @@ import gov.anl.aps.logr.portal.constants.EntityTypeName;
 import gov.anl.aps.logr.portal.constants.ItemDomainName;
 import gov.anl.aps.logr.portal.controllers.utilities.EntityInfoControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
-import gov.anl.aps.logr.portal.controllers.utilities.LogControllerUtility;
 import gov.anl.aps.logr.portal.model.db.beans.DomainFacade;
 import gov.anl.aps.logr.portal.model.db.beans.ItemDomainLogbookFacade;
+import gov.anl.aps.logr.portal.model.db.beans.LogFacade;
 import gov.anl.aps.logr.portal.model.db.entities.Domain;
 import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
 import gov.anl.aps.logr.portal.model.db.entities.EntityType;
@@ -64,6 +64,9 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @EJB
     ItemDomainLogbookFacade itemDomainLogbookFacade;
+
+    @EJB
+    LogFacade logFacade;
 
     private Domain getLogbookDomain() {
         return domainFacade.find(ItemDomainName.LOGBOOK_ID);
@@ -234,8 +237,13 @@ public class LogbookRoute extends ItemBaseRoute {
             utility.verifySaveLogLockoutsForItem(logDocument, logEntity, user);
         }
 
+        Log originalLogEntry = null;
+        if (logId != null) {
+            originalLogEntry = logFacade.find(logId);
+        }
+
         logEntry.updateLogPerLogEntryObject(logEntity);
-        logEntity = saveLog(logEntity, user);
+        logEntity = utility.saveLog(logEntity, user, originalLogEntry);
 
         // Update modified date. 
         updateModifiedDateForLogDocument(logDocument, user);
@@ -399,18 +407,6 @@ public class LogbookRoute extends ItemBaseRoute {
         EntityInfoControllerUtility eicu = new EntityInfoControllerUtility();
 
         eicu.update(entityInfo, user);
-    }
-
-    private Log saveLog(Log log, UserInfo userInfo) throws CdbException {
-        LogControllerUtility utility = new LogControllerUtility();
-
-        if (log.getId() != null) {
-            log = utility.update(log, userInfo);
-        } else {
-            log = utility.create(log, userInfo);
-        }
-
-        return log;
     }
 
     @Override

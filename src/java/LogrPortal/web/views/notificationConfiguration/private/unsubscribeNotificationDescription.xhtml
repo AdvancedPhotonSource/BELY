@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html">
+
+    <!-- descriptionPrefix: e.g., "You are already unsubscribed from" or "You have been unsubscribed from" -->
+    <p>#{descriptionPrefix}
+        <strong>#{currentConfiguration.unsubscribeHandlerConfigKey.displayName}</strong>
+        notifications for configuration
+        <strong>#{currentConfiguration.name}</strong>.
+    </p>
+    <h:panelGroup rendered="#{currentConfiguration.unsubscribeHandlerConfigKey.description != null}">
+        <p>
+            #{currentConfiguration.unsubscribeHandlerConfigKey.description}
+        </p>
+    </h:panelGroup>
+
+</ui:composition>

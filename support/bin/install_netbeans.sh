@@ -8,7 +8,7 @@ CDB_HOSTNAME=`hostname -f`
 
 NETBEANS_VERSION=16
 NETBEANS_ZIP_FILE=netbeans-$NETBEANS_VERSION-bin.zip
-DOWNLOAD_URL=https://dlcdn.apache.org/netbeans/netbeans/$NETBEANS_VERSION/$NETBEANS_ZIP_FILE
+DOWNLOAD_URL=https://archive.apache.org/dist/netbeans/netbeans/$NETBEANS_VERSION/$NETBEANS_ZIP_FILE
 
 currentDir=`pwd`
 cd `dirname $0`/.. && topDir=`pwd`

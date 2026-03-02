@@ -1200,6 +1200,119 @@ CREATE TABLE `connector_property` (
   CONSTRAINT `connector_property_fk2` FOREIGN KEY (`property_value_id`) REFERENCES `property_value` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
+--
+-- Table `notification_provider`
+--
+
+DROP TABLE IF EXISTS `notification_provider`;
+CREATE TABLE `notification_provider` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(64) NOT NULL,
+  `description` varchar(256) DEFAULT NULL,
+  `instructions` TEXT DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `notification_provider_u1` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+--
+-- Table `notification_configuration`
+--
+
+DROP TABLE IF EXISTS `notification_configuration`;
+CREATE TABLE `notification_configuration` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(64) NOT NULL,
+  `description` varchar(256) DEFAULT NULL,
+  `notification_provider_id` int(11) unsigned NOT NULL,
+  `notification_endpoint` varchar(256) NOT NULL,
+  `user_id` int(11) unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `notification_configuration_u1` (`name`),
+  KEY `notification_configuration_k1` (`notification_provider_id`),
+  KEY `notification_configuration_k2` (`user_id`),
+  CONSTRAINT `notification_configuration_fk1` FOREIGN KEY (`notification_provider_id`) REFERENCES `notification_provider` (`id`) ON UPDATE CASCADE,
+  CONSTRAINT `notification_configuration_fk2` FOREIGN KEY (`user_id`) REFERENCES `user_info` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+--
+-- Table `notification_provider_config_key`
+--
+
+DROP TABLE IF EXISTS `notification_provider_config_key`;
+CREATE TABLE `notification_provider_config_key` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `notification_provider_id` int(11) unsigned NOT NULL,
+  `config_key` varchar(64) NOT NULL,
+  `description` varchar(256) DEFAULT NULL,
+  `is_required` bool NOT NULL DEFAULT 0,
+  `display_order` int(11) DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `notification_provider_config_key_u1` (`notification_provider_id`, `config_key`),
+  KEY `notification_provider_config_key_k1` (`notification_provider_id`),
+  CONSTRAINT `notification_provider_config_key_fk1` FOREIGN KEY (`notification_provider_id`) REFERENCES `notification_provider` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+--
+-- Table `notification_configuration_setting`
+--
+
+DROP TABLE IF EXISTS `notification_configuration_setting`;
+CREATE TABLE `notification_configuration_setting` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `notification_configuration_id` int(11) unsigned NOT NULL,
+  `notification_provider_config_key_id` int(11) unsigned NOT NULL,
+  `config_value` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `notification_configuration_setting_u1` (`notification_configuration_id`, `notification_provider_config_key_id`),
+  KEY `notification_configuration_setting_k1` (`notification_configuration_id`),
+  KEY `notification_configuration_setting_k2` (`notification_provider_config_key_id`),
+  CONSTRAINT `notification_configuration_setting_fk1` FOREIGN KEY (`notification_configuration_id`) REFERENCES `notification_configuration` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT `notification_configuration_setting_fk2` FOREIGN KEY (`notification_provider_config_key_id`) REFERENCES `notification_provider_config_key` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+-- ============================================================================
+-- Notification Handler Configuration Tables
+-- ============================================================================
+
+-- Handler configuration key definitions
+-- These define global handler settings like entry_updates, own_entry_edits
+DROP TABLE IF EXISTS `notification_handler_config_key`;
+CREATE TABLE `notification_handler_config_key` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `config_key` VARCHAR(64) NOT NULL COMMENT 'Key name like entry_updates',
+  `display_name` VARCHAR(64) DEFAULT NULL COMMENT 'Short display name for UI',
+  `description` VARCHAR(256) DEFAULT NULL,
+  `value_type` ENUM('boolean', 'string', 'integer') NOT NULL DEFAULT 'boolean',
+  `default_value` VARCHAR(256) DEFAULT NULL,
+  `display_order` INT(11) DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `notification_handler_config_key_u1` (`config_key`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+-- Per-configuration handler settings
+-- Links notification_configuration to handler settings
+DROP TABLE IF EXISTS `notification_configuration_handler_setting`;
+CREATE TABLE `notification_configuration_handler_setting` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `notification_configuration_id` INT(11) UNSIGNED NOT NULL,
+  `notification_handler_config_key_id` INT(11) UNSIGNED NOT NULL,
+  `config_value` VARCHAR(256) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `notification_configuration_handler_setting_u1`
+    (`notification_configuration_id`, `notification_handler_config_key_id`),
+  KEY `notification_configuration_handler_setting_k1` (`notification_configuration_id`),
+  KEY `notification_configuration_handler_setting_k2` (`notification_handler_config_key_id`),
+  CONSTRAINT `notification_configuration_handler_setting_fk1`
+    FOREIGN KEY (`notification_configuration_id`)
+    REFERENCES `notification_configuration` (`id`)
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT `notification_configuration_handler_setting_fk2`
+    FOREIGN KEY (`notification_handler_config_key_id`)
+    REFERENCES `notification_handler_config_key` (`id`)
+    ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+
 -- Note: CHECK constraint is not supported in MySQL.
 -- Hence, we need triggers to verify that at least one of
 -- is_used_required/optional is NULL

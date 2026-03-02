@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Copyright (c) UChicago Argonne, LLC. All rights reserved.
 See LICENSE file.
@@ -15,14 +15,14 @@ from utilities.plugin_manager import PluginManager
 import sys
 
 cdb_db_name = 'bely'
-if sys.argv.__len__() == 2:
+if len(sys.argv) == 2:
     cdb_db_name = sys.argv[1]
 
 # Storage directory is irrelevant for updating deployed plugins.
 plugin_manager = PluginManager(cdb_db_name, use_default_storage_directory=True)
 
 update_configuration = False
-if sys.argv.__len__() == 3:
+if len(sys.argv) == 3:
     input_update_configuration = int(sys.argv[2])
     if input_update_configuration is not None:
         if input_update_configuration == 1:

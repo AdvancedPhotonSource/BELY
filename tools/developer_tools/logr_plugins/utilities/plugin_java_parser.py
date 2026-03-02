@@ -1,11 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Copyright (c) UChicago Argonne, LLC. All rights reserved.
 See LICENSE file.
 """
 
 import os
-from plugin_configuration import PluginConfiguration
+from .plugin_configuration import PluginConfiguration
 
 JAVA_PLUGIN_PACKAGE="gov.anl.aps.logr.portal.plugins.support"
 

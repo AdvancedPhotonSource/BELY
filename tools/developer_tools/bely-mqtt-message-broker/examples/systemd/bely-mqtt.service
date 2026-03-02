@@ -1,0 +1,28 @@
+[Unit]
+Description=BELY MQTT Message Broker Framework
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=%h/.config/bely-mqtt/bely-mqtt.env
+Restart=on-failure
+RestartSec=5
+
+# Service execution
+ExecStart=/bin/sh -c '${SERVICE_PATH} start \
+  --handlers-dir ${HANDLERS_DIR} \
+  --config ${CONFIG_FILE} \
+  ${MQTT_BROKER_HOST:+--broker-host=${MQTT_BROKER_HOST}} \
+  ${MQTT_BROKER_PORT:+--broker-port=${MQTT_BROKER_PORT}} \
+  ${MQTT_CLIENT_ID:+--client-id=${MQTT_CLIENT_ID}} \
+  ${MQTT_USERNAME:+--username=${MQTT_USERNAME}} \
+  ${MQTT_PASSWORD:+--password=${MQTT_PASSWORD}} \
+  ${MQTT_TOPIC:+--topic=${MQTT_TOPIC}} \
+  ${BELY_API_URL:+--api-url=${BELY_API_URL}} \
+  ${BELY_API_KEY:+--api-key=${BELY_API_KEY}} \
+  ${LOG_LEVEL:+--log-level=${LOG_LEVEL}} \
+  ${ENV_FILE:+--env-file=${ENV_FILE}}'
+
+[Install]
+WantedBy=default.target

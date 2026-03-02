@@ -2,6 +2,7 @@
 .vscode
 .DS_Store
 src/python/.loglogin
+.loglogin
 
 # Compiled files 
 *.pyc
@@ -56,3 +57,5 @@ docs/python/_build/
 # Temporary testing csv files
 tools/developer_tools/python-client/cdbCli/service/cli/Spreadsheets/
 .env
+tools/developer_tools/bely-mqtt-message-broker/conda-bld
+tools/developer_tools/bely-mqtt-message-broker/dev-config

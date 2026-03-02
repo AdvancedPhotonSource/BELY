@@ -1,0 +1,14 @@
+# Conda build configuration
+# This file defines build variants and pinnings
+
+python:
+  - 3.9
+  - 3.10
+  - 3.11
+  - 3.12
+
+# Pin run dependencies to be compatible with the build dependencies
+pin_run_as_build:
+  python:
+    min_pin: x.x
+    max_pin: x.x

@@ -56,7 +56,6 @@ See LICENSE file.
                 </c:forEach>              
             </p:submenu>
 
-
             <f:facet name="options">
                 <p:menubar styleClass="menuBarSupportingItems"> 
 
@@ -79,8 +78,27 @@ See LICENSE file.
                                 value="Advanced Search"
                                 update="@form"
                                 styleClass="onlyIconMenuItem"
-                                action="#{searchController.performInputBoxSearchAdvamced()}" /> 
-                    
+                                action="#{searchController.performInputBoxSearchAdvamced()}" />
+
+                    <c:forEach items="#{cdbPluginManager.allMenuBarItems}" var="pluginMenuItem">
+                        <c:if test="#{!pluginMenuItem.hasChildren}">
+                            <p:menuitem value="#{pluginMenuItem.text}"
+                                        icon="#{pluginMenuItem.icon}"
+                                        url="#{pluginMenuItem.href}"
+                                        target="_blank"/>
+                        </c:if>
+                        <c:if test="#{pluginMenuItem.hasChildren}">
+                            <p:submenu label="#{pluginMenuItem.text}"
+                                       icon="#{pluginMenuItem.icon}">
+                                <c:forEach items="#{pluginMenuItem.children}" var="childItem">
+                                    <p:menuitem value="#{childItem.text}"
+                                                icon="#{childItem.icon}"
+                                                url="#{childItem.href}"
+                                                target="_blank"/>
+                                </c:forEach>
+                            </p:submenu>
+                        </c:if>
+                    </c:forEach>
 
                     <ui:include src="portalViewSupplementalMenubar.xhtml"/>                                           
                     <p:menuitem value="Login" id="loginButton" onclick="PF('loginDialogWidget').show()" rendered="#{!loginController.loggedIn}" icon="fa fa-sign-in"/>

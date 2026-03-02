@@ -192,9 +192,11 @@ STATIC_DB_SCRIPTS_DIR="$LOGR_SQL_DIR/static"
 cd $CURRENT_DIR && cd $STATIC_DB_SCRIPTS_DIR
 STATIC_LOGR_DB_TABLES="\
     setting_type \
-    domain \    
+    domain \
     relationship_type_handler \
     relationship_type \
+    notification_provider \
+    notification_handler_config_key \
 "
 
 executePopulateScripts "$STATIC_LOGR_DB_TABLES"
@@ -281,7 +283,7 @@ if [ -z "$adminWithLocalPassword" ]; then
     read -sp "Enter password for local portal admin (username: logr): [leave blank for no local password] " LOGR_LOCAL_SYSTEM_ADMIN_PASSWORD
     echo ""
     if [ ! -z "$LOGR_LOCAL_SYSTEM_ADMIN_PASSWORD" ]; then
-	adminCryptPassword=`python -c "from cdb.common.utility.cryptUtility import CryptUtility; print(str(CryptUtility.cryptPasswordWithPbkdf2('$CDB_LOCAL_SYSTEM_ADMIN_PASSWORD')))"`
+	adminCryptPassword=`python -c "from cdb.common.utility.cryptUtility import CryptUtility; print(str(CryptUtility.cryptPasswordWithPbkdf2('$LOGR_LOCAL_SYSTEM_ADMIN_PASSWORD')))"`
 	echo "update user_info set password = '$adminCryptPassword' where username='logr'" > temporaryAdminCommand.sql
         execute $mysqlCmd temporaryAdminCommand.sql
     fi

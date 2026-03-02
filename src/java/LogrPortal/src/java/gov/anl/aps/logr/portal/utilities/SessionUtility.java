@@ -4,16 +4,18 @@
  */
 package gov.anl.aps.logr.portal.utilities;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import fish.payara.cloud.connectors.mqtt.api.MQTTConnection;
+import fish.payara.cloud.connectors.mqtt.api.MQTTConnectionFactory;
+import gov.anl.aps.logr.common.exceptions.CdbException;
+import gov.anl.aps.logr.common.exceptions.MqttNotConfiguredException;
+import gov.anl.aps.logr.common.mqtt.model.MqttEvent;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
-import java.util.logging.Level;
+import javax.annotation.Resource;
 import javax.faces.application.FacesMessage;
 import javax.faces.application.NavigationHandler;
 import javax.faces.application.ViewHandler;
@@ -47,10 +49,15 @@ public class SessionUtility {
     private static final String MODULE_NAME_LOOKUP = "java:module/ModuleName";
     private static final String JAVA_LOOKUP_START = "java:global/";
     private static String FACADE_LOOKUP_STRING_START = null;
+    private static final String BELY_MQTT_NAME = "bely/MQTT/resource";
 
     private static final String USER_SESSION_COOKIE_KEY = "USERSESSIONID";
 
     private static final Logger logger = LogManager.getLogger(SessionUtility.class.getName());
+
+    // Instructs the framework of the class to resolve for the mqtt connection factory.
+    @Resource(lookup = BELY_MQTT_NAME)
+    MQTTConnectionFactory factory;
 
     public SessionUtility() {
     }
@@ -61,6 +68,10 @@ public class SessionUtility {
 
     public static void addErrorMessage(String summary, String detail, boolean isAjax) {
         addMessage(MESSAGES_KEY, new FacesMessage(FacesMessage.SEVERITY_ERROR, summary, detail), isAjax);
+    }
+
+    public static void setValidationFailed() {
+        FacesContext.getCurrentInstance().validationFailed();
     }
 
     public static void addWarningMessage(String summary, String detail) {
@@ -133,7 +144,7 @@ public class SessionUtility {
     public static String getRemoteAddress() {
         HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
 
-        return request.getRemoteAddr();                                     
+        return request.getRemoteAddr();
     }
 
     public static String getSessionCookie() {
@@ -141,10 +152,10 @@ public class SessionUtility {
 
         Cookie cookie = (Cookie) cookieMap.get(USER_SESSION_COOKIE_KEY);
 
-        if (cookie != null) { 
+        if (cookie != null) {
             String value = cookie.getValue();
-            
-            return value; 
+
+            return value;
         }
 
         return null;
@@ -321,6 +332,51 @@ public class SessionUtility {
     public static Object findBean(String beanName) {
         FacesContext context = FacesContext.getCurrentInstance();
         return (Object) context.getApplication().evaluateExpressionGet(context, "#{" + beanName + "}", Object.class);
+    }
+
+    public static MQTTConnectionFactory fetchMQTTConnectionFactory() {
+        try {
+            InitialContext context = new InitialContext();
+            MQTTConnectionFactory result = (MQTTConnectionFactory) context.lookup(BELY_MQTT_NAME);
+
+            return result;
+        } catch (NamingException ex) {
+            logger.error(ex);
+        } catch (NoClassDefFoundError ex) {
+            logger.error(ex);
+        }
+        return null;
+
+    }
+
+    public static void publishMqttEvent(MqttEvent event) throws CdbException {
+        MQTTConnectionFactory mqttFactory = fetchMQTTConnectionFactory();
+
+        String jsonMessage;
+        try {
+            jsonMessage = event.toJson();
+        } catch (JsonProcessingException ex) {
+            String msg = "Failed to serialize MQTT event: " + ex.getMessage();
+            logger.error(msg);
+            throw new CdbException(msg);
+        }
+
+        if (mqttFactory == null) {
+            String msg = "MQTT not configured. Skipping event: " + jsonMessage;
+            logger.debug(msg);
+            throw new MqttNotConfiguredException(msg);
+        }
+
+        try {
+            MQTTConnection connection = mqttFactory.getConnection();
+            connection.publish(event.getTopic().getValue(), jsonMessage.getBytes(), 0, false);
+            connection.close();
+            logger.debug("Published MQTT event to {}: {}", event.getTopic().getValue(), jsonMessage);
+        } catch (Exception ex) {
+            String msg = "Failed to publish MQTT event: " + ex.getMessage();
+            logger.error(msg);
+            throw new CdbException(msg);
+        }
     }
 
     public static Object findFacade(String facadeName) {

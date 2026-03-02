@@ -4,6 +4,7 @@
  */
 package gov.anl.aps.logr.portal.model.db.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.Collection;
 import javax.persistence.Basic;
@@ -119,6 +120,7 @@ public class Reaction implements Serializable {
     }
 
     @XmlTransient
+    @JsonIgnore
     public Collection<LogReaction> getLogReactionCollection() {
         return logReactionCollection;
     }

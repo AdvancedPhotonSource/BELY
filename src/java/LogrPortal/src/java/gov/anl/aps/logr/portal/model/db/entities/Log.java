@@ -6,6 +6,7 @@ package gov.anl.aps.logr.portal.model.db.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import gov.anl.aps.logr.common.mqtt.model.LogEntryEvent;
 import gov.anl.aps.logr.portal.utilities.MarkdownParser;
 import gov.anl.aps.logr.portal.view.objects.GroupedReaction;
 import java.io.Serializable;
@@ -50,7 +51,7 @@ import javax.xml.bind.annotation.XmlTransient;
     @NamedQuery(name = "Log.findByEnteredOnDateTime", query = "SELECT l FROM Log l WHERE l.enteredOnDateTime = :enteredOnDateTime"),
     @NamedQuery(name = "Log.findByEffectiveFromDateTime", query = "SELECT l FROM Log l WHERE l.effectiveFromDateTime = :effectiveFromDateTime"),
     @NamedQuery(name = "Log.findByEffectiveToDateTime", query = "SELECT l FROM Log l WHERE l.effectiveToDateTime = :effectiveToDateTime")})
-public class Log extends CdbEntity implements Serializable {
+public class Log extends CdbEntity<LogEntryEvent> implements Serializable {
 
     private static final long serialVersionUID = 1L;
     @Id
@@ -121,6 +122,8 @@ public class Log extends CdbEntity implements Serializable {
     private transient String addedReactionsString; 
 
     private transient List<Log> childLogListReversed = null;
+    
+    private transient boolean isSystemLog = false; 
 
     public Log() {
     }
@@ -185,6 +188,10 @@ public class Log extends CdbEntity implements Serializable {
 
     public UserInfo getLastModifiedByUser() {
         return lastModifiedByUser;
+    }
+    
+    public String getLastModifiedByUsername() {
+        return lastModifiedByUser.getUsername();
     }
 
     public void setLastModifiedByUser(UserInfo lastModifiedByUser) {
@@ -383,6 +390,15 @@ public class Log extends CdbEntity implements Serializable {
         this.addedReactionsString = addedReactionsString;
     }
 
+    @JsonIgnore
+    public boolean isSystemLog() {
+        return isSystemLog;
+    }
+
+    public void markAsSystemLog() {
+        isSystemLog = true;
+    }
+
     @Override
     public boolean equals(Object object) {
         // TODO: Warning - this method won't work in the case the id fields are not set
@@ -398,7 +414,7 @@ public class Log extends CdbEntity implements Serializable {
 
     @Override
     public String toString() {
-        return "gov.anl.aps.cdb.portal.model.db.entities.Log[ id=" + id + " ]";
+        return "gov.anl.aps.cdb.portal.model.db.entities.Log[ id=" + id;
     }
 
 }  

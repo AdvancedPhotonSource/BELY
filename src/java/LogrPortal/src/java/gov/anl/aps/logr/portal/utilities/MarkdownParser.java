@@ -21,6 +21,7 @@ import com.vladsch.flexmark.util.data.MutableDataSet;
 import com.vladsch.flexmark.util.misc.Extension;
 import com.vladsch.flexmark.util.sequence.BasedSequence;
 import com.vladsch.flexmark.util.sequence.Escaping;
+import com.vladsch.flexmark.ext.tables.TablesExtension;
 import gov.anl.aps.logr.common.constants.CdbPropertyValue;
 
 import java.util.HashSet;
@@ -60,13 +61,15 @@ public class MarkdownParser {
             + "monospaced code content goes here\n"
             + "```\n"
             + "\n\n"
-            + "# Heading Levels:\n"
+            + "### Table\n\n"
+            + "| Column1 | Column2 | Column3 |\n"
+            + "| --- | --- | --- |\n"
+            + "| Cell 1 | Cell 2 | Cell 3 |\n"
+            + "\n\n"
+            + "### Heading Levels\n"
             + "# Level 1 Heading\n"
             + "## Level 2 Heading\n"
-            + "### Level 3 Heading\n"
-            + "#### Level 4 Heading\n"
-            + "##### Level 5 Heading\n"
-            + "###### Level 6 Heading\n";
+            + "### Level 3 Heading\n";
             
 
     private static String contextRoot = null;
@@ -79,7 +82,8 @@ public class MarkdownParser {
     private static MutableDataHolder options = new MutableDataSet()
             .set(Parser.EXTENSIONS, Arrays.asList(
                     new Extension[]{
-                        LogrFlexmarkExtension.create()
+                        LogrFlexmarkExtension.create(),
+                        TablesExtension.create()
                     }
             ));
 

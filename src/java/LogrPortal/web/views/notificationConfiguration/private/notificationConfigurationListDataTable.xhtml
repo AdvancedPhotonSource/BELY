@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <p:dataTable id="notificationConfigListDataTable"
+                 value="#{notificationConfigurationController.itemsForCurrentUser}"
+                 var="config"
+                 paginator="false"
+                 emptyMessage="No notification configurations found. Click 'Add' to create one."
+                 styleClass="dataTable">
+
+        <p:column headerText="Name" sortBy="#{config.name}" filterBy="#{config.name}" filterMatchMode="contains">
+            <h:outputText value="#{config.name}"/>
+        </p:column>
+
+        <p:column headerText="Provider" sortBy="#{config.notificationProvider.name}">
+            <h:outputText value="#{config.notificationProvider.name}"/>
+        </p:column>
+
+        <p:column headerText="Endpoint" sortBy="#{config.notificationEndpoint}">
+            <h:outputText id="endpointText" value="#{config.displayNotificationEndpoint}"/>
+            <p:tooltip for="endpointText" value="#{config.notificationEndpoint}"/>
+        </p:column>
+
+        <p:column headerText="Active Notifications">
+            <ui:repeat value="#{notificationConfigurationController.getActiveHandlerPreferences(config)}"
+                       var="pref">
+                <div>
+                    <h:outputText id="activeNotif"
+                                  value="#{pref.displayName}"
+                                  styleClass="ui-tag ui-tag-rounded"/>
+                    <p:tooltip for="activeNotif"
+                               value="#{pref.description}"/>
+                </div>
+            </ui:repeat>
+        </p:column>
+
+        <p:column headerText="Actions" rendered="#{isEntityWriteable}">
+            <p:commandLink styleClass="fa fa-link-icon fa-edit"
+                           action="#{notificationConfigurationController.prepareEditDialog(config)}"
+                           update="@form"
+                           process="@this"
+                           oncomplete="PF('notificationConfigurationEditDialogWidget').show()">
+                <p:tooltip for="@parent" value="Edit"/>
+            </p:commandLink>
+
+            <p:commandLink styleClass="fa fa-link-icon fa-paper-plane"
+                           action="#{notificationConfigurationController.sendTestNotification(config)}"
+                           update="@form">
+                <p:tooltip for="@parent" value="Send Test Notification"/>
+            </p:commandLink>
+
+            <p:commandLink styleClass="fa fa-link-icon fa-trash"                           
+                           update="@form"
+                           oncomplete="PF('notificationConfigDeleteDialogWidget').show()">
+                <p:tooltip for="@parent" value="Delete"/>
+                <f:setPropertyActionListener target="#{notificationConfigurationController.current}" value="#{config}"/>
+            </p:commandLink>
+        </p:column>
+    </p:dataTable>
+
+</ui:composition>

@@ -1,0 +1,101 @@
+# Apprise Smart Notification Handler Configuration
+# 
+# This configuration file defines how the ApprisSmartNotificationHandler
+# sends notifications for BELY events.
+
+# Global configuration (optional)
+global:
+  # Email server configuration for mailto:// URLs
+  mail_server: "smtp.gmail.com"
+  # mail_port: 587
+  # mail_username: "your-email@gmail.com"
+  # mail_password: "your-app-password"
+  mail_from: "your-email@gmail.com"
+  mail_from_name: "BELY Notifications"
+
+# User-specific notification configuration
+users:
+  # Example user with email and Discord notifications
+  john_doe:
+    # Apprise URLs for notification endpoints
+    # See https://github.com/caronc/apprise/wiki for all supported services
+    apprise_urls:
+      # Email notification
+      - "mailto://john.doe@example.com"
+      # Discord webhook
+      - "discord://webhook-id/webhook-token"
+    
+    # Which types of notifications to send
+    notifications:
+      # Notify when someone else updates any log entry (typically for document owners)
+      entry_updates: true
+      # Notify when someone else edits YOUR log entries specifically
+      own_entry_edits: true
+      # Notify when someone else replies to a log entry
+      entry_replies: true
+      # Notify when someone else creates an entry in a document
+      new_entries: true
+      # Notify when someone replies to any entry in your document
+      document_replies: true
+      # Notify when someone reacts to your log entry
+      reactions: true
+
+  # Example user with Slack notifications only
+  jane_smith:
+    apprise_urls:
+      # Slack webhook
+      - "slack://token-a/token-b/token-c"
+    
+    notifications:
+      entry_updates: true
+      # Only get notified about general updates, not specifically own entries
+      own_entry_edits: false
+      entry_replies: false  # Don't notify about replies
+      new_entries: true
+
+  # Example user with multiple notification channels
+  bob_johnson:
+    apprise_urls:
+      # Email
+      - "mailto://bob@example.com"
+      # Telegram
+      - "tgram://bot-token/chat-id"
+      # Pushbullet
+      - "pbul://access-token"
+    
+    notifications:
+      entry_updates: true
+      entry_replies: true
+      new_entries: false  # Don't notify about new entries
+
+  # Example user with Teams notifications
+  alice_williams:
+    apprise_urls:
+      # Microsoft Teams
+      - "msteams://token-a/token-b/token-c"
+    
+    notifications:
+      entry_updates: true
+      entry_replies: true
+      new_entries: true
+
+# Supported Apprise Services:
+# 
+# Email:
+#   - mailto://user:password@domain.com
+#   - mailgun://user:password@domain.com
+#   - sendgrid://api-key@domain.com
+#
+# Chat:
+#   - discord://webhook-id/webhook-token
+#   - slack://token-a/token-b/token-c
+#   - msteams://token-a/token-b/token-c
+#   - telegram://bot-token/chat-id
+#
+# Notifications:
+#   - pushbullet://access-token
+#   - pushover://user-key/api-token
+#   - gotify://hostname/token
+#
+# See https://github.com/caronc/apprise/wiki for complete list
+

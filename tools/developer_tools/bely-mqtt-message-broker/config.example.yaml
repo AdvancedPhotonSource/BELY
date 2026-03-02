@@ -1,0 +1,25 @@
+# BELY MQTT Framework Configuration
+# This file configures global settings and handler-specific parameters
+
+# Global configuration shared across all handlers
+global:
+  # BELY API URL for querying additional information
+  bely_url: https://bely.gov/bely
+
+# Handler-specific configurations
+handlers:
+  # Advanced logging handler with custom directory
+  AdvancedLoggingHandler:
+    logging_dir: /var/log/bely
+
+  # Basic logging handler (no configuration needed)
+  LoggingHandler: {}
+
+  # Notification handler with webhook
+  NotificationHandler:
+    webhook_url: https://example.com/webhook
+
+  # Apprise smart notification handler
+  AppriseSmartNotificationHandler:
+    config:
+      config_path: /path/to/apprise_notification_config.yaml

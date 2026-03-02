@@ -6,6 +6,9 @@ package gov.anl.aps.logr.portal.controllers.utilities;
 
 import gov.anl.aps.logr.common.exceptions.CdbException;
 import gov.anl.aps.logr.common.exceptions.InvalidObjectState;
+import gov.anl.aps.logr.common.mqtt.constants.ChangeType;
+import gov.anl.aps.logr.common.mqtt.model.LogEntryEvent;
+import gov.anl.aps.logr.common.mqtt.model.ReplyLogEntryEvent;
 import gov.anl.aps.logr.common.utilities.CollectionUtility;
 import gov.anl.aps.logr.portal.constants.ItemDomainName;
 import gov.anl.aps.logr.portal.constants.LogDocumentSettings;
@@ -29,6 +32,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -337,9 +341,9 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
 
         // Add search opts to match description. 
         for (SearchResult result : searchResultList) {
-            addCommonLogEntryDocumentMatches(result, searchEntityTypeList, searchItemTypeList); 
-            
-            ItemDomainLogbook resultItem = (ItemDomainLogbook) result.getCdbEntity();            
+            addCommonLogEntryDocumentMatches(result, searchEntityTypeList, searchItemTypeList);
+
+            ItemDomainLogbook resultItem = (ItemDomainLogbook) result.getCdbEntity();
             EntityInfo entityInfo = resultItem.getEntityInfo();
 
             if (searchUserList != null && !searchUserList.isEmpty()) {
@@ -404,6 +408,120 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
         }
     }
 
+    /**
+     * Search log entries using the stored procedure and build search results
+     * with pattern matching. Shared between UI controller and REST API.
+     *
+     * @param searchString search text with wildcard support
+     * @param caseInsensitive whether to use case-insensitive matching
+     * @param searchOpts map of advanced search options (from createAdvancedSearchMap)
+     * @return list of search results for matching log entries
+     */
+    public LinkedList<SearchResult> searchLogEntries(String searchString, boolean caseInsensitive, Map searchOpts) {
+        LinkedList<SearchResult> logEntryResults = new LinkedList<>();
+
+        List<EntityType> searchEntityTypeList = null;
+        List<ItemType> searchItemTypeList = null;
+        List<UserInfo> searchUserList = null;
+        String entityTypeIdList = null;
+        String itemTypeIdList = null;
+        String userIdList = null;
+        Date startModifiedTime = null;
+        Date endModifiedTime = null;
+        Date startCreatedTime = null;
+        Date endCreatedTime = null;
+
+        if (searchOpts != null) {
+            searchEntityTypeList = (List<EntityType>) searchOpts.get(SEARCH_OPT_KEY_ENTITY_TYPE_LIST);
+            searchItemTypeList = (List<ItemType>) searchOpts.get(SEARCH_OPT_KEY_ITEM_TYPE_LIST);
+            searchUserList = (List<UserInfo>) searchOpts.get(SEARCH_OPT_KEY_USER_LIST);
+
+            entityTypeIdList = CollectionUtility.generateIdListString(searchEntityTypeList);
+            itemTypeIdList = CollectionUtility.generateIdListString(searchItemTypeList);
+            userIdList = CollectionUtility.generateIdListString(searchUserList);
+
+            startModifiedTime = (Date) searchOpts.get(SEARCH_OPT_KEY_START_MODIFIED_TIME);
+            endModifiedTime = (Date) searchOpts.get(SEARCH_OPT_KEY_END_MODIFIED_TIME);
+            startCreatedTime = (Date) searchOpts.get(SEARCH_OPT_KEY_START_CREATED_TIME);
+            endCreatedTime = (Date) searchOpts.get(SEARCH_OPT_KEY_END_CREATED_TIME);
+        }
+
+        List<Object[]> results = getEntityDbFacade().searchEntityLogs(
+                searchString, itemTypeIdList, entityTypeIdList, userIdList,
+                startModifiedTime, endModifiedTime, startCreatedTime, endCreatedTime);
+
+        String patternString = generatePatternString(searchString);
+        Pattern searchPattern = getSearchPattern(patternString, caseInsensitive);
+
+        for (Object[] result : results) {
+            ItemDomainLogbook logbook = (ItemDomainLogbook) result[0];
+            Log log = (Log) result[1];
+            Long logId = (Long) result[2];
+
+            SearchResult searchResult = new SearchResult(logbook, logbook.getId(), logbook.getName(), log);
+            searchResult.setAdditionalAttribute("" + logId);
+
+            String text = log.getText();
+            String[] logLines = text.split("\n");
+            String matchingLines = "";
+
+            for (String lineText : logLines) {
+                if (searchPattern.matcher(lineText).find()) {
+                    matchingLines += lineText + "\n";
+                }
+            }
+            searchResult.addAttributeMatch("log entry", matchingLines);
+
+            addCommonLogEntryDocumentMatches(searchResult, searchEntityTypeList, searchItemTypeList);
+
+            if (searchUserList != null && !searchUserList.isEmpty()) {
+                for (UserInfo ui : searchUserList) {
+                    Integer searchUserId = ui.getId();
+
+                    UserInfo enteredByUser = log.getEnteredByUser();
+                    UserInfo lastModifiedByUser = log.getLastModifiedByUser();
+
+                    if (Objects.equals(enteredByUser.getId(), searchUserId)) {
+                        searchResult.addAttributeMatch("Create User", enteredByUser.toString());
+                    }
+                    if (Objects.equals(lastModifiedByUser.getId(), searchUserId)) {
+                        searchResult.addAttributeMatch("Last Modify User", lastModifiedByUser.toString());
+                    }
+                }
+            }
+
+            if (startCreatedTime != null || endCreatedTime != null) {
+                Date enteredOnDateTime = log.getEnteredOnDateTime();
+                searchResult.addAttributeMatch("Created on", enteredOnDateTime.toString());
+            }
+
+            if (startModifiedTime != null || endModifiedTime != null) {
+                Date modifiedOnDateTime = log.getLastModifiedOnDateTime();
+                searchResult.addAttributeMatch("Modified on", modifiedOnDateTime.toString());
+            }
+
+            logEntryResults.add(searchResult);
+        }
+
+        return logEntryResults;
+    }
+
+    /**
+     * Adjust end time to end-of-day (23:59:59) for date range searches.
+     * Shared between UI controller and REST API.
+     */
+    public static Date adjustEndTimeForSearch(Date endTime) {
+        if (endTime != null) {
+            Calendar endDateCal = Calendar.getInstance();
+            endDateCal.setTime(endTime);
+            endDateCal.set(Calendar.HOUR, 23);
+            endDateCal.set(Calendar.MINUTE, 59);
+            endDateCal.set(Calendar.SECOND, 59);
+            endTime = endDateCal.getTime();
+        }
+        return endTime;
+    }
+
     public static void copyLogs(ItemDomainLogbook oldLogDoc, ItemDomainLogbook newLogDoc) {
         List<Log> logList = oldLogDoc.getLogList();
         EntityInfo entityInfo = newLogDoc.getEntityInfo();
@@ -420,6 +538,113 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
             Date enteredTime = calendar.getTime();
             newLog.setEnteredOnDateTime(enteredTime);
         }
+    }
+
+    public static ItemDomainLogbook getParentLogDocument(Log logEntry) {
+        Log parentLog = logEntry.getParentLog();
+
+        if (parentLog != null) {
+            // Parent log has association to the log document.
+            logEntry = parentLog;
+        }
+        List<ItemElement> itemElementList = logEntry.getItemElementList();
+
+        if (itemElementList != null && itemElementList.size() == 1) {
+            // This should always happen.
+            // No exception however since this is required for notification framework not core functionality.
+            ItemElement parentElement = itemElementList.get(0);
+            Item parentItem = parentElement.getParentItem();
+            if (parentItem instanceof ItemDomainLogbook) {
+                return (ItemDomainLogbook) parentItem;
+            }
+        }
+        return null;
+
+    }
+
+    private String getLogDiffString(Log originalLog, Log updatedLog) {
+        String originalText;
+        String updatedText = updatedLog.getText();
+
+        if (originalLog != null) {
+            originalText = originalLog.getText();
+        } else {
+            return updatedText;
+        }
+
+        StringBuilder diffOutput = new StringBuilder();
+        String[] originalLines = originalText.split("\n");
+        String[] updatedLines = updatedText.split("\n");
+
+        int maxLines = Math.max(originalLines.length, updatedLines.length);
+
+        for (int i = 0; i < maxLines; i++) {
+            String originalLine = i < originalLines.length ? originalLines[i] : "";
+            String updatedLine = i < updatedLines.length ? updatedLines[i] : "";
+
+            if (!originalLine.equals(updatedLine)) {
+                if (i < originalLines.length) {
+                    diffOutput.append("- ").append(originalLine).append("\n");
+                }
+                if (i < updatedLines.length) {
+                    diffOutput.append("+ ").append(updatedLine).append("\n");
+                }
+            } else if (i < originalLines.length) {
+                diffOutput.append("  ").append(originalLine).append("\n");
+            }
+        }
+        return diffOutput.toString();
+
+    }
+
+    public void destroyLogEntry(Log logEntity, UserInfo user) throws CdbException {
+        addLogEntryMqttEvent(logEntity, null, user, true);
+
+        LogControllerUtility utility = new LogControllerUtility();
+        utility.destroy(logEntity, user);
+    }
+
+    private void addLogEntryMqttEvent(Log logEntity, Log originalLog, UserInfo user, boolean isDestroy) {
+        String logDiffString = getLogDiffString(originalLog, logEntity);
+
+        // Avoid duplicates
+        logEntity.clearActionEvents();
+
+        ItemDomainLogbook parentLogbook = getParentLogDocument(logEntity);
+
+        Log parentLog = logEntity.getParentLog();
+        Integer id = logEntity.getId();
+        ChangeType changeType;
+
+        String description = "";
+        if (isDestroy) {
+            description += "log entry was deleted";
+            changeType = ChangeType.DELETE;
+        } else if (id == null) {
+            description += "log entry was added";
+            changeType = ChangeType.ADD;
+        } else {
+            description += "log entry id [" + id + "] was modified";
+            changeType = ChangeType.UPDATE;
+        }
+
+        if (parentLog != null) {
+            description = "reply " + description;
+
+            // Reply
+            logEntity.addActionEvent(new ReplyLogEntryEvent(parentLogbook, logEntity, user, description, logDiffString, changeType));
+        } else {
+            logEntity.addActionEvent(new LogEntryEvent(parentLogbook, logEntity, user, description, logDiffString, changeType));
+        }
+    }
+
+    public Log saveLog(Log logEntity, UserInfo user, Log originalLog) throws CdbException {
+        LogControllerUtility utility = new LogControllerUtility();
+
+        addLogEntryMqttEvent(logEntity, originalLog, user, false);
+
+        // Add a generic log entry.
+        return utility.saveLogEntry(logEntity, user);
     }
 
 }

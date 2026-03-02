@@ -8,6 +8,8 @@ import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
 import gov.anl.aps.logr.portal.model.jsf.handlers.PropertyTypeHandlerInterface;
 import gov.anl.aps.logr.portal.utilities.ConfigurationUtility;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -97,8 +99,17 @@ public abstract class PluginManagerBase {
     }
     
     /**
-     * Override to display an extras tab for configuration on the multi edit screen. 
-     * 
+     * Override to provide menu bar items from a plugin.
+     *
+     * @return list of menu bar item objects, empty list by default
+     */
+    public List<?> getMenuBarItems() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * Override to display an extras tab for configuration on the multi edit screen.
+     *
      * @return display the extra tab when true
      */
     public boolean pluginHasCatalogMultiEditExtras() {
