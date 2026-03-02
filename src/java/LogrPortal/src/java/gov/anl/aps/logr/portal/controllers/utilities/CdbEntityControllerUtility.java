@@ -420,14 +420,27 @@ public abstract class CdbEntityControllerUtility<EntityType extends CdbEntity, F
     }
 
     public String generatePatternString(String searchString) {
-        String patternString;
-        if (searchString.contains("?") || searchString.contains("*")) {
-            patternString = searchString.replace("*", ".*");
-            patternString = patternString.replace("?", ".");
-        } else {
-            patternString = Pattern.quote(searchString);
+        String[] words = searchString.trim().split("\\s+");
+        if (words.length <= 1) {
+            if (searchString.contains("?") || searchString.contains("*")) {
+                String patternString = searchString.replace("*", ".*");
+                return patternString.replace("?", ".");
+            }
+            return Pattern.quote(searchString);
         }
-        return patternString;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < words.length; i++) {
+            if (i > 0) sb.append("|");
+            String word = words[i];
+            if (word.contains("?") || word.contains("*")) {
+                word = word.replace("*", ".*");
+                word = word.replace("?", ".");
+            } else {
+                word = Pattern.quote(word);
+            }
+            sb.append(word);
+        }
+        return sb.toString();
     }
 
     public Pattern getSearchPattern(String patternString, boolean caseInsensitive) {

@@ -45,33 +45,48 @@ CREATE PROCEDURE `search_items_no_parent` (
 	IN search_string VARCHAR(255)
 	) 
 BEGIN
-	SET search_string = CONCAT('"%', search_string, '%"'); 
-
 	SET @select_stmt = "SELECT DISTINCT item.* from item ";
 	SET @from_stmt = "
-	INNER JOIN v_item_self_element ise ON item.id = ise.item_id 
+	INNER JOIN v_item_self_element ise ON item.id = ise.item_id
 	INNER JOIN item_element ie ON ise.self_element_id = ie.id
 	INNER JOIN entity_info ei ON ise.entity_info_id = ei.id
 	INNER JOIN user_info owneru ON ei.owner_user_id = owneru.id
 	INNER JOIN user_info creatoru ON ei.created_by_user_id = creatoru.id
 	INNER JOIN user_info updateu ON ei.last_modified_by_user_id = updateu.id
-	"; 
+	";
 
-	SET @where_stmt = "WHERE "; 
-	SET @where_stmt = CONCAT(@where_stmt, "item.domain_id = ", domain_id, " "); 
-	SET @where_stmt = CONCAT(@where_stmt, "AND vih.parent_item_id IS NULL "); 
+	SET @where_stmt = "WHERE ";
+	SET @where_stmt = CONCAT(@where_stmt, "item.domain_id = ", domain_id, " ");
+	SET @where_stmt = CONCAT(@where_stmt, "AND vih.parent_item_id IS NULL ");
 
-	SET @where_stmt = CONCAT(@where_stmt, "AND (",
-	"item.name LIKE ", search_string, " ",
-	"OR item.qr_id LIKE ", search_string, " ",
-	"OR item.item_identifier1 LIKE ", search_string, " ",
-	"OR item.item_identifier2 LIKE ", search_string, " ",
-	"OR ie.description LIKE ", search_string, " ",
-	"OR derived_item.name LIKE ", search_string, " ",
-	"OR owneru.username LIKE ", search_string, " ",
-	"OR creatoru.username LIKE ", search_string, " ",
-	"OR updateu.username LIKE ", search_string, " ",
-	") ");
+	-- Split search_string into words and require each word to match at least one field
+	SET @remaining = TRIM(search_string);
+	WHILE LENGTH(@remaining) > 0 DO
+		SET @space_pos = LOCATE(' ', @remaining);
+		IF @space_pos = 0 THEN
+			SET @word = @remaining;
+			SET @remaining = '';
+		ELSE
+			SET @word = LEFT(@remaining, @space_pos - 1);
+			SET @remaining = TRIM(SUBSTRING(@remaining, @space_pos + 1));
+		END IF;
+
+		IF LENGTH(@word) > 0 THEN
+			SET @word_like = CONCAT('"%', @word, '%"');
+			SET @where_stmt = CONCAT(@where_stmt,
+				'AND (',
+				'item.name LIKE ', @word_like, ' ',
+				'OR item.qr_id LIKE ', @word_like, ' ',
+				'OR item.item_identifier1 LIKE ', @word_like, ' ',
+				'OR item.item_identifier2 LIKE ', @word_like, ' ',
+				'OR ie.description LIKE ', @word_like, ' ',
+				'OR derived_item.name LIKE ', @word_like, ' ',
+				'OR owneru.username LIKE ', @word_like, ' ',
+				'OR creatoru.username LIKE ', @word_like, ' ',
+				'OR updateu.username LIKE ', @word_like, ' ',
+				') ');
+		END IF;
+	END WHILE;
 
 	IF user_id_list THEN 
 		SET @where_stmt = CONCAT(@where_stmt, 
@@ -146,29 +161,42 @@ CREATE PROCEDURE `search_item_logs` (
 	IN search_string VARCHAR(255)
 	) 
 BEGIN
-	SET search_string = CONCAT('%', search_string, '%'); 
-
 	SET @select_stmt = "SELECT DISTINCT parent_item.*, log.*, log.id as log_id ";
-	SET @from_stmt = "FROM item 
-	INNER JOIN v_item_self_element ise ON item.id = ise.item_id 
+	SET @from_stmt = "FROM item
+	INNER JOIN v_item_self_element ise ON item.id = ise.item_id
 	INNER JOIN item_element ie ON ise.self_element_id = ie.id
-	LEFT OUTER JOIN item_element_log iel on iel.item_element_id = ie.id	
-	LEFT OUTER JOIN v_item_hierarchy cih on cih.child_item_id = item.id"; 
-	SET @from_tbls = ", item as parent_item, log"; 
+	LEFT OUTER JOIN item_element_log iel on iel.item_element_id = ie.id
+	LEFT OUTER JOIN v_item_hierarchy cih on cih.child_item_id = item.id";
+	SET @from_tbls = ", item as parent_item, log";
 
 	SET @where_stmt = "WHERE ";
-	SET @where_stmt = CONCAT(@where_stmt, 'item.domain_id = ', domain_id, ' '); 
+	SET @where_stmt = CONCAT(@where_stmt, 'item.domain_id = ', domain_id, ' ');
 
-	SET @where_stmt = CONCAT(@where_stmt, "AND (log.id = iel.log_id or log.parent_log_id = iel.log_id) "); 
+	SET @where_stmt = CONCAT(@where_stmt, "AND (log.id = iel.log_id or log.parent_log_id = iel.log_id) ");
 
 	SET @where_stmt = CONCAT(@where_stmt, "AND (
-		parent_item.id = cih.parent_item_id 
+		parent_item.id = cih.parent_item_id
 		OR
-		(cih.parent_item_id IS NULL AND 
+		(cih.parent_item_id IS NULL AND
 		parent_item.id = item.id
-		)) "); 	
+		)) ");
 
-	SET @where_stmt = CONCAT(@where_stmt, 'AND (log.text LIKE "', search_string, '") '); 
+	-- Split search_string into words and require each word to match log text
+	SET @remaining = TRIM(search_string);
+	WHILE LENGTH(@remaining) > 0 DO
+		SET @space_pos = LOCATE(' ', @remaining);
+		IF @space_pos = 0 THEN
+			SET @word = @remaining;
+			SET @remaining = '';
+		ELSE
+			SET @word = LEFT(@remaining, @space_pos - 1);
+			SET @remaining = TRIM(SUBSTRING(@remaining, @space_pos + 1));
+		END IF;
+
+		IF LENGTH(@word) > 0 THEN
+			SET @where_stmt = CONCAT(@where_stmt, 'AND (log.text LIKE "%', @word, '%") ');
+		END IF;
+	END WHILE; 
 
 	IF user_id_list THEN 
 		SET @where_stmt = CONCAT(@where_stmt, 
