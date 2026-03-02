@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Copyright (c) UChicago Argonne, LLC. All rights reserved.
 See LICENSE file.
@@ -14,7 +14,7 @@ from utilities.plugin_manager import PluginManager
 import sys
 
 cdb_db_name = sys.argv[1]
-if cdb_db_name == None:
+if cdb_db_name is None:
     cdb_db_name = 'bely'
 
 

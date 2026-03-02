@@ -1,11 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Copyright (c) UChicago Argonne, LLC. All rights reserved.
 See LICENSE file.
 """
 
 import os, shutil
-from utilities.plugin_configuration import PluginConfiguration
+from ..plugin_configuration import PluginConfiguration
 
 CDB_XHTML_PLUGIN_PATH = '%s/%s/web/views/plugins/private'
 CDB_JAVA_PLUGIN_PATH = '%s/%s/src/java/gov/anl/aps/logr/portal/plugins/support'

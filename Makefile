@@ -43,6 +43,9 @@ test-db:
 test:
 	$(TOP)/sbin/cdb_test.sh
 
+test-plugins:
+	cd $(TOP)/tools/developer_tools/logr_plugins && python -m pytest test/ -v
+
 db:
 	$(TOP)/sbin/cdb_create_db.sh
 
