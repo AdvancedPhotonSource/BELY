@@ -39,6 +39,7 @@ public class CdbRestService extends Application {
     private Set<Class<?>> getRestResourceClasses() {
         Set<Class<?>> resources = new java.util.HashSet<Class<?>>();
         resources.add(gov.anl.aps.logr.rest.authentication.AuthenticationFilter.class);
+        resources.add(gov.anl.aps.logr.rest.provider.DateParamConverterProvider.class);
         resources.add(gov.anl.aps.logr.rest.provider.GenericAPIExceptionProvider.class);
         resources.add(gov.anl.aps.logr.rest.routes.AuthenticationRoute.class);        
         resources.add(gov.anl.aps.logr.rest.routes.DomainRoute.class);
