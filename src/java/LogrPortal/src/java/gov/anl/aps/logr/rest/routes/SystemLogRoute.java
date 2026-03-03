@@ -9,10 +9,9 @@ import gov.anl.aps.logr.portal.constants.SystemLogLevel;
 import gov.anl.aps.logr.portal.model.db.beans.LogFacade;
 import gov.anl.aps.logr.portal.model.db.entities.Log;
 import gov.anl.aps.logr.rest.authentication.Secured;
-import gov.anl.aps.logr.rest.entities.DateParam;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.text.ParseException;
+import java.util.Date;
 import java.util.List;
 import javax.ejb.EJB;
 import javax.ws.rs.GET;
@@ -77,12 +76,11 @@ public class SystemLogRoute extends BaseRoute {
     @Produces(MediaType.APPLICATION_JSON)
     @SecurityRequirement(name = "belyAuth")
     @Secured
-    public List<Log> getSuccessfulEntityUpdateLogSinceEnteredDate(@PathParam("sinceDate") String sinceDate) throws ParseException, InvalidSession {        
-        DateParam sinceDateParam = new DateParam(sinceDate); 
+    public List<Log> getSuccessfulEntityUpdateLogSinceEnteredDate(@PathParam("sinceDate") Date sinceDate) throws InvalidSession {
         checkSystemLogPrivilage();
         LOGGER.debug("Fetching entity info since: " + sinceDate);
-        String loginInfoLevel = SystemLogLevel.entityInfo.toString(); 
-        return logFacade.findByLogLevel(loginInfoLevel, sinceDateParam.getDate());
+        String loginInfoLevel = SystemLogLevel.entityInfo.toString();
+        return logFacade.findByLogLevel(loginInfoLevel, sinceDate);
     }
     
     @GET
@@ -102,12 +100,11 @@ public class SystemLogRoute extends BaseRoute {
     @Produces(MediaType.APPLICATION_JSON)
     @SecurityRequirement(name = "belyAuth")
     @Secured
-    public List<Log> getUnsuccessfulEntityUpdateLogSinceEnteredDate(@PathParam("sinceDate") String sinceDate) throws ParseException, InvalidSession {        
-        DateParam sinceDateParam = new DateParam(sinceDate);
+    public List<Log> getUnsuccessfulEntityUpdateLogSinceEnteredDate(@PathParam("sinceDate") Date sinceDate) throws InvalidSession {
         checkSystemLogPrivilage();
         LOGGER.debug("Fetching entity warnings since: " + sinceDate);
-        String loginInfoLevel = SystemLogLevel.entityWarning.toString(); 
-        return logFacade.findByLogLevel(loginInfoLevel, sinceDateParam.getDate());
+        String loginInfoLevel = SystemLogLevel.entityWarning.toString();
+        return logFacade.findByLogLevel(loginInfoLevel, sinceDate);
     }
     
     private void checkSystemLogPrivilage() throws InvalidSession {        
