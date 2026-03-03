@@ -36,7 +36,7 @@ curl -O $OPEN_API_GENERATOR_JAR_URL
 java -jar $OPEN_API_GENERATOR_JAR  generate -i "$CDB_OPENAPI_YML_URL" -g python -o $GEN_OUT_DIR -c $GEN_CONFIG_FILE_PATH || exit 1
 
 # Clean up
-rm belyApi -rv
+rm -rv belyApi
 rm $OPEN_API_GENERATOR_JAR
 
 # Fetch the generated Api
