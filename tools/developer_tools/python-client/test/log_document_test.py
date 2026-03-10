@@ -1,4 +1,3 @@
-from tkinter.messagebox import NO
 import unittest
 
 from BelyApiFactory import BelyApiFactory
@@ -195,7 +194,7 @@ class LogDocumentEditTests(BelyTestBase):
 
         self.login_as_user()
 
-        options = LogDocumentOptions(doc_name, logbook_type_id=self.CTL_LOGBOOK_ID)
+        options = LogDocumentOptions(name=doc_name, logbook_type_id=self.CTL_LOGBOOK_ID)
 
         new_doc = self.logbook_api.create_logbook_document(options)
 

@@ -76,7 +76,7 @@ class BelyApiFactory:
             username=username, password=password
         )
 
-        token = response[-1][self.HEADER_TOKEN_KEY]
+        token = response.headers[self.HEADER_TOKEN_KEY]
         self.__set_authenticate_token(token)
 
     def __set_authenticate_token(self, token):
