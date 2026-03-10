@@ -11,6 +11,8 @@ import gov.anl.aps.logr.portal.model.db.entities.Log;
 import gov.anl.aps.logr.rest.authentication.Secured;
 import gov.anl.aps.logr.rest.entities.DateParam;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.text.ParseException;
 import java.util.List;
@@ -37,7 +39,8 @@ public class SystemLogRoute extends BaseRoute {
     LogFacade logFacade; 
     
     @GET
-    @Path("/System/LoginInfo")    
+    @Path("/System/LoginInfo")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     @SecurityRequirement(name = "belyAuth")
     @Secured
@@ -49,7 +52,8 @@ public class SystemLogRoute extends BaseRoute {
     }
     
     @GET
-    @Path("/System/LoginWarning")    
+    @Path("/System/LoginWarning")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     @SecurityRequirement(name = "belyAuth")
     @Secured
@@ -62,6 +66,7 @@ public class SystemLogRoute extends BaseRoute {
     
     @GET
     @Path("/System/EntityInfo")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     @SecurityRequirement(name = "belyAuth")
     @Secured
@@ -74,6 +79,7 @@ public class SystemLogRoute extends BaseRoute {
     
     @GET
     @Path("/System/EntityInfoSinceEnteredDate/{sinceDate}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     @SecurityRequirement(name = "belyAuth")
     @Secured
@@ -86,7 +92,8 @@ public class SystemLogRoute extends BaseRoute {
     }
     
     @GET
-    @Path("/System/EntityWarning")    
+    @Path("/System/EntityWarning")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     @SecurityRequirement(name = "belyAuth")
     @Secured
@@ -99,6 +106,7 @@ public class SystemLogRoute extends BaseRoute {
     
     @GET
     @Path("/System/EntityWarningSinceEnteredDate/{sinceDate}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     @SecurityRequirement(name = "belyAuth")
     @Secured

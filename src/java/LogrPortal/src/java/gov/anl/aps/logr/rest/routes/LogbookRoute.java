@@ -31,6 +31,7 @@ import gov.anl.aps.logr.rest.entities.LogDocumentSection;
 import gov.anl.aps.logr.rest.entities.LogEntry;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Objects;
 import javax.ejb.EJB;
 import javax.ws.rs.GET;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -74,6 +76,7 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @GET
     @Path("/LogbookTypes")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<EntityType> getLogbookTypes() {
         Domain domain = getLogbookDomain();
@@ -91,6 +94,7 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @GET
     @Path("/LogbookSystems")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<ItemType> getLogbookSystems() {
         Domain domain = getLogbookDomain();
@@ -100,6 +104,7 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @GET
     @Path("/LogbookTemplates")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<ItemDomainLogbook> getLogbookTemplates() {
         String domainName = ItemDomainName.logbook.getValue();
@@ -109,7 +114,7 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @GET
     @Path("/LogDocuments/{logbookTypeId}/{limit}")
-    @Operation(summary = "Fetch last modified log documents for specific logbook type.")
+    @Operation(summary = "Fetch last modified log documents for specific logbook type.", responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<ItemDomainLogbook> getLogDocuments(@PathParam("logbookTypeId") int logbookTypeId, @PathParam("limit") int rowLimit) throws InvalidArgument {
         List<EntityType> logbookTypes = getLogbookTypes();
@@ -133,7 +138,7 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @GET
     @Path("/LogEntries/{logDocumentId}")
-    @Operation(summary = "Fetch log entry for log document id or section id.")
+    @Operation(summary = "Fetch log entry for log document id or section id.", responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<LogEntry> getLogEntries(@PathParam("logDocumentId") int logDocumentId,
             @Parameter(description = "boolean to specify if log replies should be included") @QueryParam("loadReplies") boolean loadReplies,
@@ -147,6 +152,7 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @GET
     @Path("/LogbookSections/{logDocumentId}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<LogDocumentSection> getLogbookSections(@PathParam("logDocumentId") int logDocumentId) throws ObjectNotFound, InvalidArgument {
         ItemDomainLogbook logDocument = getLogDocumentById(logDocumentId);
@@ -169,7 +175,7 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @GET
     @Path("/LogEntryTemplate/{logDocumentId}")
-    @Operation(summary = "Fetch new log entry template for log document id or section id.")
+    @Operation(summary = "Fetch new log entry template for log document id or section id.", responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     @SecurityRequirement(name = "belyAuth")
     @Secured
@@ -187,8 +193,9 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @PUT
     @Path("/AddUpdateLogEntry")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Add/Update a log entry to a log document or section. Will only update the core log entry not related reply/reaction.")
+    @Operation(summary = "Add/Update a log entry to a log document or section. Will only update the core log entry not related reply/reaction.", responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @SecurityRequirement(name = "belyAuth")
     @Secured
     public LogEntry addUpdateLogEntry(@RequestBody(required = true) LogEntry logEntry) throws CdbException {
@@ -253,8 +260,9 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @PUT
     @Path("/CreateLogDocument")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create logbook document.")
+    @Operation(summary = "Create logbook document.", responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @SecurityRequirement(name = "belyAuth")
     @Secured
     public ItemDomainLogbook createLogbookDocument(@RequestBody(required = true) LogDocumentOptions newLogDocumentOptions) throws CdbException {
@@ -290,7 +298,7 @@ public class LogbookRoute extends ItemBaseRoute {
     @PUT
     @Path("/CreateLogDocumentSection/{logDocumentId}/{sectionName}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create logbook document.")
+    @Operation(summary = "Create logbook document section.", responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @SecurityRequirement(name = "belyAuth")
     @Secured
     public LogDocumentSection createLogDocumentSection(@PathParam("logDocumentId") int logDocumentId, @PathParam("sectionName") String sectionName) throws CdbException {
