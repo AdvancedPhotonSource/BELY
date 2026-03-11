@@ -9,7 +9,7 @@ class SearchTests(BelyTestBase):
 
     def setUp(self):
         super().setUp()
-        self.search_api = self.factory.getSearchApi()
+        self.search_api = self.factory.get_search_api()
 
     # -- search_logbook (GET /api/Search/{searchText}) --
 

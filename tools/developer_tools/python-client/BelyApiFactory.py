@@ -4,6 +4,7 @@
 # See LICENSE file.
 import base64
 import os
+import warnings
 
 from belyApi import Configuration, ApiClient
 from belyApi import (
@@ -37,39 +38,56 @@ class BelyApiFactory:
             api_client=self.api_client
         )
 
-        self.downloadsApi = DownloadsApi(api_client=self.api_client)
-        self.propertyValueApi = PropertyValueApi(api_client=self.api_client)
-        self.usersApi = UsersApi(api_client=self.api_client)
-        self.domainApi = DomainApi(api_client=self.api_client)
+        self.downloads_api = DownloadsApi(api_client=self.api_client)
+        self.property_value_api = PropertyValueApi(api_client=self.api_client)
+        self.users_api = UsersApi(api_client=self.api_client)
+        self.domain_api = DomainApi(api_client=self.api_client)
 
-        self.systemlogApi = SystemLogApi(api_client=self.api_client)
-        self.searchApi = SearchApi(api_client=self.api_client)
+        self.systemlog_api = SystemLogApi(api_client=self.api_client)
+        self.search_api = SearchApi(api_client=self.api_client)
+
+        # Deprecated camelCase aliases
+        self.downloadsApi = self.downloads_api
+        self.propertyValueApi = self.property_value_api
+        self.usersApi = self.users_api
+        self.domainApi = self.domain_api
+        self.systemlogApi = self.systemlog_api
+        self.searchApi = self.search_api
 
         self.auth_api = AuthenticationApi(api_client=self.api_client)
+
+    def _deprecated(self, old_name, new_name):
+        warnings.warn(
+            f"{old_name} is deprecated, use {new_name} instead",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+
+    # -- snake_case methods (primary) --
 
     def get_lobook_api(self) -> LogbookApi:
         return self.logbook_api
 
-    def getDomainApi(self) -> DomainApi:
-        return self.domainApi
+    def get_domain_api(self) -> DomainApi:
+        return self.domain_api
 
-    def getDownloadApi(self) -> DownloadsApi:
-        return self.downloadsApi
+    def get_download_api(self) -> DownloadsApi:
+        return self.downloads_api
 
-    def getPropertyValueApi(self) -> PropertyValueApi:
-        return self.propertyValueApi
+    def get_property_value_api(self) -> PropertyValueApi:
+        return self.property_value_api
 
-    def getUsersApi(self) -> UsersApi:
-        return self.usersApi
+    def get_users_api(self) -> UsersApi:
+        return self.users_api
 
-    def getSearchApi(self) -> SearchApi:
-        return self.searchApi
+    def get_search_api(self) -> SearchApi:
+        return self.search_api
 
-    def getNotificationConfigurationApi(self):
+    def get_notification_configuration_api(self):
         return self.notification_configuration_api
 
-    def generateCDBUrlForItemId(self, itemId):
-        return self.URL_FORMAT % (self.cdbUrl, str(itemId))
+    def generate_cdb_url_for_item_id(self, item_id):
+        return self.URL_FORMAT % (self.bely_url, str(item_id))
 
     def authenticate_user(self, username, password):
         response = self.auth_api.authenticate_user_with_http_info(
@@ -82,14 +100,59 @@ class BelyApiFactory:
     def __set_authenticate_token(self, token):
         self.api_client.set_default_header(self.HEADER_TOKEN_KEY, token)
 
-    def getAuthenticateToken(self):
-        return self.apiClient.default_headers[self.HEADER_TOKEN_KEY]
+    def get_authenticate_token(self):
+        return self.api_client.default_headers[self.HEADER_TOKEN_KEY]
 
     def test_authenticated(self):
         self.auth_api.verify_authenticated()
 
     def logout_user(self):
         self.auth_api.log_out()
+
+    def parse_api_exception(self, open_api_exception):
+        response_type = ApiExceptionMessage.__name__
+        open_api_exception.data = open_api_exception.body
+        ex_obj = self.api_client.deserialize(open_api_exception, response_type)
+        ex_obj.status = open_api_exception.status
+        return ex_obj
+
+    # -- Deprecated camelCase wrappers --
+
+    def getDomainApi(self) -> DomainApi:
+        self._deprecated("getDomainApi", "get_domain_api")
+        return self.get_domain_api()
+
+    def getDownloadApi(self) -> DownloadsApi:
+        self._deprecated("getDownloadApi", "get_download_api")
+        return self.get_download_api()
+
+    def getPropertyValueApi(self) -> PropertyValueApi:
+        self._deprecated("getPropertyValueApi", "get_property_value_api")
+        return self.get_property_value_api()
+
+    def getUsersApi(self) -> UsersApi:
+        self._deprecated("getUsersApi", "get_users_api")
+        return self.get_users_api()
+
+    def getSearchApi(self) -> SearchApi:
+        self._deprecated("getSearchApi", "get_search_api")
+        return self.get_search_api()
+
+    def getNotificationConfigurationApi(self):
+        self._deprecated("getNotificationConfigurationApi", "get_notification_configuration_api")
+        return self.get_notification_configuration_api()
+
+    def generateCDBUrlForItemId(self, itemId):
+        self._deprecated("generateCDBUrlForItemId", "generate_cdb_url_for_item_id")
+        return self.generate_cdb_url_for_item_id(itemId)
+
+    def getAuthenticateToken(self):
+        self._deprecated("getAuthenticateToken", "get_authenticate_token")
+        return self.get_authenticate_token()
+
+    def parseApiException(self, openApiException):
+        self._deprecated("parseApiException", "parse_api_exception")
+        return self.parse_api_exception(openApiException)
 
     # Restore later
     # @classmethod
@@ -99,13 +162,6 @@ class BelyApiFactory:
 
     # 	fileName = os.path.basename(filePath)
     # 	return FileUploadObject(file_name=fileName, base64_binary=b64String)
-
-    def parseApiException(self, openApiException):
-        responseType = ApiExceptionMessage.__name__
-        openApiException.data = openApiException.body
-        exObj = self.apiClient.deserialize(openApiException, responseType)
-        exObj.status = openApiException.status
-        return exObj
 
 
 # def run_command():
