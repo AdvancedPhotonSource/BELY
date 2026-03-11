@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -450,8 +451,20 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
                 searchString, itemTypeIdList, entityTypeIdList, userIdList,
                 startModifiedTime, endModifiedTime, startCreatedTime, endCreatedTime);
 
-        String patternString = generatePatternString(searchString);
-        Pattern searchPattern = getSearchPattern(patternString, caseInsensitive);
+        String[] searchWords = searchString.trim().split("\\s+");
+        boolean multiWord = searchWords.length > 1;
+
+        Map<String, Pattern> wordPatterns = new LinkedHashMap<>();
+        for (String word : searchWords) {
+            String wordPattern;
+            if (word.contains("?") || word.contains("*")) {
+                wordPattern = word.replace("*", ".*").replace("?", ".");
+            } else {
+                wordPattern = Pattern.quote(word);
+            }
+            Pattern pattern = getSearchPattern(wordPattern, caseInsensitive);
+            wordPatterns.put(word, pattern);
+        }
 
         for (Object[] result : results) {
             ItemDomainLogbook logbook = (ItemDomainLogbook) result[0];
@@ -463,14 +476,28 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
 
             String text = log.getText();
             String[] logLines = text.split("\n");
-            String matchingLines = "";
 
+            Map<String, String> keyMatchingLines = new LinkedHashMap<>();
             for (String lineText : logLines) {
-                if (searchPattern.matcher(lineText).find()) {
-                    matchingLines += lineText + "\n";
+                List<String> matchedWords = new ArrayList<>();
+                for (Map.Entry<String, Pattern> entry : wordPatterns.entrySet()) {
+                    if (entry.getValue().matcher(lineText).find()) {
+                        matchedWords.add(entry.getKey());
+                    }
+                }
+                if (!matchedWords.isEmpty()) {
+                    String key;
+                    if (!multiWord) {
+                        key = "log entry";
+                    } else {
+                        key = "log entry (" + String.join(" ", matchedWords) + ")";
+                    }
+                    keyMatchingLines.merge(key, lineText + "\n", String::concat);
                 }
             }
-            searchResult.addAttributeMatch("log entry", matchingLines);
+            for (Map.Entry<String, String> entry : keyMatchingLines.entrySet()) {
+                searchResult.addAttributeMatch(entry.getKey(), entry.getValue());
+            }
 
             addCommonLogEntryDocumentMatches(searchResult, searchEntityTypeList, searchItemTypeList);
 
