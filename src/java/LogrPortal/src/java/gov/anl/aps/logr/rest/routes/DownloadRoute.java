@@ -18,6 +18,8 @@ import gov.anl.aps.logr.portal.utilities.GalleryUtility;
 import gov.anl.aps.logr.portal.utilities.StorageUtility;
 import gov.anl.aps.logr.rest.constants.DownloadRouteMimeType;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.io.File;
 import java.io.FileNotFoundException;
 import javax.ejb.EJB;
@@ -49,6 +51,7 @@ public class DownloadRoute extends BaseRoute {
 
     @GET
     @Path("/PropertyValue/Image/{imageName}/{scaling}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     public Response getImage(@PathParam("imageName") String imageName, @PathParam("scaling") String scaling) throws FileNotFoundException {
         LOGGER.debug("Fetching " + scaling + " image: " + imageName);
         String fullImageName = imageName + "." + scaling;
@@ -59,6 +62,7 @@ public class DownloadRoute extends BaseRoute {
 
     @GET
     @Path("/PropertyValue/{propertyValueId}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces("image/png")
     public Response getDownloadByPropertyValueId(@PathParam("propertyValueId") Integer propertyValueId) throws FileNotFoundException, ObjectNotFound, InvalidRequest {
         PropertyValue result = propertyValueFacade.find(propertyValueId);
@@ -110,6 +114,7 @@ public class DownloadRoute extends BaseRoute {
     
     @GET
     @Path("/Attachments/{attachmentName}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     public Response getAttachment(@PathParam("attachmentName") String attachmentName) throws FileNotFoundException {
         String originalAttachmentName = attachmentName; 
         Attachment att = null; 
@@ -128,6 +133,7 @@ public class DownloadRoute extends BaseRoute {
     
     @GET
     @Path("/Attachments/{attachmentName}/{scaling}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces("image/png")
     public Response getAttachment(@PathParam("attachmentName") String attachmentName, @PathParam("scaling") String scaling) throws FileNotFoundException {
         String fullAttachmentName = attachmentName + "." + scaling;

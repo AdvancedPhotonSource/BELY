@@ -8,15 +8,15 @@ See LICENSE file.
 from setuptools import setup
 
 setup(name='bely_api',
-      version='2025.3.dev0',
+      version='2026.3.dev3',
       packages=["belyApi",
                 "belyApi.api",
                 "belyApi.models"],
       py_modules=["BelyApiFactory"],
-      install_requires=['python-dateutil', 
+      install_requires=['python-dateutil',
           'urllib3',
           'certifi',
-          'six'],
+          'pydantic>=1.10'],
       license='Copyright (c) UChicago Argonne, LLC. All rights reserved.',
       description='Python client API library used to communicate with BELY API.',
       maintainer='Dariusz Jarosz',

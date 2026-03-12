@@ -1,4 +1,3 @@
-from tkinter.messagebox import NO
 import unittest
 
 from BelyApiFactory import BelyApiFactory

@@ -1,5 +1,5 @@
 certifi
+pydantic
 pytest
 python-dateutil
-six
 urllib3

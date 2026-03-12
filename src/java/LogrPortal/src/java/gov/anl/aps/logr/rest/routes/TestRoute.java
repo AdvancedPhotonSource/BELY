@@ -6,6 +6,8 @@ package gov.anl.aps.logr.rest.routes;
 
 import gov.anl.aps.logr.rest.authentication.Secured;
 import gov.anl.aps.logr.rest.entities.ApiExceptionMessage;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.ws.rs.GET;
@@ -27,6 +29,7 @@ public class TestRoute {
     
     @GET
     @Path("/Auth")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     @SecurityRequirement(name = "belyAuth")
     @Secured
@@ -37,6 +40,7 @@ public class TestRoute {
     
     @GET
     @Path("/NoAuth")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public boolean verifyConnection() {
         LOGGER.debug("User is connected.");
@@ -45,7 +49,8 @@ public class TestRoute {
     
     @GET
     @Path("/SampleErrorMessage")
-    @Produces(MediaType.APPLICATION_JSON) 
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
+    @Produces(MediaType.APPLICATION_JSON)
     public ApiExceptionMessage getSampleErrorMessage() {
         Exception exception = new Exception("Sample Exception Message");         
         ApiExceptionMessage apiExceptionMessage = new ApiExceptionMessage(exception);

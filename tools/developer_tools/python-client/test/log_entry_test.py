@@ -1,4 +1,3 @@
-from tkinter.messagebox import NO
 import unittest
 from belyApi import OpenApiException
 from test.bely_test_base import BelyTestBase
