@@ -43,7 +43,7 @@ mkdir -p $srcDir
 cd $srcDir
 if [ ! -f $PAYARA_ZIP_FILE ]; then
     echo "Retrieving $PAYARA_DOWNLOAD_URL"
-    curl -L -O $PAYARA_DOWNLOAD_URL
+    curl -L -o $PAYARA_ZIP_FILE $PAYARA_DOWNLOAD_URL
 fi
 
 if [ ! -f $PAYARA_ZIP_FILE ]; then
@@ -73,6 +73,10 @@ chmod -R ug+rwx $payaraInstallDir/glassfish/bin
 
 chmod -R o-rwx $payaraInstallDir/bin
 chmod -R o-rwx $payaraInstallDir/glassfish/bin
+
+# create production domain
+echo "Creating production domain"
+$ASADMIN_CMD create-domain --nopassword production
 
 export PAYARA_DOMAIN_NAME=production
 
