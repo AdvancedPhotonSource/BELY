@@ -365,7 +365,7 @@ public class LogbookRoute extends ItemBaseRoute {
     @GET
     @Path("/LogEntryAttachments/{logDocumentId}/{logId}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Fetch attachments for a log entry.")
+    @Operation(summary = "Fetch attachments for a log entry.", responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     public List<LogEntryAttachment> getLogEntryAttachments(
             @PathParam("logDocumentId") int logDocumentId,
             @PathParam("logId") int logId) throws CdbException {
