@@ -119,9 +119,7 @@ CREATE TABLE `notification_configuration_handler_setting` (
 --
 
 INSERT INTO `notification_provider` VALUES
-(1,'apprise', 'Local library for sending notifications to email, Discord, Slack, Teams, etc.', '# Apprise Notification URLs
-
-[Apprise](https://github.com/caronc/apprise) is a local notification library — not an external service. It is used to send notifications to various platforms using the URL formats below.
+(1,'apprise', 'Sends notifications to email, Discord, Slack, Teams, and more.', '# Notification URL Examples
 
 ## Email (SMTP)
 
@@ -147,7 +145,11 @@ slack://TokenA/TokenB/TokenC/#channel
 json://hostname/path
 ```
 
-For the full list of supported services, see the [Apprise Services Page](https://appriseit.com/services).');
+For the full list of supported services, see the [Apprise Services Page](https://appriseit.com/services).
+
+---
+
+**Note:** Notifications are powered by [Apprise](https://github.com/caronc/apprise), an open-source notification library hosted locally.');
 --
 -- Populate notification_handler_config_key
 --
