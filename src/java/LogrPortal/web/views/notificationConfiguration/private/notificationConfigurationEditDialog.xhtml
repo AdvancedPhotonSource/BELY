@@ -18,43 +18,22 @@
 
         <h:panelGroup id="notificationConfigurationEditDialogContent" styleClass="leftAlignedText">
             <p:outputPanel rendered="#{currentConfiguration != null}">
-                <h:panelGroup rendered="#{currentConfiguration.newEntity}">
-                    <p:commandButton value="Populate Email Configuration"
-                                     action="#{notificationConfigurationController.populateEmailInfo()}"
-                                     process="@this"
-                                     update="notificationConfigurationEditDialogContent"
-                                     immediate="true"
-                                     icon="fa fa-plus"
-                                     title="Quick setup with your email address"/>
-                    <p:separator/>
-                </h:panelGroup>                        
+                <p:fieldset legend="General">
+                    <p:panelGrid columns="2" styleClass="noBorderPanelGrid" >
 
-                <p:panelGrid columns="2" styleClass="noBorderPanelGrid" >
-
-                    <h:outputLabel value="Name*:" styleClass="outputLabelRequired"/>
-                    <p:inputText value="#{currentConfiguration.name}"
-                                 placeholder="Work Email, Personal Teams"
-                                 />
-
-                    <h:outputLabel value="Description:" />
-                    <p:inputTextarea value="#{currentConfiguration.description}"
-                                     rows="2"
-                                     placeholder="Optional description"
+                        <h:outputLabel value="Name*:" styleClass="outputLabelRequired"/>
+                        <p:inputText value="#{currentConfiguration.name}"
+                                     placeholder="Work Email, Personal Teams"
                                      />
 
-                    <h:outputLabel value="Notification Provider*:" styleClass="outputLabelRequired"/>
-                    <p:selectOneMenu value="#{currentConfiguration.notificationProvider}"
-                                     converter="notificationProviderConverter">
-                        <f:selectItem itemLabel="Select Provider..." itemValue="#{null}"/>
-                        <f:selectItems value="#{notificationConfigurationController.availableProviders}"
-                                       var="provider"
-                                       itemLabel="#{provider.name}"
-                                       itemValue="#{provider}"/>
-                        <p:ajax update="providerConfigSection"
-                                listener="#{notificationConfigurationController.onProviderChange()}"/>
-                    </p:selectOneMenu>
+                        <h:outputLabel value="Description:" />
+                        <p:inputTextarea value="#{currentConfiguration.description}"
+                                         rows="2"
+                                         placeholder="Optional description"
+                                         />
 
-                </p:panelGrid>
+                    </p:panelGrid>
+                </p:fieldset>
 
                 <!-- Dynamic Provider Configuration Fields -->
                 <h:panelGroup id="providerConfigSection">
@@ -86,7 +65,14 @@
                                              styleClass="fullWidthInput" />
                             </c:forEach>
                         </p:panelGrid>
-                    </p:fieldset>
+                        <!-- Advanced Settings -->
+                        <p:commandButton value="Advanced"
+                                         icon="fa fa-cog"
+                                         process="@this"
+                                         update="notificationConfigAdvancedDialogContent"
+                                         oncomplete="PF('notificationConfigAdvancedDialogWidget').show()"
+                                         />
+                    </p:fieldset>                   
                 </h:panelGroup>
 
                 <!-- Handler Preferences (What events trigger notifications) -->
@@ -112,14 +98,14 @@
                             </h:panelGroup>
                         </c:forEach>
                     </p:panelGrid>
-                </p:fieldset>
+                </p:fieldset>               
             </p:outputPanel>
         </h:panelGroup>
 
         <f:facet name="footer">
             <p:commandButton value="Save"
                              action="#{notificationConfigurationController.save()}"
-                             update="notificationConfigurationEditDialogContent,notificationConfigListDataTable"
+                             update="notificationConfigurationEditDialogContent,notificationConfigListDataTable,notificationConfigActionButtons"
                              oncomplete="if (args &amp;&amp; !args.validationFailed) PF('notificationConfigurationEditDialogWidget').hide()"
                              icon="fa fa-save"
                              />
@@ -134,6 +120,35 @@
                              onclick="PF('notificationConfigurationEditDialogWidget').hide(); return false;"
                              type="button"
                              icon="fa fa-times"/>
+        </f:facet>
+    </p:dialog>
+
+    <p:dialog header="Advanced Settings"
+              widgetVar="notificationConfigAdvancedDialogWidget"
+              modal="true"
+              resizable="false">
+        <h:panelGroup id="notificationConfigAdvancedDialogContent">
+            <p:outputPanel rendered="#{notificationConfigurationController.current != null}">
+                <p:panelGrid columns="2" styleClass="noBorderPanelGrid">
+                    <h:outputLabel value="Notification Provider*:" styleClass="outputLabelRequired"/>
+                    <p:selectOneMenu value="#{notificationConfigurationController.current.notificationProvider}"
+                                     converter="notificationProviderConverter">
+                        <f:selectItem itemLabel="Select Provider..." itemValue="#{null}"/>
+                        <f:selectItems value="#{notificationConfigurationController.availableProviders}"
+                                       var="provider"
+                                       itemLabel="#{provider.name}"
+                                       itemValue="#{provider}"/>
+                        <p:ajax update="providerConfigSection"
+                                listener="#{notificationConfigurationController.onProviderChange()}"/>
+                    </p:selectOneMenu>
+                </p:panelGrid>
+            </p:outputPanel>
+        </h:panelGroup>
+        <f:facet name="footer">
+            <p:commandButton value="Done"
+                             onclick="PF('notificationConfigAdvancedDialogWidget').hide(); return false;"
+                             type="button"
+                             icon="fa fa-check"/>
         </f:facet>
     </p:dialog>
 

@@ -2,19 +2,32 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
                 xmlns:p="http://primefaces.org/ui">
 
 
-    <div class="actionButton">
-        <p:commandButton value="Add Configuration"
-                         rendered="#{isEntityWriteable}"
-                         action="#{notificationConfigurationController.prepareCreateDialog(userEntity)}"
-                         update="notificationConfigurationEditDialog"
-                         process="@this"
-                         oncomplete="PF('notificationConfigurationEditDialogWidget').show()"
-                         icon="fa fa-plus"
-                         immediate="true"/>
-    </div>
+    <h:panelGroup id="notificationConfigActionButtons">
+        <div class="actionButton">
+            <p:commandButton value="Add Email Configuration"
+                             rendered="#{isEntityWriteable and !notificationConfigurationController.hasEmailConfiguration(userEntity)}"
+                             action="#{notificationConfigurationController.prepareCreateEmailDialog(userEntity)}"
+                             update="notificationConfigurationEditDialog notificationConfigAdvancedDialogContent"
+                             process="@this"
+                             oncomplete="PF('notificationConfigurationEditDialogWidget').show()"
+                             icon="fa fa-envelope"
+                             immediate="true"
+                             title="Quick setup with your email address"/>
+
+            <p:commandButton value="Add Configuration"
+                             rendered="#{isEntityWriteable}"
+                             action="#{notificationConfigurationController.prepareCreateDialog(userEntity)}"
+                             update="notificationConfigurationEditDialog notificationConfigAdvancedDialogContent"
+                             process="@this"
+                             oncomplete="PF('notificationConfigurationEditDialogWidget').show()"
+                             icon="fa fa-plus"
+                             immediate="true"/>
+        </div>
+    </h:panelGroup>
 
     <ui:include src="notificationConfigurationListDataTable.xhtml"/>
 

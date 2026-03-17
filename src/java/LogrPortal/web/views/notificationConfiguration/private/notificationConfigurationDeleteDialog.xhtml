@@ -12,8 +12,10 @@
 
         <p:commandButton value="Delete"
                          action="#{notificationConfigurationController.destroy()}"
-                         update="notificationConfigListDataTable"
-                         oncomplete="PF('notificationConfigDeleteDialogWidget').hide()"
+                         update="notificationConfigListDataTable,notificationConfigActionButtons"
+                         onclick="PF('loadingDialog').show()"
+                         oncomplete="PF('notificationConfigDeleteDialogWidget').hide(); 
+                                     PF('loadingDialog').hide();"
                          icon="fa fa-trash"
                          styleClass="ui-button-danger"
                          />

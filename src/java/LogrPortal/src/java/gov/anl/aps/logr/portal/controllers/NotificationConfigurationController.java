@@ -142,6 +142,45 @@ public class NotificationConfigurationController extends CdbEntityController<Not
         for (NotificationHandlerConfigKey key : handlerKeys) {
             handlerPreferences.put(key.getId(), "true".equalsIgnoreCase(key.getDefaultValue()));
         }
+
+        selectDefaultProvider();
+    }
+
+    private void selectDefaultProvider() {
+        List<NotificationProvider> providers = notificationProviderFacade.findAll();
+        if (!providers.isEmpty()) {
+            getCurrent().setNotificationProvider(providers.get(0));
+            loadProviderConfigKeys();
+        }
+    }
+
+    /**
+     * Check if a user already has an email-based notification configuration.
+     *
+     * @param user
+     * @return true if the user has a config with a mailto:// endpoint
+     */
+    public boolean hasEmailConfiguration(UserInfo user) {
+        List<NotificationConfiguration> configs = notificationConfigurationFacade.findByUser(user);
+        for (NotificationConfiguration config : configs) {
+            String endpoint = config.getNotificationEndpoint();
+            if (endpoint != null && endpoint.startsWith("mailto://")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Prepare to create a new email notification configuration with user's
+     * email pre-filled. Sets up the dialog with provider, name, description,
+     * and endpoint.
+     *
+     * @param userInfo
+     */
+    public void prepareCreateEmailDialog(UserInfo userInfo) {
+        prepareCreateDialog(userInfo);
+        populateEmailInfo();
     }
 
     /**
