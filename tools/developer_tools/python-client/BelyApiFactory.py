@@ -65,7 +65,7 @@ class BelyApiFactory:
 
     # -- snake_case methods (primary) --
 
-    def get_lobook_api(self) -> LogbookApi:
+    def get_logbook_api(self) -> LogbookApi:
         return self.logbook_api
 
     def get_domain_api(self) -> DomainApi:
