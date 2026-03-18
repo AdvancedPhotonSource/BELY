@@ -1,5 +1,5 @@
 {% set name = "BELY-API" %}
-{% set version = "2024.6" %}
+{% set version = "2026.3.dev5" %}
 
 package:
   name: "{{ name|lower }}"  
@@ -8,10 +8,11 @@ package:
 source:
   path: ./src
 
-requirements:  
+requirements:
   build:
     - pip
     - python>3.10
+    - setuptools
   run:
     - python
     - python-dateutil
