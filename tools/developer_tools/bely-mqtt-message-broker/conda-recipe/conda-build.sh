@@ -20,14 +20,17 @@ fi
 
 source $CONDA_DIR/etc/profile.d/conda.sh || exit 1
 
-# Prepare build source
-rm -rf src
-cp -r ../ src
-rm -rf src/conda-recipe
-rm -rf src/.conda src/.pytest_cache src/.mypy_cache src/htmlcov src/build src/tmp
-
-# Clean and Build
+# Clean 
 rm -rvf ./build
+rm -rvf src
+
+# Prepare build source
+mkdir -p src
+cp -Rv ../src src/
+cp -Rv ../tests src/
+cp -v ../pyproject.toml ../setup.py ../README.md ../LICENSE ../CHANGELOG.md ../pytest.ini src/
+
+# Build
 conda build . --output-folder ./build || exit 1
 
 # Install build into a new env
