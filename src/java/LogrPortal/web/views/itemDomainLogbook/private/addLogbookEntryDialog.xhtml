@@ -28,49 +28,61 @@ See LICENSE file.
                 </h3>
             </ui:fragment>
 
-            <p:panelGrid id="logEntryPanelGrid" columns="2" rendered="#{logObject != null}" >
+            <p:panelGrid id="logEntryPanelGrid" rendered="#{logObject != null}" >
 
-                <h:outputText value="Latest Saved Log Entry by #{logObject.originalLogEntryUser}" rendered="#{saveConflict}"/> 
+                <p:row rendered="#{saveConflict}">
+                    <p:column>
+                        <h:outputText value="Latest Saved Log Entry by #{logObject.originalLogEntryUser}" />
+                    </p:column>
 
-                <h:outputLabel for="logbookLogEntryValue" value="Log Entry" styleClass="entityDataEmphasizedLabel"/>                        
+                    <p:column>
+                        <h:outputLabel for="logbookLogEntryValue" value="Log Entry" styleClass="entityDataEmphasizedLabel"/>
+                    </p:column>
+                </p:row>
 
-                <h:inputTextarea styleClass="logEntryDialogEntryValue"
-                                 readonly="true"
-                                 disabled="true"
-                                 rendered="#{saveConflict}"
-                                 value="#{logObject.originalLogEntryText}"                             
-                                 onblur="logbookLogEntryValueBlur()"/> 
+                <p:row>
+                    <p:column rendered="#{saveConflict}">
+                        <h:inputTextarea styleClass="logEntryDialogEntryValue"
+                                         readonly="true"
+                                         disabled="true"
+                                         value="#{logObject.originalLogEntryText}"
+                                         onblur="logbookLogEntryValueBlur()"/>
+                    </p:column>
 
-                <h:inputTextarea styleClass="logEntryDialogEntryValue" 
-                                 id="logbookLogEntryValue"                              
-                                 value="#{logObject.text}"                             
-                                 onblur="logbookLogEntryValueBlur()"/>                         
+                    <p:column colspan="#{saveConflict ? 1 : 2}">
+                        <h:inputTextarea styleClass="logEntryDialogEntryValue"
+                                         id="logbookLogEntryValue"
+                                         value="#{logObject.text}"
+                                         onblur="logbookLogEntryValueBlur()"/>
+                    </p:column>
+                </p:row>
 
-                <p:column/> 
-                <p:column>
-                    <p:commandLink value="Markdown Help" onclick="PF('markdownExampleDialogWidget').show()" /> 
-                </p:column>                               
+                <p:row>
+                    <p:column colspan="2">
+                        <p:commandLink value="Markdown Help" onclick="PF('markdownExampleDialogWidget').show()" />
+                    </p:column>
+                </p:row>
 
-                <p:column rendered="#{saveConflict}"/>                 
-                <h:outputLabel for="logbookLogAttachmentsValue" value="Attachments" styleClass="entityDataEmphasizedLabel"/>            
+                <p:row>
+                    <p:column colspan="2">
+                        <p:outputPanel id="logbookLogAttachmentsValue">
+                            <ui:include src="../../log/private/logAttachmentFileUpload.xhtml">
+                                <ui:param name="updateTarget" value="logEntryPanelGrid" />
+                            </ui:include>
+                            <p:remoteCommand autoRun="true"
+                                             action="#{logAttachmentUploadBean.setLogEntry(logObject)}"/>
+                            <p:outputPanel id="logattachementsValueList">
+                                <ui:repeat var="attachment" value="#{logObject.attachmentList}">
+                                    <h:outputLink value="#{attachment.filePath}" target="_page_#{attachment.name}" title="#{attachment.name}" styleClass="entityDataIcon">
+                                        <h:graphicImage alt="Attachment" library="images" name="attachment.ico"/>
+                                    </h:outputLink>
+                                </ui:repeat>
 
-                <p:column rendered="#{saveConflict}"/> 
-                <p:outputPanel id="logbookLogAttachmentsValue">
-                    <ui:include src="../../log/private/logAttachmentFileUpload.xhtml">
-                        <ui:param name="updateTarget" value="logEntryPanelGrid" />
-                    </ui:include>
-                    <p:remoteCommand autoRun="true"
-                                     action="#{logAttachmentUploadBean.setLogEntry(logObject)}"/>
-                    <p:outputPanel id="logattachementsValueList">
-                        <ui:repeat var="attachment" value="#{logObject.attachmentList}">
-                            <h:outputLink value="#{attachment.filePath}" target="_page_#{attachment.name}" title="#{attachment.name}" styleClass="entityDataIcon">
-                                <h:graphicImage alt="Attachment" library="images" name="attachment.ico"/>
-                            </h:outputLink>   
-                        </ui:repeat>
-
-                        <p:tooltip for="logbookLogAttachmentsValue" value="Files/Screenshots can also be pasted directly into the log entry text." /> 
-                    </p:outputPanel>
-                </p:outputPanel>
+                                <p:tooltip for="logbookLogAttachmentsValue" value="Files/Screenshots can also be pasted directly into the log entry text." />
+                            </p:outputPanel>
+                        </p:outputPanel>
+                    </p:column>
+                </p:row>
 
 
             </p:panelGrid>
