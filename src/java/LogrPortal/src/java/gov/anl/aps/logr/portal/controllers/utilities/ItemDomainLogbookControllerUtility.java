@@ -390,7 +390,7 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
             for (EntityType et : searchEntityTypeList) {
                 for (EntityType resultEt : etList) {
                     if (Objects.equals(et.getId(), resultEt.getId())) {
-                        result.addAttributeMatch("Logbook", et.getLongDisplayName());
+                        result.addAttributeMatch("Logbook", et.getAvailableLongDisplayName());
                     }
                 }
             }

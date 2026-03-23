@@ -24,7 +24,7 @@ class BelyTestBase(unittest.TestCase):
     def setUp(self):
         self.factory = BelyApiFactory("http://127.0.0.1:8080/bely")
 
-        self.logbook_api = self.factory.get_lobook_api()
+        self.logbook_api = self.factory.get_logbook_api()
 
         self.loggedIn = False
 
