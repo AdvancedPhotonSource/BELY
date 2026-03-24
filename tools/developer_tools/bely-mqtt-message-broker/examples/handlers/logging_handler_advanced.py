@@ -62,16 +62,16 @@ class AdvancedLoggingHandler(MQTTHandler):
     def __init__(
         self,
         logging_dir: Optional[str] = None,
-        api_client: Optional[object] = None,
+        api_factory: Optional[object] = None,
     ):
         """
         Initialize the advanced logging handler.
-        
+
         Args:
             logging_dir: Directory to store log files. If None, uses BELY_LOG_DIR
                         environment variable or current directory.
                         Directory is created if it doesn't exist.
-            api_client: Optional BELY API client (for compatibility with handler system).
+            api_factory: Optional BELY API factory (for compatibility with handler system).
         
         Examples:
             # Use environment variable
@@ -94,7 +94,7 @@ class AdvancedLoggingHandler(MQTTHandler):
             # Use default (current directory)
             handler = AdvancedLoggingHandler()
         """
-        super().__init__(api_client=api_client)
+        super().__init__(api_factory=api_factory)
         
         # Set up logging directory
         # Priority: parameter > environment variable > current directory
