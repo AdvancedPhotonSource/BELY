@@ -20,7 +20,9 @@ fi
 
 source $CONDA_DIR/etc/profile.d/conda.sh || exit 1
 
-# Clean 
+trap 'rm -rf src' EXIT
+
+# Clean
 rm -rvf ./build
 rm -rvf src
 
@@ -36,7 +38,8 @@ conda build . --output-folder ./build || exit 1
 # Install build into a new env
 conda create -n $ENV_NAME -y || exit 1
 conda activate $ENV_NAME || exit 1
-conda install bely-mqtt-framework -c ./build -y || exit 1
+conda install bely-mqtt-message-broker -c ./build -y || exit 1
+
 
 # Export
 conda list -n $ENV_NAME --explicit > $ENV_NAME.txt
@@ -46,4 +49,3 @@ echo "Please use the c2 tool to upload the $ENV_NAME.txt"
 # Clean up
 conda activate
 conda env remove -n $ENV_NAME
-rm -rf src

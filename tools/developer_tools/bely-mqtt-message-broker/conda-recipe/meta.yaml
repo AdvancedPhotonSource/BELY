@@ -1,4 +1,4 @@
-{% set name = "bely-mqtt-framework" %}
+{% set name = "bely-mqtt-message-broker" %}
 {% set version = "2026.3.dev0" %}
 
 package:
@@ -9,7 +9,7 @@ source:
   path: ./src
 
 build:
-  number: 0
+  number: 2
   noarch: python
 
 requirements:

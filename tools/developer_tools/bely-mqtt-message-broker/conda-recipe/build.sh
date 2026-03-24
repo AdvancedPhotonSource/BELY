@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-pip install .
+$PYTHON -m pip install . --no-deps --no-build-isolation
