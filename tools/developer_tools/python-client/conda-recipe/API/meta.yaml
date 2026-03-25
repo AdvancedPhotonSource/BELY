@@ -1,5 +1,5 @@
 {% set name = "BELY-API" %}
-{% set version = "2026.3.dev5" %}
+{% set version = "2026.3.0" %}
 
 package:
   name: "{{ name|lower }}"  
