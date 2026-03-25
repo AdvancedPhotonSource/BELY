@@ -1,8 +1,7 @@
-from tkinter.messagebox import NO
 import unittest
 
 from BelyApiFactory import BelyApiFactory
-from belyApi import LogDocumentOptions, OpenApiException
+from belyApi import ItemDomainLogbook, LogDocumentOptions, OpenApiException
 from test.bely_test_base import BelyTestBase
 
 
@@ -39,6 +38,24 @@ class LogDocumentFetchTests(BelyTestBase):
         self.assertIsNotNone(more_info.created_on_date_time)
         self.assertIsNotNone(more_info.last_modified_by_username)
         self.assertIsNotNone(more_info.last_modified_on_date_time)
+
+
+    def test_fetch_log_document_by_name(self):
+        doc_name = self._gen_unique_name() + " ByName"
+        options = LogDocumentOptions(name=doc_name, logbook_type_id=self.CTL_LOGBOOK_ID)
+
+        self.login_as_user()
+        created_doc = self.logbook_api.create_logbook_document(log_document_options=options)
+
+        result = self.logbook_api.get_log_document_by_name(name=doc_name)
+
+        self.assertIsInstance(result, ItemDomainLogbook)
+        self.assertEqual(result.name, doc_name)
+        self.assertEqual(result.id, created_doc.id)
+
+    def test_fetch_log_document_by_name_not_found(self):
+        with self.assertRaises(OpenApiException):
+            self.logbook_api.get_log_document_by_name(name="NonExistentDoc_12345")
 
 
 class LogDocumentEditTests(BelyTestBase):
@@ -195,7 +212,7 @@ class LogDocumentEditTests(BelyTestBase):
 
         self.login_as_user()
 
-        options = LogDocumentOptions(doc_name, logbook_type_id=self.CTL_LOGBOOK_ID)
+        options = LogDocumentOptions(name=doc_name, logbook_type_id=self.CTL_LOGBOOK_ID)
 
         new_doc = self.logbook_api.create_logbook_document(options)
 

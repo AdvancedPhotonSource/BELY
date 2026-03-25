@@ -9,8 +9,9 @@ See LICENSE file.
                 xmlns:p="http://primefaces.org/ui">
 
     
-    <p:fileUpload listener="#{logAttachmentUploadBean.handleFileUpload}"                  
+    <p:fileUpload listener="#{logAttachmentUploadBean.handleFileUpload}"
                   update="#{updateTarget}"
+                  label="Add Attachment"
                   fileLimit="1"
                   fileLimitMessage="Only one attachment can be added per upload."/>
 

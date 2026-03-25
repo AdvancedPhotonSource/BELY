@@ -11,6 +11,8 @@ import gov.anl.aps.logr.portal.model.db.entities.Domain;
 import gov.anl.aps.logr.portal.model.db.entities.EntityType;
 import gov.anl.aps.logr.portal.model.db.entities.ItemCategory;
 import gov.anl.aps.logr.portal.model.db.entities.ItemType;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import javax.ejb.EJB;
@@ -43,6 +45,7 @@ public class DomainRoute extends BaseRoute {
     
     @GET
     @Path("/all")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<Domain> getDomainList() {
         LOGGER.debug("Fetching domain list");
@@ -51,6 +54,7 @@ public class DomainRoute extends BaseRoute {
     
     @GET
     @Path("/ById/{id}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public Domain getDomainById(@PathParam("id") int id) {
         LOGGER.debug("Fetching domain with id: " + id);
@@ -59,6 +63,7 @@ public class DomainRoute extends BaseRoute {
     
     @GET
     @Path("/ByName/{name}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public Domain getDomainByName(@PathParam("name") String name) {
         LOGGER.debug("Fetching domain with name: " + name);
@@ -67,6 +72,7 @@ public class DomainRoute extends BaseRoute {
     
     @GET
     @Path("/ById/{id}/Categories")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<ItemCategory> getDomainCategoryList(@PathParam("id") int id) {
         Domain domainById = getDomainById(id);
@@ -75,6 +81,7 @@ public class DomainRoute extends BaseRoute {
     
     @GET
     @Path("/ById/{id}/Types")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<ItemType> getDomainTypeList(@PathParam("id") int id) {
         Domain domainById = getDomainById(id);
@@ -83,6 +90,7 @@ public class DomainRoute extends BaseRoute {
     
     @GET
     @Path("/ById/{id}/EntityTypes")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<EntityType> getAllowedEntityTypeList(@PathParam("id") int id) {
         Domain domainById = getDomainById(id);
@@ -91,6 +99,7 @@ public class DomainRoute extends BaseRoute {
     
     @GET
     @Path("/Category/ById/{id}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public ItemCategory getItemCategoryById(@PathParam("id") int id) {
         return itemCategoryFacade.find(id);
@@ -98,6 +107,7 @@ public class DomainRoute extends BaseRoute {
     
     @GET
     @Path("/Category/ById/{id}/Types")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<ItemType> getItemCategoryAllowedTypes(@PathParam("id") int id) {
         ItemCategory itemCategoryById = getItemCategoryById(id);        
@@ -106,6 +116,7 @@ public class DomainRoute extends BaseRoute {
        
     @GET
     @Path("/Type/ById/{id}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public ItemType getItemTypeById(@PathParam("id") int id) {
         return itemTypeFacade.find(id);
@@ -113,6 +124,7 @@ public class DomainRoute extends BaseRoute {
     
     @GET
     @Path("/Type/ById/{id}/Categories")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<ItemCategory> getItemTypeAllowedTypes(@PathParam("id") int id) {
         ItemType itemTypeById = getItemTypeById(id);        

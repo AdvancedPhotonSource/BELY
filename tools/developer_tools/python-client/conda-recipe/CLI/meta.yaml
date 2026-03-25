@@ -21,7 +21,7 @@ requirements:
     - python
     - python-dateutil
     - urllib3
-    - six    
+    - pydantic
     - click
     - pandas
     - rich    

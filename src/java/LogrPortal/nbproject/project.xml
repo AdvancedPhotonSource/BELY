@@ -131,23 +131,23 @@
                     <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
                 <library dirs="200">
-                    <file>${file.reference.swagger-annotations-2.1.5.jar}</file>
+                    <file>${file.reference.swagger-annotations-2.2.44.jar}</file>
                     <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
                 <library dirs="200">
-                    <file>${file.reference.swagger-core-2.1.5.jar}</file>
+                    <file>${file.reference.swagger-jaxrs2-2.2.44.jar}</file>
                     <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
                 <library dirs="200">
-                    <file>${file.reference.swagger-jaxrs2-2.1.5.jar}</file>
+                    <file>${file.reference.swagger-core-2.2.44.jar}</file>
                     <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
                 <library dirs="200">
-                    <file>${file.reference.swagger-models-2.1.5.jar}</file>
+                    <file>${file.reference.swagger-models-2.2.44.jar}</file>
                     <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
                 <library dirs="200">
-                    <file>${file.reference.swagger-integration-2.1.5.jar}</file>
+                    <file>${file.reference.swagger-integration-2.2.44.jar}</file>
                     <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
                 <library dirs="200">

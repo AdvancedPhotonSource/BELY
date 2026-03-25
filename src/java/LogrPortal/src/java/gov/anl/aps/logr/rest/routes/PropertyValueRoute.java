@@ -23,6 +23,7 @@ import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.rest.authentication.Secured;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.ArrayList;
@@ -62,7 +63,8 @@ public class PropertyValueRoute extends BaseRoute {
     
     @GET
     @Path("/ById/{id}")
-    @Produces(MediaType.APPLICATION_JSON)    
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
+    @Produces(MediaType.APPLICATION_JSON)
     public PropertyValue getPropertyValue(@PathParam("id") int id) {        
         LOGGER.debug("Fetching property value with id: " + id);
         PropertyValue propertyValue = propertyValueFacade.find(id);
@@ -73,7 +75,8 @@ public class PropertyValueRoute extends BaseRoute {
     
     @GET
     @Path("/ByPropertyTypeId/{propertyTypeId}")
-    @Produces(MediaType.APPLICATION_JSON)  
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
+    @Produces(MediaType.APPLICATION_JSON)
     public List<PropertyValue> getPropertyValuesByPropertyTypeId(@PathParam("propertyTypeId") int propertyTypeId) {
         LOGGER.debug("Fetching property values with type id: " + propertyTypeId);
         
@@ -86,7 +89,8 @@ public class PropertyValueRoute extends BaseRoute {
     
     @GET
     @Path("/ByPropertyTypeId/{propertyTypeId}/AndValue/{propertyValue}")
-    @Produces(MediaType.APPLICATION_JSON)  
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
+    @Produces(MediaType.APPLICATION_JSON)
     public List<PropertyValue> getPropertyValuesByPropertyTypeIdAndValue(@PathParam("propertyTypeId") int propertyTypeId, @PathParam("propertyValue") String propertyValue) {
         LOGGER.debug("Fetching property values with type id: " + propertyTypeId + " and value: " + propertyValue);
               
@@ -97,7 +101,8 @@ public class PropertyValueRoute extends BaseRoute {
     
     @GET
     @Path("/ById/{id}/History")
-    @Produces(MediaType.APPLICATION_JSON)    
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
+    @Produces(MediaType.APPLICATION_JSON)
     public List<PropertyValueHistory> getPropertyValueHistory(@PathParam("id") int id) {
         PropertyValue propertyValue = getPropertyValue(id);
         return propertyValue.getPropertyValueHistoryList();        
@@ -105,7 +110,8 @@ public class PropertyValueRoute extends BaseRoute {
 
     @GET
     @Path("/ById/{id}/Metadata")
-    @Produces(MediaType.APPLICATION_JSON)    
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
+    @Produces(MediaType.APPLICATION_JSON)
     public List<PropertyMetadata> getPropertyValueMetadata(@PathParam("id") int id) {
         PropertyValue propertyValue = getPropertyValue(id);
         return propertyValue.getPropertyMetadataList();
@@ -113,7 +119,7 @@ public class PropertyValueRoute extends BaseRoute {
     
     @DELETE
     @Path("/DeleteById/{propertyValueId}")
-    @Operation(summary = "Delete a property value by its id.")
+    @Operation(summary = "Delete a property value by its id.", responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @SecurityRequirement(name = "belyAuth")
     @Secured
     public void deletePropertyById(@PathParam("propertyValueId") int propertyValueId) throws ObjectNotFound, InvalidArgument, AuthorizationError, CdbException {
@@ -150,6 +156,7 @@ public class PropertyValueRoute extends BaseRoute {
         
     @POST
     @Path("/ById/{id}/AddUpdateMetadata")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @SecurityRequirement(name = "belyAuth")

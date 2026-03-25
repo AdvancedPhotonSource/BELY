@@ -17,10 +17,6 @@
             <h:outputText value="#{config.name}"/>
         </p:column>
 
-        <p:column headerText="Provider" sortBy="#{config.notificationProvider.name}">
-            <h:outputText value="#{config.notificationProvider.name}"/>
-        </p:column>
-
         <p:column headerText="Endpoint" sortBy="#{config.notificationEndpoint}">
             <h:outputText id="endpointText" value="#{config.displayNotificationEndpoint}"/>
             <p:tooltip for="endpointText" value="#{config.notificationEndpoint}"/>

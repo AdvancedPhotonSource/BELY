@@ -7,7 +7,7 @@
 
 CDB_HOST_ARCH=$(uname -sm | tr -s '[:upper:][:blank:]' '[:lower:][\-]')
 CDB_HOSTNAME=`hostname -f`
-PAYARA_VERSION=5.192
+PAYARA_VERSION=5.2022.5
 PAYARA_ZIP_FILE=payara-$PAYARA_VERSION.zip
 PAYARA_DOWNLOAD_URL=https://search.maven.org/remotecontent?filepath=fish/payara/distributions/payara/$PAYARA_VERSION/$PAYARA_ZIP_FILE
 PAYARA_DN_NAME="CN=${CDB_HOSTNAME}"
@@ -43,7 +43,7 @@ mkdir -p $srcDir
 cd $srcDir
 if [ ! -f $PAYARA_ZIP_FILE ]; then
     echo "Retrieving $PAYARA_DOWNLOAD_URL"
-    curl -L -O $PAYARA_DOWNLOAD_URL
+    curl -L -o $PAYARA_ZIP_FILE $PAYARA_DOWNLOAD_URL
 fi
 
 if [ ! -f $PAYARA_ZIP_FILE ]; then
@@ -73,6 +73,10 @@ chmod -R ug+rwx $payaraInstallDir/glassfish/bin
 
 chmod -R o-rwx $payaraInstallDir/bin
 chmod -R o-rwx $payaraInstallDir/glassfish/bin
+
+# create production domain
+echo "Creating production domain"
+$ASADMIN_CMD create-domain --nopassword production
 
 export PAYARA_DOMAIN_NAME=production
 

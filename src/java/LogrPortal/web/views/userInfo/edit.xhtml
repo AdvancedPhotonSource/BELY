@@ -31,18 +31,7 @@ See LICENSE file.
                 <ui:include src="../common/private/commonEditActionButtons.xhtml"/>
             </div>
             <div class="middleCenterRightContent">
-                <p:accordionPanel multiple="true" activeIndex="1,2">
-                    <p:tab title="Settings">
-
-                        <ui:include src="../userSetting/private/userSettingEditList.xhtml"/>
-
-                    </p:tab>
-
-                    <p:tab title="Sessions">
-                        <ui:param name="userInfoObject" value="#{userInfoController.selected}"/>
-                        <ui:include src="private/userInfoSessionsDataTable.xhtml" /> 
-                    </p:tab>
-
+                <p:accordionPanel multiple="true" activeIndex="0">
                     <p:tab title="Notification Configurations">
                         <ui:include src="../notificationConfiguration/private/notificationConfigurationListView.xhtml">
                             <ui:param name="userEntity"
@@ -50,6 +39,29 @@ See LICENSE file.
                             <ui:param name="isEntityWriteable"
                                       value="#{true}" />
                         </ui:include>
+                    </p:tab>
+
+                    <p:tab title="Sessions">
+                        <ui:param name="userInfoObject" value="#{userInfoController.selected}"/>
+                        <ui:include src="private/userInfoSessionsDataTable.xhtml" /> 
+                    </p:tab>
+
+                    <p:tab title="Settings">
+
+                        <p:outputPanel rendered="#{loginController.loggedInAsAdmin}">
+                            <ui:include src="../userSetting/private/userSettingEditList.xhtml"/>
+                        </p:outputPanel>
+
+                        <p:outputPanel rendered="#{!loginController.loggedInAsAdmin}">
+                            <p>Settings are managed by the system. You can reset all your settings to the default values.</p>
+                            <p:commandButton value="Reset settings to defaults"
+                                             icon="fa fa-eraser"
+                                             ajax="false"
+                                             update="@form"
+                                             process="@form"
+                                             action="#{userInfoController.resetAllSettingsForCurrentUser()}"/>
+                        </p:outputPanel>
+
                     </p:tab>
 
                     <p:tab rendered="#{loginController.loggedInAsAdmin}"

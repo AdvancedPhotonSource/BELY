@@ -14,7 +14,7 @@
 MY_DIR=`dirname $0` && cd $MY_DIR && MY_DIR=`pwd`
 ROOT_DIR=$MY_DIR
 
-OPEN_API_VERSION="4.3.1"
+OPEN_API_VERSION="7.20.0"
 OPEN_API_GENERATOR_JAR="openapi-generator-cli-$OPEN_API_VERSION.jar"
 OPEN_API_GENERATOR_JAR_URL="https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/$OPEN_API_VERSION/$OPEN_API_GENERATOR_JAR" 
 
@@ -36,7 +36,7 @@ curl -O $OPEN_API_GENERATOR_JAR_URL
 java -jar $OPEN_API_GENERATOR_JAR  generate -i "$CDB_OPENAPI_YML_URL" -g python -o $GEN_OUT_DIR -c $GEN_CONFIG_FILE_PATH || exit 1
 
 # Clean up
-rm belyApi -rv
+rm -rv belyApi
 rm $OPEN_API_GENERATOR_JAR
 
 # Fetch the generated Api

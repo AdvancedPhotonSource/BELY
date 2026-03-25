@@ -83,6 +83,7 @@ public class AuthenticationRoute extends BaseRoute {
     
     @POST
     @Path("/logout")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Secured
     public void logOut() throws AuthenticationError, Exception {
         Principal userPrincipal = securityContext.getUserPrincipal();
@@ -100,6 +101,7 @@ public class AuthenticationRoute extends BaseRoute {
     
     @GET
     @Path("/Verify")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     @SecurityRequirement(name = "belyAuth")
     @Secured

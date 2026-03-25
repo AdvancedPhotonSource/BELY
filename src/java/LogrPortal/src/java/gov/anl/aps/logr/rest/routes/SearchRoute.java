@@ -32,6 +32,7 @@ import gov.anl.aps.logr.rest.entities.SearchEntitiesOptions;
 import gov.anl.aps.logr.rest.entities.SearchEntitiesResults;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.ArrayList;
@@ -71,7 +72,7 @@ public class SearchRoute {
     @GET
     @Path("/{searchText}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Search log documents and log entries.")
+    @Operation(summary = "Search log documents and log entries.", responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     public LogbookSearchResults searchLogbook(
             @Parameter(description = "Search text with wildcard support (? for single char, * for multiple)", required = true)
             @PathParam("searchText") String searchText,
@@ -141,6 +142,7 @@ public class SearchRoute {
     @Path("/GenericSearch")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     public SearchEntitiesResults genericSearch(@RequestBody(required = true) SearchEntitiesOptions searchEntitiesOptions) throws InvalidRequest {
         SearchEntitiesResults results = new SearchEntitiesResults();
         String searchText = searchEntitiesOptions.getSearchText();

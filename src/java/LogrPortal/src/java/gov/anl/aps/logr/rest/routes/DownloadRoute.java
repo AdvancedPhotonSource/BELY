@@ -18,16 +18,24 @@ import gov.anl.aps.logr.portal.utilities.GalleryUtility;
 import gov.anl.aps.logr.portal.utilities.StorageUtility;
 import gov.anl.aps.logr.rest.constants.DownloadRouteMimeType;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import javax.ejb.EJB;
 import javax.ejb.EJBException;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import gov.anl.aps.logr.rest.entities.AttachmentChecksum;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -49,6 +57,7 @@ public class DownloadRoute extends BaseRoute {
 
     @GET
     @Path("/PropertyValue/Image/{imageName}/{scaling}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     public Response getImage(@PathParam("imageName") String imageName, @PathParam("scaling") String scaling) throws FileNotFoundException {
         LOGGER.debug("Fetching " + scaling + " image: " + imageName);
         String fullImageName = imageName + "." + scaling;
@@ -59,6 +68,7 @@ public class DownloadRoute extends BaseRoute {
 
     @GET
     @Path("/PropertyValue/{propertyValueId}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces("image/png")
     public Response getDownloadByPropertyValueId(@PathParam("propertyValueId") Integer propertyValueId) throws FileNotFoundException, ObjectNotFound, InvalidRequest {
         PropertyValue result = propertyValueFacade.find(propertyValueId);
@@ -110,6 +120,7 @@ public class DownloadRoute extends BaseRoute {
     
     @GET
     @Path("/Attachments/{attachmentName}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     public Response getAttachment(@PathParam("attachmentName") String attachmentName) throws FileNotFoundException {
         String originalAttachmentName = attachmentName; 
         Attachment att = null; 
@@ -128,6 +139,7 @@ public class DownloadRoute extends BaseRoute {
     
     @GET
     @Path("/Attachments/{attachmentName}/{scaling}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces("image/png")
     public Response getAttachment(@PathParam("attachmentName") String attachmentName, @PathParam("scaling") String scaling) throws FileNotFoundException {
         String fullAttachmentName = attachmentName + "." + scaling;
@@ -135,6 +147,51 @@ public class DownloadRoute extends BaseRoute {
 
         return getFileResponse("Image: " + fullAttachmentName, fullAttachmentName + ".png", filePath, false);
     }        
+
+    @GET
+    @Path("/Attachments/{attachmentName}/md5")
+    @Operation(summary = "Calculate MD5 checksum for an attachment.", responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAttachmentChecksum(@PathParam("attachmentName") String attachmentName) throws FileNotFoundException, ObjectNotFound {
+        Attachment att = null;
+        try {
+            att = attachmentFacade.findByName(attachmentName);
+        } catch (EJBException ex) { }
+
+        if (att == null) {
+            throw new ObjectNotFound("Could not find an attachment with name: " + attachmentName);
+        }
+
+        String filePath = StorageUtility.getFileSystemLogAttachmentPath(attachmentName);
+        File file = new File(filePath);
+
+        if (!file.exists()) {
+            throw new FileNotFoundException("Attachment file not found on disk: " + attachmentName);
+        }
+
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            try (FileInputStream fis = new FileInputStream(file)) {
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    md.update(buffer, 0, bytesRead);
+                }
+            }
+            byte[] digest = md.digest();
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            String checksum = sb.toString();
+
+            AttachmentChecksum result = new AttachmentChecksum(att.getName(), att.getOriginalFilename(), checksum);
+            return Response.ok(result).build();
+        } catch (NoSuchAlgorithmException | IOException ex) {
+            LOGGER.error(ex);
+            return Response.serverError().entity("{\"error\": \"Failed to calculate checksum.\"}").type(MediaType.APPLICATION_JSON).build();
+        }
+    }
 
     private Response getFileResponse(String errorFileTypeColonName, String fileName, String storageFilePath, boolean isAttachment) throws FileNotFoundException {        
         File file = new File(storageFilePath);

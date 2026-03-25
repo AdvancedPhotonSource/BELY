@@ -1,9 +1,9 @@
-# BELY 
+# BELY
 
 **Prerequisites:**
 
 In order to deploy or develop BELY, you must have some support software installed. Follow the instructions below to achieve this.
-    
+
     # For red-hat based linux distribution run the following:
     yum install -y gcc libgcc expect zlib-devel openssl-devel openldap-devel readline-devel git make cmake sed gawk autoconf automake wget mysql mysql-libs mysql-server mysql-devel curl unzip
     # For debian based linux distributions run the following:
@@ -16,28 +16,29 @@ For detailed deployment instructions please refer to our [administrators guide](
 
     # Make a new directory to hold cdb and its support directories. (replace or set DESIRED_CDB_INSTALL_DIRECTORY var with a unix directory.)
     mkdir $DESIRED_CDB_INSTALL_DIRECTORY
-    cd $DESIRED_CDB_INSTALL_DIRECTORY 
-    # get the distribution of Component DB (Alternativelly download a release zip and unzip it). 
+    cd $DESIRED_CDB_INSTALL_DIRECTORY
+    # get the distribution of Component DB (Alternativelly download a release zip and unzip it).
     git clone https://github.com/AdvancedPhotonSource/ComponentDB.git
-    # Navigate inside the distribution. 
+    # Navigate inside the distribution.
     cd ComponentDb
     # Build support needed for the application
     make support
-    # load enviornment variables with new support built. 
-    source setup.sh    
+    # load enviornment variables with new support built.
+    source setup.sh
     # Create deployment configuration
     make configuration
-    # Create a clean db for the distribution 
+    # Create a clean db for the distribution
     make clean-db
     # Prepare web portal configuraiton
     make configure-web-portal
+    # Configure MQTT (optional - needed for notification features)
+    ./sbin/bely_create_mqtt_configuration.sh
+    ./sbin/bely_configure_mqtt_service.sh
     # Deploy web portal
     make deploy-web-portal
-    # Deploy REST web service
-    make deploy-web-service
-    
-    # All done... output of the command below should print url to the deployed portal. 
-    echo "https://`hostname`:8181/cdb"
+
+    # All done... output of the command below should print url to the deployed portal.
+    echo "https://`hostname`:8181/bely"
     
     
 # Development 
@@ -45,50 +46,50 @@ For detailed development instructions please refer to our [developers guide](htt
 
 **Getting Started with development:**
 
-    # first make a fork of this project. 
-    # create a desired development directory and cdb into it
+    # first make a fork of this project.
+    # create a desired development directory and clone into it
     mkdir $desired_dev_directory
     cd $desired_dev_directory
     git clone https://github.com/AdvancedPhotonSource/ComponentDB.git
-    
-    # Getting support software
     cd ComponentDb
-    make support 
+
+    # Getting support software
+    make support
     # Get Netbeans
     make support-netbeans
 
-    # Load up the environment 
+    # Load up the environment
     source setup.sh
 
-    # Prepare Dev DB    
-    # mysql could be installed as part of ComponentDB support by running 'make support-mysql' 
+    # Prepare Dev DB
+    # mysql could be installed as part of support by running 'make support-mysql'
     # - Afterwards run `./etc/init.d/cdb-mysql start`
     # if you have mysql installed and started run...
-    make clean-db   # sample-db will be coming later 
-    
+    make clean-db
+
     # Start development
-    make dev-config     
+    make dev-config
 
     # Open Netbeans
-    netbeans & 
+    netbeans &
 
 ## Preparing Netbeans
-Once netbeans is open a few steps need to be taken to prepare netbeans for CDB development.
-1. Open CDB Project: File > Open Project
+Once netbeans is open a few steps need to be taken to prepare netbeans for BELY development.
+1. Open BELY Project: File > Open Project
 2. Navigate to $desired_dev_directory/ComponentDB/src/java
-3. Select CdbWebPortal and hit Open Project
-4. Right click on CdbWebPortal top level under projects
+3. Select LogrPortal and hit Open Project
+4. Right click on LogrPortal top level under projects
 5. Click "Resolve Missing Server Problem"
 6. Add Server -> Payara Server
   - Installation Location: $desired_dev_directory/support-`hostname`/netbeans/payara
   - Version: 5.2022.5
-  - Use the wizard's download 
+  - Use the wizard's download
 7. Next -> Use Default Domain Location -> Finish add server instance wizard
 8. Select the Newly added "Payara Server"
-9. Copy over the required mysql client to new payara server. 
-```sh 
+9. Copy over the required mysql client to new payara server.
+```sh
 # cd into the $desired_dev_directory/$distribution_directory
-cp src/java/CdbWebPortal/lib/mariadb-java-client-3.1.0.jar ../support-`hostname`/netbeans/payara/glassfish/domains/domain1/lib/
+cp src/java/LogrPortal/lib/mariadb-java-client-3.1.0.jar ../support-`hostname`/netbeans/payara/glassfish/domains/domain1/lib/
 ```
 10. Run the project
 
@@ -126,10 +127,5 @@ source setup.sh
 make test
 ```
 
-## Python Web Service Development
-    # Code is located in $desired_dev_directory/ComponentDB/src/python
-    # For web service development (Use your favorite python editor) to test run web service using:
-    ./sbin/cdbWebService.sh
-    
 # License
 [Copyright (c) UChicago Argonne, LLC. All rights reserved.](https://github.com/AdvancedPhotonSource/ComponentDB/blob/master/LICENSE)

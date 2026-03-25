@@ -14,6 +14,8 @@ import gov.anl.aps.logr.portal.model.db.entities.NotificationProvider;
 import gov.anl.aps.logr.portal.model.db.entities.NotificationProviderConfigKey;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.util.List;
 import javax.ejb.EJB;
 import javax.ws.rs.GET;
@@ -48,6 +50,7 @@ public class NotificationConfigurationRoute extends BaseRoute {
 
     @GET
     @Path("/all")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<NotificationConfiguration> getAll() {
         LOGGER.debug("Fetching all notification configurations");
@@ -56,6 +59,7 @@ public class NotificationConfigurationRoute extends BaseRoute {
 
     @GET
     @Path("/ById/{id}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public NotificationConfiguration getById(@PathParam("id") int id) {
         LOGGER.debug("Fetching notification configuration with id: " + id);
@@ -64,6 +68,7 @@ public class NotificationConfigurationRoute extends BaseRoute {
 
     @GET
     @Path("/ByName/{name}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<NotificationConfiguration> getByName(@PathParam("name") String name) {
         LOGGER.debug("Fetching notification configurations with name: " + name);
@@ -72,6 +77,7 @@ public class NotificationConfigurationRoute extends BaseRoute {
 
     @GET
     @Path("/ByProviderId/{providerId}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<NotificationConfiguration> getByProviderId(@PathParam("providerId") int providerId) {
         LOGGER.debug("Fetching notification configurations for provider id: " + providerId);
@@ -81,6 +87,7 @@ public class NotificationConfigurationRoute extends BaseRoute {
 
     @GET
     @Path("/ByUsername/{username}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<NotificationConfiguration> getByUsername(@PathParam("username") String username) {
         LOGGER.debug("Fetching notification configurations for user: " + username);
@@ -90,6 +97,7 @@ public class NotificationConfigurationRoute extends BaseRoute {
 
     @GET
     @Path("/Providers")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<NotificationProvider> getAllProviders() {
         LOGGER.debug("Fetching all notification providers");
@@ -98,6 +106,7 @@ public class NotificationConfigurationRoute extends BaseRoute {
 
     @GET
     @Path("/ProviderById/{id}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public NotificationProvider getProviderById(@PathParam("id") int id) {
         LOGGER.debug("Fetching notification provider with id: " + id);
@@ -106,6 +115,7 @@ public class NotificationConfigurationRoute extends BaseRoute {
 
     @GET
     @Path("/ProviderByName/{name}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public NotificationProvider getProviderByName(@PathParam("name") String name) {
         LOGGER.debug("Fetching notification provider with name: " + name);
@@ -114,6 +124,7 @@ public class NotificationConfigurationRoute extends BaseRoute {
 
     @GET
     @Path("/ProviderConfigKeys/{providerId}")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<NotificationProviderConfigKey> getProviderConfigKeys(@PathParam("providerId") int providerId) {
         LOGGER.debug("Fetching config keys for provider id: " + providerId);
@@ -123,6 +134,7 @@ public class NotificationConfigurationRoute extends BaseRoute {
 
     @GET
     @Path("/HandlerConfigKeys")
+    @Operation(responses = {@ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<NotificationHandlerConfigKey> getHandlerConfigKeys() {
         LOGGER.debug("Fetching all handler config keys");

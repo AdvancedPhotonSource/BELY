@@ -59,3 +59,5 @@ tools/developer_tools/python-client/cdbCli/service/cli/Spreadsheets/
 .env
 tools/developer_tools/bely-mqtt-message-broker/conda-bld
 tools/developer_tools/bely-mqtt-message-broker/dev-config
+tools/developer_tools/bely-mqtt-message-broker/conda-recipe/bely-mqtt-env.txt
+tools/developer_tools/bely-mqtt-message-broker/conda-recipe/src

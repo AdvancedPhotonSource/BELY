@@ -27,7 +27,7 @@ $MY_DIR/cdb_backup_db.sh
 timestamp=`date +%Y%m%d`
 LOGR_BACKUP_DIR=$LOGR_INSTALL_DIR/backup/logr/$timestamp
 
-yes $db_password | $MY_DIR/cdb_create_db.sh cdb $LOGR_DIST_DIR/db/sql/test || exit 1
+yes $db_password | $MY_DIR/cdb_create_db.sh logr $LOGR_DIST_DIR/db/sql/test || exit 1
 
 # Regenerate the API with current code base
 API_CLIENT_PATH=$LOGR_DIST_DIR/tools/developer_tools/python-client/
@@ -43,7 +43,7 @@ PRINTF_HEADER="\n\n$HEADER_TEXT Starting %s Test $HEADER_TEXT\n\n\n"
 
 printf "$PRINTF_HEADER" "API"
 cd $API_CLIENT_PATH/test
-pytest api_test.py
+pytest .
 
 # printf "$PRINTF_HEADER" "Selenium"
 # cd $LOGR_DIST_DIR/tools/developer_tools/portal_testing/PythonSeleniumTest

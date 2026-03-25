@@ -15,6 +15,7 @@ import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookController
 import gov.anl.aps.logr.portal.model.db.beans.DomainFacade;
 import gov.anl.aps.logr.portal.model.db.beans.ItemDomainLogbookFacade;
 import gov.anl.aps.logr.portal.model.db.beans.LogFacade;
+import gov.anl.aps.logr.portal.model.db.entities.Attachment;
 import gov.anl.aps.logr.portal.model.db.entities.Domain;
 import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
 import gov.anl.aps.logr.portal.model.db.entities.EntityType;
@@ -25,20 +26,28 @@ import gov.anl.aps.logr.portal.model.db.entities.ItemType;
 import gov.anl.aps.logr.portal.model.db.entities.Log;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.model.db.utilities.EntityInfoUtility;
+import gov.anl.aps.logr.portal.utilities.LogAttachmentUtility;
 import gov.anl.aps.logr.rest.authentication.Secured;
 import gov.anl.aps.logr.rest.entities.LogDocumentOptions;
 import gov.anl.aps.logr.rest.entities.LogDocumentSection;
 import gov.anl.aps.logr.rest.entities.LogEntry;
+import gov.anl.aps.logr.rest.entities.LogEntryAttachment;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.ejb.EJB;
 import javax.ws.rs.GET;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -74,6 +83,8 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @GET
     @Path("/LogbookTypes")
+    @Operation(responses = {
+        @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<EntityType> getLogbookTypes() {
         Domain domain = getLogbookDomain();
@@ -91,6 +102,8 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @GET
     @Path("/LogbookSystems")
+    @Operation(responses = {
+        @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<ItemType> getLogbookSystems() {
         Domain domain = getLogbookDomain();
@@ -100,6 +113,8 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @GET
     @Path("/LogbookTemplates")
+    @Operation(responses = {
+        @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<ItemDomainLogbook> getLogbookTemplates() {
         String domainName = ItemDomainName.logbook.getValue();
@@ -109,7 +124,8 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @GET
     @Path("/LogDocuments/{logbookTypeId}/{limit}")
-    @Operation(summary = "Fetch last modified log documents for specific logbook type.")
+    @Operation(summary = "Fetch last modified log documents for specific logbook type.", responses = {
+        @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<ItemDomainLogbook> getLogDocuments(@PathParam("logbookTypeId") int logbookTypeId, @PathParam("limit") int rowLimit) throws InvalidArgument {
         List<EntityType> logbookTypes = getLogbookTypes();
@@ -132,8 +148,25 @@ public class LogbookRoute extends ItemBaseRoute {
     }
 
     @GET
+    @Path("/LogDocumentByName/{name}")
+    @Operation(summary = "Fetch log documents by name.", responses = {
+        @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
+    @Produces(MediaType.APPLICATION_JSON)
+    public ItemDomainLogbook getLogDocumentByName(@PathParam("name") String name) throws ObjectNotFound, InvalidArgument {
+        List<ItemDomainLogbook> items = itemDomainLogbookFacade.findByName(name);
+        if (items == null || items.isEmpty()) {
+            throw new ObjectNotFound("No log document found with name: " + name);
+        }
+        if (items.size() > 1) {
+            throw new InvalidArgument("Multiple log documents found with name: " + name);
+        }
+        return items.get(0);
+    }
+
+    @GET
     @Path("/LogEntries/{logDocumentId}")
-    @Operation(summary = "Fetch log entry for log document id or section id.")
+    @Operation(summary = "Fetch log entry for log document id or section id.", responses = {
+        @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<LogEntry> getLogEntries(@PathParam("logDocumentId") int logDocumentId,
             @Parameter(description = "boolean to specify if log replies should be included") @QueryParam("loadReplies") boolean loadReplies,
@@ -147,6 +180,8 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @GET
     @Path("/LogbookSections/{logDocumentId}")
+    @Operation(responses = {
+        @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<LogDocumentSection> getLogbookSections(@PathParam("logDocumentId") int logDocumentId) throws ObjectNotFound, InvalidArgument {
         ItemDomainLogbook logDocument = getLogDocumentById(logDocumentId);
@@ -169,7 +204,8 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @GET
     @Path("/LogEntryTemplate/{logDocumentId}")
-    @Operation(summary = "Fetch new log entry template for log document id or section id.")
+    @Operation(summary = "Fetch new log entry template for log document id or section id.", responses = {
+        @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     @SecurityRequirement(name = "belyAuth")
     @Secured
@@ -187,8 +223,10 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @PUT
     @Path("/AddUpdateLogEntry")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Add/Update a log entry to a log document or section. Will only update the core log entry not related reply/reaction.")
+    @Operation(summary = "Add/Update a log entry to a log document or section. Will only update the core log entry not related reply/reaction.", responses = {
+        @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @SecurityRequirement(name = "belyAuth")
     @Secured
     public LogEntry addUpdateLogEntry(@RequestBody(required = true) LogEntry logEntry) throws CdbException {
@@ -205,35 +243,7 @@ public class LogbookRoute extends ItemBaseRoute {
         if (logId == null) {
             logEntity = utility.prepareAddLog(logDocument, user);
         } else {
-            List<Log> logList = logDocument.getLogList();
-
-            for (Log log : logList) {
-                if (Objects.equals(log.getId(), logId)) {
-                    logEntity = log;
-                    break;
-                }
-                Log replyMatch = null;
-                for (Log reply : log.getChildLogList()) {
-                    if (Objects.equals(reply.getId(), logId)) {
-                        replyMatch = reply;
-                        break;
-                    }
-                }
-                if (replyMatch != null) {
-                    logEntity = replyMatch;
-                    break;
-                }
-            }
-
-            if (logEntity == null) {
-                throw new ObjectNotFound(
-                        String.format(
-                                "Log id %d does not exist for log document %d.",
-                                logId,
-                                itemId
-                        )
-                );
-            }
+            logEntity = findLogInDocument(logDocument, logId);
             utility.verifySaveLogLockoutsForItem(logDocument, logEntity, user);
         }
 
@@ -245,7 +255,7 @@ public class LogbookRoute extends ItemBaseRoute {
         logEntry.updateLogPerLogEntryObject(logEntity);
         logEntity = utility.saveLog(logEntity, user, originalLogEntry);
 
-        // Update modified date. 
+        // Update modified date.
         updateModifiedDateForLogDocument(logDocument, user);
 
         return new LogEntry(itemId, logEntity, false, false);
@@ -253,8 +263,10 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @PUT
     @Path("/CreateLogDocument")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create logbook document.")
+    @Operation(summary = "Create logbook document.", responses = {
+        @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @SecurityRequirement(name = "belyAuth")
     @Secured
     public ItemDomainLogbook createLogbookDocument(@RequestBody(required = true) LogDocumentOptions newLogDocumentOptions) throws CdbException {
@@ -290,7 +302,8 @@ public class LogbookRoute extends ItemBaseRoute {
     @PUT
     @Path("/CreateLogDocumentSection/{logDocumentId}/{sectionName}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create logbook document.")
+    @Operation(summary = "Create logbook document section.", responses = {
+        @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @SecurityRequirement(name = "belyAuth")
     @Secured
     public LogDocumentSection createLogDocumentSection(@PathParam("logDocumentId") int logDocumentId, @PathParam("sectionName") String sectionName) throws CdbException {
@@ -314,6 +327,118 @@ public class LogbookRoute extends ItemBaseRoute {
             }
         }
         throw new CdbException("Unexpected Exception. Could not find newly added section.");
+    }
+
+    @PUT
+    @Path("/UploadAttachment/{logDocumentId}/{logId}")
+    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Upload an attachment to a log entry.", responses = {
+        @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
+    @SecurityRequirement(name = "belyAuth")
+    @Secured
+    public LogEntryAttachment uploadAttachment(
+            @PathParam("logDocumentId") int logDocumentId,
+            @PathParam("logId") int logId,
+            @QueryParam("appendReference") boolean appendReference,
+            @QueryParam("fileName") String fileName,
+            @RequestBody(
+                    required = true,
+                    description = "File content",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_OCTET_STREAM,
+                            schema = @Schema(type = "string", format = "binary")
+                    )
+            ) InputStream fileInputStream) throws CdbException {
+
+        ItemDomainLogbook logDocument = getLogDocumentById(logDocumentId);
+        verifyCurrentUserPermissionForItem(logDocument);
+
+        UserInfo user = getCurrentRequestUserInfo();
+        Log logEntity = findLogInDocument(logDocument, logId);
+
+        if (fileName == null || fileName.isEmpty()) {
+            throw new InvalidArgument("fileName query parameter is required.");
+        }
+
+        if (fileInputStream == null) {
+            throw new InvalidArgument("Request body with file data is required.");
+        }
+
+        try {
+            Attachment attachment = LogAttachmentUtility.uploadAttachment(fileInputStream, fileName, logEntity);
+            String markdownReference = LogAttachmentUtility.buildMarkdownReference(fileName, attachment);
+
+            if (appendReference) {
+                String text = logEntity.getText();
+                text += "\n\n" + markdownReference;
+                logEntity.setText(text);
+            }
+
+            ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();
+            Log originalLogEntry = logFacade.find(logId);
+            utility.saveLog(logEntity, user, originalLogEntry);
+
+            updateModifiedDateForLogDocument(logDocument, user);
+
+            String downloadPath = "/api/Downloads/Attachments/" + attachment.getName();
+            return new LogEntryAttachment(markdownReference, downloadPath, fileName, attachment.getName());
+        } catch (IOException ex) {
+            LOGGER.error(ex);
+            throw new CdbException("Failed to upload attachment: " + ex.getMessage());
+        }
+    }
+
+    @GET
+    @Path("/LogEntryAttachments/{logDocumentId}/{logId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Fetch attachments for a log entry.", responses = {
+        @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
+    public List<LogEntryAttachment> getLogEntryAttachments(
+            @PathParam("logDocumentId") int logDocumentId,
+            @PathParam("logId") int logId) throws CdbException {
+
+        ItemDomainLogbook logDocument = getLogDocumentById(logDocumentId);
+        Log logEntity = findLogInDocument(logDocument, logId);
+
+        List<LogEntryAttachment> result = new ArrayList<>();
+        List<Attachment> attachmentList = logEntity.getAttachmentList();
+        if (attachmentList != null) {
+            for (Attachment attachment : attachmentList) {
+                String originalFilename = attachment.getOriginalFilename();
+                if (originalFilename == null) {
+                    originalFilename = attachment.getName();
+                }
+                String markdownReference = LogAttachmentUtility.buildMarkdownReference(originalFilename, attachment);
+                String downloadPath = "/api/Downloads/Attachments/" + attachment.getName();
+                result.add(new LogEntryAttachment(markdownReference, downloadPath, originalFilename, attachment.getName()));
+            }
+        }
+
+        return result;
+    }
+
+    private Log findLogInDocument(ItemDomainLogbook logDocument, int logId) throws ObjectNotFound {
+        List<Log> logList = logDocument.getLogList();
+
+        for (Log log : logList) {
+            if (Objects.equals(log.getId(), logId)) {
+                return log;
+            }
+            for (Log reply : log.getChildLogList()) {
+                if (Objects.equals(reply.getId(), logId)) {
+                    return reply;
+                }
+            }
+        }
+
+        throw new ObjectNotFound(
+                String.format(
+                        "Log id %d does not exist for log document %d.",
+                        logId,
+                        logDocument.getId()
+                )
+        );
     }
 
     private void validateAndGatherLogDocumentOptions(LogDocumentOptions logDocumentOptions) throws CdbException {
