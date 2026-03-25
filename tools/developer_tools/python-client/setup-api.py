@@ -8,7 +8,7 @@ See LICENSE file.
 from setuptools import setup
 
 setup(name='bely_api',
-      version='2026.3.dev5',
+      version='2026.3.0',
       packages=["belyApi",
                 "belyApi.api",
                 "belyApi.models"],
