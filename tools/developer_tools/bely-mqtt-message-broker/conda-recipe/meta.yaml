@@ -9,7 +9,7 @@ source:
   path: ./src
 
 build:
-  number: 2
+  number: 3
   noarch: python
 
 requirements:
@@ -21,7 +21,7 @@ requirements:
   run:
     - python>3.10
     - click
-    - paho-mqtt
+    - paho-mqtt >=2.0.0
     - pydantic
     - python-dotenv
     - pluggy

@@ -17,7 +17,7 @@ setup(
     python_requires=">=3.9",
     install_requires=[
         "click>=8.1.0",
-        "paho-mqtt>=1.6.1",
+        "paho-mqtt>=2.0.0",
         "pydantic>=2.0.0",
         "python-dotenv>=1.0.0",
         "pluggy>=1.3.0",
