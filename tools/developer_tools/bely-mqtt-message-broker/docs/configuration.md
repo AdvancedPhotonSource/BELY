@@ -23,7 +23,10 @@ bely-mqtt start [OPTIONS]
 
 ### API Options
 
-- `--api-url TEXT` - BELY API base URL
+- `--api-url TEXT` - Internal BELY API URL for server-to-server API calls.
+  Takes precedence over `api_url` in the config file, which in turn falls back
+  to `bely_url`. Set when the broker runs on the same host as BELY and internal
+  access is preferred over going through the public URL.
 - `--api-key TEXT` - BELY API authentication key
 
 ### Logging Options
@@ -80,8 +83,12 @@ Handlers can be configured via a YAML file to provide both global and handler-sp
 ```yaml
 # Global configuration shared across all handlers
 global:
-  # BELY API URL for querying additional information
+  # Public-facing URL for notification links (log entry permalinks, unsubscribe URLs).
+  # Must be reachable by end-users who receive notifications.
   bely_url: https://bely.example.com/bely
+  # (Optional) Internal API URL for broker-to-BELY server API calls.
+  # Defaults to bely_url. Set when broker runs on the same host as BELY.
+  # api_url: http://localhost:8080/bely
   # Add any other global parameters here
   shared_param: value
 
