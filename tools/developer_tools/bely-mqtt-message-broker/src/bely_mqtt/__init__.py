@@ -35,7 +35,7 @@ from bely_mqtt.models import (
 from bely_mqtt.mqtt_client import BelyMQTTClient
 from bely_mqtt.plugin import MQTTHandler, PluginManager
 
-__version__ = "2026.3.dev0"
+__version__ = "2026.3.1"
 
 __all__ = [
     "BelyMQTTClient",
