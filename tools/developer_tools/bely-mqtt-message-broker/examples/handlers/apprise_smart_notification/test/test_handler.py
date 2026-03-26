@@ -895,9 +895,9 @@ class TestUrlSeparation:
         )
 
         # The internal api_url must never appear in user-facing notification content
-        assert "localhost:8080" not in body, (
-            f"Internal api_url leaked into notification body:\n{body!r}"
-        )
+        assert (
+            "localhost:8080" not in body
+        ), f"Internal api_url leaked into notification body:\n{body!r}"
 
 
 class TestNotificationContent:
