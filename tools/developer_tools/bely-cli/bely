@@ -2,6 +2,7 @@
 
 import click
 
+from settings import VALID_FIELDS
 from commands import (
     cmd_new_doc,
     cmd_list_docs,
@@ -10,6 +11,7 @@ from commands import (
     cmd_list_templates,
     cmd_show_config,
     cmd_edit_config,
+    cmd_set_config,
 )
 from entry import (
     cmd_add_entry,
@@ -165,6 +167,14 @@ def config_show():
 def config_edit():
     """Open the settings file in your editor."""
     cmd_edit_config()
+
+
+@config_group.command("set")
+@click.argument("field", type=click.Choice(VALID_FIELDS))
+@click.argument("value")
+def config_set(field, value):
+    """Set a configuration field to a value."""
+    cmd_set_config(field, value)
 
 
 

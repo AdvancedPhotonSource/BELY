@@ -83,6 +83,16 @@ def cmd_edit_config():
     os.execvp(editor, [editor, settings.SETTINGS_FILE])
 
 
+def cmd_set_config(field, value):
+    """Set a single configuration field in settings.yaml."""
+    if field not in settings.VALID_FIELDS:
+        valid = ", ".join(settings.VALID_FIELDS)
+        print(f"Error: unknown field '{field}'. Valid fields: {valid}", file=sys.stderr)
+        sys.exit(1)
+    settings.set_setting(field, value)
+    print(f"Set {field} = {value}")
+
+
 
 def cmd_new_doc(type_, name, file, template, systems, no_template, no_prompt):
     """Create a new log document, optionally adding a first log entry."""

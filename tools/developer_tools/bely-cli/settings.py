@@ -4,6 +4,8 @@ import yaml
 CONFIG_DIR = os.path.expanduser("~/.config/bely")
 SETTINGS_FILE = os.path.join(CONFIG_DIR, "settings.yaml")
 
+VALID_FIELDS = ("host", "user")
+
 
 def _ensure_config_dir():
     if not os.path.exists(CONFIG_DIR):
