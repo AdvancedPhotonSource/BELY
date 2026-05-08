@@ -6,7 +6,9 @@ from contextlib import contextmanager
 import belyApi
 
 from BelyApiFactory import BelyApiFactory
-from settings import get_setting
+from settings import CONFIG_DIR, _ensure_config_dir, get_setting
+
+TOKEN_FILE = os.path.join(CONFIG_DIR, "token")
 
 
 def get_host():
@@ -40,31 +42,40 @@ def get_password(username):
     return password
 
 
+def load_token():
+    """Return the cached auth token from disk, or None if not present."""
+    try:
+        with open(TOKEN_FILE, "r") as f:
+            return f.read().strip() or None
+    except FileNotFoundError:
+        return None
+
+
+def save_token(token):
+    """Persist the auth token to disk with restrictive permissions."""
+    _ensure_config_dir()
+    with open(TOKEN_FILE, "w") as f:
+        f.write(token)
+    os.chmod(TOKEN_FILE, 0o600)
+
+
+def delete_token():
+    """Remove the cached token file."""
+    try:
+        os.remove(TOKEN_FILE)
+    except FileNotFoundError:
+        pass
+
 
 def get_factory():
     """Create and return an unauthenticated BelyApiFactory."""
     return BelyApiFactory(bely_url=get_host())
 
 
-@contextmanager
-def get_authenticated_factory():
-    """Create and yield an authenticated BelyApiFactory, logging out on exit.
-
-    Usage::
-
-        with auth.get_authenticated_factory() as factory:
-            logbook_api = factory.get_logbook_api()
-            ...
-
-    Credentials come from:
-      1. BELY_USER + BELY_PASSWORD env vars
-      2. Interactive prompt
-    """
-    factory = BelyApiFactory(bely_url=get_host())
-
+def _login_and_cache(factory):
+    """Prompt for credentials, authenticate the factory, and persist the new token."""
     username = get_username()
     password = get_password(username)
-
     try:
         factory.authenticate_user(username, password)
     except belyApi.exceptions.UnauthorizedException:
@@ -74,8 +85,33 @@ def get_authenticated_factory():
     except Exception as e:
         print(f"Authentication failed: {e}", file=sys.stderr)
         sys.exit(1)
+    save_token(factory.get_authenticate_token())
 
-    try:
-        yield factory
-    finally:
-        factory.logout_user()
+
+@contextmanager
+def get_authenticated_factory():
+    """Create and yield an authenticated BelyApiFactory.
+
+    Uses a cached token from disk if it is still valid; otherwise prompts
+    for credentials and saves the new token. The token persists across
+    runs, so we deliberately do not log out on exit.
+
+    Credentials, when needed, come from:
+      1. BELY_USER + BELY_PASSWORD env vars
+      2. Interactive prompt
+    """
+    factory = BelyApiFactory(bely_url=get_host())
+
+    token = load_token()
+    if token:
+        factory.api_client.set_default_header(BelyApiFactory.HEADER_TOKEN_KEY, token)
+        try:
+            factory.test_authenticated()
+        except belyApi.exceptions.UnauthorizedException:
+            delete_token()
+            factory.api_client.default_headers.pop(BelyApiFactory.HEADER_TOKEN_KEY, None)
+            _login_and_cache(factory)
+    else:
+        _login_and_cache(factory)
+
+    yield factory
