@@ -1,17 +1,21 @@
-#!/home/phoebus/ECHANDLER/sandbox/hla/bely-client/conda/bin/python
+#!/Users/echandler/sandbox/auxiliary-scripts/scripts/bely-cli/conda/bin/python
 
 import click
 
 from commands import (
     cmd_new_doc,
     cmd_list_docs,
-    cmd_update_entry,
-    cmd_add_entry,
     cmd_list_types,
     cmd_list_systems,
     cmd_list_templates,
     cmd_show_config,
     cmd_edit_config,
+)
+from entry import (
+    cmd_add_entry,
+    cmd_get_entry,
+    cmd_list_entries,
+    cmd_update_entry,
 )
 
 
@@ -33,9 +37,9 @@ def doc_group():
 
 
 @doc_group.command("new")
-@click.option("--type", "type_", required=True, help="Logbook type (e.g. ops, controls)")
-@click.option("--name", required=True, help="Name for the new document")
-@click.option("--file", "file", default=None, help="Markdown file for the first log entry")
+@click.option("--type", "type_", default=None, help="Logbook type (e.g. ops, controls)")
+@click.option("--name", "-n", default=None, help="Name for the new document")
+@click.option("--file", "-f", "file", default=None, help="Markdown file for the first log entry")
 @click.option("--template", default=None, help="Template name to use")
 @click.option("--systems", default=None, help="Comma-separated system list (e.g. SR,software)")
 @click.option("--no-template", is_flag=True, help="Skip template selection")
@@ -61,9 +65,10 @@ def entry_group():
 
 
 @entry_group.command("add")
-@click.option("--name", required=True, help="Log document name")
-@click.option("--file", "file", default=None, help="Markdown file with entry content")
-@click.option("--text", default=None, help="Inline text for the entry")
+@click.option("--doc-name", "-n", default=None, help="Log document name")
+@click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
+@click.option("--file", "-f", "file", default=None, help="Markdown file with entry content")
+@click.option("--text", "-t", default=None, help="Inline text for the entry")
 @click.option("--add-attachment", default=None, help="File to attach to the entry")
 def entry_add(**kwargs):
     """Add a new log entry to an existing document."""
@@ -71,14 +76,33 @@ def entry_add(**kwargs):
 
 
 @entry_group.command("update")
-@click.option("--name", default=None, help="Log document name")
-@click.option("--entry-id", default=None, type=int, help="Specific log entry ID to update")
-@click.option("--file", "file", default=None, help="Markdown file with updated content")
-@click.option("--text", default=None, help="Inline text for the entry")
+@click.option("--doc-name", "-n", default=None, help="Log document name")
+@click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
+@click.option("--id", "entry_id", default=None, type=int, help="Specific log entry ID to update")
+@click.option("--file", "-f", "file", default=None, help="Markdown file with updated content")
+@click.option("--text", "-t", default=None, help="Inline text for the entry")
 @click.option("--add-attachment", default=None, help="File to attach to the entry")
 def entry_update(**kwargs):
     """Update an existing log entry."""
     cmd_update_entry(**kwargs)
+
+
+@entry_group.command("list")
+@click.option("--doc-name", "-n", default=None, help="Log document name")
+@click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
+def entry_list(**kwargs):
+    """List entries in a log document."""
+    cmd_list_entries(**kwargs)
+
+
+@entry_group.command("get")
+@click.option("--doc-name", "-n", default=None, help="Log document name")
+@click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
+@click.option("--id", "entry_id", default=None, type=int, help="Specific log entry ID (default: latest)")
+@click.option("--output", "-o", default=None, help="Output file (default: entry_<log_id>.md)")
+def entry_get(**kwargs):
+    """Write the markdown of a log entry to a file (latest by default)."""
+    cmd_get_entry(**kwargs)
 
 
 # -- type --

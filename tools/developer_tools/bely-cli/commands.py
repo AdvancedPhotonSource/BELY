@@ -1,7 +1,5 @@
 import os
-import subprocess
 import sys
-import tempfile
 
 import belyApi
 
@@ -96,6 +94,34 @@ def cmd_new_doc(type_, name, file, template, systems, no_template, no_prompt):
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
 
+    # Prompt for required fields if missing
+    if not type_:
+        if no_prompt:
+            print("Error: --type is required.", file=sys.stderr)
+            sys.exit(1)
+        types = logbook_api.get_logbook_types()
+        print("Available logbook types:")
+        for i, t in enumerate(types, 1):
+            print(f"  {i}) {t.name} ({t.display_name})")
+        choice = input("Select type (number or name): ").strip()
+        if choice.isdigit():
+            idx = int(choice) - 1
+            if not (0 <= idx < len(types)):
+                print("Error: invalid selection.", file=sys.stderr)
+                sys.exit(1)
+            type_ = types[idx].name
+        else:
+            type_ = choice
+
+    if not name:
+        if no_prompt:
+            print("Error: --name is required.", file=sys.stderr)
+            sys.exit(1)
+        name = input("Document name: ").strip()
+        if not name:
+            print("Error: name cannot be empty.", file=sys.stderr)
+            sys.exit(1)
+
     try:
         logbook_type = find_logbook_type(logbook_api, type_)
         system_id_list = find_systems(logbook_api, systems) if systems else None
@@ -145,9 +171,9 @@ def cmd_new_doc(type_, name, file, template, systems, no_template, no_prompt):
             entry = logbook_api.add_update_log_entry(log_entry=entry)
             print(f"Log entry added, log_id={entry.log_id}")
         elif entries:
-            entry = entries[0]
-            print(f"Default entry (log_id={entry.log_id}):")
-            print(entry.log_entry)
+            from entry import write_entry_to_file
+            print(f"Template generated a default log entry (log_id={entries[0].log_id})")
+            write_entry_to_file(entries[0])
 
 
 def cmd_list_docs(limit):
@@ -185,168 +211,6 @@ def cmd_list_docs(limit):
         doc_type = d.logbook_type or ""
         name = d.object_name or ""
         print(f"{d.object_id:<8} {name:<50} {doc_type:<15} {modified}")
-
-
-def cmd_update_entry(name, entry_id, file, text, add_attachment):
-    """Update an existing log entry."""
-    if file and text:
-        print("Error: --file and --text are mutually exclusive.", file=sys.stderr)
-        sys.exit(1)
-    if not name:
-        print("Error: --name is required.", file=sys.stderr)
-        sys.exit(1)
-
-    # Validate files exist before any network calls
-    if file:
-        file = os.path.expanduser(file)
-        if not os.path.isfile(file):
-            print(f"Error: file not found: {file}", file=sys.stderr)
-            sys.exit(1)
-    if add_attachment:
-        add_attachment = os.path.expanduser(add_attachment)
-        if not os.path.isfile(add_attachment):
-            print(f"Error: attachment file not found: {add_attachment}", file=sys.stderr)
-            sys.exit(1)
-
-    # Determine content
-    content = None
-    if file:
-        with open(file, "r") as f:
-            content = f.read()
-    elif text:
-        content = text
-
-    # Look up document (unauthenticated)
-    factory = auth.get_factory()
-    logbook_api = factory.get_logbook_api()
-    doc = find_logdoc(logbook_api, name)
-    if not doc:
-        print(f'Error: log document "{name}" not found.', file=sys.stderr)
-        sys.exit(1)
-
-    # Authenticate and find/update entry
-    with auth.get_authenticated_factory() as auth_factory:
-        logbook_api = auth_factory.get_logbook_api()
-        entries = logbook_api.get_log_entries(log_document_id=doc.id)
-
-        if entry_id:
-            # Find specific entry by log_id
-            entry = None
-            for e in entries:
-                if e.log_id == entry_id:
-                    entry = e
-                    break
-            if not entry:
-                print(f'Error: entry with log_id={entry_id} not found in document "{name}".',
-                      file=sys.stderr)
-                sys.exit(1)
-        else:
-            # Find last entry by current user
-            username = auth.get_username()
-            if not username:
-                print("Error: cannot determine username. Set BELY_USER or 'user' in settings.",
-                      file=sys.stderr)
-                sys.exit(1)
-            user_entries = [e for e in entries
-                           if e.entered_by_username
-                           and e.entered_by_username.lower() == username.lower()]
-            if not user_entries:
-                print(f'Error: no entries by user "{username}" found in document "{name}".',
-                      file=sys.stderr)
-                sys.exit(1)
-            entry = user_entries[-1]
-
-        # Update entry content
-        if content:
-            entry.log_entry = content
-            entry = logbook_api.add_update_log_entry(log_entry=entry)
-            print(f'Log entry updated in "{doc.name}", log_id={entry.log_id}')
-        elif add_attachment:
-            logbook_api.upload_attachment(
-                log_document_id=doc.id,
-                log_id=entry.log_id,
-                body=add_attachment,
-                append_reference=True,
-                file_name=os.path.basename(add_attachment),
-            )
-            print(f'Attachment "{os.path.basename(add_attachment)}" uploaded')
-        else:
-            # Interactive edit: open entry in editor
-            original = entry.log_entry or ""
-            with tempfile.NamedTemporaryFile(suffix=".md", mode="w", delete=False) as tmp:
-                tmp.write(original)
-                tmp_path = tmp.name
-            try:
-                editor = os.environ.get("EDITOR", "vi")
-                subprocess.call([editor, tmp_path])
-                with open(tmp_path, "r") as f:
-                    edited = f.read()
-            finally:
-                os.unlink(tmp_path)
-            if edited != original:
-                entry.log_entry = edited
-                entry = logbook_api.add_update_log_entry(log_entry=entry)
-                print(f'Log entry updated in "{doc.name}", log_id={entry.log_id}')
-            else:
-                print("No changes made.")
-
-
-def cmd_add_entry(name, file, text, add_attachment):
-    """Add a new log entry to an existing document."""
-    if file and text:
-        print("Error: --file and --text are mutually exclusive.", file=sys.stderr)
-        sys.exit(1)
-    if not file and not text and not add_attachment:
-        print("Error: at least one of --file, --text, or --add-attachment is required.",
-              file=sys.stderr)
-        sys.exit(1)
-
-    # Validate files exist before any network calls
-    if file:
-        file = os.path.expanduser(file)
-        if not os.path.isfile(file):
-            print(f"Error: file not found: {file}", file=sys.stderr)
-            sys.exit(1)
-    if add_attachment:
-        add_attachment = os.path.expanduser(add_attachment)
-        if not os.path.isfile(add_attachment):
-            print(f"Error: attachment file not found: {add_attachment}", file=sys.stderr)
-            sys.exit(1)
-
-    # Determine content
-    content = None
-    if file:
-        with open(file, "r") as f:
-            content = f.read()
-    elif text:
-        content = text
-
-    # Look up document (unauthenticated)
-    factory = auth.get_factory()
-    logbook_api = factory.get_logbook_api()
-    doc = find_logdoc(logbook_api, name)
-    if not doc:
-        print(f'Error: log document "{name}" not found.', file=sys.stderr)
-        sys.exit(1)
-
-    # Authenticate and create entry
-    with auth.get_authenticated_factory() as auth_factory:
-        logbook_api = auth_factory.get_logbook_api()
-
-        entry = logbook_api.get_log_entry_template(log_document_id=doc.id)
-        entry.log_entry = content or ""
-        entry = logbook_api.add_update_log_entry(log_entry=entry)
-        print(f'Log entry added to "{doc.name}", log_id={entry.log_id}')
-
-        if add_attachment:
-            logbook_api.upload_attachment(
-                log_document_id=doc.id,
-                log_id=entry.log_id,
-                body=add_attachment,
-                append_reference=True,
-                file_name=os.path.basename(add_attachment),
-            )
-            print(f'Attachment "{os.path.basename(add_attachment)}" uploaded')
 
 
 def cmd_list_types():
