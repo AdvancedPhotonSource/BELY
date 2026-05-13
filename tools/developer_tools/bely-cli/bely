@@ -104,7 +104,7 @@ def entry_list(**kwargs):
 @click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
 @click.option("--id", "entry_id", default=None, type=int, help="Specific log entry ID (default: latest)")
 @click.option("--output", "-o", "output_dir", default=None,
-              help="Directory to write entry_<log_id>.md into (default: cwd)")
+              help="Directory to write <doc_name>_entry_<log_id>.md into (default: cwd)")
 def entry_get(**kwargs):
     """Write the markdown of a log entry to a file (latest by default)."""
     cmd_get_entry(**kwargs)

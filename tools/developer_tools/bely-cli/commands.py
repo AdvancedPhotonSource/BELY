@@ -183,7 +183,7 @@ def cmd_new_doc(type_, name, file, template, systems, no_template, no_prompt, ou
         elif entries:
             from entry import write_entry_to_file
             print(f"Template generated a default log entry (log_id={entries[0].log_id})")
-            write_entry_to_file(entries[0], output_dir)
+            write_entry_to_file(entries[0], doc.name, output_dir)
 
 
 def cmd_list_docs(limit):

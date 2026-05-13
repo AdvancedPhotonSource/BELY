@@ -25,13 +25,18 @@ def resolve_doc(logbook_api, doc_name, doc_id):
     return doc
 
 
-def write_entry_to_file(entry, output_dir=None):
-    """Write entry markdown to a file in output_dir (cwd if None). Returns the path written."""
+def _sanitize_for_filename(name):
+    return "".join(c if c.isalnum() or c in "-_." else "_" for c in name)
+
+
+def write_entry_to_file(entry, doc_name, output_dir=None):
+    """Write entry markdown to <doc_name>_entry_<id>.md in output_dir (cwd if None)."""
     directory = os.path.expanduser(output_dir) if output_dir else "."
     if not os.path.isdir(directory):
         print(f"Error: output directory not found: {directory}", file=sys.stderr)
         sys.exit(1)
-    out_path = os.path.join(directory, f"entry_{entry.log_id}.md")
+    safe_doc = _sanitize_for_filename(doc_name)
+    out_path = os.path.join(directory, f"{safe_doc}_entry_{entry.log_id}.md")
     with open(out_path, "w") as f:
         f.write(entry.log_entry or "")
     print(f'Wrote log entry id={entry.log_id} to {out_path}')
@@ -235,4 +240,5 @@ def cmd_get_entry(doc_name, doc_id, entry_id, output_dir):
     else:
         entry = entries[-1]
 
-    write_entry_to_file(entry, output_dir)
+    name_for_file = doc_name if doc_name else str(doc.id)
+    write_entry_to_file(entry, name_for_file, output_dir)
