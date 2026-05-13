@@ -4,7 +4,7 @@ import sys
 import belyApi
 
 import auth
-import settings
+import config
 
 
 ENV_VARS = ["BELY_HOST", "BELY_USER", "BELY_PASSWORD"]
@@ -12,8 +12,8 @@ ENV_VARS = ["BELY_HOST", "BELY_USER", "BELY_PASSWORD"]
 
 def cmd_show_config():
     """Show current configuration from settings file and environment."""
-    print(f"Settings file: {settings.SETTINGS_FILE}")
-    data = settings.load_settings()
+    print(f"Settings file: {config.SETTINGS_FILE}")
+    data = config.load_settings()
     if data:
         for key, value in data.items():
             print(f"  {key} = {value}")
@@ -76,20 +76,20 @@ def find_logdoc(logbook_api, name):
 
 def cmd_edit_config():
     """Open the settings file in the user's editor."""
-    settings._ensure_config_dir()
-    if not os.path.exists(settings.SETTINGS_FILE):
-        settings.save_settings({})
+    config._ensure_config_dir()
+    if not os.path.exists(config.SETTINGS_FILE):
+        config.save_settings({})
     editor = os.environ.get("EDITOR", "vi")
-    os.execvp(editor, [editor, settings.SETTINGS_FILE])
+    os.execvp(editor, [editor, config.SETTINGS_FILE])
 
 
 def cmd_set_config(field, value):
     """Set a single configuration field in settings.yaml."""
-    if field not in settings.VALID_FIELDS:
-        valid = ", ".join(settings.VALID_FIELDS)
+    if field not in config.VALID_FIELDS:
+        valid = ", ".join(config.VALID_FIELDS)
         print(f"Error: unknown field '{field}'. Valid fields: {valid}", file=sys.stderr)
         sys.exit(1)
-    settings.set_setting(field, value)
+    config.set_setting(field, value)
     print(f"Set {field} = {value}")
 
 

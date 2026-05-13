@@ -6,7 +6,7 @@ from contextlib import contextmanager
 import belyApi
 
 from BelyApiFactory import BelyApiFactory
-from settings import CONFIG_DIR, _ensure_config_dir, get_setting
+from config import CONFIG_DIR, _ensure_config_dir, get_setting
 
 TOKEN_FILE = os.path.join(CONFIG_DIR, "token")
 

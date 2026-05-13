@@ -2,7 +2,7 @@
 
 import click
 
-from settings import VALID_FIELDS
+from config import VALID_FIELDS
 from commands import (
     cmd_new_doc,
     cmd_list_docs,
