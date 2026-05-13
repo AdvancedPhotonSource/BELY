@@ -46,6 +46,8 @@ def doc_group():
 @click.option("--systems", default=None, help="Comma-separated system list (e.g. SR,software)")
 @click.option("--no-template", is_flag=True, help="Skip template selection")
 @click.option("--no-prompt", is_flag=True, help="Non-interactive mode (no prompts)")
+@click.option("--output", "-o", "output_dir", default=None,
+              help="Directory to write template-generated entry into (default: cwd)")
 def doc_new(**kwargs):
     """Create a new log document."""
     cmd_new_doc(**kwargs)
@@ -101,7 +103,8 @@ def entry_list(**kwargs):
 @click.option("--doc-name", "-n", default=None, help="Log document name")
 @click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
 @click.option("--id", "entry_id", default=None, type=int, help="Specific log entry ID (default: latest)")
-@click.option("--output", "-o", default=None, help="Output file (default: entry_<log_id>.md)")
+@click.option("--output", "-o", "output_dir", default=None,
+              help="Directory to write entry_<log_id>.md into (default: cwd)")
 def entry_get(**kwargs):
     """Write the markdown of a log entry to a file (latest by default)."""
     cmd_get_entry(**kwargs)

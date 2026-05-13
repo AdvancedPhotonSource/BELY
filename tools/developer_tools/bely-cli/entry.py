@@ -25,9 +25,13 @@ def resolve_doc(logbook_api, doc_name, doc_id):
     return doc
 
 
-def write_entry_to_file(entry, output=None):
-    """Write entry markdown to a file. Returns the path written."""
-    out_path = os.path.expanduser(output) if output else f"entry_{entry.log_id}.md"
+def write_entry_to_file(entry, output_dir=None):
+    """Write entry markdown to a file in output_dir (cwd if None). Returns the path written."""
+    directory = os.path.expanduser(output_dir) if output_dir else "."
+    if not os.path.isdir(directory):
+        print(f"Error: output directory not found: {directory}", file=sys.stderr)
+        sys.exit(1)
+    out_path = os.path.join(directory, f"entry_{entry.log_id}.md")
     with open(out_path, "w") as f:
         f.write(entry.log_entry or "")
     print(f'Wrote log entry id={entry.log_id} to {out_path}')
@@ -211,7 +215,7 @@ def cmd_list_entries(doc_name, doc_id):
         print(f"{e.log_id:<10} {date:<18} {author:<20} {snippet}")
 
 
-def cmd_get_entry(doc_name, doc_id, entry_id, output):
+def cmd_get_entry(doc_name, doc_id, entry_id, output_dir):
     """Write the markdown of a log entry to a file (latest by default)."""
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
@@ -231,4 +235,4 @@ def cmd_get_entry(doc_name, doc_id, entry_id, output):
     else:
         entry = entries[-1]
 
-    write_entry_to_file(entry, output)
+    write_entry_to_file(entry, output_dir)

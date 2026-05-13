@@ -94,7 +94,7 @@ def cmd_set_config(field, value):
 
 
 
-def cmd_new_doc(type_, name, file, template, systems, no_template, no_prompt):
+def cmd_new_doc(type_, name, file, template, systems, no_template, no_prompt, output_dir):
     """Create a new log document, optionally adding a first log entry."""
     if template and no_template:
         print("Error: --template and --no-template are mutually exclusive.", file=sys.stderr)
@@ -183,7 +183,7 @@ def cmd_new_doc(type_, name, file, template, systems, no_template, no_prompt):
         elif entries:
             from entry import write_entry_to_file
             print(f"Template generated a default log entry (log_id={entries[0].log_id})")
-            write_entry_to_file(entries[0])
+            write_entry_to_file(entries[0], output_dir)
 
 
 def cmd_list_docs(limit):
