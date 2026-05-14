@@ -1,4 +1,4 @@
-#!/Users/echandler/sandbox/auxiliary-scripts/scripts/bely-cli/conda/bin/python
+#!/C2/conda/envs/bely/bin/python
 
 import click
 
