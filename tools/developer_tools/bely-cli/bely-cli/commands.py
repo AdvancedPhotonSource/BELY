@@ -94,8 +94,13 @@ def cmd_set_config(field, value):
 
 
 
-def cmd_new_doc(type_, name, file, template, systems, no_template, no_prompt, output_dir):
+def cmd_new_doc(type_, name, file, template, systems, no_template,
+                output_dir, list_options):
     """Create a new log document, optionally adding a first log entry."""
+    if list_options:
+        _list_doc_option(list_options)
+        return
+
     if template and no_template:
         print("Error: --template and --no-template are mutually exclusive.", file=sys.stderr)
         sys.exit(1)
@@ -106,9 +111,6 @@ def cmd_new_doc(type_, name, file, template, systems, no_template, no_prompt, ou
 
     # Prompt for required fields if missing
     if not type_:
-        if no_prompt:
-            print("Error: --type is required.", file=sys.stderr)
-            sys.exit(1)
         types = logbook_api.get_logbook_types()
         print("Available logbook types:")
         for i, t in enumerate(types, 1):
@@ -124,9 +126,6 @@ def cmd_new_doc(type_, name, file, template, systems, no_template, no_prompt, ou
             type_ = choice
 
     if not name:
-        if no_prompt:
-            print("Error: --name is required.", file=sys.stderr)
-            sys.exit(1)
         name = input("Document name: ").strip()
         if not name:
             print("Error: name cannot be empty.", file=sys.stderr)
@@ -221,6 +220,15 @@ def cmd_list_docs(limit):
         doc_type = d.logbook_type or ""
         name = d.object_name or ""
         print(f"{d.object_id:<8} {name:<50} {doc_type:<15} {modified}")
+
+
+def _list_doc_option(option):
+    """Dispatch --list-options choice to the matching listing helper."""
+    {
+        "system": cmd_list_systems,
+        "type": cmd_list_types,
+        "template": cmd_list_templates,
+    }[option]()
 
 
 def cmd_list_types():
