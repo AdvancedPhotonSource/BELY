@@ -5,6 +5,7 @@ import belyApi
 
 import auth
 import config
+from common import find_logdoc, write_entry_to_file, open_in_editor
 
 
 ENV_VARS = ["BELY_HOST", "BELY_USER", "BELY_PASSWORD"]
@@ -65,14 +66,6 @@ def find_template(logbook_api, name):
             return t
     available = ", ".join(t.name for t in templates if t.name)
     raise ValueError(f"Unknown template '{name}'. Available: {available}")
-
-def find_logdoc(logbook_api, name):
-    try:
-        existing = logbook_api.get_log_document_by_name(name=name)
-        return existing
-    except belyApi.exceptions.NotFoundException:
-        return None
-
 
 def cmd_edit_config():
     """Open the settings file in the user's editor."""
@@ -180,9 +173,30 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
             entry = logbook_api.add_update_log_entry(log_entry=entry)
             print(f"Log entry added, log_id={entry.log_id}")
         elif entries:
-            from entry import write_entry_to_file
-            print(f"Template generated a default log entry (log_id={entries[0].log_id})")
-            write_entry_to_file(entries[0], doc.name, output_dir)
+            entry = entries[0]
+            print(f"Template generated a default log entry (log_id={entry.log_id})")
+            answer = input("Update the entry? [y/N] ").strip().lower()
+            if answer in ("y", "yes"):
+                edited = open_in_editor(entry.log_entry or "")
+                if edited != (entry.log_entry or ""):
+                    entry.log_entry = edited
+                    entry = logbook_api.add_update_log_entry(log_entry=entry)
+                    print(f"Log entry updated, log_id={entry.log_id}")
+                else:
+                    print("No changes made.")
+            else:
+                write_entry_to_file(entry, doc.name, output_dir)
+        else:
+            answer = input("Create a log entry? [y/N] ").strip().lower()
+            if answer in ("y", "yes"):
+                entry = logbook_api.get_log_entry_template(log_document_id=doc.id)
+                edited = open_in_editor(entry.log_entry or "")
+                if edited.strip():
+                    entry.log_entry = edited
+                    entry = logbook_api.add_update_log_entry(log_entry=entry)
+                    print(f"Log entry added, log_id={entry.log_id}")
+                else:
+                    print("Empty entry, skipped.")
 
 
 def cmd_list_docs(limit):

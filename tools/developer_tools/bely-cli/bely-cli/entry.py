@@ -1,11 +1,9 @@
 import os
-import subprocess
 import sys
-import tempfile
 from types import SimpleNamespace
 
 import auth
-from commands import find_logdoc
+from common import find_logdoc, write_entry_to_file, open_in_editor
 
 
 def resolve_doc(logbook_api, doc_name, doc_id):
@@ -23,24 +21,6 @@ def resolve_doc(logbook_api, doc_name, doc_id):
         print(f'Error: log document "{doc_name}" not found.', file=sys.stderr)
         sys.exit(1)
     return doc
-
-
-def _sanitize_for_filename(name):
-    return "".join(c if c.isalnum() or c in "-_." else "_" for c in name)
-
-
-def write_entry_to_file(entry, doc_name, output_dir=None):
-    """Write entry markdown to <doc_name>_entry_<id>.md in output_dir (cwd if None)."""
-    directory = os.path.expanduser(output_dir) if output_dir else "."
-    if not os.path.isdir(directory):
-        print(f"Error: output directory not found: {directory}", file=sys.stderr)
-        sys.exit(1)
-    safe_doc = _sanitize_for_filename(doc_name)
-    out_path = os.path.join(directory, f"{safe_doc}_entry_{entry.log_id}.md")
-    with open(out_path, "w") as f:
-        f.write(entry.log_entry or "")
-    print(f'Wrote log entry id={entry.log_id} to {out_path}')
-    return out_path
 
 
 def upload_and_print_attachment(logbook_api, doc_id, log_id, path):
@@ -132,16 +112,7 @@ def cmd_update_entry(doc_name, doc_id, entry_id, file, text, add_attachment):
         else:
             # Interactive edit: open entry in editor
             original = entry.log_entry or ""
-            with tempfile.NamedTemporaryFile(suffix=".md", mode="w", delete=False) as tmp:
-                tmp.write(original)
-                tmp_path = tmp.name
-            try:
-                editor = os.environ.get("EDITOR", "vi")
-                subprocess.call([editor, tmp_path])
-                with open(tmp_path, "r") as f:
-                    edited = f.read()
-            finally:
-                os.unlink(tmp_path)
+            edited = open_in_editor(original)
             if edited != original:
                 entry.log_entry = edited
                 entry = logbook_api.add_update_log_entry(log_entry=entry)
@@ -155,10 +126,7 @@ def cmd_add_entry(doc_name, doc_id, file, text, add_attachment):
     if file and text:
         print("Error: --file and --text are mutually exclusive.", file=sys.stderr)
         sys.exit(1)
-    if not file and not text and not add_attachment:
-        print("Error: at least one of --file, --text, or --add-attachment is required.",
-              file=sys.stderr)
-        sys.exit(1)
+    use_editor = not file and not text and not add_attachment
 
     # Validate files exist before any network calls
     if file:
@@ -190,12 +158,22 @@ def cmd_add_entry(doc_name, doc_id, file, text, add_attachment):
         logbook_api = auth_factory.get_logbook_api()
 
         entry = logbook_api.get_log_entry_template(log_document_id=doc.id)
-        entry.log_entry = content or ""
-        entry = logbook_api.add_update_log_entry(log_entry=entry)
-        print(f'Log entry added to "{doc.name}", log_id={entry.log_id}')
 
-        if add_attachment:
-            upload_and_print_attachment(logbook_api, doc.id, entry.log_id, add_attachment)
+        if use_editor:
+            edited = open_in_editor(entry.log_entry or "")
+            if edited.strip():
+                entry.log_entry = edited
+                entry = logbook_api.add_update_log_entry(log_entry=entry)
+                print(f'Log entry added to "{doc.name}", log_id={entry.log_id}')
+            else:
+                print("Empty entry, skipped.")
+        else:
+            entry.log_entry = content or ""
+            entry = logbook_api.add_update_log_entry(log_entry=entry)
+            print(f'Log entry added to "{doc.name}", log_id={entry.log_id}')
+
+            if add_attachment:
+                upload_and_print_attachment(logbook_api, doc.id, entry.log_id, add_attachment)
 
 
 def cmd_list_entries(doc_name, doc_id):
