@@ -1,9 +1,34 @@
+import json
 import os
 import subprocess
 import sys
 import tempfile
 
 import belyApi
+
+
+def print_items(items, columns, json_output=False):
+    """Print a list of dicts as a table or JSON array.
+
+    columns: list of (key, header, width) tuples for table format.
+    """
+    if json_output:
+        print(json.dumps(items, indent=2))
+        return
+    header = "  ".join(f"{h:<{w}}" for _, h, w in columns)
+    sep = "  ".join(f"{'-' * len(h):<{w}}" for _, h, w in columns)
+    print(header)
+    print(sep)
+    for item in items:
+        print("  ".join(f"{str(item.get(k, '')):<{w}}" for k, _, w in columns))
+
+
+def print_result(data, message, json_output=False):
+    """Print a confirmation message or JSON object."""
+    if json_output:
+        print(json.dumps(data))
+    else:
+        print(message)
 
 
 def find_logdoc(logbook_api, name):

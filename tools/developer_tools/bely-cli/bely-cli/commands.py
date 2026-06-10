@@ -5,7 +5,7 @@ import belyApi
 
 import auth
 import config
-from common import find_logdoc, write_entry_to_file, open_in_editor
+from common import find_logdoc, write_entry_to_file, open_in_editor, print_items, print_result
 
 
 ENV_VARS = ["BELY_HOST", "BELY_USER", "BELY_PASSWORD"]
@@ -87,11 +87,12 @@ def cmd_set_config(field, value):
 
 
 
-def cmd_new_doc(type_, name, file, template, systems, no_template,
+def cmd_new_doc(ctx, type_, name, file, template, systems, no_template,
                 output_dir, list_options):
     """Create a new log document, optionally adding a first log entry."""
+    json_output = ctx.obj["json"]
     if list_options:
-        _list_doc_option(list_options)
+        _list_doc_option(list_options, json_output)
         return
 
     if template and no_template:
@@ -148,10 +149,14 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
         doc_opts.skip_default_logbook_type_template = True
 
     # Authenticate and create document
+    result = {"id": None, "name": name}
     with auth.get_authenticated_factory() as auth_factory:
         logbook_api = auth_factory.get_logbook_api()
         doc = logbook_api.create_logbook_document(log_document_options=doc_opts)
-        print(f'New document "{doc.name}" created, id={doc.id}')
+        result["id"] = doc.id
+        result["name"] = doc.name
+        if not json_output:
+            print(f'New document "{doc.name}" created, id={doc.id}')
 
         # Determine entry content from --file or --text
         content = None
@@ -171,36 +176,46 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
                 entry = logbook_api.get_log_entry_template(log_document_id=doc.id)
                 entry.log_entry = content
             entry = logbook_api.add_update_log_entry(log_entry=entry)
-            print(f"Log entry added, log_id={entry.log_id}")
+            result["log_id"] = entry.log_id
+            if not json_output:
+                print(f"Log entry added, log_id={entry.log_id}")
         elif entries:
             entry = entries[0]
-            print(f"Template generated a default log entry (log_id={entry.log_id})")
-            answer = input("Update the entry? [y/N] ").strip().lower()
-            if answer in ("y", "yes"):
-                edited = open_in_editor(entry.log_entry or "")
-                if edited != (entry.log_entry or ""):
-                    entry.log_entry = edited
-                    entry = logbook_api.add_update_log_entry(log_entry=entry)
-                    print(f"Log entry updated, log_id={entry.log_id}")
+            result["log_id"] = entry.log_id
+            if not json_output:
+                print(f"Template generated a default log entry (log_id={entry.log_id})")
+                answer = input("Update the entry? [y/N] ").strip().lower()
+                if answer in ("y", "yes"):
+                    edited = open_in_editor(entry.log_entry or "")
+                    if edited != (entry.log_entry or ""):
+                        entry.log_entry = edited
+                        entry = logbook_api.add_update_log_entry(log_entry=entry)
+                        print(f"Log entry updated, log_id={entry.log_id}")
+                    else:
+                        print("No changes made.")
                 else:
-                    print("No changes made.")
-            else:
-                write_entry_to_file(entry, doc.name, output_dir)
+                    write_entry_to_file(entry, doc.name, output_dir)
         else:
-            answer = input("Create a log entry? [y/N] ").strip().lower()
-            if answer in ("y", "yes"):
-                entry = logbook_api.get_log_entry_template(log_document_id=doc.id)
-                edited = open_in_editor(entry.log_entry or "")
-                if edited.strip():
-                    entry.log_entry = edited
-                    entry = logbook_api.add_update_log_entry(log_entry=entry)
-                    print(f"Log entry added, log_id={entry.log_id}")
-                else:
-                    print("Empty entry, skipped.")
+            if not json_output:
+                answer = input("Create a log entry? [y/N] ").strip().lower()
+                if answer in ("y", "yes"):
+                    entry = logbook_api.get_log_entry_template(log_document_id=doc.id)
+                    edited = open_in_editor(entry.log_entry or "")
+                    if edited.strip():
+                        entry.log_entry = edited
+                        entry = logbook_api.add_update_log_entry(log_entry=entry)
+                        result["log_id"] = entry.log_id
+                        print(f"Log entry added, log_id={entry.log_id}")
+                    else:
+                        print("Empty entry, skipped.")
+
+    if json_output:
+        print_result(result, "", json_output)
 
 
-def cmd_list_docs(limit):
+def cmd_list_docs(ctx, limit):
     """List recent log documents created by the current user."""
+    json_output = ctx.obj["json"]
     username = auth.get_username()
     if not username:
         print("Error: cannot determine username. Set BELY_USER or 'user' in settings.",
@@ -227,13 +242,16 @@ def cmd_list_docs(limit):
         print("No documents found.")
         return
 
-    print(f"{'ID':<8} {'Name':<50} {'Type':<15} {'Last Modified'}")
-    print(f"{'--':<8} {'----':<50} {'----':<15} {'-------------'}")
+    items = []
     for d in docs:
-        modified = d.last_modified_on.strftime("%Y-%m-%d %H:%M") if d.last_modified_on else ""
-        doc_type = d.logbook_type or ""
-        name = d.object_name or ""
-        print(f"{d.object_id:<8} {name:<50} {doc_type:<15} {modified}")
+        items.append({
+            "id": d.object_id,
+            "name": d.object_name or "",
+            "type": d.logbook_type or "",
+            "last_modified": d.last_modified_on.strftime("%Y-%m-%d %H:%M") if d.last_modified_on else "",
+        })
+    columns = [("id", "ID", 8), ("name", "Name", 50), ("type", "Type", 15), ("last_modified", "Last Modified", 20)]
+    print_items(items, columns, json_output)
 
 
 def _list_doc_option(option):

@@ -22,9 +22,12 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
-def cli():
+@click.option("--json", "json_output", is_flag=True, help="Output in JSON format")
+@click.pass_context
+def cli(ctx, json_output):
     """BELY logbook CLI"""
-    pass
+    ctx.ensure_object(dict)
+    ctx.obj["json"] = json_output
 
 
 # -- doc --
@@ -48,16 +51,18 @@ def doc_group():
               type=click.Choice(["system", "type", "template"]),
               default=None,
               help="List available values for the given option and exit")
-def doc_new(**kwargs):
+@click.pass_context
+def doc_new(ctx, **kwargs):
     """Create a new log document."""
-    cmd_new_doc(**kwargs)
+    cmd_new_doc(ctx, **kwargs)
 
 
 @doc_group.command("list")
 @click.option("--limit", default=20, type=int, help="Max documents to return (default 20)")
-def doc_list(**kwargs):
+@click.pass_context
+def doc_list(ctx, **kwargs):
     """List recent log documents created by you."""
-    cmd_list_docs(**kwargs)
+    cmd_list_docs(ctx, **kwargs)
 
 
 # -- entry --
@@ -74,9 +79,10 @@ def entry_group():
 @click.option("--file", "-f", "file", default=None, help="Markdown file with entry content")
 @click.option("--text", "-t", default=None, help="Inline text for the entry")
 @click.option("--add-attachment", default=None, help="File to attach to the entry")
-def entry_add(**kwargs):
+@click.pass_context
+def entry_add(ctx, **kwargs):
     """Add a new log entry to an existing document."""
-    cmd_add_entry(**kwargs)
+    cmd_add_entry(ctx, **kwargs)
 
 
 @entry_group.command("update")
@@ -86,17 +92,19 @@ def entry_add(**kwargs):
 @click.option("--file", "-f", "file", default=None, help="Markdown file with updated content")
 @click.option("--text", "-t", default=None, help="Inline text for the entry")
 @click.option("--add-attachment", default=None, help="File to attach to the entry")
-def entry_update(**kwargs):
+@click.pass_context
+def entry_update(ctx, **kwargs):
     """Update an existing log entry."""
-    cmd_update_entry(**kwargs)
+    cmd_update_entry(ctx, **kwargs)
 
 
 @entry_group.command("list")
 @click.option("--doc-name", "-n", default=None, help="Log document name")
 @click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
-def entry_list(**kwargs):
+@click.pass_context
+def entry_list(ctx, **kwargs):
     """List entries in a log document."""
-    cmd_list_entries(**kwargs)
+    cmd_list_entries(ctx, **kwargs)
 
 
 @entry_group.command("get")
@@ -105,9 +113,10 @@ def entry_list(**kwargs):
 @click.option("--id", "entry_id", default=None, type=int, help="Specific log entry ID (default: latest)")
 @click.option("--output", "-o", "output_dir", default=None,
               help="Directory to write <doc_name>_entry_<log_id>.md into (default: cwd)")
-def entry_get(**kwargs):
+@click.pass_context
+def entry_get(ctx, **kwargs):
     """Write the markdown of a log entry to a file (latest by default)."""
-    cmd_get_entry(**kwargs)
+    cmd_get_entry(ctx, **kwargs)
 
 
 # -- config --
