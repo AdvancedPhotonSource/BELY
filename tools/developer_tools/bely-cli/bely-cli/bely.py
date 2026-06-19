@@ -17,6 +17,7 @@ from entry import (
     cmd_list_entries,
     cmd_update_entry,
 )
+from tui import cmd_tui
 
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -123,6 +124,23 @@ def entry_list(output_format, **kwargs):
 def entry_get(output_format, **kwargs):
     """Write the markdown of a log entry to a file (latest by default)."""
     cmd_get_entry(fmt=output_format, **kwargs)
+
+
+# -- tui --
+
+@cli.group("tui")
+def tui_group():
+    """Interactive terminal UIs."""
+    pass
+
+
+@tui_group.command("lookup")
+@click.option("--limit", default=100, type=int,
+              help="Recent documents to load per logbook (default 100)")
+@format_option
+def tui_lookup(output_format, **kwargs):
+    """Interactively browse logbooks -> documents -> entries to find a log entry."""
+    cmd_tui(fmt=output_format, **kwargs)
 
 
 # -- config --

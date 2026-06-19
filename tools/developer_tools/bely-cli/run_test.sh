@@ -14,3 +14,4 @@ COMPONENT_DIR="${COMPONENT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 # (appended to a leaf command, not at the top level).
 bely.py -h > /dev/null
 bely.py doc list -h | grep -q -- --format
+bely.py tui lookup -h | grep -q -- --format

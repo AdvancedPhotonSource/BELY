@@ -99,6 +99,46 @@ List recent log documents you created, newest first.
 |--------|-------------|
 | `--limit INTEGER` | Maximum documents to return (default: 20). |
 
+### `tui` — interactive terminal UIs
+
+#### `bely.py tui lookup`
+
+Interactively browse to find a log entry when you don't already know its document. The TUI
+drills down through three levels — **logbook → recent documents → entries** — and then shows
+the entry's markdown in a scrollable view. Browsing is read-only and needs no authentication.
+
+```bash
+bely.py tui lookup
+bely.py tui lookup --limit 50
+```
+
+| Option | Description |
+|--------|-------------|
+| `--limit INTEGER` | Recent documents to load per logbook (default: 100). |
+
+Keys:
+
+| Key | Action |
+|-----|--------|
+| `Up` / `Down`, `PgUp` / `PgDn` | Move the highlight (or scroll, in the entry view). |
+| *type any text* | Incrementally filter the current list (case-insensitive substring). |
+| `Backspace` | Edit the filter; with an empty filter, go back one level. |
+| `Enter` | Open the highlighted item / drill in. In the entry view, select the entry. |
+| `q` | (Entry view only) select the entry. |
+| `Esc` | Go back one level; quits from the logbook list. |
+
+On selecting an entry the TUI exits and prints its `doc-id` / `log-id`, plus a ready-to-run
+`bely.py entry get` command so you can fetch it:
+
+```
+doc-id: 99
+log-id: 42
+# fetch with: bely.py entry get -d 99 --id 42
+```
+
+With `--format json` / `--format yaml` the selected reference is printed as structured data
+instead.
+
 ### `entry` — log entries
 
 All `entry` commands identify the target document with **either** `-n/--doc-name` **or**
