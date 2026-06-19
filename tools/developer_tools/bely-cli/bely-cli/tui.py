@@ -66,6 +66,45 @@ _BACKSPACE_KEYS = (curses.KEY_BACKSPACE, 127, 8)
 _ESC = 27
 
 
+# Display attributes. These start as monochrome fallbacks (used when the
+# terminal has no color support) and are upgraded to theme-aware colors by
+# _init_colors() once curses is running.
+_A_TITLE = curses.A_BOLD
+_A_SELECTED = curses.A_REVERSE | curses.A_BOLD
+_A_FOOTER = curses.A_DIM
+_A_ERROR = curses.A_BOLD
+
+_PAIR_TITLE = 1
+_PAIR_FOOTER = 2
+_PAIR_ERROR = 3
+
+
+def _init_colors():
+    """Derive display attributes from the terminal's own palette.
+
+    use_default_colors() lets us pass -1 for the background so the terminal's
+    own background shows through, and the named ANSI colors resolve to whatever
+    the user's theme defines for them. That keeps the UI legible on both light
+    and dark terminals without hardcoding a background. The selected-row
+    highlight uses reverse video, which simply swaps the terminal's current
+    foreground/background and so adapts to any theme.
+    """
+    global _A_TITLE, _A_FOOTER, _A_ERROR
+    if not curses.has_colors():
+        return
+    try:
+        curses.start_color()
+        curses.use_default_colors()
+    except curses.error:
+        return
+    curses.init_pair(_PAIR_TITLE, curses.COLOR_CYAN, -1)
+    curses.init_pair(_PAIR_FOOTER, curses.COLOR_BLUE, -1)
+    curses.init_pair(_PAIR_ERROR, curses.COLOR_RED, -1)
+    _A_TITLE = curses.color_pair(_PAIR_TITLE) | curses.A_BOLD
+    _A_FOOTER = curses.color_pair(_PAIR_FOOTER)
+    _A_ERROR = curses.color_pair(_PAIR_ERROR) | curses.A_BOLD
+
+
 def _addstr(stdscr, y, x, text, width, attr=0):
     """Write text truncated to width, swallowing curses edge errors."""
     try:
@@ -97,18 +136,23 @@ def _select(stdscr, title, items, render_fn):
             top = pos - body_h + 1
 
         stdscr.erase()
-        _addstr(stdscr, 0, 0, title, width, curses.A_BOLD)
+        _addstr(stdscr, 0, 0, title, width, _A_TITLE)
 
         if not shown:
             _addstr(stdscr, 2, 2, "(no items)", width)
         else:
             for row, item in enumerate(shown[top:top + body_h]):
                 idx = top + row
-                attr = curses.A_REVERSE if idx == pos else 0
-                _addstr(stdscr, 2 + row, 0, " " + render_fn(item), width, attr)
+                selected = idx == pos
+                text = " " + render_fn(item)
+                if selected:
+                    # Pad to full width so the highlight reads as a solid bar.
+                    text = text.ljust(width)
+                _addstr(stdscr, 2 + row, 0, text, width,
+                        _A_SELECTED if selected else 0)
 
         footer = f"Filter: {query}_   [Up/Down PgUp/PgDn] move  [Enter] open  [Esc] back  (type to filter)"
-        _addstr(stdscr, height - 1, 0, footer, width, curses.A_DIM)
+        _addstr(stdscr, height - 1, 0, footer, width, _A_FOOTER)
         stdscr.refresh()
 
         ch = stdscr.getch()
@@ -155,11 +199,11 @@ def _view_entry(stdscr, doc, entry):
         top = min(top, max_top)
 
         stdscr.erase()
-        _addstr(stdscr, 0, 0, header, width, curses.A_BOLD)
+        _addstr(stdscr, 0, 0, header, width, _A_TITLE)
         for row, line in enumerate(lines[top:top + body_h]):
             _addstr(stdscr, 2 + row, 0, line, width)
         footer = "[Up/Down PgUp/PgDn] scroll  [Enter/q] select this entry  [Esc] back"
-        _addstr(stdscr, height - 1, 0, footer, width, curses.A_DIM)
+        _addstr(stdscr, height - 1, 0, footer, width, _A_FOOTER)
         stdscr.refresh()
 
         ch = stdscr.getch()
@@ -181,7 +225,7 @@ def _loading(stdscr, message):
     """Show a transient status line while a network call runs."""
     _, width = stdscr.getmaxyx()
     stdscr.erase()
-    _addstr(stdscr, 0, 0, message, width, curses.A_DIM)
+    _addstr(stdscr, 0, 0, message, width, _A_FOOTER)
     stdscr.refresh()
 
 
@@ -189,10 +233,10 @@ def _show_error(stdscr, message):
     """Show an error and wait for a keypress."""
     height, width = stdscr.getmaxyx()
     stdscr.erase()
-    _addstr(stdscr, 0, 0, "Error", width, curses.A_BOLD)
+    _addstr(stdscr, 0, 0, "Error", width, _A_ERROR)
     for row, line in enumerate(textwrap.wrap(message, max(1, width - 1))):
         _addstr(stdscr, 2 + row, 0, line, width)
-    _addstr(stdscr, height - 1, 0, "Press any key to go back", width, curses.A_DIM)
+    _addstr(stdscr, height - 1, 0, "Press any key to go back", width, _A_FOOTER)
     stdscr.refresh()
     stdscr.getch()
 
@@ -200,6 +244,7 @@ def _show_error(stdscr, message):
 def _run(stdscr, api, limit):
     """Drill-down loop. Return (doc, entry) if confirmed, else None."""
     curses.curs_set(0)
+    _init_colors()
 
     level = 0
     sel_type = sel_doc = sel_entry = None
