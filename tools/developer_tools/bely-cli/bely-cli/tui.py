@@ -244,20 +244,33 @@ def _show_error(stdscr, message):
 def _run(stdscr, api, limit):
     """Drill-down loop. Return (doc, entry) if confirmed, else None."""
     curses.curs_set(0)
+    # ncurses waits ESCDELAY ms after an ESC byte to see if it begins an escape
+    # sequence (arrows, PgUp, ...). The default is 1000ms, which makes "Esc to
+    # go back" feel frozen. 25ms is plenty to disambiguate real key sequences.
+    if hasattr(curses, "set_escdelay"):
+        curses.set_escdelay(25)
     _init_colors()
 
     level = 0
     sel_type = sel_doc = sel_entry = None
-    docs = entries = []
+
+    # Per-session caches so back-navigation redraws from memory instead of
+    # re-hitting the network. Keyed by parent id; errors are left uncached so a
+    # later visit retries. `is None` checks distinguish "not fetched" from a
+    # legitimately empty result list (which we do cache).
+    types = None
+    docs_cache = {}      # type_id -> list of documents
+    entries_cache = {}   # doc_id -> list of entries
 
     while True:
         if level == 0:
-            _loading(stdscr, "Loading logbooks...")
-            try:
-                types = api.get_logbook_types()
-            except Exception as e:  # broad: avoid importing belyApi just for its exceptions
-                _show_error(stdscr, f"Could not load logbooks: {e}")
-                return None
+            if types is None:
+                _loading(stdscr, "Loading logbooks...")
+                try:
+                    types = api.get_logbook_types()
+                except Exception as e:  # broad: avoid importing belyApi just for its exceptions
+                    _show_error(stdscr, f"Could not load logbooks: {e}")
+                    return None
             chosen = _select(stdscr, "Select a logbook", types, format_type)
             if chosen is None:
                 return None
@@ -265,13 +278,16 @@ def _run(stdscr, api, limit):
             level = 1
 
         elif level == 1:
-            _loading(stdscr, f"Loading recent documents in '{format_type(sel_type)}'...")
-            try:
-                docs = api.get_log_documents(logbook_type_id=sel_type.id, limit=limit)
-            except Exception as e:
-                _show_error(stdscr, f"Could not load documents: {e}")
-                level = 0
-                continue
+            docs = docs_cache.get(sel_type.id)
+            if docs is None:
+                _loading(stdscr, f"Loading recent documents in '{format_type(sel_type)}'...")
+                try:
+                    docs = api.get_log_documents(logbook_type_id=sel_type.id, limit=limit)
+                except Exception as e:
+                    _show_error(stdscr, f"Could not load documents: {e}")
+                    level = 0
+                    continue
+                docs_cache[sel_type.id] = docs
             chosen = _select(
                 stdscr, f"{format_type(sel_type)} - recent documents", docs, format_doc)
             if chosen is None:
@@ -281,13 +297,16 @@ def _run(stdscr, api, limit):
             level = 2
 
         elif level == 2:
-            _loading(stdscr, f"Loading entries in '{format_doc(sel_doc)}'...")
-            try:
-                entries = api.get_log_entries(log_document_id=sel_doc.id)
-            except Exception as e:
-                _show_error(stdscr, f"Could not load entries: {e}")
-                level = 1
-                continue
+            entries = entries_cache.get(sel_doc.id)
+            if entries is None:
+                _loading(stdscr, f"Loading entries in '{format_doc(sel_doc)}'...")
+                try:
+                    entries = api.get_log_entries(log_document_id=sel_doc.id)
+                except Exception as e:
+                    _show_error(stdscr, f"Could not load entries: {e}")
+                    level = 1
+                    continue
+                entries_cache[sel_doc.id] = entries
             chosen = _select(
                 stdscr, f"{format_doc(sel_doc)} - entries", entries, format_entry)
             if chosen is None:
