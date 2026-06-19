@@ -50,6 +50,13 @@ def filter_items(items, query, render_fn):
     return [it for it in items if q in render_fn(it).lower()]
 
 
+def step_index(index, delta, length):
+    """Clamp index+delta to [0, length-1]. length<=0 returns 0."""
+    if length <= 0:
+        return 0
+    return max(0, min(index + delta, length - 1))
+
+
 def entry_reference(doc, entry):
     """Reference dict for the selected entry, for json/yaml output."""
     return {
@@ -180,13 +187,20 @@ def _select(stdscr, title, items, render_fn):
             pos = 0
 
 
-def _view_entry(stdscr, doc, entry):
-    """Scrollable view of an entry's markdown. Return 'select' or 'back'."""
-    body = getattr(entry, "log_entry", None) or "(empty entry)"
+def _view_entry(stdscr, doc, entries, index):
+    """Scrollable view of an entry's markdown, with Left/Right to move between
+    entries in the document. Return (action, index) where action is 'select' or
+    'back' and index is the (possibly changed) entry the user ended on."""
     top = 0
-    header = f'{getattr(doc, "name", "")}  /  log_id={getattr(entry, "log_id", "")}'
 
     while True:
+        entry = entries[index]
+        body = getattr(entry, "log_entry", None) or "(empty entry)"
+        header = (
+            f'{getattr(doc, "name", "")}  /  log_id={getattr(entry, "log_id", "")}'
+            f'   ({index + 1}/{len(entries)})'
+        )
+
         height, width = stdscr.getmaxyx()
         body_h = max(1, height - 3)
 
@@ -202,7 +216,7 @@ def _view_entry(stdscr, doc, entry):
         _addstr(stdscr, 0, 0, header, width, _A_TITLE)
         for row, line in enumerate(lines[top:top + body_h]):
             _addstr(stdscr, 2 + row, 0, line, width)
-        footer = "[Up/Down PgUp/PgDn] scroll  [Enter/q] select this entry  [Esc] back"
+        footer = "[Up/Down PgUp/PgDn] scroll  [Left/Right] prev/next entry  [Enter/q] select  [Esc] back"
         _addstr(stdscr, height - 1, 0, footer, width, _A_FOOTER)
         stdscr.refresh()
 
@@ -215,10 +229,18 @@ def _view_entry(stdscr, doc, entry):
             top = max(0, top - body_h)
         elif ch == curses.KEY_NPAGE:
             top = min(max_top, top + body_h)
+        elif ch == curses.KEY_LEFT:
+            new = step_index(index, -1, len(entries))
+            if new != index:
+                index, top = new, 0   # reset scroll on entry change
+        elif ch == curses.KEY_RIGHT:
+            new = step_index(index, +1, len(entries))
+            if new != index:
+                index, top = new, 0
         elif ch in _ENTER_KEYS or ch in (ord("q"), ord("Q")):
-            return "select"
+            return "select", index
         elif ch == _ESC or ch in _BACKSPACE_KEYS:
-            return "back"
+            return "back", index
 
 
 def _loading(stdscr, message):
@@ -316,7 +338,10 @@ def _run(stdscr, api, limit):
             level = 3
 
         elif level == 3:
-            action = _view_entry(stdscr, sel_doc, sel_entry)
+            entries = entries_cache[sel_doc.id]   # already populated at level 2
+            idx = next(i for i, e in enumerate(entries) if e is sel_entry)
+            action, idx = _view_entry(stdscr, sel_doc, entries, idx)
+            sel_entry = entries[idx]
             if action == "back":
                 level = 2
                 continue

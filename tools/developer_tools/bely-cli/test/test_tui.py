@@ -56,6 +56,21 @@ class FormatEntryTests(unittest.TestCase):
         self.assertIn("Real content", tui.format_entry(e))
 
 
+class StepIndexTests(unittest.TestCase):
+    def test_middle_moves(self):
+        self.assertEqual(tui.step_index(3, +1, 10), 4)
+        self.assertEqual(tui.step_index(3, -1, 10), 2)
+
+    def test_clamp_low(self):
+        self.assertEqual(tui.step_index(0, -1, 10), 0)
+
+    def test_clamp_high(self):
+        self.assertEqual(tui.step_index(9, +1, 10), 9)
+
+    def test_empty_list(self):
+        self.assertEqual(tui.step_index(0, +1, 0), 0)
+
+
 class EntryReferenceTests(unittest.TestCase):
     def test_reference_fields(self):
         doc = SimpleNamespace(id=42, name="My Doc")
