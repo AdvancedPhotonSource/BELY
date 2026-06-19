@@ -10,7 +10,6 @@ from unittest.mock import MagicMock, patch
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "bely-cli"))
 
 import commands
-import common
 
 
 class _NF(Exception):
@@ -64,8 +63,8 @@ class CmdNewDocTests(unittest.TestCase):
         try:
             with patch.object(commands.auth, "get_factory", return_value=factory), \
                  patch.object(commands.auth, "get_authenticated_factory", return_value=auth_ctx), \
-                 patch.object(commands.belyApi, "LogDocumentOptions") as opts_cls, \
-                 patch.object(common.belyApi.exceptions, "NotFoundException", _NF):
+                 patch("belyApi.LogDocumentOptions") as opts_cls, \
+                 patch("belyApi.exceptions.NotFoundException", _NF):
                 buf = io.StringIO()
                 with redirect_stdout(buf):
                     commands.cmd_new_doc(

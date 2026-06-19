@@ -1,8 +1,6 @@
 import os
 import sys
 
-import belyApi
-
 import auth
 import config
 from common import find_logdoc, write_entry_to_file, open_in_editor, print_items, print_result
@@ -150,6 +148,7 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
 
 
     # Build document options
+    import belyApi
     doc_opts = belyApi.LogDocumentOptions(
         name=name,
         logbook_type_id=logbook_type.id,

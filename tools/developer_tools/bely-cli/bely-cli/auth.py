@@ -3,10 +3,11 @@ import os
 import sys
 from contextlib import contextmanager
 
-import belyApi
-
-from BelyApiFactory import BelyApiFactory
 from config import CONFIG_DIR, expand_path, get_setting
+
+# belyApi and BelyApiFactory are imported lazily inside the functions that need
+# them: the generated client is ~1.8s to import, and paths like --help that
+# never make a network call should not pay that cost.
 
 
 def get_token_file():
@@ -78,11 +79,13 @@ def delete_token():
 
 def get_factory():
     """Create and return an unauthenticated BelyApiFactory."""
+    from BelyApiFactory import BelyApiFactory
     return BelyApiFactory(bely_url=get_host())
 
 
 def _login_and_cache(factory):
     """Prompt for credentials, authenticate the factory, and persist the new token."""
+    import belyApi
     username = get_username()
     password = get_password(username)
     try:
@@ -109,6 +112,9 @@ def get_authenticated_factory():
       1. BELY_USER + BELY_PASSWORD env vars
       2. Interactive prompt
     """
+    import belyApi
+    from BelyApiFactory import BelyApiFactory
+
     factory = BelyApiFactory(bely_url=get_host())
 
     token = load_token()

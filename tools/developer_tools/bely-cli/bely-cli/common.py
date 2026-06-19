@@ -6,8 +6,6 @@ import tempfile
 
 import yaml
 
-import belyApi
-
 import config
 
 
@@ -46,6 +44,7 @@ def print_result(data, message, fmt="text"):
 
 
 def find_logdoc(logbook_api, name):
+    import belyApi
     try:
         existing = logbook_api.get_log_document_by_name(name=name)
         return existing
