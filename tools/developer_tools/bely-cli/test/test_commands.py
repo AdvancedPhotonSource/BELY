@@ -77,6 +77,7 @@ class CmdNewDocTests(unittest.TestCase):
                         no_template=False,
                         output_dir=None,
                         list_options=None,
+                        fmt="text",
                     )
         finally:
             os.unlink(tmp_path)

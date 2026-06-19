@@ -1,4 +1,5 @@
 import io
+import json
 import os
 import sys
 import tempfile
@@ -77,6 +78,7 @@ class CmdAddEntryTests(unittest.TestCase):
                         file=tmp_path,
                         text=None,
                         add_attachment=None,
+                        fmt="text",
                     )
             finally:
                 for p in patches:
@@ -88,6 +90,37 @@ class CmdAddEntryTests(unittest.TestCase):
         self.assertEqual(api.entry_saved.log_entry, "added content\n")
         self.assertEqual(api.entry_saved.log_id, 99)
         self.assertIn('Log entry added to "My Doc", log_id=99', buf.getvalue())
+
+    def test_add_entry_json_format(self):
+        api = FakeApi()
+        tmp_path = _write_tmp("added content\n")
+
+        try:
+            patches = _patch_auth(api)
+            for p in patches:
+                p.start()
+            try:
+                buf = io.StringIO()
+                with redirect_stdout(buf):
+                    entry.cmd_add_entry(
+                        doc_name="My Doc",
+                        doc_id=None,
+                        file=tmp_path,
+                        text=None,
+                        add_attachment=None,
+                        fmt="json",
+                    )
+            finally:
+                for p in patches:
+                    p.stop()
+        finally:
+            os.unlink(tmp_path)
+
+        # In JSON mode the only stdout is the structured result.
+        payload = json.loads(buf.getvalue())
+        self.assertEqual(payload["log_id"], 99)
+        self.assertEqual(payload["status"], "added")
+        self.assertEqual(payload["doc"], "My Doc")
 
 
 class CmdUpdateEntryTests(unittest.TestCase):
@@ -115,6 +148,7 @@ class CmdUpdateEntryTests(unittest.TestCase):
                         file=tmp_path,
                         text=None,
                         add_attachment=None,
+                        fmt="text",
                     )
             finally:
                 for p in patches:
