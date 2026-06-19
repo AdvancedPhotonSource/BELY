@@ -8,6 +8,8 @@ import yaml
 
 import belyApi
 
+import config
+
 
 # Supported values for the global --format option (single source of truth).
 FORMATS = ("text", "json", "yaml")
@@ -79,7 +81,7 @@ def open_in_editor(initial_content=""):
         tmp.write(initial_content)
         tmp_path = tmp.name
     try:
-        editor = os.environ.get("EDITOR", "vi")
+        editor = config.get_editor()
         subprocess.call([editor, tmp_path])
         with open(tmp_path, "r") as f:
             return f.read()

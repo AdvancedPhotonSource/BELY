@@ -53,6 +53,9 @@ lookups (listing types, systems, templates, finding documents) do not.
 On success a token is cached at `~/.config/bely/token` (permissions `0600`) and reused on
 later runs. Expired or invalid tokens are discarded and you re-authenticate automatically.
 
+The token location can be changed with the `token_path` setting; by default it sits beside
+the settings file (see [Configuration & environment](#configuration--environment)).
+
 ## Output format
 
 A global `--format` option controls output for all commands:
@@ -158,28 +161,35 @@ variables (`BELY_PASSWORD` is masked).
 
 #### `bely.py config edit`
 
-Open `~/.config/bely/settings.yaml` in your `$EDITOR` (defaults to `vi`). The file and
-directory are created if needed.
+Open the settings file in your editor. The editor is resolved from `EDITOR`, then the
+`editor` setting, then `vi`. The file and directory are created if needed.
 
 #### `bely.py config set FIELD VALUE`
 
-Set a single configuration field. `FIELD` is one of `host` or `user`.
+Set a single configuration field. `FIELD` is one of `host`, `user`, `editor`, or
+`token_path`.
 
 ```bash
 bely.py config set user alice
 bely.py config set host https://tinkerbox.aps.anl.gov:8181/bely
+bely.py config set editor nano
+bely.py config set token_path ~/.secrets/bely-token
 ```
 
 ## Configuration & environment
 
 | Location / variable | Purpose |
 |---------------------|---------|
-| `~/.config/bely/settings.yaml` | Persistent settings (`host`, `user`); permissions `0600`. |
-| `~/.config/bely/token` | Cached auth token; permissions `0600`. |
+| `~/.config/bely/settings.yaml` | Persistent settings (`host`, `user`, `editor`, `token_path`); permissions `0600`. |
+| `~/.config/bely/token` | Cached auth token; permissions `0600`. Override with the `token_path` setting. |
+| `BELY_SETTINGS_FILE` | Path to the settings file (overrides the default location). The default token sits beside it. |
 | `BELY_HOST` | Server URL (overrides the settings file). |
 | `BELY_USER` | Username (overrides the settings file). |
 | `BELY_PASSWORD` | Password for non-interactive authentication. |
-| `EDITOR` | Editor used for interactive entries and `config edit` (default: `vi`). |
+| `EDITOR` | Editor for interactive entries and `config edit`. Falls back to the `editor` setting, then `vi`. |
+
+Settings that hold paths (`token_path`) and the `BELY_SETTINGS_FILE` env var expand `~` and
+`$VARS`.
 
 ## Examples
 

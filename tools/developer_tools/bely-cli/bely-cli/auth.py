@@ -6,9 +6,15 @@ from contextlib import contextmanager
 import belyApi
 
 from BelyApiFactory import BelyApiFactory
-from config import CONFIG_DIR, _ensure_config_dir, get_setting
+from config import CONFIG_DIR, expand_path, get_setting
 
-TOKEN_FILE = os.path.join(CONFIG_DIR, "token")
+
+def get_token_file():
+    """Return the token file path: 'token_path' setting, else <config dir>/token."""
+    configured = get_setting("token_path")
+    if configured:
+        return expand_path(configured)
+    return os.path.join(CONFIG_DIR, "token")
 
 
 def get_host():
@@ -45,7 +51,7 @@ def get_password(username):
 def load_token():
     """Return the cached auth token from disk, or None if not present."""
     try:
-        with open(TOKEN_FILE, "r") as f:
+        with open(get_token_file(), "r") as f:
             return f.read().strip() or None
     except FileNotFoundError:
         return None
@@ -53,16 +59,19 @@ def load_token():
 
 def save_token(token):
     """Persist the auth token to disk with restrictive permissions."""
-    _ensure_config_dir()
-    with open(TOKEN_FILE, "w") as f:
+    token_file = get_token_file()
+    parent = os.path.dirname(token_file)
+    if parent:
+        os.makedirs(parent, mode=0o700, exist_ok=True)
+    with open(token_file, "w") as f:
         f.write(token)
-    os.chmod(TOKEN_FILE, 0o600)
+    os.chmod(token_file, 0o600)
 
 
 def delete_token():
     """Remove the cached token file."""
     try:
-        os.remove(TOKEN_FILE)
+        os.remove(get_token_file())
     except FileNotFoundError:
         pass
 

@@ -8,7 +8,7 @@ import config
 from common import find_logdoc, write_entry_to_file, open_in_editor, print_items, print_result
 
 
-ENV_VARS = ["BELY_HOST", "BELY_USER", "BELY_PASSWORD"]
+ENV_VARS = ["BELY_HOST", "BELY_USER", "BELY_PASSWORD", "BELY_SETTINGS_FILE", "EDITOR"]
 
 
 def cmd_show_config(fmt="text"):
@@ -86,7 +86,7 @@ def cmd_edit_config():
     config._ensure_config_dir()
     if not os.path.exists(config.SETTINGS_FILE):
         config.save_settings({})
-    editor = os.environ.get("EDITOR", "vi")
+    editor = config.get_editor()
     os.execvp(editor, [editor, config.SETTINGS_FILE])
 
 
