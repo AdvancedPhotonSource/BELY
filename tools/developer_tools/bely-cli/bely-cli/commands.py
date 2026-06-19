@@ -11,26 +11,40 @@ from common import find_logdoc, write_entry_to_file, open_in_editor, print_items
 ENV_VARS = ["BELY_HOST", "BELY_USER", "BELY_PASSWORD"]
 
 
-def cmd_show_config():
+def cmd_show_config(fmt="text"):
     """Show current configuration from settings file and environment."""
+    settings = config.load_settings()
+    environment = {}
+    for var in ENV_VARS:
+        val = os.environ.get(var)
+        if val is not None:
+            environment[var] = "****" if "PASSWORD" in var else val
+
+    if fmt != "text":
+        print_result(
+            {
+                "settings_file": config.SETTINGS_FILE,
+                "settings": settings,
+                "environment": environment,
+            },
+            "",
+            fmt,
+        )
+        return
+
     print(f"Settings file: {config.SETTINGS_FILE}")
-    data = config.load_settings()
-    if data:
-        for key, value in data.items():
+    if settings:
+        for key, value in settings.items():
             print(f"  {key} = {value}")
     else:
         print("  (no settings)")
 
     print()
     print("Environment variables:")
-    found = False
-    for var in ENV_VARS:
-        val = os.environ.get(var)
-        if val is not None:
-            display = "****" if "PASSWORD" in var else val
+    if environment:
+        for var, display in environment.items():
             print(f"  {var} = {display}")
-            found = True
-    if not found:
+    else:
         print("  (none set)")
 
 
@@ -76,23 +90,22 @@ def cmd_edit_config():
     os.execvp(editor, [editor, config.SETTINGS_FILE])
 
 
-def cmd_set_config(field, value):
+def cmd_set_config(field, value, fmt="text"):
     """Set a single configuration field in settings.yaml."""
     if field not in config.VALID_FIELDS:
         valid = ", ".join(config.VALID_FIELDS)
         print(f"Error: unknown field '{field}'. Valid fields: {valid}", file=sys.stderr)
         sys.exit(1)
     config.set_setting(field, value)
-    print(f"Set {field} = {value}")
+    print_result({field: value}, f"Set {field} = {value}", fmt)
 
 
 
-def cmd_new_doc(ctx, type_, name, file, template, systems, no_template,
-                output_dir, list_options):
+def cmd_new_doc(type_, name, file, template, systems, no_template,
+                output_dir, list_options, fmt="text"):
     """Create a new log document, optionally adding a first log entry."""
-    json_output = ctx.obj["json"]
     if list_options:
-        _list_doc_option(list_options, json_output)
+        _list_doc_option(list_options, fmt)
         return
 
     if template and no_template:
@@ -155,7 +168,7 @@ def cmd_new_doc(ctx, type_, name, file, template, systems, no_template,
         doc = logbook_api.create_logbook_document(log_document_options=doc_opts)
         result["id"] = doc.id
         result["name"] = doc.name
-        if not json_output:
+        if fmt == "text":
             print(f'New document "{doc.name}" created, id={doc.id}')
 
         # Determine entry content from --file or --text
@@ -177,12 +190,12 @@ def cmd_new_doc(ctx, type_, name, file, template, systems, no_template,
                 entry.log_entry = content
             entry = logbook_api.add_update_log_entry(log_entry=entry)
             result["log_id"] = entry.log_id
-            if not json_output:
+            if fmt == "text":
                 print(f"Log entry added, log_id={entry.log_id}")
         elif entries:
             entry = entries[0]
             result["log_id"] = entry.log_id
-            if not json_output:
+            if fmt == "text":
                 print(f"Template generated a default log entry (log_id={entry.log_id})")
                 answer = input("Update the entry? [y/N] ").strip().lower()
                 if answer in ("y", "yes"):
@@ -194,9 +207,9 @@ def cmd_new_doc(ctx, type_, name, file, template, systems, no_template,
                     else:
                         print("No changes made.")
                 else:
-                    write_entry_to_file(entry, doc.name, output_dir)
+                    write_entry_to_file(entry, doc.name, output_dir, fmt)
         else:
-            if not json_output:
+            if fmt == "text":
                 answer = input("Create a log entry? [y/N] ").strip().lower()
                 if answer in ("y", "yes"):
                     entry = logbook_api.get_log_entry_template(log_document_id=doc.id)
@@ -209,13 +222,12 @@ def cmd_new_doc(ctx, type_, name, file, template, systems, no_template,
                     else:
                         print("Empty entry, skipped.")
 
-    if json_output:
-        print_result(result, "", json_output)
+    if fmt != "text":
+        print_result(result, "", fmt)
 
 
-def cmd_list_docs(ctx, limit):
+def cmd_list_docs(limit, fmt="text"):
     """List recent log documents created by the current user."""
-    json_output = ctx.obj["json"]
     username = auth.get_username()
     if not username:
         print("Error: cannot determine username. Set BELY_USER or 'user' in settings.",
@@ -239,7 +251,10 @@ def cmd_list_docs(ctx, limit):
     docs = docs[:limit]
 
     if not docs:
-        print("No documents found.")
+        if fmt == "text":
+            print("No documents found.")
+        else:
+            print_items([], [], fmt)
         return
 
     items = []
@@ -251,64 +266,70 @@ def cmd_list_docs(ctx, limit):
             "last_modified": d.last_modified_on.strftime("%Y-%m-%d %H:%M") if d.last_modified_on else "",
         })
     columns = [("id", "ID", 8), ("name", "Name", 50), ("type", "Type", 15), ("last_modified", "Last Modified", 20)]
-    print_items(items, columns, json_output)
+    print_items(items, columns, fmt)
 
 
-def _list_doc_option(option):
+def _list_doc_option(option, fmt="text"):
     """Dispatch --list-options choice to the matching listing helper."""
     {
         "system": cmd_list_systems,
         "type": cmd_list_types,
         "template": cmd_list_templates,
-    }[option]()
+    }[option](fmt)
 
 
-def cmd_list_types():
+def cmd_list_types(fmt="text"):
     """List all logbook types."""
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
     types = logbook_api.get_logbook_types()
 
-    if not types:
+    items = [
+        {
+            "id": t.id,
+            "name": t.name or "",
+            "display_name": t.display_name or "",
+            "description": t.description or "",
+        }
+        for t in types
+    ]
+    if not items and fmt == "text":
         print("No logbook types found.")
         return
-
-    print(f"{'ID':<6} {'Name':<20} {'Display Name':<30} {'Description'}")
-    print(f"{'--':<6} {'----':<20} {'------------':<30} {'-----------'}")
-    for t in types:
-        desc = t.description or ""
-        print(f"{t.id:<6} {t.name:<20} {t.display_name:<30} {desc}")
+    columns = [("id", "ID", 6), ("name", "Name", 20),
+               ("display_name", "Display Name", 30), ("description", "Description", 0)]
+    print_items(items, columns, fmt)
 
 
-def cmd_list_systems():
+def cmd_list_systems(fmt="text"):
     """List all logbook systems."""
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
     systems = logbook_api.get_logbook_systems()
 
-    if not systems:
+    items = [
+        {"id": s.id, "name": s.name or "", "description": s.description or ""}
+        for s in systems
+    ]
+    if not items and fmt == "text":
         print("No logbook systems found.")
         return
-
-    print(f"{'ID':<6} {'Name':<30} {'Description'}")
-    print(f"{'--':<6} {'----':<30} {'-----------'}")
-    for s in systems:
-        desc = s.description or ""
-        print(f"{s.id:<6} {s.name:<30} {desc}")
+    columns = [("id", "ID", 6), ("name", "Name", 30), ("description", "Description", 0)]
+    print_items(items, columns, fmt)
 
 
-def cmd_list_templates():
+def cmd_list_templates(fmt="text"):
     """List all logbook templates."""
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
     templates = logbook_api.get_logbook_templates()
 
-    if not templates:
+    items = [
+        {"id": t.id, "name": t.name or "", "description": t.description or ""}
+        for t in templates
+    ]
+    if not items and fmt == "text":
         print("No logbook templates found.")
         return
-
-    print(f"{'ID':<6} {'Name':<30} {'Description'}")
-    print(f"{'--':<6} {'----':<30} {'-----------'}")
-    for t in templates:
-        desc = t.description or ""
-        print(f"{t.id:<6} {t.name:<30} {desc}")
+    columns = [("id", "ID", 6), ("name", "Name", 30), ("description", "Description", 0)]
+    print_items(items, columns, fmt)

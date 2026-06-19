@@ -4,16 +4,26 @@ import subprocess
 import sys
 import tempfile
 
+import yaml
+
 import belyApi
 
 
-def print_items(items, columns, json_output=False):
-    """Print a list of dicts as a table or JSON array.
+# Supported values for the global --format option (single source of truth).
+FORMATS = ("text", "json", "yaml")
 
-    columns: list of (key, header, width) tuples for table format.
+
+def print_items(items, columns, fmt="text"):
+    """Print a list of dicts as a table, JSON array, or YAML sequence.
+
+    columns: list of (key, header, width) tuples for the table format.
+    fmt: one of FORMATS.
     """
-    if json_output:
-        print(json.dumps(items, indent=2))
+    if fmt == "json":
+        print(json.dumps(items, indent=2, default=str))
+        return
+    if fmt == "yaml":
+        print(yaml.safe_dump(items, sort_keys=False, default_flow_style=False), end="")
         return
     header = "  ".join(f"{h:<{w}}" for _, h, w in columns)
     sep = "  ".join(f"{'-' * len(h):<{w}}" for _, h, w in columns)
@@ -23,10 +33,12 @@ def print_items(items, columns, json_output=False):
         print("  ".join(f"{str(item.get(k, '')):<{w}}" for k, _, w in columns))
 
 
-def print_result(data, message, json_output=False):
-    """Print a confirmation message or JSON object."""
-    if json_output:
-        print(json.dumps(data))
+def print_result(data, message, fmt="text"):
+    """Print a confirmation message (text) or structured data (json/yaml)."""
+    if fmt == "json":
+        print(json.dumps(data, default=str))
+    elif fmt == "yaml":
+        print(yaml.safe_dump(data, sort_keys=False, default_flow_style=False), end="")
     else:
         print(message)
 
@@ -43,8 +55,11 @@ def _sanitize_for_filename(name):
     return "".join(c if c.isalnum() or c in "-_." else "_" for c in name)
 
 
-def write_entry_to_file(entry, doc_name, output_dir=None):
-    """Write entry markdown to <doc_name>_entry_<id>.md in output_dir (cwd if None)."""
+def write_entry_to_file(entry, doc_name, output_dir=None, fmt="text"):
+    """Write entry markdown to <doc_name>_entry_<id>.md in output_dir (cwd if None).
+
+    Returns the path written. Prints the confirmation line only for text format.
+    """
     directory = os.path.expanduser(output_dir) if output_dir else "."
     if not os.path.isdir(directory):
         print(f"Error: output directory not found: {directory}", file=sys.stderr)
@@ -53,7 +68,8 @@ def write_entry_to_file(entry, doc_name, output_dir=None):
     out_path = os.path.join(directory, f"{safe_doc}_entry_{entry.log_id}.md")
     with open(out_path, "w") as f:
         f.write(entry.log_entry or "")
-    print(f'Wrote log entry id={entry.log_id} to {out_path}')
+    if fmt == "text":
+        print(f'Wrote log entry id={entry.log_id} to {out_path}')
     return out_path
 
 

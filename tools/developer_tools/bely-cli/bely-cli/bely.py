@@ -2,6 +2,7 @@
 
 import click
 
+from common import FORMATS
 from config import VALID_FIELDS
 from commands import (
     cmd_new_doc,
@@ -22,12 +23,13 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
-@click.option("--json", "json_output", is_flag=True, help="Output in JSON format")
+@click.option("--format", "output_format", type=click.Choice(FORMATS),
+              default="text", help="Output format (default: text)")
 @click.pass_context
-def cli(ctx, json_output):
+def cli(ctx, output_format):
     """BELY logbook CLI"""
     ctx.ensure_object(dict)
-    ctx.obj["json"] = json_output
+    ctx.obj["format"] = output_format
 
 
 # -- doc --
@@ -54,7 +56,7 @@ def doc_group():
 @click.pass_context
 def doc_new(ctx, **kwargs):
     """Create a new log document."""
-    cmd_new_doc(ctx, **kwargs)
+    cmd_new_doc(fmt=ctx.obj["format"], **kwargs)
 
 
 @doc_group.command("list")
@@ -62,7 +64,7 @@ def doc_new(ctx, **kwargs):
 @click.pass_context
 def doc_list(ctx, **kwargs):
     """List recent log documents created by you."""
-    cmd_list_docs(ctx, **kwargs)
+    cmd_list_docs(fmt=ctx.obj["format"], **kwargs)
 
 
 # -- entry --
@@ -82,7 +84,7 @@ def entry_group():
 @click.pass_context
 def entry_add(ctx, **kwargs):
     """Add a new log entry to an existing document."""
-    cmd_add_entry(ctx, **kwargs)
+    cmd_add_entry(fmt=ctx.obj["format"], **kwargs)
 
 
 @entry_group.command("update")
@@ -95,7 +97,7 @@ def entry_add(ctx, **kwargs):
 @click.pass_context
 def entry_update(ctx, **kwargs):
     """Update an existing log entry."""
-    cmd_update_entry(ctx, **kwargs)
+    cmd_update_entry(fmt=ctx.obj["format"], **kwargs)
 
 
 @entry_group.command("list")
@@ -104,7 +106,7 @@ def entry_update(ctx, **kwargs):
 @click.pass_context
 def entry_list(ctx, **kwargs):
     """List entries in a log document."""
-    cmd_list_entries(ctx, **kwargs)
+    cmd_list_entries(fmt=ctx.obj["format"], **kwargs)
 
 
 @entry_group.command("get")
@@ -116,7 +118,7 @@ def entry_list(ctx, **kwargs):
 @click.pass_context
 def entry_get(ctx, **kwargs):
     """Write the markdown of a log entry to a file (latest by default)."""
-    cmd_get_entry(ctx, **kwargs)
+    cmd_get_entry(fmt=ctx.obj["format"], **kwargs)
 
 
 # -- config --
@@ -128,9 +130,10 @@ def config_group():
 
 
 @config_group.command("show")
-def config_show():
+@click.pass_context
+def config_show(ctx):
     """Show current configuration."""
-    cmd_show_config()
+    cmd_show_config(fmt=ctx.obj["format"])
 
 
 @config_group.command("edit")
@@ -142,9 +145,10 @@ def config_edit():
 @config_group.command("set")
 @click.argument("field", type=click.Choice(VALID_FIELDS))
 @click.argument("value")
-def config_set(field, value):
+@click.pass_context
+def config_set(ctx, field, value):
     """Set a configuration field to a value."""
-    cmd_set_config(field, value)
+    cmd_set_config(field, value, fmt=ctx.obj["format"])
 
 
 

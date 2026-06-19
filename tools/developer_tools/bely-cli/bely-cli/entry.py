@@ -3,7 +3,7 @@ import sys
 from types import SimpleNamespace
 
 import auth
-from common import find_logdoc, write_entry_to_file, open_in_editor
+from common import find_logdoc, write_entry_to_file, open_in_editor, print_items, print_result
 
 
 def resolve_doc(logbook_api, doc_name, doc_id):
@@ -23,7 +23,11 @@ def resolve_doc(logbook_api, doc_name, doc_id):
     return doc
 
 
-def upload_and_print_attachment(logbook_api, doc_id, log_id, path):
+def upload_and_print_attachment(logbook_api, doc_id, log_id, path, fmt="text"):
+    """Upload an attachment and return its details as a dict.
+
+    Prints the human-readable summary only for text format.
+    """
     basename = os.path.basename(path)
     att = logbook_api.upload_attachment(
         log_document_id=doc_id,
@@ -32,14 +36,22 @@ def upload_and_print_attachment(logbook_api, doc_id, log_id, path):
         append_reference=True,
         file_name=basename,
     )
-    print(f'Attachment "{basename}" uploaded')
-    print(f"  original_filename:  {att.original_filename}")
-    print(f"  stored_filename:    {att.stored_filename}")
-    print(f"  download_path:      {att.download_path}")
-    print(f"  markdown_reference: {att.markdown_reference}")
+    info = {
+        "original_filename": att.original_filename,
+        "stored_filename": att.stored_filename,
+        "download_path": att.download_path,
+        "markdown_reference": att.markdown_reference,
+    }
+    if fmt == "text":
+        print(f'Attachment "{basename}" uploaded')
+        print(f"  original_filename:  {att.original_filename}")
+        print(f"  stored_filename:    {att.stored_filename}")
+        print(f"  download_path:      {att.download_path}")
+        print(f"  markdown_reference: {att.markdown_reference}")
+    return info
 
 
-def cmd_update_entry(doc_name, doc_id, entry_id, file, text, add_attachment):
+def cmd_update_entry(doc_name, doc_id, entry_id, file, text, add_attachment, fmt="text"):
     """Update an existing log entry."""
     if file and text:
         print("Error: --file and --text are mutually exclusive.", file=sys.stderr)
@@ -103,12 +115,19 @@ def cmd_update_entry(doc_name, doc_id, entry_id, file, text, add_attachment):
             entry = user_entries[-1]
 
         # Update entry content
+        result = {"doc": doc.name, "log_id": entry.log_id, "status": None,
+                  "attachment": None}
         if content:
             entry.log_entry = content
             entry = logbook_api.add_update_log_entry(log_entry=entry)
-            print(f'Log entry updated in "{doc.name}", log_id={entry.log_id}')
+            result["log_id"] = entry.log_id
+            result["status"] = "updated"
+            if fmt == "text":
+                print(f'Log entry updated in "{doc.name}", log_id={entry.log_id}')
         elif add_attachment:
-            upload_and_print_attachment(logbook_api, doc.id, entry.log_id, add_attachment)
+            result["attachment"] = upload_and_print_attachment(
+                logbook_api, doc.id, entry.log_id, add_attachment, fmt)
+            result["status"] = "attachment_added"
         else:
             # Interactive edit: open entry in editor
             original = entry.log_entry or ""
@@ -116,12 +135,20 @@ def cmd_update_entry(doc_name, doc_id, entry_id, file, text, add_attachment):
             if edited != original:
                 entry.log_entry = edited
                 entry = logbook_api.add_update_log_entry(log_entry=entry)
-                print(f'Log entry updated in "{doc.name}", log_id={entry.log_id}')
+                result["log_id"] = entry.log_id
+                result["status"] = "updated"
+                if fmt == "text":
+                    print(f'Log entry updated in "{doc.name}", log_id={entry.log_id}')
             else:
-                print("No changes made.")
+                result["status"] = "no_change"
+                if fmt == "text":
+                    print("No changes made.")
+
+        if fmt != "text":
+            print_result(result, "", fmt)
 
 
-def cmd_add_entry(doc_name, doc_id, file, text, add_attachment):
+def cmd_add_entry(doc_name, doc_id, file, text, add_attachment, fmt="text"):
     """Add a new log entry to an existing document."""
     if file and text:
         print("Error: --file and --text are mutually exclusive.", file=sys.stderr)
@@ -159,24 +186,37 @@ def cmd_add_entry(doc_name, doc_id, file, text, add_attachment):
 
         entry = logbook_api.get_log_entry_template(log_document_id=doc.id)
 
+        result = {"doc": doc.name, "log_id": None, "status": None, "attachment": None}
         if use_editor:
             edited = open_in_editor(entry.log_entry or "")
             if edited.strip():
                 entry.log_entry = edited
                 entry = logbook_api.add_update_log_entry(log_entry=entry)
-                print(f'Log entry added to "{doc.name}", log_id={entry.log_id}')
+                result["log_id"] = entry.log_id
+                result["status"] = "added"
+                if fmt == "text":
+                    print(f'Log entry added to "{doc.name}", log_id={entry.log_id}')
             else:
-                print("Empty entry, skipped.")
+                result["status"] = "skipped"
+                if fmt == "text":
+                    print("Empty entry, skipped.")
         else:
             entry.log_entry = content or ""
             entry = logbook_api.add_update_log_entry(log_entry=entry)
-            print(f'Log entry added to "{doc.name}", log_id={entry.log_id}')
+            result["log_id"] = entry.log_id
+            result["status"] = "added"
+            if fmt == "text":
+                print(f'Log entry added to "{doc.name}", log_id={entry.log_id}')
 
             if add_attachment:
-                upload_and_print_attachment(logbook_api, doc.id, entry.log_id, add_attachment)
+                result["attachment"] = upload_and_print_attachment(
+                    logbook_api, doc.id, entry.log_id, add_attachment, fmt)
+
+        if fmt != "text":
+            print_result(result, "", fmt)
 
 
-def cmd_list_entries(doc_name, doc_id):
+def cmd_list_entries(doc_name, doc_id, fmt="text"):
     """List entries in a log document."""
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
@@ -184,21 +224,30 @@ def cmd_list_entries(doc_name, doc_id):
     entries = logbook_api.get_log_entries(log_document_id=doc.id)
 
     if not entries:
-        print(f'No entries found in document {doc.name}.')
+        if fmt == "text":
+            print(f'No entries found in document {doc.name}.')
+        else:
+            print_items([], [], fmt)
         return
 
-    print(f"{'Log ID':<10} {'Date':<18} {'Author':<20} {'Snippet'}")
-    print(f"{'------':<10} {'----':<18} {'------':<20} {'-------'}")
+    items = []
     for e in entries:
         date = e.entered_on_date_time.strftime("%Y-%m-%d %H:%M") if e.entered_on_date_time else ""
-        author = e.entered_by_username or ""
         snippet = (e.log_entry or "").strip().splitlines()[0] if e.log_entry else ""
         if len(snippet) > 60:
             snippet = snippet[:57] + "..."
-        print(f"{e.log_id:<10} {date:<18} {author:<20} {snippet}")
+        items.append({
+            "log_id": e.log_id,
+            "date": date,
+            "author": e.entered_by_username or "",
+            "snippet": snippet,
+        })
+    columns = [("log_id", "Log ID", 10), ("date", "Date", 18),
+               ("author", "Author", 20), ("snippet", "Snippet", 0)]
+    print_items(items, columns, fmt)
 
 
-def cmd_get_entry(doc_name, doc_id, entry_id, output_dir):
+def cmd_get_entry(doc_name, doc_id, entry_id, output_dir, fmt="text"):
     """Write the markdown of a log entry to a file (latest by default)."""
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
@@ -219,4 +268,10 @@ def cmd_get_entry(doc_name, doc_id, entry_id, output_dir):
         entry = entries[-1]
 
     name_for_file = doc_name if doc_name else str(doc.id)
-    write_entry_to_file(entry, name_for_file, output_dir)
+    out_path = write_entry_to_file(entry, name_for_file, output_dir, fmt)
+    if fmt != "text":
+        print_result(
+            {"log_id": entry.log_id, "path": out_path, "doc": doc.name},
+            "",
+            fmt,
+        )
