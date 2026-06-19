@@ -10,6 +10,7 @@ COMPONENT_DIR="${COMPONENT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 # Unit tests (run from the project dir so unittest discovers test/).
 (cd "$COMPONENT_DIR" && "$PYTHON" -m unittest)
 
-# Smoke test: the published command loads and the global --format option is wired.
+# Smoke test: the published command loads and --format is wired per-command
+# (appended to a leaf command, not at the top level).
 bely.py -h > /dev/null
-bely.py --format json doc -h > /dev/null
+bely.py doc list -h | grep -q -- --format

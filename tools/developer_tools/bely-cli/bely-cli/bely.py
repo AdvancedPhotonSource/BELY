@@ -22,14 +22,18 @@ from entry import (
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
+def format_option(f):
+    """Per-command --format option, appended to each leaf command."""
+    return click.option(
+        "--format", "output_format", type=click.Choice(FORMATS), default="text",
+        help="Output format: text, json, yaml (default: text)",
+    )(f)
+
+
 @click.group(context_settings=CONTEXT_SETTINGS)
-@click.option("--format", "output_format", type=click.Choice(FORMATS),
-              default="text", help="Output format (default: text)")
-@click.pass_context
-def cli(ctx, output_format):
+def cli():
     """BELY logbook CLI"""
-    ctx.ensure_object(dict)
-    ctx.obj["format"] = output_format
+    pass
 
 
 # -- doc --
@@ -53,18 +57,18 @@ def doc_group():
               type=click.Choice(["system", "type", "template"]),
               default=None,
               help="List available values for the given option and exit")
-@click.pass_context
-def doc_new(ctx, **kwargs):
+@format_option
+def doc_new(output_format, **kwargs):
     """Create a new log document."""
-    cmd_new_doc(fmt=ctx.obj["format"], **kwargs)
+    cmd_new_doc(fmt=output_format, **kwargs)
 
 
 @doc_group.command("list")
 @click.option("--limit", default=20, type=int, help="Max documents to return (default 20)")
-@click.pass_context
-def doc_list(ctx, **kwargs):
+@format_option
+def doc_list(output_format, **kwargs):
     """List recent log documents created by you."""
-    cmd_list_docs(fmt=ctx.obj["format"], **kwargs)
+    cmd_list_docs(fmt=output_format, **kwargs)
 
 
 # -- entry --
@@ -81,10 +85,10 @@ def entry_group():
 @click.option("--file", "-f", "file", default=None, help="Markdown file with entry content")
 @click.option("--text", "-t", default=None, help="Inline text for the entry")
 @click.option("--add-attachment", default=None, help="File to attach to the entry")
-@click.pass_context
-def entry_add(ctx, **kwargs):
+@format_option
+def entry_add(output_format, **kwargs):
     """Add a new log entry to an existing document."""
-    cmd_add_entry(fmt=ctx.obj["format"], **kwargs)
+    cmd_add_entry(fmt=output_format, **kwargs)
 
 
 @entry_group.command("update")
@@ -94,19 +98,19 @@ def entry_add(ctx, **kwargs):
 @click.option("--file", "-f", "file", default=None, help="Markdown file with updated content")
 @click.option("--text", "-t", default=None, help="Inline text for the entry")
 @click.option("--add-attachment", default=None, help="File to attach to the entry")
-@click.pass_context
-def entry_update(ctx, **kwargs):
+@format_option
+def entry_update(output_format, **kwargs):
     """Update an existing log entry."""
-    cmd_update_entry(fmt=ctx.obj["format"], **kwargs)
+    cmd_update_entry(fmt=output_format, **kwargs)
 
 
 @entry_group.command("list")
 @click.option("--doc-name", "-n", default=None, help="Log document name")
 @click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
-@click.pass_context
-def entry_list(ctx, **kwargs):
+@format_option
+def entry_list(output_format, **kwargs):
     """List entries in a log document."""
-    cmd_list_entries(fmt=ctx.obj["format"], **kwargs)
+    cmd_list_entries(fmt=output_format, **kwargs)
 
 
 @entry_group.command("get")
@@ -115,10 +119,10 @@ def entry_list(ctx, **kwargs):
 @click.option("--id", "entry_id", default=None, type=int, help="Specific log entry ID (default: latest)")
 @click.option("--output", "-o", "output_dir", default=None,
               help="Directory to write <doc_name>_entry_<log_id>.md into (default: cwd)")
-@click.pass_context
-def entry_get(ctx, **kwargs):
+@format_option
+def entry_get(output_format, **kwargs):
     """Write the markdown of a log entry to a file (latest by default)."""
-    cmd_get_entry(fmt=ctx.obj["format"], **kwargs)
+    cmd_get_entry(fmt=output_format, **kwargs)
 
 
 # -- config --
@@ -130,10 +134,10 @@ def config_group():
 
 
 @config_group.command("show")
-@click.pass_context
-def config_show(ctx):
+@format_option
+def config_show(output_format):
     """Show current configuration."""
-    cmd_show_config(fmt=ctx.obj["format"])
+    cmd_show_config(fmt=output_format)
 
 
 @config_group.command("edit")
@@ -145,10 +149,10 @@ def config_edit():
 @config_group.command("set")
 @click.argument("field", type=click.Choice(VALID_FIELDS))
 @click.argument("value")
-@click.pass_context
-def config_set(ctx, field, value):
+@format_option
+def config_set(field, value, output_format):
     """Set a configuration field to a value."""
-    cmd_set_config(field, value, fmt=ctx.obj["format"])
+    cmd_set_config(field, value, fmt=output_format)
 
 
 

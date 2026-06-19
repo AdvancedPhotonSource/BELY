@@ -58,10 +58,10 @@ the settings file (see [Configuration & environment](#configuration--environment
 
 ## Output format
 
-A global `--format` option controls output for all commands:
+A `--format` option controls output, appended to the command:
 
 ```bash
-bely.py --format json doc list
+bely.py doc list --format json
 ```
 
 | Value  | Behavior                                              |
@@ -70,7 +70,7 @@ bely.py --format json doc list
 | `json` | Structured JSON — for scripting                       |
 | `yaml` | Structured YAML — for scripting                       |
 
-`--format` goes before the command group, e.g. `bely.py --format yaml entry list -n "..."`.
+`--format` is given at the end of a command, e.g. `bely.py entry list -n "..." --format yaml`.
 
 ## Commands
 
@@ -254,6 +254,6 @@ bely.py entry get -n "Shift Report"                 # latest, to cwd
 bely.py entry get -d 99 --id 42 -o ~/logs/
 
 # Structured output for scripting
-bely.py --format json doc list
-bely.py --format yaml entry list -n "Shift Report"
+bely.py doc list --format json
+bely.py entry list -n "Shift Report" --format yaml
 ```
