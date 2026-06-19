@@ -188,8 +188,32 @@ bely.py config set token_path ~/.secrets/bely-token
 | `BELY_PASSWORD` | Password for non-interactive authentication. |
 | `EDITOR` | Editor for interactive entries and `config edit`. Falls back to the `editor` setting, then `vi`. |
 
-Settings that hold paths (`token_path`) and the `BELY_SETTINGS_FILE` env var expand `~` and
-`$VARS`.
+Settings that hold paths (`token_path`, `setting_override_path`) and the
+`BELY_SETTINGS_FILE` env var expand `~` and `$VARS`.
+
+### Shared settings with per-user overrides
+
+When the settings file lives in a shared, read-only location, add a
+`setting_override_path` key pointing to a file the user owns. Keys in that file are merged
+on top of the shared settings, so each user can override individual values (e.g. `user` or
+`token_path`) without write access to the shared file. The override file is plain YAML and
+is hand-edited — `setting_override_path` is **not** set via the CLI, and a
+`setting_override_path` key inside the override file itself is ignored (no chaining).
+
+Shared `settings.yaml` (read-only). It can still hold per-user paths like `token_path`
+because `~` expands to each user's own home directory:
+
+```yaml
+host: https://tinkerbox.aps.anl.gov:8181/bely
+token_path: ~/.config/bely/token
+setting_override_path: ~/.config/bely/overrides.yaml
+```
+
+User-owned `~/.config/bely/overrides.yaml` — only the keys that differ per user:
+
+```yaml
+user: alice
+```
 
 ## Examples
 
