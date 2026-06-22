@@ -174,6 +174,9 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
         content = None
         if file:
             file = os.path.expanduser(file)
+            if not os.path.isfile(file):
+                print(f"Error: file not found: {file}", file=sys.stderr)
+                sys.exit(1)
             with open(file, "r") as f:
                 content = f.read()
 

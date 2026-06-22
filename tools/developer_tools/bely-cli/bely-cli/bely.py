@@ -1,5 +1,7 @@
 #!/C2/conda/envs/bely/bin/python
 
+import sys
+
 import click
 
 from common import FORMATS
@@ -175,4 +177,8 @@ def config_set(field, value, output_format):
 
 
 if __name__ == "__main__":
-    cli()
+    try:
+        cli()
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
