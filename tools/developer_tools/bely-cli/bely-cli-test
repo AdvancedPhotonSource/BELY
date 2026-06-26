@@ -2,4 +2,4 @@
 
 SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
 export BELY_HOST=https://tinkerbox.aps.anl.gov:8181/bely
-${SCRIPT_DIR}/bely-cli/bely.py "$@"
+${SCRIPT_DIR}/bely-cli/bely-cli.py "$@"

@@ -1,1 +1,1 @@
-bely-cli/bely.py
+bely-cli/bely-cli.py

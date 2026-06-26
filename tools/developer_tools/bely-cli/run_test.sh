@@ -12,6 +12,6 @@ COMPONENT_DIR="${COMPONENT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 
 # Smoke test: the published command loads and --format is wired per-command
 # (appended to a leaf command, not at the top level).
-bely.py -h > /dev/null
-bely.py doc list -h | grep -q -- --format
-bely.py tui lookup -h | grep -q -- --format
+bely-cli.py -h > /dev/null
+bely-cli.py doc list -h | grep -q -- --format
+bely-cli.py tui lookup -h | grep -q -- --format

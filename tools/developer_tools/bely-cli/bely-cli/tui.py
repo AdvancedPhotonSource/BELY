@@ -365,6 +365,6 @@ def cmd_tui(limit=100, fmt="text"):
     if fmt == "text":
         print(f"doc-id: {doc.id}")
         print(f"log-id: {entry.log_id}")
-        print(f"# fetch with: bely.py entry get -d {doc.id} --id {entry.log_id}")
+        print(f"# fetch with: bely-cli.py entry get -d {doc.id} --id {entry.log_id}")
     else:
         print_result(entry_reference(doc, entry), "", fmt)
