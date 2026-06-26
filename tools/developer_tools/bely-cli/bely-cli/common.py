@@ -1,7 +1,6 @@
 import json
 import os
 import subprocess
-import sys
 import tempfile
 
 import yaml
@@ -63,8 +62,7 @@ def write_entry_to_file(entry, doc_name, output_dir=None, fmt="text"):
     """
     directory = os.path.expanduser(output_dir) if output_dir else "."
     if not os.path.isdir(directory):
-        print(f"Error: output directory not found: {directory}", file=sys.stderr)
-        sys.exit(1)
+        raise ValueError(f"output directory not found: {directory}")
     safe_doc = _sanitize_for_filename(doc_name)
     out_path = os.path.join(directory, f"{safe_doc}_entry_{entry.log_id}.md")
     with open(out_path, "w") as f:

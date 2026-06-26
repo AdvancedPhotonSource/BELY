@@ -1,5 +1,4 @@
 import os
-import sys
 from types import SimpleNamespace
 
 import auth
@@ -7,19 +6,16 @@ from common import find_logdoc, write_entry_to_file, open_in_editor, print_items
 
 
 def resolve_doc(logbook_api, doc_name, doc_id):
-    """Resolve a document by name or ID. Exits on error."""
+    """Resolve a document by name or ID. Raises ValueError on error."""
     if doc_name and doc_id:
-        print("Error: --doc-name and --doc-id are mutually exclusive.", file=sys.stderr)
-        sys.exit(1)
+        raise ValueError("--doc-name and --doc-id are mutually exclusive.")
     if not doc_name and not doc_id:
-        print("Error: --doc-name or --doc-id is required.", file=sys.stderr)
-        sys.exit(1)
+        raise ValueError("--doc-name or --doc-id is required.")
     if doc_id:
         return SimpleNamespace(id=doc_id, name=f"id={doc_id}")
     doc = find_logdoc(logbook_api, doc_name)
     if not doc:
-        print(f'Error: log document "{doc_name}" not found.', file=sys.stderr)
-        sys.exit(1)
+        raise ValueError(f'log document "{doc_name}" not found.')
     return doc
 
 
@@ -54,20 +50,17 @@ def upload_and_print_attachment(logbook_api, doc_id, log_id, path, fmt="text"):
 def cmd_update_entry(doc_name, doc_id, entry_id, file, text, add_attachment, fmt="text"):
     """Update an existing log entry."""
     if file and text:
-        print("Error: --file and --text are mutually exclusive.", file=sys.stderr)
-        sys.exit(1)
+        raise ValueError("--file and --text are mutually exclusive.")
 
     # Validate files exist before any network calls
     if file:
         file = os.path.expanduser(file)
         if not os.path.isfile(file):
-            print(f"Error: file not found: {file}", file=sys.stderr)
-            sys.exit(1)
+            raise ValueError(f"file not found: {file}")
     if add_attachment:
         add_attachment = os.path.expanduser(add_attachment)
         if not os.path.isfile(add_attachment):
-            print(f"Error: attachment file not found: {add_attachment}", file=sys.stderr)
-            sys.exit(1)
+            raise ValueError(f"attachment file not found: {add_attachment}")
 
     # Determine content
     content = None
@@ -95,23 +88,17 @@ def cmd_update_entry(doc_name, doc_id, entry_id, file, text, add_attachment, fmt
                     entry = e
                     break
             if not entry:
-                print(f'Error: entry with log_id={entry_id} not found in document "{doc.name}".',
-                      file=sys.stderr)
-                sys.exit(1)
+                raise ValueError(f'entry with log_id={entry_id} not found in document "{doc.name}".')
         else:
             # Find last entry by current user
             username = auth.get_username()
             if not username:
-                print("Error: cannot determine username. Set BELY_USER or 'user' in settings.",
-                      file=sys.stderr)
-                sys.exit(1)
+                raise ValueError("cannot determine username. Set BELY_USER or 'user' in settings.")
             user_entries = [e for e in entries
                            if e.entered_by_username
                            and e.entered_by_username.lower() == username.lower()]
             if not user_entries:
-                print(f'Error: no entries by user "{username}" found in document "{doc.name}".',
-                      file=sys.stderr)
-                sys.exit(1)
+                raise ValueError(f'no entries by user "{username}" found in document "{doc.name}".')
             entry = user_entries[-1]
 
         # Update entry content
@@ -151,21 +138,18 @@ def cmd_update_entry(doc_name, doc_id, entry_id, file, text, add_attachment, fmt
 def cmd_add_entry(doc_name, doc_id, file, text, add_attachment, fmt="text"):
     """Add a new log entry to an existing document."""
     if file and text:
-        print("Error: --file and --text are mutually exclusive.", file=sys.stderr)
-        sys.exit(1)
+        raise ValueError("--file and --text are mutually exclusive.")
     use_editor = not file and not text and not add_attachment
 
     # Validate files exist before any network calls
     if file:
         file = os.path.expanduser(file)
         if not os.path.isfile(file):
-            print(f"Error: file not found: {file}", file=sys.stderr)
-            sys.exit(1)
+            raise ValueError(f"file not found: {file}")
     if add_attachment:
         add_attachment = os.path.expanduser(add_attachment)
         if not os.path.isfile(add_attachment):
-            print(f"Error: attachment file not found: {add_attachment}", file=sys.stderr)
-            sys.exit(1)
+            raise ValueError(f"attachment file not found: {add_attachment}")
 
     # Determine content
     content = None
@@ -255,15 +239,12 @@ def cmd_get_entry(doc_name, doc_id, entry_id, output_dir, fmt="text"):
     entries = logbook_api.get_log_entries(log_document_id=doc.id)
 
     if not entries:
-        print(f'No entries found in document {doc.name}.', file=sys.stderr)
-        sys.exit(1)
+        raise ValueError(f'No entries found in document {doc.name}.')
 
     if entry_id:
         entry = next((e for e in entries if e.log_id == entry_id), None)
         if not entry:
-            print(f'Error: entry with log_id={entry_id} not found in document {doc.name}.',
-                  file=sys.stderr)
-            sys.exit(1)
+            raise ValueError(f'entry with log_id={entry_id} not found in document {doc.name}.')
     else:
         entry = entries[-1]
 

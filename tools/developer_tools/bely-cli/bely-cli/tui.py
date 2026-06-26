@@ -351,8 +351,7 @@ def _run(stdscr, api, limit):
 def cmd_tui(limit=100, fmt="text"):
     """Interactively browse logbooks -> documents -> entries to find an entry."""
     if not sys.stdout.isatty() or not sys.stdin.isatty():
-        print("Error: the tui requires an interactive terminal.", file=sys.stderr)
-        sys.exit(1)
+        raise RuntimeError("the tui requires an interactive terminal.")
 
     factory = auth.get_factory()
     api = factory.get_logbook_api()

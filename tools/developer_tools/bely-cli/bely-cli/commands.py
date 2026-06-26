@@ -1,5 +1,4 @@
 import os
-import sys
 
 import auth
 import config
@@ -92,8 +91,7 @@ def cmd_set_config(field, value, fmt="text"):
     """Set a single configuration field in settings.yaml."""
     if field not in config.VALID_FIELDS:
         valid = ", ".join(config.VALID_FIELDS)
-        print(f"Error: unknown field '{field}'. Valid fields: {valid}", file=sys.stderr)
-        sys.exit(1)
+        raise ValueError(f"unknown field '{field}'. Valid fields: {valid}")
     config.set_setting(field, value)
     print_result({field: value}, f"Set {field} = {value}", fmt)
 
@@ -107,8 +105,7 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
         return
 
     if template and no_template:
-        print("Error: --template and --no-template are mutually exclusive.", file=sys.stderr)
-        sys.exit(1)
+        raise ValueError("--template and --no-template are mutually exclusive.")
 
     # Resolve names to IDs using unauthenticated API
     factory = auth.get_factory()
@@ -124,8 +121,7 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
         if choice.isdigit():
             idx = int(choice) - 1
             if not (0 <= idx < len(types)):
-                print("Error: invalid selection.", file=sys.stderr)
-                sys.exit(1)
+                raise ValueError("invalid selection.")
             type_ = types[idx].name
         else:
             type_ = choice
@@ -133,18 +129,13 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
     if not name:
         name = input("Document name: ").strip()
         if not name:
-            print("Error: name cannot be empty.", file=sys.stderr)
-            sys.exit(1)
+            raise ValueError("name cannot be empty.")
 
-    try:
-        logbook_type = find_logbook_type(logbook_api, type_)
-        system_id_list = find_systems(logbook_api, systems) if systems else None
-        template_id = find_template(logbook_api, template).id if template else None
-        if find_logdoc(logbook_api, name):
-            raise ValueError(f"A log document named '{name}' already exists")
-    except ValueError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+    logbook_type = find_logbook_type(logbook_api, type_)
+    system_id_list = find_systems(logbook_api, systems) if systems else None
+    template_id = find_template(logbook_api, template).id if template else None
+    if find_logdoc(logbook_api, name):
+        raise ValueError(f"A log document named '{name}' already exists")
 
 
     # Build document options
@@ -175,8 +166,7 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
         if file:
             file = os.path.expanduser(file)
             if not os.path.isfile(file):
-                print(f"Error: file not found: {file}", file=sys.stderr)
-                sys.exit(1)
+                raise ValueError(f"file not found: {file}")
             with open(file, "r") as f:
                 content = f.read()
 
@@ -232,17 +222,14 @@ def cmd_list_docs(limit, fmt="text"):
     """List recent log documents created by the current user."""
     username = auth.get_username()
     if not username:
-        print("Error: cannot determine username. Set BELY_USER or 'user' in settings.",
-              file=sys.stderr)
-        sys.exit(1)
+        raise ValueError("cannot determine username. Set BELY_USER or 'user' in settings.")
 
     factory = auth.get_factory()
     users_api = factory.get_users_api()
     try:
         user_info = users_api.get_user_by_username(username=username)
     except Exception as e:
-        print(f"Error: could not look up user '{username}': {e}", file=sys.stderr)
-        sys.exit(1)
+        raise RuntimeError(f"could not look up user '{username}': {e}") from e
 
     search_api = factory.get_search_api()
     results = search_api.search_logbook(search_text="*", user_id=[user_info.id])

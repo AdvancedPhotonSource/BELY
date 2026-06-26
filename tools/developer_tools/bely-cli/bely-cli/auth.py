@@ -22,9 +22,7 @@ def get_host():
     """Return the BELY server URL from env var or settings."""
     host = os.environ.get("BELY_HOST") or get_setting("host")
     if not host:
-        print("Error: no host configured. Set BELY_HOST or add 'host' to settings.yaml.",
-              file=sys.stderr)
-        sys.exit(1)
+        raise ValueError("no host configured. Set BELY_HOST or add 'host' to settings.yaml.")
     return host
 
 
@@ -91,12 +89,9 @@ def _login_and_cache(factory):
     try:
         factory.authenticate_user(username, password)
     except belyApi.exceptions.UnauthorizedException:
-        print(f"Authentication failed: invalid credentials for user '{username}'",
-              file=sys.stderr)
-        sys.exit(1)
+        raise ValueError(f"Authentication failed: invalid credentials for user '{username}'")
     except Exception as e:
-        print(f"Authentication failed: {e}", file=sys.stderr)
-        sys.exit(1)
+        raise RuntimeError(f"Authentication failed: {e}") from e
     save_token(factory.get_authenticate_token())
 
 
