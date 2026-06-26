@@ -2,7 +2,7 @@ import os
 from types import SimpleNamespace
 
 import auth
-from common import find_logdoc, write_entry_to_file, open_in_editor, print_items, print_result
+from common import find_logdoc, is_no_prompt, read_file_or_stdin, write_entry_to_file, open_in_editor, print_items, print_result
 
 
 def resolve_doc(logbook_api, doc_name, doc_id):
@@ -52,23 +52,16 @@ def cmd_update_entry(doc_name, doc_id, entry_id, file, text, add_attachment, fmt
     if file and text:
         raise ValueError("--file and --text are mutually exclusive.")
 
-    # Validate files exist before any network calls
-    if file:
-        file = os.path.expanduser(file)
-        if not os.path.isfile(file):
-            raise ValueError(f"file not found: {file}")
+    if is_no_prompt() and not entry_id and not auth.get_configured_username():
+        raise ValueError("--id or a configured username (BELY_USER / 'user' setting) required in non-interactive mode")
+
+    # Validate attachments and read content before any network calls
     if add_attachment:
         add_attachment = os.path.expanduser(add_attachment)
         if not os.path.isfile(add_attachment):
             raise ValueError(f"attachment file not found: {add_attachment}")
 
-    # Determine content
-    content = None
-    if file:
-        with open(file, "r") as f:
-            content = f.read()
-    elif text:
-        content = text
+    content = read_file_or_stdin(file) if file else text
 
     # Resolve document (unauthenticated)
     factory = auth.get_factory()
@@ -141,23 +134,13 @@ def cmd_add_entry(doc_name, doc_id, file, text, add_attachment, fmt="text"):
         raise ValueError("--file and --text are mutually exclusive.")
     use_editor = not file and not text and not add_attachment
 
-    # Validate files exist before any network calls
-    if file:
-        file = os.path.expanduser(file)
-        if not os.path.isfile(file):
-            raise ValueError(f"file not found: {file}")
+    # Validate attachments and read content before any network calls
     if add_attachment:
         add_attachment = os.path.expanduser(add_attachment)
         if not os.path.isfile(add_attachment):
             raise ValueError(f"attachment file not found: {add_attachment}")
 
-    # Determine content
-    content = None
-    if file:
-        with open(file, "r") as f:
-            content = f.read()
-    elif text:
-        content = text
+    content = read_file_or_stdin(file) if file else text
 
     # Resolve document (unauthenticated)
     factory = auth.get_factory()

@@ -2,7 +2,7 @@ import os
 
 import auth
 import config
-from common import find_logdoc, write_entry_to_file, open_in_editor, print_items, print_result
+from common import find_logdoc, is_no_prompt, read_file_or_stdin, write_entry_to_file, open_in_editor, print_items, print_result
 
 
 ENV_VARS = ["BELY_HOST", "BELY_USER", "BELY_PASSWORD", "BELY_SETTINGS_FILE", "EDITOR"]
@@ -107,6 +107,11 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
     if template and no_template:
         raise ValueError("--template and --no-template are mutually exclusive.")
 
+    if is_no_prompt():
+        missing = [opt for opt, val in [("--type", type_), ("--name", name)] if not val]
+        if missing:
+            raise ValueError(f"{', '.join(missing)} required in non-interactive mode")
+
     # Resolve names to IDs using unauthenticated API
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
@@ -162,13 +167,7 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
             print(f'New document "{doc.name}" created, id={doc.id}')
 
         # Determine entry content from --file or --text
-        content = None
-        if file:
-            file = os.path.expanduser(file)
-            if not os.path.isfile(file):
-                raise ValueError(f"file not found: {file}")
-            with open(file, "r") as f:
-                content = f.read()
+        content = read_file_or_stdin(file) if file else None
 
         # Check if creating the doc already produced a default entry
         entries = logbook_api.get_log_entries(log_document_id=doc.id)

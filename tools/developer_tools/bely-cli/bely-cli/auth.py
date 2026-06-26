@@ -3,11 +3,13 @@ import os
 import sys
 from contextlib import contextmanager
 
+from common import is_no_prompt
 from config import CONFIG_DIR, expand_path, get_setting
 
 # belyApi and BelyApiFactory are imported lazily inside the functions that need
 # them: the generated client is ~1.8s to import, and paths like --help that
 # never make a network call should not pay that cost.
+
 
 
 def get_token_file():
@@ -26,10 +28,17 @@ def get_host():
     return host
 
 
+def get_configured_username():
+    """Return the BELY username from env var or settings, without prompting."""
+    return os.environ.get("BELY_USER") or get_setting("user")
+
+
 def get_username():
     """Return the BELY username from env var, settings, or interactive prompt."""
-    username = os.environ.get("BELY_USER") or get_setting("user")
+    username = get_configured_username()
     if not username:
+        if is_no_prompt():
+            raise ValueError("username required: set BELY_USER or 'user' in settings")
         username = input("Username: ").strip()
     return username
 
@@ -38,6 +47,8 @@ def get_password(username):
     """Return the BELY password from env var or interactive prompt."""
     password = os.environ.get("BELY_PASSWORD")
     if not password:
+        if is_no_prompt():
+            raise ValueError("password required: set BELY_PASSWORD")
         print(f"Logging in as '{username}'")
         try:
             password = getpass.getpass("Password: ")

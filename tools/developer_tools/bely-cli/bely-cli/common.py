@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import sys
 import tempfile
 
 import yaml
@@ -10,6 +11,17 @@ import config
 
 # Supported values for the global --format option (single source of truth).
 FORMATS = ("text", "json", "yaml")
+
+_no_prompt = False
+
+
+def set_no_prompt(value=True):
+    global _no_prompt
+    _no_prompt = value
+
+
+def is_no_prompt():
+    return _no_prompt
 
 
 def print_items(items, columns, fmt="text"):
@@ -40,6 +52,17 @@ def print_result(data, message, fmt="text"):
         print(yaml.safe_dump(data, sort_keys=False, default_flow_style=False), end="")
     else:
         print(message)
+
+
+def read_file_or_stdin(path):
+    """Read content from path; '-' reads from stdin."""
+    if path == "-":
+        return sys.stdin.read()
+    path = os.path.expanduser(path)
+    if not os.path.isfile(path):
+        raise ValueError(f"file not found: {path}")
+    with open(path, "r") as f:
+        return f.read()
 
 
 def find_logdoc(logbook_api, name):

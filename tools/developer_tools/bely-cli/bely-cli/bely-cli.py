@@ -4,7 +4,7 @@ import sys
 
 import click
 
-from common import FORMATS
+from common import FORMATS, set_no_prompt
 from config import VALID_FIELDS
 from commands import (
     cmd_new_doc,
@@ -34,9 +34,12 @@ def format_option(f):
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
-def cli():
+@click.option("--no-prompt", is_flag=True, default=False,
+              help="Non-interactive mode: fail if any prompt would be needed. Enabled automatically when --file=-.")
+def cli(no_prompt):
     """BELY logbook CLI"""
-    pass
+    if no_prompt:
+        set_no_prompt()
 
 
 # -- doc --
@@ -63,6 +66,8 @@ def doc_group():
 @format_option
 def doc_new(output_format, **kwargs):
     """Create a new log document."""
+    if kwargs.get('file') == '-':
+        set_no_prompt()
     cmd_new_doc(fmt=output_format, **kwargs)
 
 
@@ -91,6 +96,8 @@ def entry_group():
 @format_option
 def entry_add(output_format, **kwargs):
     """Add a new log entry to an existing document."""
+    if kwargs.get('file') == '-':
+        set_no_prompt()
     cmd_add_entry(fmt=output_format, **kwargs)
 
 
@@ -104,6 +111,8 @@ def entry_add(output_format, **kwargs):
 @format_option
 def entry_update(output_format, **kwargs):
     """Update an existing log entry."""
+    if kwargs.get('file') == '-':
+        set_no_prompt()
     cmd_update_entry(fmt=output_format, **kwargs)
 
 
