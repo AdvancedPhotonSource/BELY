@@ -33,13 +33,29 @@ def format_option(f):
     )(f)
 
 
+def no_prompt_option(f):
+    """Per-command --no-prompt flag: enable non-interactive mode."""
+    def _set(ctx, param, value):
+        if value:
+            set_no_prompt()
+        return value
+    return click.option(
+        "--no-prompt", is_flag=True, default=False,
+        expose_value=False, callback=_set,
+        help="Non-interactive mode: fail if any prompt would be needed. "
+             "Enabled automatically when --file=-.",
+    )(f)
+
+
+def common_options(f):
+    """Options shared by all leaf commands (--format and --no-prompt)."""
+    return format_option(no_prompt_option(f))
+
+
 @click.group(context_settings=CONTEXT_SETTINGS)
-@click.option("--no-prompt", is_flag=True, default=False,
-              help="Non-interactive mode: fail if any prompt would be needed. Enabled automatically when --file=-.")
-def cli(no_prompt):
+def cli():
     """BELY logbook CLI"""
-    if no_prompt:
-        set_no_prompt()
+    pass
 
 
 # -- doc --
@@ -63,7 +79,7 @@ def doc_group():
               type=click.Choice(["system", "type", "template"]),
               default=None,
               help="List available values for the given option and exit")
-@format_option
+@common_options
 def doc_new(output_format, **kwargs):
     """Create a new log document."""
     if kwargs.get('file') == '-':
@@ -73,7 +89,7 @@ def doc_new(output_format, **kwargs):
 
 @doc_group.command("list")
 @click.option("--limit", default=20, type=int, help="Max documents to return (default 20)")
-@format_option
+@common_options
 def doc_list(output_format, **kwargs):
     """List recent log documents created by you."""
     cmd_list_docs(fmt=output_format, **kwargs)
@@ -93,7 +109,7 @@ def entry_group():
 @click.option("--file", "-f", "file", default=None, help="Markdown file with entry content")
 @click.option("--text", "-t", default=None, help="Inline text for the entry")
 @click.option("--add-attachment", default=None, help="File to attach to the entry")
-@format_option
+@common_options
 def entry_add(output_format, **kwargs):
     """Add a new log entry to an existing document."""
     if kwargs.get('file') == '-':
@@ -108,7 +124,7 @@ def entry_add(output_format, **kwargs):
 @click.option("--file", "-f", "file", default=None, help="Markdown file with updated content")
 @click.option("--text", "-t", default=None, help="Inline text for the entry")
 @click.option("--add-attachment", default=None, help="File to attach to the entry")
-@format_option
+@common_options
 def entry_update(output_format, **kwargs):
     """Update an existing log entry."""
     if kwargs.get('file') == '-':
@@ -119,7 +135,7 @@ def entry_update(output_format, **kwargs):
 @entry_group.command("list")
 @click.option("--doc-name", "-n", default=None, help="Log document name")
 @click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
-@format_option
+@common_options
 def entry_list(output_format, **kwargs):
     """List entries in a log document."""
     cmd_list_entries(fmt=output_format, **kwargs)
@@ -131,7 +147,7 @@ def entry_list(output_format, **kwargs):
 @click.option("--id", "entry_id", default=None, type=int, help="Specific log entry ID (default: latest)")
 @click.option("--output", "-o", "output_dir", default=None,
               help="Directory to write <doc_name>_entry_<log_id>.md into (default: cwd)")
-@format_option
+@common_options
 def entry_get(output_format, **kwargs):
     """Write the markdown of a log entry to a file (latest by default)."""
     cmd_get_entry(fmt=output_format, **kwargs)
@@ -148,7 +164,7 @@ def tui_group():
 @tui_group.command("lookup")
 @click.option("--limit", default=100, type=int,
               help="Recent documents to load per logbook (default 100)")
-@format_option
+@common_options
 def tui_lookup(output_format, **kwargs):
     """Interactively browse logbooks -> documents -> entries to find a log entry."""
     cmd_tui(fmt=output_format, **kwargs)
@@ -163,7 +179,7 @@ def config_group():
 
 
 @config_group.command("show")
-@format_option
+@common_options
 def config_show(output_format):
     """Show current configuration."""
     cmd_show_config(fmt=output_format)
@@ -178,7 +194,7 @@ def config_edit():
 @config_group.command("set")
 @click.argument("field", type=click.Choice(VALID_FIELDS))
 @click.argument("value")
-@format_option
+@common_options
 def config_set(field, value, output_format):
     """Set a configuration field to a value."""
     cmd_set_config(field, value, fmt=output_format)
