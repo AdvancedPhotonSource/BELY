@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PYTHON=/C2/conda/envs/bely/bin/python
+PYTHON="${PYTHON:-python}"
 
 # COMPONENT_DIR is set by the test harness; default to this script's dir so the
 # test is also runnable standalone.
@@ -12,6 +12,6 @@ COMPONENT_DIR="${COMPONENT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 
 # Smoke test: the published command loads and --format is wired per-command
 # (appended to a leaf command, not at the top level).
-bely-cli.py -h > /dev/null
-bely-cli.py doc list -h | grep -q -- --format
-bely-cli.py tui lookup -h | grep -q -- --format
+bely-cli -h > /dev/null
+bely-cli doc list -h | grep -q -- --format
+bely-cli tui lookup -h | grep -q -- --format

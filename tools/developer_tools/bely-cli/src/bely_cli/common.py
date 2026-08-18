@@ -6,7 +6,7 @@ import tempfile
 
 import yaml
 
-import config
+from . import config
 
 
 # Supported values for the global --format option (single source of truth).

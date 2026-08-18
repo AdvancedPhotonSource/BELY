@@ -1,8 +1,8 @@
 import os
 from types import SimpleNamespace
 
-import auth
-from common import find_logdoc, is_no_prompt, read_file_or_stdin, write_entry_to_file, open_in_editor, print_items, print_result
+from . import auth
+from .common import find_logdoc, is_no_prompt, read_file_or_stdin, write_entry_to_file, open_in_editor, print_items, print_result
 
 
 def resolve_doc(logbook_api, doc_name, doc_id):

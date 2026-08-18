@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bely-cli"
+version = "2026.3.0"
+description = "Command-line interface for the BELY electronic logbook"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Copyright (c) UChicago Argonne, LLC. All rights reserved." }
+maintainers = [{ name = "Dariusz Jarosz", email = "djarosz@aps.anl.gov" }]
+dependencies = [
+    "click>=8.1.0",
+    "PyYAML>=6.0.0",
+    "bely-api>=2026.3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/AdvancedPhotonSource/BELY"
+
+[project.scripts]
+bely-cli = "bely_cli.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=7.0.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.uv.sources]
+bely-api = { path = "../python-client/dist/bely_api-2026.3.0.tar.gz" }

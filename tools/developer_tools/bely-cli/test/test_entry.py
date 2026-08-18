@@ -1,16 +1,13 @@
 import io
 import json
 import os
-import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "bely-cli"))
-
-import entry
+from bely_cli import entry
 
 
 class FakeApi:

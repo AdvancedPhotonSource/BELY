@@ -1,12 +1,8 @@
 import datetime
-import os
-import sys
 import unittest
 from types import SimpleNamespace
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "bely-cli"))
-
-import tui
+from bely_cli import tui
 
 
 class FilterItemsTests(unittest.TestCase):

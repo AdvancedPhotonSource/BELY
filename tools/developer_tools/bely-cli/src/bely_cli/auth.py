@@ -3,8 +3,8 @@ import os
 import sys
 from contextlib import contextmanager
 
-from common import is_no_prompt
-from config import CONFIG_DIR, expand_path, get_setting
+from .common import is_no_prompt
+from .config import CONFIG_DIR, expand_path, get_setting
 
 # belyApi and BelyApiFactory are imported lazily inside the functions that need
 # them: the generated client is ~1.8s to import, and paths like --help that

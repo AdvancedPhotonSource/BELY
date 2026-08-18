@@ -1,8 +1,8 @@
 import os
 
-import auth
-import config
-from common import find_logdoc, is_no_prompt, read_file_or_stdin, write_entry_to_file, open_in_editor, print_items, print_result
+from . import auth
+from . import config
+from .common import find_logdoc, is_no_prompt, read_file_or_stdin, write_entry_to_file, open_in_editor, print_items, print_result
 
 
 ENV_VARS = ["BELY_HOST", "BELY_USER", "BELY_PASSWORD", "BELY_SETTINGS_FILE", "EDITOR"]

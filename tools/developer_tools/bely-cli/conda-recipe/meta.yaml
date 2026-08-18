@@ -1,0 +1,42 @@
+{% set name = "bely-cli" %}
+{% set version = "2026.3.0" %}
+
+package:
+  name: "{{ name|lower }}"
+  version: "{{ version }}"
+
+source:
+  path: ./src
+
+build:
+  number: 0
+  noarch: python
+  entry_points:
+    - bely-cli = bely_cli.cli:main
+
+requirements:
+  build:
+    - pip
+    - python>3.10
+    - setuptools
+  run:
+    - python>3.10
+    - click
+    - pyyaml
+    - bely-api
+
+test:
+  imports:
+    - bely_cli
+  source_files:
+    - test
+  requires:
+    - python
+  commands:
+    - python -m unittest discover -s test -v
+    - bely-cli -h
+
+about:
+  home: "https://github.com/AdvancedPhotonSource/BELY"
+  license: "Copyright (c) UChicago Argonne, LLC. All rights reserved."
+  summary: "Command-line interface for the BELY"

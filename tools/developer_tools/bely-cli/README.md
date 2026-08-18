@@ -4,22 +4,37 @@ A command-line client for the **BELY logbook**. Create log documents, add and up
 entries (from files, inline text, an editor, or with attachments), list and fetch entries,
 and manage local configuration.
 
-The published command is `bely-cli.py`.
+The published command is `bely-cli`.
+
+## Installation
+
+For development, from this directory:
+
+```bash
+uv sync
+uv run bely-cli -h
+```
+
+For deployment, install the conda package built from `conda-recipe/` (see
+`conda-recipe/conda-build.sh`):
+
+```bash
+conda install bely-cli -c <channel>
+```
 
 ## Getting started
 
-After loading the `aux` module the command is on your `PATH`:
+Once installed, the command is on your `PATH`:
 
 ```bash
-module add aux
-bely-cli.py -h
+bely-cli -h
 ```
 
 Every command and group accepts `-h` / `--help`:
 
 ```bash
-bely-cli.py doc -h
-bely-cli.py entry add -h
+bely-cli doc -h
+bely-cli entry add -h
 ```
 
 ### Set the server host
@@ -34,12 +49,12 @@ The host is resolved in this order:
 Set it once with `config set`:
 
 ```bash
-bely-cli.py config set host https://tinkerbox.aps.anl.gov:8181/bely
+bely-cli config set host https://tinkerbox.aps.anl.gov:8181/bely
 ```
 
-> A convenience wrapper named `bely` ships in the source directory; it presets
-> `BELY_HOST` to `https://tinkerbox.aps.anl.gov:8181/bely` before invoking `bely-cli.py`. The
-> examples in this README use `bely-cli.py` directly, so set the host (or export `BELY_HOST`)
+> A convenience wrapper named `bely-cli-test` ships alongside the source; it presets
+> `BELY_HOST` to `https://tinkerbox.aps.anl.gov:8181/bely` before invoking `bely-cli`. The
+> examples in this README use `bely-cli` directly, so set the host (or export `BELY_HOST`)
 > as shown above.
 
 ## Authentication
@@ -61,7 +76,7 @@ the settings file (see [Configuration & environment](#configuration--environment
 A `--format` option controls output, appended to the command:
 
 ```bash
-bely-cli.py doc list --format json
+bely-cli doc list --format json
 ```
 
 | Value  | Behavior                                              |
@@ -70,13 +85,13 @@ bely-cli.py doc list --format json
 | `json` | Structured JSON — for scripting                       |
 | `yaml` | Structured YAML — for scripting                       |
 
-`--format` is given at the end of a command, e.g. `bely-cli.py entry list -n "..." --format yaml`.
+`--format` is given at the end of a command, e.g. `bely-cli entry list -n "..." --format yaml`.
 
 ## Commands
 
 ### `doc` — log documents
 
-#### `bely-cli.py doc new`
+#### `bely-cli doc new`
 
 Create a new log document (and optionally its first entry).
 
@@ -91,7 +106,7 @@ Create a new log document (and optionally its first entry).
 | `-o, --output TEXT` | Directory to write a template-generated entry into (default: cwd). |
 | `--list-options {system,type,template}` | List the available values for that option and exit. |
 
-#### `bely-cli.py doc list`
+#### `bely-cli doc list`
 
 List recent log documents you created, newest first.
 
@@ -101,15 +116,15 @@ List recent log documents you created, newest first.
 
 ### `tui` — interactive terminal UIs
 
-#### `bely-cli.py tui lookup`
+#### `bely-cli tui lookup`
 
 Interactively browse to find a log entry when you don't already know its document. The TUI
 drills down through three levels — **logbook → recent documents → entries** — and then shows
 the entry's markdown in a scrollable view. Browsing is read-only and needs no authentication.
 
 ```bash
-bely-cli.py tui lookup
-bely-cli.py tui lookup --limit 50
+bely-cli tui lookup
+bely-cli tui lookup --limit 50
 ```
 
 | Option | Description |
@@ -128,12 +143,12 @@ Keys:
 | `Esc` | Go back one level; quits from the logbook list. |
 
 On selecting an entry the TUI exits and prints its `doc-id` / `log-id`, plus a ready-to-run
-`bely-cli.py entry get` command so you can fetch it:
+`bely-cli entry get` command so you can fetch it:
 
 ```
 doc-id: 99
 log-id: 42
-# fetch with: bely-cli.py entry get -d 99 --id 42
+# fetch with: bely-cli entry get -d 99 --id 42
 ```
 
 With `--format json` / `--format yaml` the selected reference is printed as structured data
@@ -144,7 +159,7 @@ instead.
 All `entry` commands identify the target document with **either** `-n/--doc-name` **or**
 `-d/--doc-id` (provide one).
 
-#### `bely-cli.py entry add`
+#### `bely-cli entry add`
 
 Add a new entry to an existing document. If none of `--file`, `--text`, or
 `--add-attachment` is given, your `$EDITOR` opens for the entry text.
@@ -157,7 +172,7 @@ Add a new entry to an existing document. If none of `--file`, `--text`, or
 | `-t, --text TEXT` | Inline text for the entry. |
 | `--add-attachment TEXT` | File to attach to the entry. |
 
-#### `bely-cli.py entry update`
+#### `bely-cli entry update`
 
 Update an existing entry. With no `--id`, your most recent entry in the document is
 updated. If none of `--file`, `--text`, or `--add-attachment` is given, your `$EDITOR`
@@ -172,7 +187,7 @@ opens. `--file` and `--text` are mutually exclusive.
 | `-t, --text TEXT` | Inline text for the entry. |
 | `--add-attachment TEXT` | File to attach to the entry. |
 
-#### `bely-cli.py entry list`
+#### `bely-cli entry list`
 
 List the entries in a document (Log ID, date, author, and a snippet of the first line).
 
@@ -181,7 +196,7 @@ List the entries in a document (Log ID, date, author, and a snippet of the first
 | `-n, --doc-name TEXT` | Document name. |
 | `-d, --doc-id INTEGER` | Document ID. |
 
-#### `bely-cli.py entry get`
+#### `bely-cli entry get`
 
 Write the markdown of an entry to a file named `<doc_name>_entry_<log_id>.md`.
 
@@ -194,26 +209,26 @@ Write the markdown of an entry to a file named `<doc_name>_entry_<log_id>.md`.
 
 ### `config` — local configuration
 
-#### `bely-cli.py config show`
+#### `bely-cli config show`
 
 Show the current configuration: values from the settings file and the relevant environment
 variables (`BELY_PASSWORD` is masked).
 
-#### `bely-cli.py config edit`
+#### `bely-cli config edit`
 
 Open the settings file in your editor. The editor is resolved from `EDITOR`, then the
 `editor` setting, then `vi`. The file and directory are created if needed.
 
-#### `bely-cli.py config set FIELD VALUE`
+#### `bely-cli config set FIELD VALUE`
 
 Set a single configuration field. `FIELD` is one of `host`, `user`, `editor`, or
 `token_path`.
 
 ```bash
-bely-cli.py config set user alice
-bely-cli.py config set host https://tinkerbox.aps.anl.gov:8181/bely
-bely-cli.py config set editor nano
-bely-cli.py config set token_path ~/.secrets/bely-token
+bely-cli config set user alice
+bely-cli config set host https://tinkerbox.aps.anl.gov:8181/bely
+bely-cli config set editor nano
+bely-cli config set token_path ~/.secrets/bely-token
 ```
 
 ## Configuration & environment
@@ -259,41 +274,41 @@ user: alice
 
 ```bash
 # One-time setup
-bely-cli.py config set host https://tinkerbox.aps.anl.gov:8181/bely
-bely-cli.py config set user alice
+bely-cli config set host https://tinkerbox.aps.anl.gov:8181/bely
+bely-cli config set user alice
 
 # Discover available values
-bely-cli.py doc new --list-options type
-bely-cli.py doc new --list-options system
-bely-cli.py doc new --list-options template
+bely-cli doc new --list-options type
+bely-cli doc new --list-options system
+bely-cli doc new --list-options template
 
 # Create a document interactively (prompts for type and name)
-bely-cli.py doc new
+bely-cli doc new
 
 # Create a document with everything specified, plus a first entry from a file
-bely-cli.py doc new --type ops --name "Shift Report" --systems SR,software --file entry.md
+bely-cli doc new --type ops --name "Shift Report" --systems SR,software --file entry.md
 
 # List your recent documents
-bely-cli.py doc list --limit 50
+bely-cli doc list --limit 50
 
 # Add an entry — inline text, from a file, or via your editor
-bely-cli.py entry add -n "Shift Report" -t "Beam restored after RF trip."
-bely-cli.py entry add -n "Shift Report" -f entry.md
-bely-cli.py entry add -n "Shift Report"                 # opens $EDITOR
+bely-cli entry add -n "Shift Report" -t "Beam restored after RF trip."
+bely-cli entry add -n "Shift Report" -f entry.md
+bely-cli entry add -n "Shift Report"                 # opens $EDITOR
 
 # Attach a file to an entry
-bely-cli.py entry add -n "Shift Report" --add-attachment plot.png
+bely-cli entry add -n "Shift Report" --add-attachment plot.png
 
 # Update your most recent entry, or a specific one
-bely-cli.py entry update -n "Shift Report" -t "Corrected: trip was on RF2."
-bely-cli.py entry update -n "Shift Report" --id 42 -f revised.md
+bely-cli entry update -n "Shift Report" -t "Corrected: trip was on RF2."
+bely-cli entry update -n "Shift Report" --id 42 -f revised.md
 
 # List and fetch entries
-bely-cli.py entry list -n "Shift Report"
-bely-cli.py entry get -n "Shift Report"                 # latest, to cwd
-bely-cli.py entry get -d 99 --id 42 -o ~/logs/
+bely-cli entry list -n "Shift Report"
+bely-cli entry get -n "Shift Report"                 # latest, to cwd
+bely-cli entry get -d 99 --id 42 -o ~/logs/
 
 # Structured output for scripting
-bely-cli.py doc list --format json
-bely-cli.py entry list -n "Shift Report" --format yaml
+bely-cli doc list --format json
+bely-cli entry list -n "Shift Report" --format yaml
 ```

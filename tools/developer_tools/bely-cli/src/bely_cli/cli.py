@@ -1,25 +1,23 @@
-#!/C2/conda/envs/bely/bin/python
-
 import sys
 
 import click
 
-from common import FORMATS, set_no_prompt
-from config import VALID_FIELDS
-from commands import (
+from .common import FORMATS, set_no_prompt
+from .config import VALID_FIELDS
+from .commands import (
     cmd_new_doc,
     cmd_list_docs,
     cmd_show_config,
     cmd_edit_config,
     cmd_set_config,
 )
-from entry import (
+from .entry import (
     cmd_add_entry,
     cmd_get_entry,
     cmd_list_entries,
     cmd_update_entry,
 )
-from tui import cmd_tui
+from .tui import cmd_tui
 
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -201,9 +199,13 @@ def config_set(field, value, output_format):
 
 
 
-if __name__ == "__main__":
+def main():
     try:
         cli()
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

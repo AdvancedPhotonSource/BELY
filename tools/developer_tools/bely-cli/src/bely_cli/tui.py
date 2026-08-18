@@ -2,8 +2,8 @@ import curses
 import sys
 import textwrap
 
-import auth
-from common import print_result
+from . import auth
+from .common import print_result
 
 # belyApi is intentionally NOT imported at module scope: the heavy client is
 # pulled in lazily by auth.get_factory() only when the TUI actually runs, so the
