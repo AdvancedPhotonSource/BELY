@@ -317,10 +317,10 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             await pilot.pause()
             self.assertEqual(type(app.screen).__name__, "ComposeScreen")
 
-            from textual.widgets import TextArea
+            from textual.widgets import Button, TextArea
 
             app.screen.query_one("#compose-area", TextArea).text = "new content"
-            await pilot.press("ctrl+s")
+            app.screen.query_one("#compose-save", Button).press()
             await pilot.pause()
             await pilot.pause()
 
@@ -349,12 +349,13 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             await pilot.pause()
             self.assertEqual(type(app.screen).__name__, "ComposeScreen")
 
-            from textual.widgets import TextArea
+            from textual.widgets import Button, TextArea
 
             self.assertEqual(
                 app.screen.query_one("#compose-area", TextArea).text, "# Hello\n\nBody text")
 
-            await pilot.press("escape")  # no changes made -> dismiss immediately, no save
+            # no changes made -> Cancel dismisses immediately, no confirmation, no save
+            app.screen.query_one("#compose-cancel", Button).press()
             await pilot.pause()
             self.assertEqual(type(app.screen).__name__, "BrowseScreen")
             self.assertEqual(screen.level, screen.LEVEL_ENTRIES)

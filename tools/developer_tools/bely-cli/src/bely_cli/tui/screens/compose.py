@@ -17,12 +17,15 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
-from textual.widgets import Input, Static, TextArea
+from textual.widgets import Button, Input, Static, TextArea
 
 from ... import core
+from ...common import editor_changed
 
 
 class ComposeScreen(ModalScreen):
+    """Buttons-only entry composer; BINDINGS below are arrow-key focus navigation, not action shortcuts."""
+
     DEFAULT_CSS = """
     ComposeScreen {
         align: center middle;
@@ -35,13 +38,31 @@ class ComposeScreen(ModalScreen):
         background: $surface;
         padding: 1 2;
     }
+
+    #compose-area {
+        height: 1fr;
+    }
+
+    #compose-buttons {
+        height: auto;
+        align: right middle;
+        margin-top: 1;
+    }
+
+    #compose-buttons Button {
+        margin-left: 1;
+    }
     """
 
     BINDINGS = [
-        Binding("ctrl+s", "submit", "Save"),
-        Binding("ctrl+e", "open_editor", "$EDITOR"),
-        Binding("escape", "cancel", "Cancel"),
+        Binding("up", "focus_up", show=False),
+        Binding("down", "focus_down", show=False),
+        Binding("left", "focus_left", show=False),
+        Binding("right", "focus_right", show=False),
     ]
+
+    # Save first: right after the attachment field in tab order, since it's used most.
+    BUTTON_IDS = ["compose-save", "compose-editor", "compose-cancel"]
 
     def __init__(self, doc, entry, api, *, is_new):
         super().__init__()
@@ -60,36 +81,77 @@ class ComposeScreen(ModalScreen):
             with Horizontal(id="compose-attach-row"):
                 yield Static("Attachment:", id="compose-attach-label")
                 yield Input(placeholder="optional file path", id="compose-attach")
-            yield Static(
-                "[ctrl+s] save   [ctrl+e] edit in $EDITOR   [escape] cancel",
-                id="compose-hint",
-            )
+            with Horizontal(id="compose-buttons"):
+                yield Button("Save", variant="primary", id="compose-save")
+                yield Button("Edit in $EDITOR", id="compose-editor")
+                yield Button("Cancel", id="compose-cancel")
 
     def on_mount(self):
         self.query_one("#compose-area", TextArea).focus()
 
+    def on_button_pressed(self, event):
+        if event.button.id == "compose-save":
+            self._save()
+        elif event.button.id == "compose-editor":
+            self._open_editor()
+        elif event.button.id == "compose-cancel":
+            self._cancel()
+
+    # -- arrow-key nav: TextArea/Input consume arrows themselves, so this only fires past both --
+
+    def action_focus_down(self):
+        if self.focused is self.query_one("#compose-attach", Input):
+            self.query_one(f"#{self.BUTTON_IDS[0]}", Button).focus()
+
+    def action_focus_up(self):
+        if isinstance(self.focused, Button):
+            self.query_one("#compose-attach", Input).focus()
+
+    def action_focus_left(self):
+        self._cycle_button(-1)
+
+    def action_focus_right(self):
+        self._cycle_button(1)
+
+    def _cycle_button(self, delta):
+        focused = self.focused
+        if not isinstance(focused, Button):
+            return
+        idx = self.BUTTON_IDS.index(focused.id)
+        target_id = self.BUTTON_IDS[(idx + delta) % len(self.BUTTON_IDS)]
+        self.query_one(f"#{target_id}", Button).focus()
+
+    # -- dirty check shared by cancel and save --
+
+    def _is_dirty(self):
+        area = self.query_one("#compose-area", TextArea)
+        attach_path = self.query_one("#compose-attach", Input).value.strip()
+        return editor_changed(self._initial_text, area.text) or bool(attach_path)
+
     # -- cancel, with a dirty-buffer confirmation --
 
-    def action_cancel(self):
-        area = self.query_one("#compose-area", TextArea)
-        if area.text != self._initial_text:
+    def _cancel(self):
+        if self._is_dirty():
             self._confirm_discard()
         else:
             self.dismiss(None)
 
     @work
     async def _confirm_discard(self):
-        from .picker import PickerScreen
+        from .confirm import ConfirmScreen
 
-        choice = await self.app.push_screen_wait(
-            PickerScreen("Discard unsaved changes?", ["Discard", "Keep editing"], lambda x: x)
+        discard = await self.app.push_screen_wait(
+            ConfirmScreen(
+                "Discard unsaved changes?", confirm_label="Discard", cancel_label="Keep editing",
+                confirm_variant="error",
+            )
         )
-        if choice == "Discard":
+        if discard:
             self.dismiss(None)
 
     # -- hand off to $EDITOR and back --
 
-    def action_open_editor(self):
+    def _open_editor(self):
         from ...common import open_in_editor
 
         area = self.query_one("#compose-area", TextArea)
@@ -98,9 +160,6 @@ class ComposeScreen(ModalScreen):
         area.text = edited
 
     # -- save --
-
-    def action_submit(self):
-        self._save()
 
     @work
     async def _save(self):
@@ -120,7 +179,7 @@ class ComposeScreen(ModalScreen):
                 self.notify(str(e), severity="error")
                 return
 
-        if not self.is_new and text == self._initial_text and not attach_path:
+        if not self.is_new and not editor_changed(self._initial_text, text) and not attach_path:
             self.notify("No changes made.")
             self.dismiss(None)
             return

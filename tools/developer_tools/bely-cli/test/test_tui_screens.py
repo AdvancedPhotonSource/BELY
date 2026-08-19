@@ -12,7 +12,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from textual.app import App
-from textual.widgets import Input, Static, TextArea
+from textual.widgets import Button, Input, Static, TextArea
 
 from bely_cli.tui.app import BelyTuiApp
 from bely_cli.tui.data import LogbookData
@@ -210,7 +210,7 @@ class PickerScreenTests(unittest.IsolatedAsyncioTestCase):
 
 
 class ComposeScreenTests(unittest.IsolatedAsyncioTestCase):
-    async def test_ctrl_s_saves_and_dismisses_with_entry(self):
+    async def test_save_button_saves_and_dismisses_with_entry(self):
         api = FakeLogbookApi()
         doc = SimpleNamespace(id=1, name="Doc")
         entry = SimpleNamespace(log_id=None, log_entry="")
@@ -221,7 +221,7 @@ class ComposeScreenTests(unittest.IsolatedAsyncioTestCase):
             await pilot.pause()
             area = app.screen.query_one("#compose-area", TextArea)
             area.text = "hello world"
-            await pilot.press("ctrl+s")
+            app.screen.query_one("#compose-save", Button).press()
             await pilot.pause()
             await pilot.pause()
             saved = await task.wait()
@@ -237,13 +237,13 @@ class ComposeScreenTests(unittest.IsolatedAsyncioTestCase):
             task = app.run_worker(
                 app.push_screen_wait(ComposeScreen(doc, entry, api, is_new=True)))
             await pilot.pause()
-            await pilot.press("ctrl+s")
+            app.screen.query_one("#compose-save", Button).press()
             await pilot.pause()
             await pilot.pause()
             result = await task.wait()
         self.assertIsNone(result)
 
-    async def test_escape_without_changes_dismisses_immediately(self):
+    async def test_cancel_without_changes_dismisses_immediately(self):
         api = FakeLogbookApi()
         doc = SimpleNamespace(id=1, name="Doc")
         entry = SimpleNamespace(log_id=7, log_entry="existing text")
@@ -252,12 +252,12 @@ class ComposeScreenTests(unittest.IsolatedAsyncioTestCase):
             task = app.run_worker(
                 app.push_screen_wait(ComposeScreen(doc, entry, api, is_new=False)))
             await pilot.pause()
-            await pilot.press("escape")
+            app.screen.query_one("#compose-cancel", Button).press()
             await pilot.pause()
             result = await task.wait()
         self.assertIsNone(result)
 
-    async def test_escape_with_unsaved_changes_prompts_discard_confirmation(self):
+    async def test_cancel_with_unsaved_changes_prompts_discard_confirmation(self):
         api = FakeLogbookApi()
         doc = SimpleNamespace(id=1, name="Doc")
         entry = SimpleNamespace(log_id=7, log_entry="existing text")
@@ -268,15 +268,134 @@ class ComposeScreenTests(unittest.IsolatedAsyncioTestCase):
             await pilot.pause()
             area = app.screen.query_one("#compose-area", TextArea)
             area.text = "existing text, changed"
-            await pilot.press("escape")
+            app.screen.query_one("#compose-cancel", Button).press()
             await pilot.pause()
-            self.assertEqual(type(app.screen).__name__, "PickerScreen")
-            await pilot.press("enter")  # filter -> list
-            await pilot.pause()
-            await pilot.press("enter")  # confirm "Discard" (highlighted first)
+            self.assertEqual(type(app.screen).__name__, "ConfirmScreen")
+            app.screen.query_one("#confirm-confirm", Button).press()  # "Discard"
             await pilot.pause()
             result = await task.wait()
         self.assertIsNone(result)
+
+    async def test_cancel_with_unsaved_changes_keep_editing_returns_to_compose(self):
+        api = FakeLogbookApi()
+        doc = SimpleNamespace(id=1, name="Doc")
+        entry = SimpleNamespace(log_id=7, log_entry="existing text")
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(
+                app.push_screen_wait(ComposeScreen(doc, entry, api, is_new=False)))
+            await pilot.pause()
+            area = app.screen.query_one("#compose-area", TextArea)
+            area.text = "existing text, changed"
+            app.screen.query_one("#compose-cancel", Button).press()
+            await pilot.pause()
+            self.assertEqual(type(app.screen).__name__, "ConfirmScreen")
+            app.screen.query_one("#confirm-cancel", Button).press()  # "Keep editing"
+            await pilot.pause()
+            self.assertEqual(type(app.screen).__name__, "ComposeScreen")
+            self.assertFalse(task.is_finished)
+
+    async def test_editor_button_opens_editor_and_updates_buffer(self):
+        from contextlib import nullcontext
+
+        api = FakeLogbookApi()
+        doc = SimpleNamespace(id=1, name="Doc")
+        entry = SimpleNamespace(log_id=7, log_entry="existing text")
+        app = App()
+        async with app.run_test() as pilot:
+            app.run_worker(app.push_screen_wait(ComposeScreen(doc, entry, api, is_new=False)))
+            await pilot.pause()
+            screen = app.screen
+            with patch.object(app, "suspend", return_value=nullcontext()), \
+                 patch("bely_cli.common.open_in_editor",
+                       side_effect=lambda text: text + " edited"):
+                screen.query_one("#compose-editor", Button).press()
+                await pilot.pause()
+            self.assertEqual(
+                screen.query_one("#compose-area", TextArea).text, "existing text edited")
+            # The buffer is now dirty from the editor round-trip; Cancel would
+            # open the discard-confirmation dialog -- not what this test covers.
+
+    async def test_tab_from_attachment_field_reaches_save_next(self):
+        api = FakeLogbookApi()
+        doc = SimpleNamespace(id=1, name="Doc")
+        entry = SimpleNamespace(log_id=7, log_entry="existing text")
+        app = App()
+        async with app.run_test() as pilot:
+            app.run_worker(app.push_screen_wait(ComposeScreen(doc, entry, api, is_new=False)))
+            await pilot.pause()
+            screen = app.screen
+            screen.query_one("#compose-attach", Input).focus()
+            await pilot.pause()
+            await pilot.press("tab")
+            await pilot.pause()
+            self.assertIs(screen.focused, screen.query_one("#compose-save", Button))
+
+    async def test_down_and_up_arrows_move_between_attachment_and_buttons(self):
+        api = FakeLogbookApi()
+        doc = SimpleNamespace(id=1, name="Doc")
+        entry = SimpleNamespace(log_id=7, log_entry="existing text")
+        app = App()
+        async with app.run_test() as pilot:
+            app.run_worker(app.push_screen_wait(ComposeScreen(doc, entry, api, is_new=False)))
+            await pilot.pause()
+            screen = app.screen
+            screen.query_one("#compose-attach", Input).focus()
+            await pilot.pause()
+
+            await pilot.press("down")
+            await pilot.pause()
+            self.assertIs(screen.focused, screen.query_one("#compose-save", Button))
+
+            await pilot.press("up")
+            await pilot.pause()
+            self.assertIs(screen.focused, screen.query_one("#compose-attach", Input))
+
+    async def test_left_and_right_arrows_cycle_between_buttons(self):
+        api = FakeLogbookApi()
+        doc = SimpleNamespace(id=1, name="Doc")
+        entry = SimpleNamespace(log_id=7, log_entry="existing text")
+        app = App()
+        async with app.run_test() as pilot:
+            app.run_worker(app.push_screen_wait(ComposeScreen(doc, entry, api, is_new=False)))
+            await pilot.pause()
+            screen = app.screen
+            screen.query_one("#compose-save", Button).focus()
+            await pilot.pause()
+
+            await pilot.press("right")
+            await pilot.pause()
+            self.assertIs(screen.focused, screen.query_one("#compose-editor", Button))
+
+            await pilot.press("right")
+            await pilot.pause()
+            self.assertIs(screen.focused, screen.query_one("#compose-cancel", Button))
+
+            await pilot.press("right")  # wraps back to the first button
+            await pilot.pause()
+            self.assertIs(screen.focused, screen.query_one("#compose-save", Button))
+
+            await pilot.press("left")  # wraps the other way
+            await pilot.pause()
+            self.assertIs(screen.focused, screen.query_one("#compose-cancel", Button))
+
+    async def test_arrow_keys_in_textarea_move_the_cursor_not_focus(self):
+        api = FakeLogbookApi()
+        doc = SimpleNamespace(id=1, name="Doc")
+        entry = SimpleNamespace(log_id=7, log_entry="line one\nline two")
+        app = App()
+        async with app.run_test() as pilot:
+            app.run_worker(app.push_screen_wait(ComposeScreen(doc, entry, api, is_new=False)))
+            await pilot.pause()
+            screen = app.screen
+            area = screen.query_one("#compose-area", TextArea)
+            area.focus()
+            await pilot.pause()
+
+            for key in ("down", "up", "left", "right"):
+                await pilot.press(key)
+                await pilot.pause()
+                self.assertIs(screen.focused, area)
 
 
 class NewDocScreenPrefillTests(unittest.IsolatedAsyncioTestCase):
