@@ -118,7 +118,7 @@ class BrowseScreen(Screen):
                 yield Markdown(id="body-md")
         with Horizontal(id="status-bar"):
             yield Static(id="status-left")
-            yield Input(id="filter", placeholder="type to filter")
+            yield Input(id="filter", placeholder="type to filter", compact=True)
             yield Static(id="status-right")
         yield Footer()
 
@@ -169,6 +169,9 @@ class BrowseScreen(Screen):
         self.refresh_bindings()
         nav = self._nav()
         if not preserve_filter:
+            # Avoid a stale-item preview if clearing the filter's async Changed lands before the new level's fetch does.
+            self.all_items = []
+            self.shown_items = []
             filt = self.query_one("#filter", Input)
             filt.value = ""
             filt.display = False

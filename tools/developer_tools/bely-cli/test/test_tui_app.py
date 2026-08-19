@@ -3,7 +3,7 @@ from contextlib import nullcontext
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from textual.widgets import DataTable, Markdown, Static
+from textual.widgets import DataTable, Input, Markdown, Static
 
 from bely_cli.tui.app import BelyTuiApp
 from bely_cli.tui.data import LogbookData
@@ -183,6 +183,45 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(screen.shown_items, [])
             screen._apply_filter("")
             self.assertEqual(len(screen.shown_items), 1)
+
+    async def test_filter_box_fits_the_one_row_status_bar(self):
+        data = LogbookData(FakeLogbookApi())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            screen = app.screen
+            await pilot.press("/")
+            await pilot.pause()
+            filt = screen.query_one("#filter", Input)
+            status_bar = screen.query_one("#status-bar")
+            self.assertTrue(filt.display)
+            self.assertEqual(filt.region.height, status_bar.region.height)
+
+    async def test_show_level_clears_stale_items_so_a_filter_race_cant_preview_them(self):
+        data = LogbookData(FakeLogbookApi())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            screen = app.screen
+            await pilot.press("enter")  # type -> docs
+            await pilot.pause()
+            await pilot.pause()
+            self.assertEqual(screen.level, screen.LEVEL_DOCS)
+
+            screen._apply_filter("Shift")  # non-empty filter, like the user hit '/'
+            self.assertEqual(len(screen.shown_items), 1)
+
+            screen.sel_doc = screen.shown_items[0]
+            screen.show_level(screen.LEVEL_ENTRIES)  # drill in, entries fetch still pending
+            self.assertEqual(screen.all_items, [])
+            self.assertEqual(screen.shown_items, [])
+
+            # simulate the filter's queued Input.Changed landing before the fetch does
+            screen._apply_filter("")  # must not crash previewing the stale doc's .log_entry
+
+            await pilot.pause()  # let the real entries fetch complete and repopulate
+            self.assertEqual(screen.level, screen.LEVEL_ENTRIES)
+            self.assertEqual(screen.shown_items[0].log_id, 100)
 
     async def test_filter_narrows_table_row_count(self):
         data = LogbookData(FakeLogbookApi())

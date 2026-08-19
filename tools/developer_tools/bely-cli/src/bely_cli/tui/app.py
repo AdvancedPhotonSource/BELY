@@ -64,7 +64,10 @@ class BelyTuiApp(App):
 
     #filter {
         width: 1fr;
+        height: 1;
         margin: 0 1;
+        border: none;
+        padding: 0;
     }
 
     #status-right {
