@@ -119,8 +119,23 @@ List recent log documents you created, newest first.
 #### `bely-cli tui lookup`
 
 Interactively browse to find a log entry when you don't already know its document. The TUI
-drills down through three levels — **logbook → recent documents → entries** — and then shows
-the entry's markdown in a scrollable view. Browsing is read-only and needs no authentication.
+(built on [Textual](https://textual.textualize.io/)) drills down through three levels —
+**logbook → recent documents → entries**. Browsing is read-only and needs no authentication.
+
+The logbook and document levels render as full-width, aligned tables (rows stay in API order,
+not sorted):
+
+| Level | Columns |
+|-------|---------|
+| Logbook | Name, Display, Description |
+| Document | Name, Description, Systems, Owner, Modified |
+
+Press `i` at either of these levels to open a side info panel with a few extra fields for the
+highlighted row (it splits the table's width; `i` again closes it).
+
+Entries stay a single-column list (date, author, and a snippet of the first line) with a preview
+pane that's always shown alongside it — the entry body rendered as markdown (headings, lists,
+tables, and syntax-highlighted code), since the list row itself is just a one-line snippet.
 
 ```bash
 bely-cli tui lookup
@@ -131,16 +146,30 @@ bely-cli tui lookup --limit 50
 |--------|-------------|
 | `--limit INTEGER` | Recent documents to load per logbook (default: 100). |
 
+The info panel (`i`, logbook/document levels only) shows, depending on the level: for a logbook,
+its name, display name(s), and description; for a document, its description, logbook types,
+systems, owner, and creation/modification info. The entry preview (always shown at that level)
+has author and modification info, reply/reaction counts, and attachments (fetched lazily as you
+highlight each entry).
+
 Keys:
+
+The footer at the bottom of the screen only ever shows the keys that apply to the level you're
+on — `i` disappears once you drill into entries, and `s` / `y` / `e` / `f` only appear there.
 
 | Key | Action |
 |-----|--------|
-| `Up` / `Down`, `PgUp` / `PgDn` | Move the highlight (or scroll, in the entry view). |
-| *type any text* | Incrementally filter the current list (case-insensitive substring). |
-| `Backspace` | Edit the filter; with an empty filter, go back one level. |
-| `Enter` | Open the highlighted item / drill in. In the entry view, select the entry. |
-| `q` | (Entry view only) select the entry. |
-| `Esc` | Go back one level; quits from the logbook list. |
+| `Up` / `Down`, `PgUp` / `PgDn` | Move the highlight; the preview/info panel follows. |
+| `/` | Focus the filter box and incrementally filter the current list (case-insensitive substring). |
+| `Enter` | In the filter box, return focus to the list. Elsewhere, drill into the highlighted item, or select the entry at the entries level. |
+| `Esc` / `Backspace` | Go back one level (from the list); quits from the logbook list. In the filter box, `Esc` returns focus to the list. |
+| `s` | Entries level only: save the highlighted entry's markdown to a file in the current directory. |
+| `y` | Entries level only: copy a `bely-cli entry get` reference for the highlighted entry to the clipboard. |
+| `e` | Entries level only: open the highlighted entry in `$EDITOR` (view-only — nothing is sent back to the server). |
+| `i` | Logbook/document levels only: toggle the side info panel. |
+| `f` | Entries level only: toggle the list to widen the preview pane. |
+| `r` | Refresh the current level, bypassing the in-session cache. |
+| `q` | Quit without selecting. |
 
 On selecting an entry the TUI exits and prints its `doc-id` / `log-id`, plus a ready-to-run
 `bely-cli entry get` command so you can fetch it:
@@ -153,6 +182,9 @@ log-id: 42
 
 With `--format json` / `--format yaml` the selected reference is printed as structured data
 instead.
+
+Note: attachment images referenced from entry markdown render as links in the preview, not
+inline images — use `s` or `e` to view the full entry, or fetch the attachment directly.
 
 ### `entry` — log entries
 

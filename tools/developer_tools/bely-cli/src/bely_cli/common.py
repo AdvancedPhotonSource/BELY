@@ -78,10 +78,12 @@ def _sanitize_for_filename(name):
     return "".join(c if c.isalnum() or c in "-_." else "_" for c in name)
 
 
-def write_entry_to_file(entry, doc_name, output_dir=None, fmt="text"):
+def write_entry_to_file(entry, doc_name, output_dir=None, fmt="text", quiet=False):
     """Write entry markdown to <doc_name>_entry_<id>.md in output_dir (cwd if None).
 
-    Returns the path written. Prints the confirmation line only for text format.
+    Returns the path written. Prints the confirmation line only for text
+    format; pass quiet=True to suppress it entirely (e.g. from the TUI, where
+    printing to stdout would corrupt the screen).
     """
     directory = os.path.expanduser(output_dir) if output_dir else "."
     if not os.path.isdir(directory):
@@ -90,7 +92,7 @@ def write_entry_to_file(entry, doc_name, output_dir=None, fmt="text"):
     out_path = os.path.join(directory, f"{safe_doc}_entry_{entry.log_id}.md")
     with open(out_path, "w") as f:
         f.write(entry.log_entry or "")
-    if fmt == "text":
+    if fmt == "text" and not quiet:
         print(f'Wrote log entry id={entry.log_id} to {out_path}')
     return out_path
 

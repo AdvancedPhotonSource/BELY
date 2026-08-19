@@ -24,6 +24,8 @@ requirements:
     - click
     - pyyaml
     - bely-api
+    - textual
+    - rich
 
 test:
   imports:
