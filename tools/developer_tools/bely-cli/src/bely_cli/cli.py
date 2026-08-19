@@ -153,10 +153,19 @@ def entry_get(output_format, **kwargs):
 
 # -- tui --
 
-@cli.group("tui")
-def tui_group():
+# Bare `bely-cli tui` launches the full interactive app, so the group itself
+# is a leaf invocation when no subcommand is given -- the one place
+# --format/--no-prompt sit on a group rather than a leaf command.
+@cli.group("tui", invoke_without_command=True)
+@click.option("--limit", default=100, type=int,
+              help="Recent documents to load per logbook (default 100)")
+@common_options
+@click.pass_context
+def tui_group(ctx, output_format, **kwargs):
     """Interactive terminal UIs."""
-    pass
+    ctx.obj = {"output_format": output_format, **kwargs}
+    if ctx.invoked_subcommand is None:
+        cmd_tui(fmt=output_format, mode="app", **kwargs)
 
 
 @tui_group.command("lookup")
@@ -165,7 +174,7 @@ def tui_group():
 @common_options
 def tui_lookup(output_format, **kwargs):
     """Interactively browse logbooks -> documents -> entries to find a log entry."""
-    cmd_tui(fmt=output_format, **kwargs)
+    cmd_tui(fmt=output_format, mode="lookup", **kwargs)
 
 
 # -- config --

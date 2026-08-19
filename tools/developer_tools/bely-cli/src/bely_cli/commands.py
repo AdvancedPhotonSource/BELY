@@ -2,89 +2,45 @@ import os
 
 from . import auth
 from . import config
+from . import core
 from .common import find_logdoc, is_no_prompt, read_file_or_stdin, write_entry_to_file, open_in_editor, print_items, print_result
 
+# Re-exported for backward compatibility: these used to live here and tests /
+# callers may still import them from this module.
+from .core import find_logbook_type, find_systems, find_template  # noqa: F401
 
-ENV_VARS = ["BELY_HOST", "BELY_USER", "BELY_PASSWORD", "BELY_SETTINGS_FILE", "EDITOR"]
+ENV_VARS = core.ENV_VARS
 
 
 def cmd_show_config(fmt="text"):
     """Show current configuration from settings file and environment."""
-    settings = config.load_settings()
-    environment = {}
-    for var in ENV_VARS:
-        val = os.environ.get(var)
-        if val is not None:
-            environment[var] = "****" if "PASSWORD" in var else val
+    data = core.collect_config()
 
     if fmt != "text":
-        print_result(
-            {
-                "settings_file": config.SETTINGS_FILE,
-                "settings": settings,
-                "environment": environment,
-            },
-            "",
-            fmt,
-        )
+        print_result(data, "", fmt)
         return
 
-    print(f"Settings file: {config.SETTINGS_FILE}")
-    if settings:
-        for key, value in settings.items():
+    print(f"Settings file: {data['settings_file']}")
+    if data["settings"]:
+        for key, value in data["settings"].items():
             print(f"  {key} = {value}")
     else:
         print("  (no settings)")
 
     print()
     print("Environment variables:")
-    if environment:
-        for var, display in environment.items():
+    if data["environment"]:
+        for var, display in data["environment"].items():
             print(f"  {var} = {display}")
     else:
         print("  (none set)")
 
 
-def find_logbook_type(logbook_api, name):
-    """Find a logbook type by name (case-insensitive). Raises ValueError if not found."""
-    types = logbook_api.get_logbook_types()
-    for t in types:
-        if t.name and t.name.lower() == name.lower():
-            return t
-    available = ", ".join(t.name for t in types if t.name)
-    raise ValueError(f"Unknown logbook type '{name}'. Available: {available}")
-
-
-def find_systems(logbook_api, names_csv):
-    """Resolve comma-separated system names to IDs. Raises ValueError on unknown name."""
-    all_systems = logbook_api.get_logbook_systems()
-    by_name = {s.name.lower(): s for s in all_systems}
-    ids = []
-    for name in names_csv.split(","):
-        name = name.strip()
-        if name.lower() not in by_name:
-            available = ", ".join(s.name for s in all_systems)
-            raise ValueError(f"Unknown system '{name}'. Available: {available}")
-        ids.append(by_name[name.lower()].id)
-    return ids
-
-
-def find_template(logbook_api, name):
-    """Find a template by name (case-insensitive). Raises ValueError if not found."""
-    templates = logbook_api.get_logbook_templates()
-    for t in templates:
-        if t.name and t.name.lower() == name.lower():
-            return t
-    available = ", ".join(t.name for t in templates if t.name)
-    raise ValueError(f"Unknown template '{name}'. Available: {available}")
-
 def cmd_edit_config():
     """Open the settings file in the user's editor."""
-    config._ensure_config_dir()
-    if not os.path.exists(config.SETTINGS_FILE):
-        config.save_settings({})
+    settings_file = core.ensure_settings_file()
     editor = config.get_editor()
-    os.execvp(editor, [editor, config.SETTINGS_FILE])
+    os.execvp(editor, [editor, settings_file])
 
 
 def cmd_set_config(field, value, fmt="text"):
@@ -94,7 +50,6 @@ def cmd_set_config(field, value, fmt="text"):
         raise ValueError(f"unknown field '{field}'. Valid fields: {valid}")
     config.set_setting(field, value)
     print_result({field: value}, f"Set {field} = {value}", fmt)
-
 
 
 def cmd_new_doc(type_, name, file, template, systems, no_template,
@@ -136,31 +91,21 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
         if not name:
             raise ValueError("name cannot be empty.")
 
-    logbook_type = find_logbook_type(logbook_api, type_)
-    system_id_list = find_systems(logbook_api, systems) if systems else None
-    template_id = find_template(logbook_api, template).id if template else None
+    logbook_type = core.find_logbook_type(logbook_api, type_)
+    system_id_list = core.find_systems(logbook_api, systems) if systems else None
+    template_id = core.find_template(logbook_api, template).id if template else None
     if find_logdoc(logbook_api, name):
         raise ValueError(f"A log document named '{name}' already exists")
-
-
-    # Build document options
-    import belyApi
-    doc_opts = belyApi.LogDocumentOptions(
-        name=name,
-        logbook_type_id=logbook_type.id,
-    )
-    if system_id_list:
-        doc_opts.system_id_list = system_id_list
-    if template_id:
-        doc_opts.template_id = template_id
-    if no_template:
-        doc_opts.skip_default_logbook_type_template = True
 
     # Authenticate and create document
     result = {"id": None, "name": name}
     with auth.get_authenticated_factory() as auth_factory:
         logbook_api = auth_factory.get_logbook_api()
-        doc = logbook_api.create_logbook_document(log_document_options=doc_opts)
+        doc = core.create_document(
+            logbook_api, name, logbook_type.id,
+            system_id_list=system_id_list, template_id=template_id,
+            skip_default_template=no_template,
+        )
         result["id"] = doc.id
         result["name"] = doc.name
         if fmt == "text":
@@ -173,13 +118,8 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
         entries = logbook_api.get_log_entries(log_document_id=doc.id)
 
         if content:
-            if entries:
-                entry = entries[0]
-                entry.log_entry = content
-            else:
-                entry = logbook_api.get_log_entry_template(log_document_id=doc.id)
-                entry.log_entry = content
-            entry = logbook_api.add_update_log_entry(log_entry=entry)
+            entry = entries[0] if entries else core.new_entry_template(logbook_api, doc.id)
+            entry = core.save_entry(logbook_api, entry, content)
             result["log_id"] = entry.log_id
             if fmt == "text":
                 print(f"Log entry added, log_id={entry.log_id}")
@@ -192,8 +132,7 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
                 if answer in ("y", "yes"):
                     edited = open_in_editor(entry.log_entry or "")
                     if edited != (entry.log_entry or ""):
-                        entry.log_entry = edited
-                        entry = logbook_api.add_update_log_entry(log_entry=entry)
+                        entry = core.save_entry(logbook_api, entry, edited)
                         print(f"Log entry updated, log_id={entry.log_id}")
                     else:
                         print("No changes made.")
@@ -203,11 +142,10 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
             if fmt == "text":
                 answer = input("Create a log entry? [y/N] ").strip().lower()
                 if answer in ("y", "yes"):
-                    entry = logbook_api.get_log_entry_template(log_document_id=doc.id)
+                    entry = core.new_entry_template(logbook_api, doc.id)
                     edited = open_in_editor(entry.log_entry or "")
                     if edited.strip():
-                        entry.log_entry = edited
-                        entry = logbook_api.add_update_log_entry(log_entry=entry)
+                        entry = core.save_entry(logbook_api, entry, edited)
                         result["log_id"] = entry.log_id
                         print(f"Log entry added, log_id={entry.log_id}")
                     else:
@@ -224,19 +162,7 @@ def cmd_list_docs(limit, fmt="text"):
         raise ValueError("cannot determine username. Set BELY_USER or 'user' in settings.")
 
     factory = auth.get_factory()
-    users_api = factory.get_users_api()
-    try:
-        user_info = users_api.get_user_by_username(username=username)
-    except Exception as e:
-        raise RuntimeError(f"could not look up user '{username}': {e}") from e
-
-    search_api = factory.get_search_api()
-    results = search_api.search_logbook(search_text="*", user_id=[user_info.id])
-
-    docs = results.document_results or []
-    # Sort by last_modified_on descending
-    docs.sort(key=lambda d: d.last_modified_on or "", reverse=True)
-    docs = docs[:limit]
+    docs = core.recent_documents(factory, username, limit)
 
     if not docs:
         if fmt == "text":
@@ -247,11 +173,12 @@ def cmd_list_docs(limit, fmt="text"):
 
     items = []
     for d in docs:
+        modified = getattr(d.more_info, "last_modified_on_date_time", None)
         items.append({
-            "id": d.object_id,
-            "name": d.object_name or "",
+            "id": d.id,
+            "name": d.name or "",
             "type": d.logbook_type or "",
-            "last_modified": d.last_modified_on.strftime("%Y-%m-%d %H:%M") if d.last_modified_on else "",
+            "last_modified": modified.strftime("%Y-%m-%d %H:%M") if modified else "",
         })
     columns = [("id", "ID", 8), ("name", "Name", 50), ("type", "Type", 15), ("last_modified", "Last Modified", 20)]
     print_items(items, columns, fmt)

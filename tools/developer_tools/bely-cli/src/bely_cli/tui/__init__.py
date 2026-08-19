@@ -1,30 +1,34 @@
-"""`bely-cli tui lookup`: interactive Textual browser for logbooks/entries.
+"""`bely-cli tui` / `bely-cli tui lookup`: the Textual app entry point.
 
-`.app` (Textual/rich) is imported lazily inside cmd_tui, not at module scope,
-so `bely-cli --help` (which imports this package via cli.py) stays fast.
+`.app` (Textual/rich) and `.session` are imported lazily inside cmd_tui, not
+at module scope, so `bely-cli --help` (which imports this package via
+cli.py) stays fast.
 """
 
 from .. import auth
-from ..common import print_result
+from ..common import is_no_prompt, print_result
 from .data import LogbookData
 from .format import entry_reference
 
 __all__ = ["cmd_tui", "LogbookData"]
 
 
-def cmd_tui(limit=100, fmt="text"):
-    """Interactively browse logbooks -> documents -> entries to find an entry."""
+def cmd_tui(limit=100, fmt="text", mode="app"):
+    """Launch the TUI: the full app (mode="app") or the browse-and-exit lookup."""
     import sys
 
     if not sys.stdout.isatty() or not sys.stdin.isatty():
         raise RuntimeError("the tui requires an interactive terminal.")
+    if is_no_prompt():
+        raise RuntimeError("the tui cannot run with --no-prompt.")
 
     from .app import BelyTuiApp  # lazy: keeps --help fast
+    from .session import TuiSession
 
     factory = auth.get_factory()
-    data = LogbookData(factory.get_logbook_api())
+    session = TuiSession(factory)
 
-    result = BelyTuiApp(data, limit=limit).run()
+    result = BelyTuiApp(session, limit=limit, mode=mode).run()
     if not result:
         return
     doc, entry = result

@@ -11,6 +11,8 @@ Caching rules (carried over from the original curses implementation):
     legitimately empty result.
 """
 
+from .. import core
+
 
 class LogbookData:
     """Wraps logbook_api with the caching the TUI needs."""
@@ -19,14 +21,39 @@ class LogbookData:
         self._logbook_api = logbook_api
 
         self._types = None
+        self._systems = None
+        self._templates = None
         self._docs = {}          # type_id -> list of ItemDomainLogbook
         self._entries = {}       # doc_id -> list of LogEntry
         self._attachments = {}   # (doc_id, log_id) -> list of LogEntryAttachment
+        self._recent = {}        # username -> list of recent documents
 
     def logbook_types(self):
         if self._types is None:
             self._types = self._logbook_api.get_logbook_types()
         return self._types
+
+    def logbook_systems(self):
+        if self._systems is None:
+            self._systems = self._logbook_api.get_logbook_systems()
+        return self._systems
+
+    def logbook_templates(self):
+        if self._templates is None:
+            self._templates = self._logbook_api.get_logbook_templates()
+        return self._templates
+
+    def recent_documents(self, factory, username, limit):
+        """The user's recently modified documents (see core.recent_documents).
+
+        Cached per username; `factory` is only needed to actually fetch (it
+        isn't part of the cache key -- a session has exactly one factory).
+        """
+        docs = self._recent.get(username)
+        if docs is None:
+            docs = core.recent_documents(factory, username, limit)
+            self._recent[username] = docs
+        return docs
 
     def documents(self, type_id, limit):
         docs = self._docs.get(type_id)
@@ -52,14 +79,19 @@ class LogbookData:
             self._attachments[key] = attachments
         return attachments
 
-    def invalidate(self, level, type_id=None, doc_id=None):
+    def invalidate(self, level, type_id=None, doc_id=None, username=None):
         """Drop the cache for one level so the next fetch hits the network.
 
-        level: "types", "docs", or "entries". type_id/doc_id narrow the
-        invalidation to a single key; omitted, the whole level is cleared.
+        level: "types", "systems", "templates", "docs", "entries", or
+        "recent". type_id/doc_id/username narrow the invalidation to a
+        single key; omitted, the whole level is cleared.
         """
         if level == "types":
             self._types = None
+        elif level == "systems":
+            self._systems = None
+        elif level == "templates":
+            self._templates = None
         elif level == "docs":
             if type_id is None:
                 self._docs.clear()
@@ -73,5 +105,20 @@ class LogbookData:
                 self._entries.pop(doc_id, None)
                 for key in [k for k in self._attachments if k[0] == doc_id]:
                     del self._attachments[key]
+        elif level == "recent":
+            if username is None:
+                self._recent.clear()
+            else:
+                self._recent.pop(username, None)
         else:
             raise ValueError(f"unknown cache level: {level}")
+
+    def clear(self):
+        """Discard every cache, forcing the next fetch at any level to hit the network."""
+        self._types = None
+        self._systems = None
+        self._templates = None
+        self._docs.clear()
+        self._entries.clear()
+        self._attachments.clear()
+        self._recent.clear()

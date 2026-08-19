@@ -116,26 +116,123 @@ List recent log documents you created, newest first.
 
 ### `tui` — interactive terminal UIs
 
+#### `bely-cli tui`
+
+Launches the full interactive app, covering the same operations as the flag-driven
+commands: browsing, creating documents, adding/updating entries, and viewing or editing
+configuration. There's no separate menu screen — it opens straight on the list of
+logbooks, the same drill-down `tui lookup` uses, just not read-only.
+
+```bash
+bely-cli tui
+bely-cli tui --limit 50
+```
+
+| Option | Description |
+|--------|-------------|
+| `--limit INTEGER` | Recent documents to load per logbook (default: 100). |
+
+Browsing needs no authentication. `Enter` on an entry just keeps it in the preview
+instead of exiting, and `Esc` at the logbook list quits (there's nothing above it to pop
+back to). A few keys are available once you've drilled in:
+
+| Key | Level | Action |
+|-----|-------|--------|
+| `d` | Logbook, document | Create a new document — see "New document" below. Prefilled with the current logbook if you drilled into one. |
+| `n` | Document, entry | Add a new entry to the current document. |
+| `u` | Entry | Update the highlighted entry. |
+
+`n`/`u`/`d` all open a mutation flow (the entry composer, or the new-document form
+below), which is the point where the app authenticates if it hasn't already (see
+"Authentication" below).
+
+**Command palette**
+
+Press `ctrl+p` for everything that isn't tied to the current logbook/document — the
+equivalent of Home's old menu items, plus what Textual provides by default:
+
+| Command | Action |
+|---------|--------|
+| Configuration | Opens the configuration dialog — equivalent of `config show` / `config set` / `config edit`. |
+| My documents | Opens a browse starting at your recently modified documents — equivalent of `doc list`. `Esc` pops back to wherever you opened it from. |
+| Log in | Authenticate now instead of waiting for the first mutation. |
+| Refresh cache | Discard all cached logbook data so the next view re-fetches from the server. |
+| Theme | Built-in: change the app's color theme for this session. |
+| Quit | Built-in: exit the app. |
+
+**Entry composer**
+
+A Markdown-aware `TextArea` for the entry body, plus an optional attachment path:
+
+| Key | Action |
+|-----|--------|
+| `ctrl+s` | Save (and upload the attachment, if a path was entered). |
+| `ctrl+e` | Suspend the TUI and open the buffer in `$EDITOR`; the edited text comes back into the `TextArea`. |
+| `Esc` | Cancel; asks for confirmation first if the buffer has unsaved changes. |
+
+An empty new entry is skipped rather than saved, matching `entry add`'s behavior.
+
+**New document**
+
+Mirrors `doc new`: a name field, plus pickers for type, systems, and template.
+
+| Key | Action |
+|-----|--------|
+| `ctrl+t` | Pick the logbook type. |
+| `ctrl+y` | Pick systems (multi-select — `space` toggles, `Enter` confirms). |
+| `ctrl+m` | Pick a template, or "(no template)" to skip. |
+| `ctrl+s` | Create the document. |
+| `Esc` | Cancel. |
+
+After creating, it reproduces `doc new`'s post-create prompts: if the template already
+generated an entry it offers to edit it, otherwise it offers to create one — both open the
+same entry composer.
+
+**Configuration**
+
+Opened from the command palette. Mirrors `config show` / `config set` / `config edit`:
+one input per setting, prefilled from `settings.yaml`, alongside a summary of the current
+settings and any environment-variable overrides.
+
+| Key | Action |
+|-----|--------|
+| `ctrl+s` | Save changed fields (same effect as `config set FIELD VALUE`). |
+| `ctrl+e` | Suspend the TUI and open the settings file in `$EDITOR`, then reload. |
+| `r` | Reload from disk, discarding unsaved edits in the form. |
+| `Esc` | Close the dialog. |
+
+A field whose effective value comes from an environment variable (`BELY_HOST`, `BELY_USER`,
+`EDITOR`) shows that in its placeholder, and saving it warns that the env var will keep
+overriding it.
+
+**Authentication**
+
+Browsing needs no login. The first time you add or update an entry, create a document, or
+save a config change, the app looks for the token the CLI already caches (see
+[Authentication](#authentication) above) and reuses it silently if it's valid — so if you've
+already run an authenticated `bely-cli` command, or a previous `tui` session, you won't be
+prompted again. Otherwise a login modal appears; a successful login is cached the same way
+the CLI caches it, shared by later `bely-cli` commands and TUI sessions alike.
+
 #### `bely-cli tui lookup`
 
 Interactively browse to find a log entry when you don't already know its document. The TUI
 (built on [Textual](https://textual.textualize.io/)) drills down through three levels —
 **logbook → recent documents → entries**. Browsing is read-only and needs no authentication.
 
-The logbook and document levels render as full-width, aligned tables (rows stay in API order,
-not sorted):
+All three levels render as full-width, aligned tables (rows stay in API order, not sorted):
 
 | Level | Columns |
 |-------|---------|
 | Logbook | Name, Display, Description |
 | Document | Name, Description, Systems, Owner, Modified |
+| Entry | Date, Author, Entry (a snippet of the first line) |
 
-Press `i` at either of these levels to open a side info panel with a few extra fields for the
-highlighted row (it splits the table's width; `i` again closes it).
-
-Entries stay a single-column list (date, author, and a snippet of the first line) with a preview
-pane that's always shown alongside it — the entry body rendered as markdown (headings, lists,
-tables, and syntax-highlighted code), since the list row itself is just a one-line snippet.
+Press `i` at the logbook/document levels to open a side info panel with a few extra fields
+for the highlighted row (it splits the table's width; `i` again closes it). Entries always
+show a preview pane alongside the table — the entry body rendered as markdown (headings,
+lists, tables, and syntax-highlighted code), since the row itself is just a one-line
+snippet.
 
 ```bash
 bely-cli tui lookup
@@ -160,14 +257,15 @@ on — `i` disappears once you drill into entries, and `s` / `y` / `e` / `f` onl
 | Key | Action |
 |-----|--------|
 | `Up` / `Down`, `PgUp` / `PgDn` | Move the highlight; the preview/info panel follows. |
-| `/` | Focus the filter box and incrementally filter the current list (case-insensitive substring). |
-| `Enter` | In the filter box, return focus to the list. Elsewhere, drill into the highlighted item, or select the entry at the entries level. |
-| `Esc` / `Backspace` | Go back one level (from the list); quits from the logbook list. In the filter box, `Esc` returns focus to the list. |
+| `/` | Reveal and focus the filter box; incrementally filters the current table (case-insensitive substring). It hides itself again once it loses focus with nothing typed. |
+| `Enter` | In the filter box, return focus to the table. Elsewhere, drill into the highlighted row, or select the entry at the entries level. |
+| `Esc` / `Backspace` | Go back one level (from the table); quits from the logbook list. In the filter box, `Esc` returns focus to the table. |
+| `d` | Logbook/document levels only: create a new document (see `bely-cli tui`'s "New document" above) — a mutation, so this is where the app authenticates if it hasn't already. |
 | `s` | Entries level only: save the highlighted entry's markdown to a file in the current directory. |
 | `y` | Entries level only: copy a `bely-cli entry get` reference for the highlighted entry to the clipboard. |
 | `e` | Entries level only: open the highlighted entry in `$EDITOR` (view-only — nothing is sent back to the server). |
 | `i` | Logbook/document levels only: toggle the side info panel. |
-| `f` | Entries level only: toggle the list to widen the preview pane. |
+| `f` | Entries level only: toggle the table to widen the preview pane. |
 | `r` | Refresh the current level, bypassing the in-session cache. |
 | `q` | Quit without selecting. |
 

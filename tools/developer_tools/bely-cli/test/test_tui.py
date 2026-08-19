@@ -63,6 +63,10 @@ class RowColumnArityTests(unittest.TestCase):
         d = SimpleNamespace(name=None, description=None, item_type_list=None, more_info=None)
         self.assertEqual(len(fmt.doc_row(d)), len(fmt.DOC_COLUMNS))
 
+    def test_entry_row_matches_entry_columns(self):
+        e = SimpleNamespace(entered_on_date_time=None, entered_by_username=None, log_entry=None)
+        self.assertEqual(len(fmt.entry_row(e)), len(fmt.ENTRY_COLUMNS))
+
 
 class FilterItemsWithRowFnTests(unittest.TestCase):
     def test_matches_on_any_column(self):
@@ -75,18 +79,17 @@ class FilterItemsWithRowFnTests(unittest.TestCase):
         self.assertEqual([r.name for r in result], ["controls"])
 
 
-class FormatEntryTests(unittest.TestCase):
+class EntryRowTests(unittest.TestCase):
     def test_date_author_snippet(self):
         e = SimpleNamespace(
             entered_on_date_time=datetime.datetime(2026, 6, 19, 14, 30),
             entered_by_username="alice",
             log_entry="First line\nSecond line",
         )
-        out = fmt.format_entry(e)
-        self.assertIn("2026-06-19 14:30", out)
-        self.assertIn("alice", out)
-        self.assertIn("First line", out)
-        self.assertNotIn("Second line", out)
+        date, author, snippet = fmt.entry_row(e)
+        self.assertEqual(date, "2026-06-19 14:30")
+        self.assertEqual(author, "alice")
+        self.assertEqual(snippet, "First line")
 
     def test_truncates_long_first_line(self):
         e = SimpleNamespace(
@@ -94,8 +97,8 @@ class FormatEntryTests(unittest.TestCase):
             entered_by_username="bob",
             log_entry="x" * 100,
         )
-        out = fmt.format_entry(e)
-        self.assertIn("...", out)
+        _, _, snippet = fmt.entry_row(e)
+        self.assertIn("...", snippet)
 
     def test_skips_blank_leading_lines(self):
         e = SimpleNamespace(
@@ -103,7 +106,8 @@ class FormatEntryTests(unittest.TestCase):
             entered_by_username="bob",
             log_entry="\n\n  \nReal content",
         )
-        self.assertIn("Real content", fmt.format_entry(e))
+        _, _, snippet = fmt.entry_row(e)
+        self.assertEqual(snippet, "Real content")
 
 
 class EntryReferenceTests(unittest.TestCase):

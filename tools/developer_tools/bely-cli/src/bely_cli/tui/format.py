@@ -23,22 +23,6 @@ def format_doc(d):
     return f"{name}  -  {desc}" if desc else name
 
 
-def format_entry(e):
-    """Display string for a log entry: date, author, first-line snippet.
-
-    Mirrors the snippet logic used by cmd_list_entries (entry.py).
-    """
-    dt = getattr(e, "entered_on_date_time", None)
-    date = dt.strftime("%Y-%m-%d %H:%M") if dt else ""
-    author = getattr(e, "entered_by_username", None) or ""
-    body = getattr(e, "log_entry", None) or ""
-    lines = [ln for ln in body.strip().splitlines() if ln.strip()]
-    snippet = lines[0] if lines else ""
-    if len(snippet) > 60:
-        snippet = snippet[:57] + "..."
-    return f"{date}  {author:<16}  {snippet}".rstrip()
-
-
 def format_attachment(att):
     """Display string for a LogEntryAttachment."""
     name = getattr(att, "original_filename", None) or "(unnamed)"
@@ -102,9 +86,27 @@ def doc_row(d):
     return (name, description, _doc_systems(d), _doc_owner(d), _doc_modified(d))
 
 
+ENTRY_COLUMNS = [("Date", 16), ("Author", 16), ("Entry", None)]
+
+
+def _entry_snippet(e):
+    """First non-blank line of the entry body, truncated to 60 chars.
+
+    Mirrors the snippet logic used by cmd_list_entries (entry.py).
+    """
+    body = getattr(e, "log_entry", None) or ""
+    lines = [ln for ln in body.strip().splitlines() if ln.strip()]
+    snippet = lines[0] if lines else ""
+    if len(snippet) > 60:
+        snippet = snippet[:57] + "..."
+    return snippet
+
+
 def entry_row(e):
-    """Row cells for a log entry: kept 1-tuple since entries stay list-rendered."""
-    return (format_entry(e),)
+    """DataTable row cells for a log entry: date, author, first-line snippet."""
+    date = _fmt_dt(getattr(e, "entered_on_date_time", None))
+    author = getattr(e, "entered_by_username", None) or ""
+    return (date, author, _entry_snippet(e))
 
 
 # -- filtering / navigation --

@@ -92,11 +92,39 @@ def get_factory():
     return BelyApiFactory(bely_url=get_host())
 
 
-def _login_and_cache(factory):
-    """Prompt for credentials, authenticate the factory, and persist the new token."""
+def authenticated_factory_from_token():
+    """Return a factory authenticated with the cached token, or None.
+
+    A cached token that the server rejects is deleted before returning None,
+    so the caller can fall back to an interactive/explicit login. Does not
+    prompt for anything.
+    """
     import belyApi
-    username = get_username()
-    password = get_password(username)
+    from BelyApiFactory import BelyApiFactory
+
+    token = load_token()
+    if not token:
+        return None
+
+    factory = BelyApiFactory(bely_url=get_host())
+    factory.api_client.set_default_header(BelyApiFactory.HEADER_TOKEN_KEY, token)
+    try:
+        factory.test_authenticated()
+    except belyApi.exceptions.UnauthorizedException:
+        delete_token()
+        return None
+    return factory
+
+
+def login(username, password):
+    """Authenticate with credentials, cache the resulting token, and return the factory.
+
+    Raises ValueError on bad credentials, RuntimeError on any other failure.
+    """
+    import belyApi
+    from BelyApiFactory import BelyApiFactory
+
+    factory = BelyApiFactory(bely_url=get_host())
     try:
         factory.authenticate_user(username, password)
     except belyApi.exceptions.UnauthorizedException:
@@ -104,6 +132,7 @@ def _login_and_cache(factory):
     except Exception as e:
         raise RuntimeError(f"Authentication failed: {e}") from e
     save_token(factory.get_authenticate_token())
+    return factory
 
 
 @contextmanager
@@ -118,21 +147,9 @@ def get_authenticated_factory():
       1. BELY_USER + BELY_PASSWORD env vars
       2. Interactive prompt
     """
-    import belyApi
-    from BelyApiFactory import BelyApiFactory
-
-    factory = BelyApiFactory(bely_url=get_host())
-
-    token = load_token()
-    if token:
-        factory.api_client.set_default_header(BelyApiFactory.HEADER_TOKEN_KEY, token)
-        try:
-            factory.test_authenticated()
-        except belyApi.exceptions.UnauthorizedException:
-            delete_token()
-            factory.api_client.default_headers.pop(BelyApiFactory.HEADER_TOKEN_KEY, None)
-            _login_and_cache(factory)
-    else:
-        _login_and_cache(factory)
+    factory = authenticated_factory_from_token()
+    if factory is None:
+        username = get_username()
+        factory = login(username, get_password(username))
 
     yield factory

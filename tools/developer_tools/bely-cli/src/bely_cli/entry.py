@@ -1,22 +1,9 @@
-import os
-from types import SimpleNamespace
-
 from . import auth
-from .common import find_logdoc, is_no_prompt, read_file_or_stdin, write_entry_to_file, open_in_editor, print_items, print_result
+from . import core
+from .common import is_no_prompt, read_file_or_stdin, write_entry_to_file, open_in_editor, print_items, print_result
 
-
-def resolve_doc(logbook_api, doc_name, doc_id):
-    """Resolve a document by name or ID. Raises ValueError on error."""
-    if doc_name and doc_id:
-        raise ValueError("--doc-name and --doc-id are mutually exclusive.")
-    if not doc_name and not doc_id:
-        raise ValueError("--doc-name or --doc-id is required.")
-    if doc_id:
-        return SimpleNamespace(id=doc_id, name=f"id={doc_id}")
-    doc = find_logdoc(logbook_api, doc_name)
-    if not doc:
-        raise ValueError(f'log document "{doc_name}" not found.')
-    return doc
+# Re-exported for backward compatibility: resolve_doc used to live here.
+from .core import resolve_doc  # noqa: F401
 
 
 def upload_and_print_attachment(logbook_api, doc_id, log_id, path, fmt="text"):
@@ -24,26 +11,13 @@ def upload_and_print_attachment(logbook_api, doc_id, log_id, path, fmt="text"):
 
     Prints the human-readable summary only for text format.
     """
-    basename = os.path.basename(path)
-    att = logbook_api.upload_attachment(
-        log_document_id=doc_id,
-        log_id=log_id,
-        body=path,
-        append_reference=True,
-        file_name=basename,
-    )
-    info = {
-        "original_filename": att.original_filename,
-        "stored_filename": att.stored_filename,
-        "download_path": att.download_path,
-        "markdown_reference": att.markdown_reference,
-    }
+    info = core.upload_attachment(logbook_api, doc_id, log_id, path)
     if fmt == "text":
-        print(f'Attachment "{basename}" uploaded')
-        print(f"  original_filename:  {att.original_filename}")
-        print(f"  stored_filename:    {att.stored_filename}")
-        print(f"  download_path:      {att.download_path}")
-        print(f"  markdown_reference: {att.markdown_reference}")
+        print(f'Attachment "{info["original_filename"]}" uploaded')
+        print(f"  original_filename:  {info['original_filename']}")
+        print(f"  stored_filename:    {info['stored_filename']}")
+        print(f"  download_path:      {info['download_path']}")
+        print(f"  markdown_reference: {info['markdown_reference']}")
     return info
 
 
@@ -57,16 +31,14 @@ def cmd_update_entry(doc_name, doc_id, entry_id, file, text, add_attachment, fmt
 
     # Validate attachments and read content before any network calls
     if add_attachment:
-        add_attachment = os.path.expanduser(add_attachment)
-        if not os.path.isfile(add_attachment):
-            raise ValueError(f"attachment file not found: {add_attachment}")
+        add_attachment = core.validate_attachment_path(add_attachment)
 
     content = read_file_or_stdin(file) if file else text
 
     # Resolve document (unauthenticated)
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
-    doc = resolve_doc(logbook_api, doc_name, doc_id)
+    doc = core.resolve_doc(logbook_api, doc_name, doc_id)
 
     # Authenticate and find/update entry
     with auth.get_authenticated_factory() as auth_factory:
@@ -74,32 +46,22 @@ def cmd_update_entry(doc_name, doc_id, entry_id, file, text, add_attachment, fmt
         entries = logbook_api.get_log_entries(log_document_id=doc.id)
 
         if entry_id:
-            # Find specific entry by log_id
-            entry = None
-            for e in entries:
-                if e.log_id == entry_id:
-                    entry = e
-                    break
+            entry = core.find_entry(entries, entry_id)
             if not entry:
                 raise ValueError(f'entry with log_id={entry_id} not found in document "{doc.name}".')
         else:
-            # Find last entry by current user
             username = auth.get_username()
             if not username:
                 raise ValueError("cannot determine username. Set BELY_USER or 'user' in settings.")
-            user_entries = [e for e in entries
-                           if e.entered_by_username
-                           and e.entered_by_username.lower() == username.lower()]
-            if not user_entries:
+            entry = core.last_entry_by_user(entries, username)
+            if not entry:
                 raise ValueError(f'no entries by user "{username}" found in document "{doc.name}".')
-            entry = user_entries[-1]
 
         # Update entry content
         result = {"doc": doc.name, "log_id": entry.log_id, "status": None,
                   "attachment": None}
         if content:
-            entry.log_entry = content
-            entry = logbook_api.add_update_log_entry(log_entry=entry)
+            entry = core.save_entry(logbook_api, entry, content)
             result["log_id"] = entry.log_id
             result["status"] = "updated"
             if fmt == "text":
@@ -113,8 +75,7 @@ def cmd_update_entry(doc_name, doc_id, entry_id, file, text, add_attachment, fmt
             original = entry.log_entry or ""
             edited = open_in_editor(original)
             if edited != original:
-                entry.log_entry = edited
-                entry = logbook_api.add_update_log_entry(log_entry=entry)
+                entry = core.save_entry(logbook_api, entry, edited)
                 result["log_id"] = entry.log_id
                 result["status"] = "updated"
                 if fmt == "text":
@@ -136,29 +97,26 @@ def cmd_add_entry(doc_name, doc_id, file, text, add_attachment, fmt="text"):
 
     # Validate attachments and read content before any network calls
     if add_attachment:
-        add_attachment = os.path.expanduser(add_attachment)
-        if not os.path.isfile(add_attachment):
-            raise ValueError(f"attachment file not found: {add_attachment}")
+        add_attachment = core.validate_attachment_path(add_attachment)
 
     content = read_file_or_stdin(file) if file else text
 
     # Resolve document (unauthenticated)
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
-    doc = resolve_doc(logbook_api, doc_name, doc_id)
+    doc = core.resolve_doc(logbook_api, doc_name, doc_id)
 
     # Authenticate and create entry
     with auth.get_authenticated_factory() as auth_factory:
         logbook_api = auth_factory.get_logbook_api()
 
-        entry = logbook_api.get_log_entry_template(log_document_id=doc.id)
+        entry = core.new_entry_template(logbook_api, doc.id)
 
         result = {"doc": doc.name, "log_id": None, "status": None, "attachment": None}
         if use_editor:
             edited = open_in_editor(entry.log_entry or "")
             if edited.strip():
-                entry.log_entry = edited
-                entry = logbook_api.add_update_log_entry(log_entry=entry)
+                entry = core.save_entry(logbook_api, entry, edited)
                 result["log_id"] = entry.log_id
                 result["status"] = "added"
                 if fmt == "text":
@@ -168,8 +126,7 @@ def cmd_add_entry(doc_name, doc_id, file, text, add_attachment, fmt="text"):
                 if fmt == "text":
                     print("Empty entry, skipped.")
         else:
-            entry.log_entry = content or ""
-            entry = logbook_api.add_update_log_entry(log_entry=entry)
+            entry = core.save_entry(logbook_api, entry, content or "")
             result["log_id"] = entry.log_id
             result["status"] = "added"
             if fmt == "text":
@@ -187,7 +144,7 @@ def cmd_list_entries(doc_name, doc_id, fmt="text"):
     """List entries in a log document."""
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
-    doc = resolve_doc(logbook_api, doc_name, doc_id)
+    doc = core.resolve_doc(logbook_api, doc_name, doc_id)
     entries = logbook_api.get_log_entries(log_document_id=doc.id)
 
     if not entries:
@@ -197,18 +154,7 @@ def cmd_list_entries(doc_name, doc_id, fmt="text"):
             print_items([], [], fmt)
         return
 
-    items = []
-    for e in entries:
-        date = e.entered_on_date_time.strftime("%Y-%m-%d %H:%M") if e.entered_on_date_time else ""
-        snippet = (e.log_entry or "").strip().splitlines()[0] if e.log_entry else ""
-        if len(snippet) > 60:
-            snippet = snippet[:57] + "..."
-        items.append({
-            "log_id": e.log_id,
-            "date": date,
-            "author": e.entered_by_username or "",
-            "snippet": snippet,
-        })
+    items = core.entry_list_items(entries)
     columns = [("log_id", "Log ID", 10), ("date", "Date", 18),
                ("author", "Author", 20), ("snippet", "Snippet", 0)]
     print_items(items, columns, fmt)
@@ -218,14 +164,14 @@ def cmd_get_entry(doc_name, doc_id, entry_id, output_dir, fmt="text"):
     """Write the markdown of a log entry to a file (latest by default)."""
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
-    doc = resolve_doc(logbook_api, doc_name, doc_id)
+    doc = core.resolve_doc(logbook_api, doc_name, doc_id)
     entries = logbook_api.get_log_entries(log_document_id=doc.id)
 
     if not entries:
         raise ValueError(f'No entries found in document {doc.name}.')
 
     if entry_id:
-        entry = next((e for e in entries if e.log_id == entry_id), None)
+        entry = core.find_entry(entries, entry_id)
         if not entry:
             raise ValueError(f'entry with log_id={entry_id} not found in document {doc.name}.')
     else:
