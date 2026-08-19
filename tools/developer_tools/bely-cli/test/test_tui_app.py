@@ -1,5 +1,7 @@
 import unittest
+from contextlib import nullcontext
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from textual.widgets import DataTable, Markdown, Static
 
@@ -356,6 +358,61 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             await pilot.pause()
             self.assertEqual(type(app.screen).__name__, "BrowseScreen")
             self.assertEqual(screen.level, screen.LEVEL_ENTRIES)
+
+    async def test_edit_key_with_no_editor_changes_does_not_save(self):
+        api = FakeLogbookApi()
+        data = LogbookData(api)
+        session = FakeSession(data, factory=FakeFactory(api=api))
+        app = BelyTuiApp(session, limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            screen = app.screen
+            await pilot.press("enter")  # type -> docs
+            await pilot.pause()
+            await pilot.press("enter")  # docs -> entries
+            await pilot.pause()
+            await pilot.pause()
+            self.assertEqual(screen.level, screen.LEVEL_ENTRIES)
+
+            with patch.object(app, "suspend", return_value=nullcontext()), \
+                 patch("bely_cli.common.open_in_editor", side_effect=lambda text: text):
+                await pilot.press("e")
+                await pilot.pause()
+                await pilot.pause()
+
+            self.assertEqual(type(app.screen).__name__, "BrowseScreen")
+
+    async def test_edit_key_with_editor_changes_offers_save_and_saves(self):
+        api = FakeLogbookApi()
+        data = LogbookData(api)
+        session = FakeSession(data, factory=FakeFactory(api=api))
+        app = BelyTuiApp(session, limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            screen = app.screen
+            await pilot.press("enter")  # type -> docs
+            await pilot.pause()
+            await pilot.press("enter")  # docs -> entries
+            await pilot.pause()
+            await pilot.pause()
+            self.assertEqual(screen.level, screen.LEVEL_ENTRIES)
+
+            with patch.object(app, "suspend", return_value=nullcontext()), \
+                 patch("bely_cli.common.open_in_editor",
+                       side_effect=lambda text: text + "\nedited in $EDITOR"), \
+                 patch.object(api, "add_update_log_entry", wraps=api.add_update_log_entry) as save_call:
+                await pilot.press("e")
+                await pilot.pause()
+                await pilot.pause()
+                self.assertEqual(type(app.screen).__name__, "ConfirmScreen")
+
+                await pilot.press("enter")  # confirm button is focused -> Save
+                await pilot.pause()
+                await pilot.pause()
+
+            self.assertEqual(type(app.screen).__name__, "BrowseScreen")
+            saved_entry = save_call.call_args.kwargs["log_entry"]
+            self.assertIn("edited in $EDITOR", saved_entry.log_entry)
 
 
 if __name__ == "__main__":

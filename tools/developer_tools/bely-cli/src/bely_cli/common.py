@@ -1,5 +1,6 @@
 import json
 import os
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -104,8 +105,24 @@ def open_in_editor(initial_content=""):
         tmp_path = tmp.name
     try:
         editor = config.get_editor()
-        subprocess.call([editor, tmp_path])
+        try:
+            argv = shlex.split(editor) + [tmp_path]
+        except ValueError as e:
+            raise RuntimeError(f"could not parse editor command {editor!r}: {e}")
+        try:
+            subprocess.call(argv)
+        except OSError as e:
+            raise RuntimeError(f"could not run editor {editor!r}: {e}")
         with open(tmp_path, "r") as f:
             return f.read()
     finally:
         os.unlink(tmp_path)
+
+
+def editor_changed(original, edited):
+    """True if an $EDITOR round-trip produced a real change.
+
+    Ignores a trailing newline, which most editors (vim, nano) append on save
+    whether or not the user typed anything.
+    """
+    return edited.rstrip("\n") != original.rstrip("\n")

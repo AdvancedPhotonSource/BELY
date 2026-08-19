@@ -21,6 +21,8 @@ so the UI never blocks on belyApi's synchronous HTTP calls: plain fetches use
 a plain async `@work` so they can `await` the auth gate and a modal screen.
 """
 
+import asyncio
+
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -82,9 +84,9 @@ class BrowseScreen(Screen):
         Binding("f", "toggle_full", "Full"),
         Binding("s", "save_entry", "Save"),
         Binding("y", "copy_reference", "Copy ref"),
-        Binding("e", "open_editor", "Editor"),
+        Binding("e", "open_editor", "Edit in editor"),
         Binding("n", "new_entry", "New entry"),
-        Binding("u", "update_entry", "Update"),
+        Binding("u", "update_entry", "Edit in TUI"),
         Binding("d", "new_doc", "New doc"),
         Binding("r", "refresh_level", "Refresh"),
         Binding("i", "toggle_info", "Info"),
@@ -484,15 +486,54 @@ class BrowseScreen(Screen):
         self.notify(f"Copied: {ref}")
 
     def action_open_editor(self):
-        from ...common import open_in_editor
-
         entry = self._current_entry()
         if entry is None:
             self.notify("Select an entry first.", severity="warning")
             return
-        with self.app.suspend():
-            open_in_editor(entry.log_entry or "")
-        self.notify("Back from editor (view-only; nothing was saved).")
+        self._edit_entry_externally(entry)
+
+    @work
+    async def _edit_entry_externally(self, entry):
+        from ...common import editor_changed, open_in_editor
+        from .confirm import ConfirmScreen
+
+        original = entry.log_entry or ""
+        try:
+            with self.app.suspend():
+                edited = open_in_editor(original)
+        except RuntimeError as e:
+            self.notify(str(e), severity="error")
+            return
+
+        if not editor_changed(original, edited):
+            self.notify("No changes made.")
+            return
+
+        save = await self.app.push_screen_wait(
+            ConfirmScreen(
+                f"Save changes to entry #{entry.log_id}?",
+                confirm_label="Save",
+                cancel_label="Discard",
+            )
+        )
+        if not save:
+            return
+
+        api = await self.app.ensure_auth()
+        if api is None:
+            return
+
+        from ... import core
+
+        try:
+            await asyncio.to_thread(core.save_entry, api, entry, edited)
+        except Exception as e:
+            self.notify(f"Save failed: {e}", severity="error")
+            return
+
+        self.data.invalidate("entries", doc_id=self.sel_doc.id)
+        self.show_level(self.LEVEL_ENTRIES, preserve_filter=True)
+        self.notify("Entry saved.")
 
     # -- add / update entry (mutating: goes through the auth gate) --
 

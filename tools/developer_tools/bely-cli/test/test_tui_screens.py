@@ -18,6 +18,7 @@ from bely_cli.tui.app import BelyTuiApp
 from bely_cli.tui.data import LogbookData
 from bely_cli.tui.screens import configscreen
 from bely_cli.tui.screens.compose import ComposeScreen
+from bely_cli.tui.screens.confirm import ConfirmScreen
 from bely_cli.tui.screens.configscreen import ConfigScreen
 from bely_cli.tui.screens.login import LoginScreen
 from bely_cli.tui.screens.newdoc import NewDocScreen
@@ -468,6 +469,42 @@ class ConfigScreenTests(unittest.IsolatedAsyncioTestCase):
                 await pilot.pause()
 
         self.assertEqual(saved, [("host", "https://new")])
+
+
+class ConfirmScreenTests(unittest.IsolatedAsyncioTestCase):
+    async def test_confirm_button_dismisses_true(self):
+        from textual.widgets import Button
+
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(ConfirmScreen("Are you sure?")))
+            await pilot.pause()
+            app.screen.query_one("#confirm-confirm", Button).press()
+            await pilot.pause()
+            result = await task.wait()
+        self.assertTrue(result)
+
+    async def test_cancel_button_dismisses_false(self):
+        from textual.widgets import Button
+
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(ConfirmScreen("Are you sure?")))
+            await pilot.pause()
+            app.screen.query_one("#confirm-cancel", Button).press()
+            await pilot.pause()
+            result = await task.wait()
+        self.assertFalse(result)
+
+    async def test_escape_dismisses_false(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(ConfirmScreen("Are you sure?")))
+            await pilot.pause()
+            await pilot.press("escape")
+            await pilot.pause()
+            result = await task.wait()
+        self.assertFalse(result)
 
 
 if __name__ == "__main__":
