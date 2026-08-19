@@ -313,8 +313,7 @@ class ComposeScreenTests(unittest.IsolatedAsyncioTestCase):
                 await pilot.pause()
             self.assertEqual(
                 screen.query_one("#compose-area", TextArea).text, "existing text edited")
-            # The buffer is now dirty from the editor round-trip; Cancel would
-            # open the discard-confirmation dialog -- not what this test covers.
+            # buffer is dirty now, so skip Cancel here -- not what this test covers
 
     async def test_tab_from_attachment_field_reaches_save_next(self):
         api = FakeLogbookApi()
