@@ -22,6 +22,7 @@ a plain async `@work` so they can `await` the auth gate and a modal screen.
 """
 
 import asyncio
+from functools import partial
 
 from textual import work
 from textual.app import ComposeResult
@@ -165,6 +166,8 @@ class BrowseScreen(Screen):
 
     def show_level(self, level, *, preserve_filter=False):
         self.level = level
+        # cancel any in-flight preview worker so a stale, now-mistyped item can't reach _show_preview
+        self.app.workers.cancel_group(self, "preview")
         self._sync_panes()
         self.refresh_bindings()
         nav = self._nav()
@@ -262,7 +265,7 @@ class BrowseScreen(Screen):
             # DataTable.clear() leaves the cursor at (0, 0); if it was
             # already there, RowHighlighted won't fire, so drive the
             # initial preview explicitly instead of relying on it.
-            self.run_worker(self._show_preview(self.shown_items[0]), exclusive=True, group="preview")
+            self.run_worker(partial(self._show_preview, self.shown_items[0]), exclusive=True, group="preview")
         else:
             self.query_one("#meta", Static).update("(no matches)")
             self.query_one("#body-md", Markdown).display = False
