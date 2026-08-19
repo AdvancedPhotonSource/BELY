@@ -455,5 +455,47 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("edited in $EDITOR", saved_entry.log_entry)
 
 
+class ThemePersistenceTests(unittest.IsolatedAsyncioTestCase):
+    async def test_no_saved_theme_falls_back_to_default(self):
+        data = LogbookData(FakeLogbookApi())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None), \
+             patch("bely_cli.tui.app.config.set_setting") as set_setting:
+            async with app.run_test() as pilot:
+                await pilot.pause()
+                self.assertEqual(app.theme, "textual-dark")
+            set_setting.assert_not_called()
+
+    async def test_saved_valid_theme_is_loaded_without_repersisting(self):
+        data = LogbookData(FakeLogbookApi())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        with patch("bely_cli.tui.app.config.get_setting", return_value="nord"), \
+             patch("bely_cli.tui.app.config.set_setting") as set_setting:
+            async with app.run_test() as pilot:
+                await pilot.pause()
+                self.assertEqual(app.theme, "nord")
+            set_setting.assert_not_called()
+
+    async def test_unknown_saved_theme_falls_back_to_default(self):
+        data = LogbookData(FakeLogbookApi())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        with patch("bely_cli.tui.app.config.get_setting", return_value="not-a-real-theme"), \
+             patch("bely_cli.tui.app.config.set_setting"):
+            async with app.run_test() as pilot:
+                await pilot.pause()
+                self.assertEqual(app.theme, "textual-dark")
+
+    async def test_changing_theme_after_mount_persists_it(self):
+        data = LogbookData(FakeLogbookApi())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None), \
+             patch("bely_cli.tui.app.config.set_setting") as set_setting:
+            async with app.run_test() as pilot:
+                await pilot.pause()
+                app.theme = "gruvbox"
+                await pilot.pause()
+            set_setting.assert_called_once_with("theme", "gruvbox")
+
+
 if __name__ == "__main__":
     unittest.main()

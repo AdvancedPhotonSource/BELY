@@ -24,7 +24,10 @@ import asyncio
 
 from textual.app import App, SystemCommand
 
+from .. import config
 from .screens.browse import BrowseScreen
+
+DEFAULT_THEME = "textual-dark"
 
 
 class BelyTuiApp(App):
@@ -80,10 +83,18 @@ class BelyTuiApp(App):
         self.session = session
         self.limit = limit
         self.mode = mode
+        self._theme_loaded = False
 
     def on_mount(self):
-        self.theme = "textual-dark"
+        saved = config.get_setting("theme")
+        self.theme = saved if saved in self.available_themes else DEFAULT_THEME
+        self._theme_loaded = True
         self.push_screen(BrowseScreen(self.session, self.limit, select_mode=(self.mode == "lookup")))
+
+    def watch_theme(self, theme_name):
+        """Persist a theme picked from the built-in palette command (not the initial on_mount load)."""
+        if self._theme_loaded:
+            config.set_setting("theme", theme_name)
 
     def get_system_commands(self, screen):
         yield from super().get_system_commands(screen)

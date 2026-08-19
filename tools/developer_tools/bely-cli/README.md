@@ -157,7 +157,7 @@ equivalent of Home's old menu items, plus what Textual provides by default:
 | My documents | Opens a browse starting at your recently modified documents — equivalent of `doc list`. `Esc` pops back to wherever you opened it from. |
 | Log in | Authenticate now instead of waiting for the first mutation. |
 | Refresh cache | Discard all cached logbook data so the next view re-fetches from the server. |
-| Theme | Built-in: change the app's color theme for this session. |
+| Theme | Built-in: change the app's color theme; the choice is saved as the `theme` setting and reused on the next launch. |
 | Quit | Built-in: exit the app. |
 
 **Entry composer**
@@ -353,21 +353,22 @@ Open the settings file in your editor. The editor is resolved from `EDITOR`, the
 
 #### `bely-cli config set FIELD VALUE`
 
-Set a single configuration field. `FIELD` is one of `host`, `user`, `editor`, or
-`token_path`.
+Set a single configuration field. `FIELD` is one of `host`, `user`, `editor`,
+`token_path`, or `theme`.
 
 ```bash
 bely-cli config set user alice
 bely-cli config set host https://tinkerbox.aps.anl.gov:8181/bely
 bely-cli config set editor nano
 bely-cli config set token_path ~/.secrets/bely-token
+bely-cli config set theme nord
 ```
 
 ## Configuration & environment
 
 | Location / variable | Purpose |
 |---------------------|---------|
-| `~/.config/bely/settings.yaml` | Persistent settings (`host`, `user`, `editor`, `token_path`); permissions `0600`. |
+| `~/.config/bely/settings.yaml` | Persistent settings (`host`, `user`, `editor`, `token_path`, `theme`); permissions `0600`. |
 | `~/.config/bely/token` | Cached auth token; permissions `0600`. Override with the `token_path` setting. |
 | `BELY_SETTINGS_FILE` | Path to the settings file (overrides the default location). The default token sits beside it. |
 | `BELY_HOST` | Server URL (overrides the settings file). |

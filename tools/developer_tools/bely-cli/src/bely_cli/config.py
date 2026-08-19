@@ -3,7 +3,7 @@ import yaml
 
 DEFAULT_CONFIG_DIR = os.path.expanduser("~/.config/bely")
 
-VALID_FIELDS = ("host", "user", "editor", "token_path")
+VALID_FIELDS = ("host", "user", "editor", "token_path", "theme")
 
 
 def expand_path(path):
