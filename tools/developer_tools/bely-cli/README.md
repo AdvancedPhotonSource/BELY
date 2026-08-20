@@ -252,7 +252,7 @@ All three levels render as full-width, aligned tables (rows stay in API order, n
 |-------|---------|
 | Logbook | Name, Display, Description |
 | Document | Name, Description, Systems, Owner, Modified |
-| Entry | Date, Author, Entry (a snippet of the first line) |
+| Entry | Date, Author, Entry (a snippet of the first line) — replies render as indented rows beneath their parent, expanded by default |
 
 Press `i` at the logbook/document levels to open a side info panel with a few extra fields
 for the highlighted row (it splits the table's width; `i` again closes it). Entries always
@@ -272,28 +272,33 @@ bely-cli tui lookup --limit 50
 The info panel (`i`, logbook/document levels only) shows, depending on the level: for a logbook,
 its name, display name(s), and description; for a document, its description, logbook types,
 systems, owner, and creation/modification info. The entry preview (always shown at that level)
-has author and modification info, reply/reaction counts, and attachments (fetched lazily as you
-highlight each entry).
+has author and modification info, reply/reaction counts, and attachments (fetched lazily as
+you highlight each entry) — and, for a reply, which entry it's a reply to.
 
 Keys:
 
 The footer at the bottom of the screen only ever shows the keys that apply to the level you're
-on — `i` disappears once you drill into entries, and `s` / `y` / `e` / `f` only appear there.
+on — `i` disappears once you drill into entries, and `s` / `y` / `e` / `f` / `t` only appear there.
 
 | Key | Action |
 |-----|--------|
 | `Up` / `Down`, `PgUp` / `PgDn` | Move the highlight; the preview/info panel follows. |
-| `/` | Reveal and focus the filter box; incrementally filters the current table (case-insensitive substring). It hides itself again once it loses focus with nothing typed. |
+| `/` | Reveal and focus the filter box; incrementally filters the current table (case-insensitive substring, matched against the entry text — not the reply tree's glyphs or reply count). |
 | `Enter` | In the filter box, return focus to the table. Elsewhere, drill into the highlighted row, or select the entry at the entries level. |
 | `Esc` / `Backspace` | Go back one level (from the table); does nothing at the logbook list — press `q` to quit. In the filter box, `Esc` returns focus to the table. |
 | `d` | Logbook/document levels only: create a new document (see `bely-cli tui`'s "New document" above) — a mutation, so this is where the app authenticates if it hasn't already. |
 | `s` | Entries level only: save the highlighted entry's markdown to a file in the current directory. |
 | `y` | Entries level only: copy a `bely-cli entry get` reference for the highlighted entry to the clipboard. |
 | `e` | Entries level only: open the highlighted entry in `$EDITOR`; if you change it, offers to save the result back to the server (a mutation, so this is where the app authenticates if it hasn't already). |
+| `t` | Entries level only: collapse/expand the reply thread under the highlighted entry (or its parent, if the highlight is on a reply). Replies start expanded. |
 | `i` | Logbook/document levels only: toggle the side info panel. |
 | `f` | Entries level only: toggle the table to widen the preview pane. |
-| `r` | Refresh the current level, bypassing the in-session cache. |
+| `r` | Refresh the current level, bypassing the in-session cache. Collapsed threads stay collapsed. |
 | `q` | Quit without selecting. |
+
+Replies only ever nest one level deep — the server doesn't return replies-to-replies — and
+`n` on a highlighted reply adds a new top-level entry, not a reply to that reply (there's no
+API for that yet).
 
 On selecting an entry the TUI exits and prints its `doc-id` / `log-id`, plus a ready-to-run
 `bely-cli entry get` command so you can fetch it:

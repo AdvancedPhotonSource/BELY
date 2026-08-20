@@ -84,6 +84,7 @@ class BrowseScreen(Screen):
     # (rather than showing it disabled) so only relevant keys ever appear.
     ACTION_LEVELS = {
         "toggle_full": (LEVEL_ENTRIES,),
+        "toggle_replies": (LEVEL_ENTRIES,),
         "save_entry": (LEVEL_ENTRIES,),
         "copy_reference": (LEVEL_ENTRIES,),
         "open_editor": (LEVEL_ENTRIES,),
@@ -99,6 +100,7 @@ class BrowseScreen(Screen):
         Binding("q", "quit_app", "Quit"),
         Binding("slash", "focus_filter", "Filter"),
         Binding("f", "toggle_full", "Full"),
+        Binding("t", "toggle_replies", "Replies"),
         Binding("s", "save_entry", "Save"),
         Binding("y", "copy_reference", "Copy ref"),
         Binding("e", "open_editor", "Edit in editor"),
@@ -591,6 +593,32 @@ class BrowseScreen(Screen):
         return None
 
     # -- entry actions --
+
+    def action_toggle_replies(self):
+        node = self._current_node()
+        if node is None:
+            self.notify("Select an entry first.", severity="warning")
+            return
+        target = node.parent if node.depth > 0 else node.entry
+        if node.depth == 0 and node.reply_count == 0:
+            return
+        log_id = target.log_id
+        if log_id in self._collapsed:
+            self._collapsed.discard(log_id)
+        else:
+            self._collapsed.add(log_id)
+        self._reflatten(focus_log_id=log_id)
+
+    def _reflatten(self, focus_log_id=None):
+        """Rebuild shown_items from entry_tree/_collapsed, keeping the filter and cursor."""
+        self.all_items = flatten_entries(self.entry_tree, self._collapsed)
+        self._apply_filter(self.query_one("#filter", Input).value)
+        if focus_log_id is None:
+            return
+        for i, node in enumerate(self.shown_items):
+            if node.entry.log_id == focus_log_id:
+                self._nav().move_cursor(row=i)
+                break
 
     def action_save_entry(self):
         from ...common import write_entry_to_file

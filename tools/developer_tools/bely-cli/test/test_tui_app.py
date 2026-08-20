@@ -786,6 +786,70 @@ class ReplyTreeTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(screen._current_entry().log_id, 101)
             self.assertEqual(screen._current_node().parent.log_id, 100)
 
+    async def test_toggle_collapses_and_restores_a_thread(self):
+        data = LogbookData(FakeLogbookApiWithReplies())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await self._open_entries(pilot)
+            screen = app.screen
+            table = screen.query_one("#nav-table", DataTable)
+
+            await pilot.press("t")
+            await pilot.pause()
+            self.assertEqual(table.row_count, 1)
+            self.assertIn("(2 replies)", table.get_row_at(0)[2])
+            self.assertEqual(table.cursor_row, 0)  # cursor stays on the thread root
+
+            await pilot.press("t")
+            await pilot.pause()
+            self.assertEqual(table.row_count, 3)
+            self.assertIn("▾", table.get_row_at(0)[2])
+
+    async def test_toggle_from_a_reply_row_collapses_its_parent(self):
+        data = LogbookData(FakeLogbookApiWithReplies())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await self._open_entries(pilot)
+            screen = app.screen
+            table = screen.query_one("#nav-table", DataTable)
+
+            await pilot.press("down")  # onto the first reply
+            await pilot.pause()
+            await pilot.press("t")
+            await pilot.pause()
+
+            self.assertEqual(table.row_count, 1)
+            self.assertEqual(screen.shown_items[0].entry.log_id, 100)
+
+    async def test_toggle_on_entry_without_replies_is_a_noop(self):
+        data = LogbookData(FakeLogbookApi())  # single entry, no replies
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await self._open_entries(pilot)
+            screen = app.screen
+            table = screen.query_one("#nav-table", DataTable)
+
+            await pilot.press("t")
+            await pilot.pause()
+            self.assertEqual(table.row_count, 1)
+
+    async def test_collapsed_state_survives_refresh(self):
+        data = LogbookData(FakeLogbookApiWithReplies())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await self._open_entries(pilot)
+            screen = app.screen
+            table = screen.query_one("#nav-table", DataTable)
+
+            await pilot.press("t")
+            await pilot.pause()
+            self.assertEqual(table.row_count, 1)
+
+            await pilot.press("r")  # refresh_level
+            await pilot.pause()
+            await pilot.pause()
+            self.assertEqual(table.row_count, 1)
+
     async def test_filtering_matches_entry_text_not_glyphs(self):
         data = LogbookData(FakeLogbookApiWithReplies())
         app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
