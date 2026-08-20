@@ -12,7 +12,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from textual.app import App
-from textual.widgets import Button, Input, Static, TextArea
+from textual.widgets import Button, Input, Select, Static, TextArea
 
 from bely_cli.tui.app import BelyTuiApp
 from bely_cli.tui.data import LogbookData
@@ -587,6 +587,89 @@ class ConfigScreenTests(unittest.IsolatedAsyncioTestCase):
                 await pilot.pause()
 
         self.assertEqual(saved, [("host", "https://new")])
+
+    async def test_images_field_is_a_select_defaulting_to_auto(self):
+        state = {"settings_file": "/tmp/settings.yaml", "settings": {}, "environment": {}}
+        app = App()
+        with patch.object(configscreen.core, "collect_config", side_effect=lambda: dict(state)), \
+             patch.object(configscreen.config, "get_setting", side_effect=lambda k: None):
+            async with app.run_test() as pilot:
+                app.push_screen(ConfigScreen())
+                await pilot.pause()
+                select = app.screen.query_one("#config-images", Select)
+                self.assertEqual(select.value, "auto")
+
+    async def test_images_options_document_each_mode(self):
+        from bely_cli.tui.images import IMAGE_MODE_HELP, IMAGE_MODES
+
+        state = {"settings_file": "/tmp/settings.yaml", "settings": {}, "environment": {}}
+        app = App()
+        with patch.object(configscreen.core, "collect_config", side_effect=lambda: dict(state)), \
+             patch.object(configscreen.config, "get_setting", side_effect=lambda k: None):
+            async with app.run_test() as pilot:
+                app.push_screen(ConfigScreen())
+                await pilot.pause()
+                select = app.screen.query_one("#config-images", Select)
+                labels = {value: str(label) for label, value in select._options}
+        self.assertEqual(set(labels), set(IMAGE_MODES))
+        for mode in IMAGE_MODES:
+            self.assertIn(IMAGE_MODE_HELP[mode], labels[mode])
+
+    async def test_images_field_prefills_from_settings(self):
+        state = {
+            "settings_file": "/tmp/settings.yaml",
+            "settings": {"images": "sixel"},
+            "environment": {},
+        }
+        app = App()
+        with patch.object(configscreen.core, "collect_config", side_effect=lambda: dict(state)), \
+             patch.object(configscreen.config, "get_setting",
+                          side_effect=lambda k: state["settings"].get(k)):
+            async with app.run_test() as pilot:
+                app.push_screen(ConfigScreen())
+                await pilot.pause()
+                select = app.screen.query_one("#config-images", Select)
+                self.assertEqual(select.value, "sixel")
+
+    async def test_saving_auto_with_nothing_stored_reports_no_change(self):
+        state = {"settings_file": "/tmp/settings.yaml", "settings": {}, "environment": {}}
+        saved = []
+        app = App()
+        with patch.object(configscreen.core, "collect_config", side_effect=lambda: dict(state)), \
+             patch.object(configscreen.config, "get_setting", side_effect=lambda k: None), \
+             patch.object(configscreen.config, "set_setting",
+                          side_effect=lambda k, v: saved.append((k, v))):
+            async with app.run_test() as pilot:
+                app.push_screen(ConfigScreen())
+                await pilot.pause()
+                await pilot.press("ctrl+s")
+                await pilot.pause()
+                await pilot.pause()
+        self.assertEqual(saved, [])
+
+    async def test_changing_images_select_saves_the_new_value(self):
+        state = {"settings_file": "/tmp/settings.yaml", "settings": {}, "environment": {}}
+        saved = []
+
+        def fake_set_setting(key, value):
+            saved.append((key, value))
+            state["settings"][key] = value
+
+        app = App()
+        with patch.object(configscreen.core, "collect_config", side_effect=lambda: dict(state)), \
+             patch.object(configscreen.config, "get_setting",
+                          side_effect=lambda k: state["settings"].get(k)), \
+             patch.object(configscreen.config, "set_setting", side_effect=fake_set_setting):
+            async with app.run_test() as pilot:
+                app.push_screen(ConfigScreen())
+                await pilot.pause()
+                select = app.screen.query_one("#config-images", Select)
+                select.value = "unicode"
+                await pilot.press("ctrl+s")
+                await pilot.pause()
+                await pilot.pause()
+
+        self.assertEqual(saved, [("images", "unicode")])
 
 
 class ConfirmScreenTests(unittest.IsolatedAsyncioTestCase):

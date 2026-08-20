@@ -78,12 +78,26 @@ class BelyTuiApp(App):
     }
     """
 
-    def __init__(self, session, limit=100, mode="app"):
+    def __init__(self, session, limit=100, mode="app", image_widgets=None):
         super().__init__()
         self.session = session
         self.limit = limit
         self.mode = mode
+        self.image_widgets = image_widgets or {}
         self._theme_loaded = False
+
+    @property
+    def image_widget(self):
+        """The widget class for the current 'images' setting, or None.
+
+        Reflects live config changes (e.g. from ConfigScreen) without a
+        restart, as long as image_widgets was populated at launch -- it's
+        only ever empty when the terminal probe was skipped because the app
+        started with images off, or textual_image isn't installed.
+        """
+        from . import images
+
+        return images.widget_for(self.image_widgets, config.get_setting("images"))
 
     def on_mount(self):
         saved = config.get_setting("theme")

@@ -22,13 +22,21 @@ def cmd_tui(limit=100, fmt="text", mode="app"):
     if is_no_prompt():
         raise RuntimeError("the tui cannot run with --no-prompt.")
 
+    from .. import config
     from .app import BelyTuiApp  # lazy: keeps --help fast
+    from .images import load_image_widgets
     from .session import TuiSession
 
     factory = auth.get_factory()
     session = TuiSession(factory)
 
-    result = BelyTuiApp(session, limit=limit, mode=mode).run()
+    # The graphics-protocol probe in load_image_widgets() talks to the
+    # terminal and must happen before the Textual app takes over stdin/stdout
+    # -- so this runs here, not lazily inside a screen. Skipped entirely when
+    # images are off, so "off" also skips the terminal probe.
+    image_widgets = {} if config.get_setting("images") == "off" else load_image_widgets()
+
+    result = BelyTuiApp(session, limit=limit, mode=mode, image_widgets=image_widgets).run()
     if not result:
         return
     doc, entry = result

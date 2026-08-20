@@ -14,9 +14,10 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
 from textual.screen import ModalScreen
-from textual.widgets import Input, Static
+from textual.widgets import Input, Select, Static
 
 from ... import config, core
+from ..images import IMAGE_MODE_HELP, IMAGE_MODES
 
 
 class ConfigScreen(ModalScreen):
@@ -45,12 +46,25 @@ class ConfigScreen(ModalScreen):
     # also honors (see auth.py's precedence) -- token_path has none.
     ENV_FOR_FIELD = {"host": "BELY_HOST", "user": "BELY_USER", "editor": "EDITOR"}
 
+    # Fields backed by an enum rather than free text get a Select instead of
+    # an Input, with a default used when nothing is saved yet.
+    FIELD_CHOICES = {"images": IMAGE_MODES}
+    FIELD_DEFAULTS = {"images": "auto"}
+
     def compose(self) -> ComposeResult:
         with Vertical(id="config-dialog"):
             yield Static(id="config-breadcrumb")
             yield Static(id="config-summary")
             for field in config.VALID_FIELDS:
-                yield Input(placeholder=field, id=f"config-{field}")
+                choices = self.FIELD_CHOICES.get(field)
+                if choices:
+                    yield Select(
+                        [(f"{choice} — {IMAGE_MODE_HELP[choice]}", choice)
+                         for choice in choices],
+                        allow_blank=False, id=f"config-{field}",
+                    )
+                else:
+                    yield Input(placeholder=field, id=f"config-{field}")
             yield Static(
                 "[ctrl+s] save   [ctrl+e] edit file   [r] reload   [escape] back",
                 id="config-hint",
@@ -87,6 +101,10 @@ class ConfigScreen(ModalScreen):
         self.query_one("#config-summary", Static).update("\n".join(lines))
 
         for field in config.VALID_FIELDS:
+            if field in self.FIELD_CHOICES:
+                select = self.query_one(f"#config-{field}", Select)
+                select.value = settings.get(field) or self.FIELD_DEFAULTS[field]
+                continue
             box = self.query_one(f"#config-{field}", Input)
             box.value = str(settings.get(field, "") or "")
             env_var = self.ENV_FOR_FIELD.get(field)
@@ -101,6 +119,19 @@ class ConfigScreen(ModalScreen):
     async def _save(self):
         changed = []
         for field in config.VALID_FIELDS:
+            if field in self.FIELD_CHOICES:
+                value = self.query_one(f"#config-{field}", Select).value
+                default = self.FIELD_DEFAULTS[field]
+                current = config.get_setting(field) or default
+                if value != current:
+                    await asyncio.to_thread(config.set_setting, field, value)
+                    changed.append(field)
+                    if field == "images" and value != "off" and not getattr(
+                            self.app, "image_widgets", None):
+                        self.notify(
+                            "Restart the TUI to enable images (the terminal wasn't "
+                            "probed for graphics support at launch).", severity="warning")
+                continue
             value = self.query_one(f"#config-{field}", Input).value.strip()
             current = config.get_setting(field)
             if value and value != (current or ""):
