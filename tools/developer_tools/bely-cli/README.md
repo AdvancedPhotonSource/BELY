@@ -15,11 +15,32 @@ uv sync
 uv run bely-cli -h
 ```
 
+`uv run` only works from inside this directory. To get a `bely-cli` on your `$PATH` that
+still tracks your local working-tree edits (no `uv run` prefix, usable from anywhere),
+install it as an editable uv tool instead:
+
+```bash
+uv tool install --editable .
+bely-cli -h
+```
+Re-run that command (add `--force` to overwrite without prompting) any time `pyproject.toml`'s
+dependencies change — code edits alone are picked up immediately, but new/changed
+dependencies aren't installed into the tool's environment until you reinstall.
+
 For deployment, install the conda package built from `conda-recipe/` (see
 `conda-recipe/conda-build.sh`):
 
 ```bash
 conda install bely-cli -c <channel>
+```
+
+To view images inline in `bely-cli tui` (see [Images](#images) below), install the optional
+`images` extra — it pulls in Pillow and `textual-image`, which the base install skips:
+
+```bash
+uv sync --extra images                        # development, via uv run
+uv tool install --force --editable '.[images]'  # development, editable tool install
+conda install bely-cli textual-image -c <channel>  # deployment
 ```
 
 ## Getting started
@@ -192,9 +213,10 @@ same entry composer.
 
 **Configuration**
 
-Opened from the command palette. Mirrors `config show` / `config set` / `config edit`:
-one input per setting, prefilled from `settings.yaml`, alongside a summary of the current
-settings and any environment-variable overrides.
+Opened from the command palette. Mirrors `config show` / `config set` / `config edit`: one
+field per setting (a dropdown for `images`, a text input for everything else), prefilled
+from `settings.yaml`, alongside a summary of the current settings and any
+environment-variable overrides.
 
 | Key | Action |
 |-----|--------|
@@ -283,8 +305,46 @@ log-id: 42
 With `--format json` / `--format yaml` the selected reference is printed as structured data
 instead.
 
-Note: attachment images referenced from entry markdown render as links in the preview, not
-inline images — use `s` or `e` to view the full entry, or fetch the attachment directly.
+#### Images
+
+When an entry's markdown references an image attachment, the preview (in both `tui` and
+`tui lookup`) renders it inline as an actual picture if your terminal and the `images`
+setting support it, instead of a plain link.
+
+Requires the optional `images` extra (see [Installation](#installation)) and a terminal with
+a graphics protocol. Controlled by the `images` setting, one of:
+
+| Mode | Renders via |
+|------|-------------|
+| `auto` (default) | Autodetects the terminal's protocol — recommended. |
+| `off` | No images; the old link-text preview. |
+| `tgp` | Kitty Graphics Protocol (kitty, Ghostty, WezTerm, Konsole, ...). |
+| `sixel` | Sixel (xterm, foot, iTerm2, WezTerm, Windows Terminal ≥1.22, ...). |
+| `halfcell` | Block-art fallback (higher resolution), no graphics protocol needed. |
+| `unicode` | Block-art fallback (lowest resolution), works in any terminal. |
+
+```bash
+bely-cli config set images sixel
+```
+or from the TUI's Configuration dialog (`ctrl+p` → Configuration) — the `images` field is a
+dropdown listing all six modes with a short description of each. A mode change there takes
+effect on the very next entry you preview, no restart needed — unless the TUI was launched
+with `images: off` (which skips the terminal graphics probe at startup entirely), in which
+case it warns that a restart is required.
+
+If the extra isn't installed, entries with images show a one-time notice suggesting
+`pip install 'bely-cli[images]'`; the link-text preview otherwise behaves exactly as before.
+Only BELY attachment images (`![...](/log/attachments/...)`) are ever fetched — external
+`http(s)://` image URLs in entry markdown are left as plain links, never downloaded.
+
+**tmux**: `tgp` does not work through tmux — `textual-image` writes Kitty's raw escape
+sequences directly to the terminal without tmux's DCS passthrough wrapping, so tmux can't
+forward them regardless of configuration. `sixel` does work, but needs tmux ≥3.3 with:
+```tmux
+set -g allow-passthrough on
+set -ga terminal-features ',*:RGB:sixel'
+```
+`halfcell` needs no tmux configuration at all and is the more reliable choice inside tmux.
 
 ### `entry` — log entries
 
@@ -354,7 +414,7 @@ Open the settings file in your editor. The editor is resolved from `EDITOR`, the
 #### `bely-cli config set FIELD VALUE`
 
 Set a single configuration field. `FIELD` is one of `host`, `user`, `editor`,
-`token_path`, or `theme`.
+`token_path`, `theme`, or `images`.
 
 ```bash
 bely-cli config set user alice
@@ -362,13 +422,14 @@ bely-cli config set host https://tinkerbox.aps.anl.gov:8181/bely
 bely-cli config set editor nano
 bely-cli config set token_path ~/.secrets/bely-token
 bely-cli config set theme nord
+bely-cli config set images sixel
 ```
 
 ## Configuration & environment
 
 | Location / variable | Purpose |
 |---------------------|---------|
-| `~/.config/bely/settings.yaml` | Persistent settings (`host`, `user`, `editor`, `token_path`, `theme`); permissions `0600`. |
+| `~/.config/bely/settings.yaml` | Persistent settings (`host`, `user`, `editor`, `token_path`, `theme`, `images`); permissions `0600`. |
 | `~/.config/bely/token` | Cached auth token; permissions `0600`. Override with the `token_path` setting. |
 | `BELY_SETTINGS_FILE` | Path to the settings file (overrides the default location). The default token sits beside it. |
 | `BELY_HOST` | Server URL (overrides the settings file). |

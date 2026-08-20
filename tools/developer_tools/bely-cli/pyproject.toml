@@ -18,6 +18,9 @@ dependencies = [
     "rich>=13.7.0",
 ]
 
+[project.optional-dependencies]
+images = ["textual-image[textual]>=0.12.0"]
+
 [project.urls]
 Homepage = "https://github.com/AdvancedPhotonSource/BELY"
 
@@ -25,7 +28,7 @@ Homepage = "https://github.com/AdvancedPhotonSource/BELY"
 bely-cli = "bely_cli.cli:main"
 
 [dependency-groups]
-dev = ["pytest>=7.0.0"]
+dev = ["pytest>=7.0.0", "textual-image[textual]>=0.12.0"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -34,6 +34,7 @@ test:
     - test
   requires:
     - python
+    - textual-image  # optional at runtime (tui image rendering); here so tests exercise the real widget
   commands:
     - python -m unittest discover -s test -v
     - bely-cli -h
