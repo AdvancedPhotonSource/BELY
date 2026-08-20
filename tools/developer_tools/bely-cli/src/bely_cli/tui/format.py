@@ -5,6 +5,8 @@ unit-tested with plain SimpleNamespace stand-ins for the API models (see
 test/test_tui.py) without touching a terminal.
 """
 
+from typing import NamedTuple, Optional
+
 
 # -- list-row formatting (used by both the old curses UI and the new
 #    Textual OptionList rows) --
@@ -109,6 +111,69 @@ def entry_row(e):
     return (date, author, _entry_snippet(e))
 
 
+# -- reply tree --
+
+class EntryNode(NamedTuple):
+    """One flattened row of the entries tree: an entry plus its position in the reply thread."""
+
+    entry: object
+    depth: int
+    parent: Optional[object]
+    branch: str
+    reply_count: int
+    expanded: bool
+
+
+def entry_replies(e):
+    """The direct replies of an entry, or [] if none."""
+    return getattr(e, "log_replies", None) or []
+
+
+def _branch_prefix(prefix_lasts, is_last):
+    """Box-drawing prefix for a reply row: continuation bars for ancestors, then a connector."""
+    parts = ["   " if last else "│  " for last in prefix_lasts]
+    parts.append("└─ " if is_last else "├─ ")
+    return "  " + "".join(parts)
+
+
+def flatten_entries(entries, collapsed=()):
+    """Depth-first [EntryNode] over entries and their replies, skipping children of collapsed ids."""
+    collapsed = set(collapsed)
+    nodes = []
+
+    def walk(items, depth, parent, prefix_lasts):
+        for i, e in enumerate(items):
+            is_last = i == len(items) - 1
+            branch = _branch_prefix(prefix_lasts, is_last) if depth > 0 else ""
+            replies = entry_replies(e)
+            expanded = getattr(e, "log_id", None) not in collapsed
+            nodes.append(EntryNode(
+                entry=e, depth=depth, parent=parent, branch=branch,
+                reply_count=len(replies), expanded=expanded,
+            ))
+            if replies and expanded:
+                next_prefix = prefix_lasts + [is_last] if depth > 0 else []
+                walk(replies, depth + 1, e, next_prefix)
+
+    walk(entries, 0, None, [])
+    return nodes
+
+
+def entry_node_row(node):
+    """DataTable row cells for an EntryNode: entry_row's cells with a tree glyph on the entry column."""
+    date, author, snippet = entry_row(node.entry)
+    if node.depth > 0:
+        entry_cell = node.branch + snippet
+    elif node.reply_count == 0:
+        entry_cell = "  " + snippet
+    elif node.expanded:
+        entry_cell = "▾ " + snippet
+    else:
+        noun = "reply" if node.reply_count == 1 else "replies"
+        entry_cell = f"▸ {snippet}  ({node.reply_count} {noun})"
+    return (date, author, entry_cell)
+
+
 # -- filtering / navigation --
 
 def filter_items(items, query, render_fn):
@@ -152,12 +217,12 @@ def summarize_reactions(reactions):
     return "  ".join(f"{label} {counts[label]}" for label in order)
 
 
-def entry_metadata_rows(entry, doc):
+def entry_metadata_rows(entry, doc, parent=None):
     """[(label, value)] metadata rows for the entry preview header."""
-    rows = [
-        ("log_id", str(getattr(entry, "log_id", "") or "")),
-        ("doc", getattr(doc, "name", None) or ""),
-    ]
+    rows = [("log_id", str(getattr(entry, "log_id", "") or ""))]
+    if parent is not None:
+        rows.append(("reply to", str(getattr(parent, "log_id", "") or "")))
+    rows.append(("doc", getattr(doc, "name", None) or ""))
 
     entered_by = getattr(entry, "entered_by_username", None) or ""
     entered_at = _fmt_dt(getattr(entry, "entered_on_date_time", None))

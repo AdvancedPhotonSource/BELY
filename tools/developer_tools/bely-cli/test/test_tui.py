@@ -110,6 +110,100 @@ class EntryRowTests(unittest.TestCase):
         self.assertEqual(snippet, "Real content")
 
 
+class FlattenEntriesTests(unittest.TestCase):
+    def _entry(self, log_id, replies=None):
+        return SimpleNamespace(
+            log_id=log_id, entered_on_date_time=None, entered_by_username=None,
+            log_entry=f"entry {log_id}", log_replies=replies,
+        )
+
+    def test_flat_list_when_no_replies(self):
+        entries = [self._entry(1), self._entry(2)]
+        nodes = fmt.flatten_entries(entries)
+        self.assertEqual([n.entry.log_id for n in nodes], [1, 2])
+        self.assertTrue(all(n.depth == 0 for n in nodes))
+        self.assertTrue(all(n.parent is None for n in nodes))
+        self.assertTrue(all(n.reply_count == 0 for n in nodes))
+
+    def test_none_and_empty_log_replies_are_no_replies(self):
+        entries = [self._entry(1, replies=None), self._entry(2, replies=[])]
+        nodes = fmt.flatten_entries(entries)
+        self.assertEqual(len(nodes), 2)
+        self.assertTrue(all(n.reply_count == 0 for n in nodes))
+
+    def test_replies_are_depth_first_after_parent(self):
+        r1, r2 = self._entry(11), self._entry(12)
+        parent = self._entry(1, replies=[r1, r2])
+        nodes = fmt.flatten_entries([parent, self._entry(2)])
+        self.assertEqual([n.entry.log_id for n in nodes], [1, 11, 12, 2])
+        self.assertEqual([n.depth for n in nodes], [0, 1, 1, 0])
+        self.assertIs(nodes[1].parent, parent)
+        self.assertIs(nodes[2].parent, parent)
+
+    def test_collapsed_id_skips_its_replies(self):
+        r1 = self._entry(11)
+        parent = self._entry(1, replies=[r1])
+        nodes = fmt.flatten_entries([parent], collapsed={1})
+        self.assertEqual([n.entry.log_id for n in nodes], [1])
+        self.assertFalse(nodes[0].expanded)
+
+    def test_uncollapsed_parent_is_expanded(self):
+        parent = self._entry(1, replies=[self._entry(11)])
+        nodes = fmt.flatten_entries([parent], collapsed=set())
+        self.assertTrue(nodes[0].expanded)
+
+    def test_nested_replies_use_connectors_and_continuation_bars(self):
+        grandchild_a, grandchild_b = self._entry(111), self._entry(112)
+        child = self._entry(11, replies=[grandchild_a, grandchild_b])
+        other_child = self._entry(12)
+        parent = self._entry(1, replies=[child, other_child])
+        nodes = fmt.flatten_entries([parent])
+        by_id = {n.entry.log_id: n for n in nodes}
+        self.assertEqual(by_id[11].branch, "  ├─ ")
+        self.assertEqual(by_id[12].branch, "  └─ ")
+        self.assertEqual(by_id[111].branch, "  │  ├─ ")
+        self.assertEqual(by_id[112].branch, "  │  └─ ")
+
+
+class EntryNodeRowTests(unittest.TestCase):
+    def _node(self, log_id, depth=0, branch="", reply_count=0, expanded=True, parent=None):
+        entry = SimpleNamespace(
+            log_id=log_id, entered_on_date_time=None, entered_by_username="alice",
+            log_entry="Reactor status nominal",
+        )
+        return fmt.EntryNode(
+            entry=entry, depth=depth, parent=parent, branch=branch,
+            reply_count=reply_count, expanded=expanded,
+        )
+
+    def test_top_level_no_replies_pads_to_align(self):
+        _, _, cell = fmt.entry_node_row(self._node(1))
+        self.assertEqual(cell, "  Reactor status nominal")
+
+    def test_top_level_expanded_with_replies_shows_open_glyph(self):
+        node = self._node(1, reply_count=2, expanded=True)
+        _, _, cell = fmt.entry_node_row(node)
+        self.assertEqual(cell, "▾ Reactor status nominal")
+
+    def test_top_level_collapsed_shows_closed_glyph_and_count(self):
+        node = self._node(1, reply_count=2, expanded=False)
+        _, _, cell = fmt.entry_node_row(node)
+        self.assertEqual(cell, "▸ Reactor status nominal  (2 replies)")
+
+    def test_collapsed_singular_reply_count(self):
+        node = self._node(1, reply_count=1, expanded=False)
+        _, _, cell = fmt.entry_node_row(node)
+        self.assertEqual(cell, "▸ Reactor status nominal  (1 reply)")
+
+    def test_reply_row_uses_its_branch_prefix(self):
+        node = self._node(11, depth=1, branch="  └─ ")
+        _, _, cell = fmt.entry_node_row(node)
+        self.assertEqual(cell, "  └─ Reactor status nominal")
+
+    def test_row_arity_matches_entry_columns(self):
+        self.assertEqual(len(fmt.entry_node_row(self._node(1))), len(fmt.ENTRY_COLUMNS))
+
+
 class EntryReferenceTests(unittest.TestCase):
     def test_reference_fields(self):
         doc = SimpleNamespace(id=42, name="My Doc")
@@ -178,6 +272,20 @@ class EntryMetadataRowsTests(unittest.TestCase):
         rows = dict(fmt.entry_metadata_rows(entry, doc))
         self.assertEqual(rows["replies"], "2")
         self.assertEqual(rows["reactions"], "👍 1")
+
+    def test_parent_adds_reply_to_row_right_after_log_id(self):
+        doc = SimpleNamespace(id=1, name="Ops")
+        parent = SimpleNamespace(log_id=100)
+        rows = fmt.entry_metadata_rows(self._entry(), doc, parent=parent)
+        labels = [label for label, _ in rows]
+        self.assertEqual(labels[0], "log_id")
+        self.assertEqual(labels[1], "reply to")
+        self.assertEqual(dict(rows)["reply to"], "100")
+
+    def test_no_parent_omits_reply_to_row(self):
+        doc = SimpleNamespace(id=1, name="Ops")
+        rows = fmt.entry_metadata_rows(self._entry(), doc)
+        self.assertNotIn("reply to", dict(rows))
 
 
 class DocMetadataRowsTests(unittest.TestCase):
