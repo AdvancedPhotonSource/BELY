@@ -1,16 +1,4 @@
-"""Split entry markdown into renderable segments: plain markdown vs. images.
-
-No textual/rich import here -- pure data-in/data-out logic so it can be unit
-tested without a terminal (see test/test_tui_mdimages.py), matching the style
-of format.py. Only markdown_it is used, which textual already depends on.
-
-Server-side, an uploaded image gets a markdown reference of the form
-`![name](/log/attachments/<stored>)` appended to the entry body in its own
-paragraph (LogAttachmentUtility.java); the web portal rewrites that prefix to
-`/api/Downloads/Attachments/<stored>` when rendering. We recognize either
-form. Non-image attachments (pdf, etc.) and any other URL are left as plain
-markdown links -- textual's Markdown widget already renders those as text.
-"""
+"""Split entry markdown into renderable segments: plain markdown vs. images. Pure, no textual/rich import."""
 
 from markdown_it import MarkdownIt
 
@@ -20,11 +8,7 @@ _ATTACHMENT_PREFIXES = ("/log/attachments/", "/api/Downloads/Attachments/")
 
 
 def attachment_name(src):
-    """The stored filename if src is a renderable BELY attachment reference, else None.
-
-    Rejects external URLs (http://, https://) and non-image attachments (pdf) --
-    those stay as ordinary markdown links, never fetched.
-    """
+    """The stored filename if src is a renderable BELY attachment reference, else None."""
     if not src:
         return None
     for prefix in _ATTACHMENT_PREFIXES:
@@ -52,14 +36,7 @@ def _image_only_children(children):
 
 
 def split_entry_markdown(text):
-    """Split entry markdown into ("markdown", str) / ("image", stored_name, alt) segments.
-
-    A paragraph whose inline content is exclusively image(s) (as the server
-    appends after an upload) becomes one or more image segments; everything
-    else -- including a paragraph that mixes text and an image -- is left as
-    markdown, verbatim. Returns a single ("markdown", text) segment when
-    nothing is renderable, so the caller can take the cheap unsplit path.
-    """
+    """Split into ("markdown", str) / ("image", stored_name, alt) segments; image-only paragraphs become images."""
     text = text or ""
     lines = text.splitlines(keepends=True)
     tokens = MarkdownIt("gfm-like").parse(text)

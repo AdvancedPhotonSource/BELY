@@ -17,10 +17,7 @@ from .. import core
 class LogbookData:
     """Wraps logbook_api with the caching the TUI needs."""
 
-    # Bound on the image-bytes cache: images are much larger than the metadata
-    # the other caches hold, so unlike those this one evicts (FIFO) rather
-    # than growing without limit for the life of a session.
-    MAX_CACHED_IMAGES = 32
+    MAX_CACHED_IMAGES = 32  # FIFO-bounded: images are much larger than the other caches' entries
 
     def __init__(self, logbook_api, download_api=None):
         self._logbook_api = logbook_api
@@ -87,15 +84,7 @@ class LogbookData:
         return attachments
 
     def attachment_bytes(self, stored_filename, scaling="scaled"):
-        """Raw image bytes for an attachment, preferring a server-scaled variant.
-
-        Falls back to the unscaled original if the scaled fetch fails (e.g. the
-        server doesn't have a scaled variant for this file type). Failures are
-        not cached, matching the other caches' rule; a successful fetch is
-        cached per (stored_filename, scaling), FIFO-evicted past
-        MAX_CACHED_IMAGES since images are far larger than the metadata the
-        other caches hold.
-        """
+        """Raw image bytes, preferring a server-scaled variant; falls back to the original on failure."""
         key = (stored_filename, scaling)
         data = self._image_bytes.get(key)
         if data is None:

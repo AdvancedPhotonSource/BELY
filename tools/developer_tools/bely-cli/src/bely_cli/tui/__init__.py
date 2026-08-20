@@ -30,10 +30,7 @@ def cmd_tui(limit=100, fmt="text", mode="app"):
     factory = auth.get_factory()
     session = TuiSession(factory)
 
-    # The graphics-protocol probe in load_image_widgets() talks to the
-    # terminal and must happen before the Textual app takes over stdin/stdout
-    # -- so this runs here, not lazily inside a screen. Skipped entirely when
-    # images are off, so "off" also skips the terminal probe.
+    # Must probe the terminal before the Textual app takes over stdin/stdout; "off" skips the probe entirely.
     image_widgets = {} if config.get_setting("images") == "off" else load_image_widgets()
 
     result = BelyTuiApp(session, limit=limit, mode=mode, image_widgets=image_widgets).run()

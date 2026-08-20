@@ -46,9 +46,7 @@ class ConfigScreen(ModalScreen):
     # also honors (see auth.py's precedence) -- token_path has none.
     ENV_FOR_FIELD = {"host": "BELY_HOST", "user": "BELY_USER", "editor": "EDITOR"}
 
-    # Fields backed by an enum rather than free text get a Select instead of
-    # an Input, with a default used when nothing is saved yet.
-    FIELD_CHOICES = {"images": IMAGE_MODES}
+    FIELD_CHOICES = {"images": IMAGE_MODES}  # enum fields get a Select instead of an Input
     FIELD_DEFAULTS = {"images": "auto"}
 
     def compose(self) -> ComposeResult:
