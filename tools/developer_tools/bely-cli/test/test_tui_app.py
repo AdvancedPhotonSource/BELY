@@ -3,10 +3,12 @@ from contextlib import nullcontext
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from textual.containers import Vertical
 from textual.widgets import DataTable, Input, Markdown, Static
 
 from bely_cli.tui.app import BelyTuiApp
 from bely_cli.tui.data import LogbookData
+from bely_cli.tui.screens import browse
 from bely_cli.tui.screens.browse import BrowseScreen
 
 
@@ -60,6 +62,34 @@ class FakeLogbookApi:
     def add_update_log_entry(self, log_entry):
         log_entry.log_id = 101
         return log_entry
+
+
+class FakeLogbookApiWithImage(FakeLogbookApi):
+    """Entry body is a single image-only paragraph (as the server appends after upload)."""
+
+    def get_log_entries(self, log_document_id, load_replies, load_reactions):
+        return [SimpleNamespace(
+            log_id=100, entered_by_username="alice", entered_on_date_time=None,
+            last_modified_by_username=None, last_modified_on_date_time=None,
+            log_replies=None, log_reactions=None,
+            log_entry="Body text.\n\n![logo](/log/attachments/attachment.1.png)",
+        )]
+
+
+class FakeDownloadApi:
+    def get_attachment1_without_preload_content(self, attachment_name, scaling):
+        return SimpleNamespace(data=b"fake-scaled-bytes")
+
+    def get_attachment_without_preload_content(self, attachment_name):
+        return SimpleNamespace(data=b"fake-bytes")
+
+
+class FakeImageWidget(Static):
+    """Stand-in for textual_image.widget.Image: never touches a real terminal."""
+
+    def __init__(self, image, classes=None):
+        super().__init__(f"<image {image!r}>", classes=classes)
+        self.image = image
 
 
 class FakeUsersApi:
@@ -495,6 +525,155 @@ class ThemePersistenceTests(unittest.IsolatedAsyncioTestCase):
                 app.theme = "gruvbox"
                 await pilot.pause()
             set_setting.assert_called_once_with("theme", "gruvbox")
+
+
+async def _wait_until(pilot, predicate, attempts=30):
+    """Poll for `predicate()`; pilot.pause() alone can return before _fetch_image's worker thread lands."""
+    for _ in range(attempts):
+        if predicate():
+            return
+        await pilot.pause(0.01)
+    raise AssertionError("condition never became true")
+
+
+class ImagePreviewTests(unittest.IsolatedAsyncioTestCase):
+    """BrowseScreen's image-segment rendering path; patches decode_image_bytes so no Pillow install is needed."""
+
+    def _make_app(self, *, image_widgets):
+        data = LogbookData(FakeLogbookApiWithImage(), FakeDownloadApi())
+        app = BelyTuiApp(
+            FakeSession(data), limit=10, mode="lookup", image_widgets=image_widgets)
+        return app
+
+    async def test_image_only_entry_renders_fake_widget_and_hides_markdown(self):
+        app = self._make_app(image_widgets={"auto": FakeImageWidget})
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None), \
+             patch.object(browse, "decode_image_bytes", return_value="decoded-image"):
+            async with app.run_test() as pilot:
+                await pilot.pause()
+                await pilot.press("enter")  # type -> docs
+                await pilot.pause()
+                await pilot.press("enter")  # docs -> entries
+                await pilot.pause()
+                await pilot.pause()
+
+                screen = app.screen
+                body_blocks = screen.query_one("#body-blocks", Vertical)
+                await _wait_until(pilot, lambda: screen.query(FakeImageWidget))
+
+                self.assertFalse(screen.query_one("#body-md", Markdown).display)
+                self.assertTrue(body_blocks.display)
+                images = list(screen.query(FakeImageWidget))
+                self.assertEqual(len(images), 1)
+                self.assertEqual(images[0].image, "decoded-image")
+                # The markdown segment before the image is still rendered.
+                markdown_segments = list(body_blocks.query(Markdown))
+                self.assertEqual(len(markdown_segments), 1)
+
+    async def test_no_image_widget_falls_back_to_plain_markdown(self):
+        # image_widgets={} -- as if textual_image weren't installed, or images: off.
+        app = self._make_app(image_widgets={})
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None):
+            async with app.run_test() as pilot:
+                await pilot.pause()
+                await pilot.press("enter")
+                await pilot.pause()
+                await pilot.press("enter")
+                await pilot.pause()
+                await pilot.pause()
+
+                screen = app.screen
+                self.assertTrue(screen.query_one("#body-md", Markdown).display)
+                self.assertFalse(screen.query_one("#body-blocks", Vertical).display)
+                self.assertEqual(len(list(screen.query(FakeImageWidget))), 0)
+
+    async def test_non_image_entry_uses_plain_markdown_even_with_image_widget(self):
+        # FakeLogbookApi (not the *WithImage variant): text-only entry, so the
+        # fast path applies even though an image widget is available.
+        data = LogbookData(FakeLogbookApi(), FakeDownloadApi())
+        app = BelyTuiApp(
+            FakeSession(data), limit=10, mode="lookup",
+            image_widgets={"auto": FakeImageWidget})
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None):
+            async with app.run_test() as pilot:
+                await pilot.pause()
+                await pilot.press("enter")
+                await pilot.pause()
+                await pilot.press("enter")
+                await pilot.pause()
+                await pilot.pause()
+
+                screen = app.screen
+                self.assertTrue(screen.query_one("#body-md", Markdown).display)
+                self.assertFalse(screen.query_one("#body-blocks", Vertical).display)
+
+    async def test_image_fetch_failure_shows_error_placeholder(self):
+        app = self._make_app(image_widgets={"auto": FakeImageWidget})
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None), \
+             patch.object(browse, "decode_image_bytes", side_effect=RuntimeError("bad image")):
+            async with app.run_test() as pilot:
+                await pilot.pause()
+                await pilot.press("enter")
+                await pilot.pause()
+                await pilot.press("enter")
+                await pilot.pause()
+                await pilot.pause()
+
+                screen = app.screen
+
+                def has_error():
+                    return screen.query(".img-error")
+
+                await _wait_until(pilot, has_error)
+                self.assertEqual(len(list(screen.query(FakeImageWidget))), 0)
+
+    async def test_switching_entries_before_fetch_completes_does_not_mount_stale_image(self):
+        """Arrowing away mid-fetch must not land an image in the wrong entry's preview."""
+        import threading
+
+        class TwoEntryApi(FakeLogbookApiWithImage):
+            def get_log_entries(self, log_document_id, load_replies, load_reactions):
+                return super().get_log_entries(log_document_id, load_replies, load_reactions) + [
+                    SimpleNamespace(
+                        log_id=200, entered_by_username="alice", entered_on_date_time=None,
+                        last_modified_by_username=None, last_modified_on_date_time=None,
+                        log_replies=None, log_reactions=None, log_entry="Plain second entry.",
+                    ),
+                ]
+
+        data = LogbookData(TwoEntryApi(), FakeDownloadApi())
+        app = BelyTuiApp(
+            FakeSession(data), limit=10, mode="lookup",
+            image_widgets={"auto": FakeImageWidget})
+        release = threading.Event()
+
+        def slow_decode(data):
+            # Block the worker thread until the test moves the cursor away.
+            release.wait(timeout=2)
+            return "decoded-image"
+
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None), \
+             patch.object(browse, "decode_image_bytes", side_effect=slow_decode):
+            async with app.run_test() as pilot:
+                await pilot.pause()
+                await pilot.press("enter")
+                await pilot.pause()
+                await pilot.press("enter")
+                await pilot.pause()
+                await pilot.pause()
+
+                screen = app.screen
+                self.assertEqual(screen._entry_key, (10, 100))
+
+                await pilot.press("down")  # move to the second (image-free) entry
+                await pilot.pause()
+                await pilot.pause()
+                self.assertEqual(screen._entry_key, (10, 200))
+
+                release.set()
+                await _wait_until(pilot, lambda: True, attempts=5)  # let the worker drain
+
+                self.assertEqual(len(list(screen.query(FakeImageWidget))), 0)
 
 
 if __name__ == "__main__":

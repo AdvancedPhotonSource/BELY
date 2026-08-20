@@ -27,10 +27,11 @@ from functools import partial
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, VerticalScroll
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import DataTable, Footer, Header, Input, Markdown, Static
 
+from ... import config
 from . import rows_table
 from ..format import (
     DOC_COLUMNS,
@@ -48,8 +49,20 @@ from ..format import (
     type_metadata_rows,
     type_row,
 )
+from ..mdimages import split_entry_markdown
 
 LEVEL_TITLES = {0: "Logbooks", 1: "Documents", 2: "Entries"}
+
+
+def decode_image_bytes(data):
+    """Decode raw image bytes into a PIL Image, fully loaded; separate so tests can patch it without Pillow."""
+    import io
+
+    from PIL import Image as PILImage
+
+    image = PILImage.open(io.BytesIO(data))
+    image.load()  # decode fully while still off the event loop
+    return image
 
 
 class BrowseScreen(Screen):
@@ -106,6 +119,7 @@ class BrowseScreen(Screen):
         self.all_items = []
         self.shown_items = []
         self._entry_key = None
+        self._render_token = 0
         self._nav_hidden = False
         self._info_open = False
         self._table_columns_for = None
@@ -117,6 +131,7 @@ class BrowseScreen(Screen):
             with VerticalScroll(id="preview"):
                 yield Static(id="meta")
                 yield Markdown(id="body-md")
+                yield Vertical(id="body-blocks")
         with Horizontal(id="status-bar"):
             yield Static(id="status-left")
             yield Input(id="filter", placeholder="type to filter", compact=True)
@@ -125,6 +140,7 @@ class BrowseScreen(Screen):
 
     def on_mount(self):
         self.query_one("#body-md", Markdown).display = False
+        self.query_one("#body-blocks", Vertical).display = False
         self.query_one("#filter", Input).display = False
         self._update_auth_status()
         self.show_level(self.level)
@@ -166,8 +182,9 @@ class BrowseScreen(Screen):
 
     def show_level(self, level, *, preserve_filter=False):
         self.level = level
-        # cancel any in-flight preview worker so a stale, now-mistyped item can't reach _show_preview
+        # cancel any in-flight preview/image workers so a stale, now-mistyped item can't reach _show_preview
         self.app.workers.cancel_group(self, "preview")
+        self.app.workers.cancel_group(self, "images")
         self._sync_panes()
         self.refresh_bindings()
         nav = self._nav()
@@ -180,6 +197,7 @@ class BrowseScreen(Screen):
             filt.display = False
         nav.set_loading(True)
         self.query_one("#body-md", Markdown).display = False
+        self.query_one("#body-blocks", Vertical).display = False
         self.query_one("#meta", Static).update("")
         if level == self.LEVEL_TYPES:
             self._load_types()
@@ -269,6 +287,7 @@ class BrowseScreen(Screen):
         else:
             self.query_one("#meta", Static).update("(no matches)")
             self.query_one("#body-md", Markdown).display = False
+            self.query_one("#body-blocks", Vertical).display = False
 
     def _update_status_left(self, query):
         count = len(self.shown_items)
@@ -318,17 +337,104 @@ class BrowseScreen(Screen):
     async def _show_preview(self, item):
         self._render_meta(item)
         body_md = self.query_one("#body-md", Markdown)
-        if self.level == self.LEVEL_ENTRIES:
+        body_blocks = self.query_one("#body-blocks", Vertical)
+        if self.level != self.LEVEL_ENTRIES:
+            body_md.display = False
+            body_blocks.display = False
+            return
+
+        key = (self.sel_doc.id, item.log_id)
+        self._entry_key = key
+        self._load_attachments(item)
+
+        segments = split_entry_markdown(item.log_entry or "")
+        widget_cls = getattr(self.app, "image_widget", None)
+        image_segments_present = any(seg[0] == "image" for seg in segments)
+
+        if widget_cls is None or not image_segments_present:
+            if widget_cls is None and image_segments_present:
+                self._maybe_hint_images_unavailable()
+            body_blocks.display = False
             body_md.display = True
             await body_md.update(item.log_entry or "")
-            self._load_attachments(item)
-        else:
-            body_md.display = False
+            return
+
+        body_md.display = False
+        body_blocks.display = True
+        await self._render_segments(key, segments, widget_cls)
+
+    def _maybe_hint_images_unavailable(self):
+        """Nudge toward the optional extra, once per session, unless images are off."""
+        if getattr(self.app, "_images_hint_shown", False):
+            return
+        if config.get_setting("images") == "off":
+            return
+        self.app._images_hint_shown = True
+        self.notify(
+            "This entry has images -- install the optional extra to view them "
+            "inline: pip install 'bely-cli[images]'",
+            timeout=8,
+            markup=False,
+        )
+
+    async def _render_segments(self, key, segments, widget_cls):
+        """Mount markdown/image placeholders and fetch each image; _render_token guards _show_preview's double-call race."""
+        self._render_token += 1
+        token = self._render_token
+        self.app.workers.cancel_group(self, "images")
+        body_blocks = self.query_one("#body-blocks", Vertical)
+        await body_blocks.remove_children()
+        if key != self._entry_key or token != self._render_token:
+            return
+
+        widgets = []
+        pending_images = []  # (placeholder, stored_name, alt)
+        for segment in segments:
+            if segment[0] == "markdown":
+                widgets.append(Markdown(segment[1]))
+            else:
+                _, stored_name, alt = segment
+                placeholder = Static(
+                    f"\U0001f5bc  {alt or stored_name}  (loading...)", classes="img-loading")
+                widgets.append(placeholder)
+                pending_images.append((placeholder, stored_name, alt))
+
+        await body_blocks.mount_all(widgets)
+        if key != self._entry_key or token != self._render_token:
+            return
+        for placeholder, stored_name, alt in pending_images:
+            self._fetch_image(key, token, stored_name, alt, placeholder, widget_cls)
+
+    @work(thread=True, group="images")
+    def _fetch_image(self, key, token, stored_name, alt, placeholder, widget_cls):
+        try:
+            data = self.data.attachment_bytes(stored_name)
+            pil_image = decode_image_bytes(data)
+        except Exception as e:
+            self.app.call_from_thread(
+                self._image_failed, key, token, placeholder, stored_name, str(e))
+            return
+        self.app.call_from_thread(self._apply_image, key, token, placeholder, widget_cls, pil_image)
+
+    def _stale_render(self, key, token, placeholder):
+        return key != self._entry_key or token != self._render_token or not placeholder.is_mounted
+
+    async def _apply_image(self, key, token, placeholder, widget_cls, pil_image):
+        if self._stale_render(key, token, placeholder):
+            return
+        image_widget = widget_cls(pil_image, classes="entry-image")
+        await self.query_one("#body-blocks", Vertical).mount(image_widget, after=placeholder)
+        await placeholder.remove()
+
+    async def _image_failed(self, key, token, placeholder, stored_name, message):
+        if self._stale_render(key, token, placeholder):
+            return
+        placeholder.update(f"\U0001f5bc  {stored_name}  (failed to load: {message})")
+        placeholder.remove_class("img-loading")
+        placeholder.add_class("img-error")
 
     def _load_attachments(self, entry):
-        key = (self.sel_doc.id, entry.log_id)
-        self._entry_key = key
-        self._fetch_attachments(self.sel_doc.id, entry.log_id, entry, key)
+        self._fetch_attachments(self.sel_doc.id, entry.log_id, entry, self._entry_key)
 
     @work(thread=True, exclusive=True, group="attachments")
     def _fetch_attachments(self, doc_id, log_id, entry, key):

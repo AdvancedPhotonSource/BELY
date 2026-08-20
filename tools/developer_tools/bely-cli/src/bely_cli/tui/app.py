@@ -56,6 +56,29 @@ class BelyTuiApp(App):
         margin-bottom: 1;
     }
 
+    #body-blocks {
+        height: auto;
+    }
+
+    .entry-image {
+        /* width/height must both be "auto" -- otherwise height is unbounded and can exceed the renderer's cell limit. */
+        width: auto;
+        height: auto;
+        max-width: 100%;
+        max-height: 30;
+        margin-bottom: 1;
+    }
+
+    .img-loading {
+        color: $text-muted;
+        margin-bottom: 1;
+    }
+
+    .img-error {
+        color: $error;
+        margin-bottom: 1;
+    }
+
     #status-bar {
         height: 1;
         padding: 0 1;
@@ -88,13 +111,7 @@ class BelyTuiApp(App):
 
     @property
     def image_widget(self):
-        """The widget class for the current 'images' setting, or None.
-
-        Reflects live config changes (e.g. from ConfigScreen) without a
-        restart, as long as image_widgets was populated at launch -- it's
-        only ever empty when the terminal probe was skipped because the app
-        started with images off, or textual_image isn't installed.
-        """
+        """The widget class for the current 'images' setting, or None; reflects live config changes."""
         from . import images
 
         return images.widget_for(self.image_widgets, config.get_setting("images"))
