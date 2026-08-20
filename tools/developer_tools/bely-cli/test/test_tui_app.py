@@ -64,6 +64,29 @@ class FakeLogbookApi:
         return log_entry
 
 
+class FakeLogbookApiWithReplies(FakeLogbookApi):
+    """One entry with two direct replies."""
+
+    def get_log_entries(self, log_document_id, load_replies, load_reactions):
+        replies = [
+            SimpleNamespace(
+                log_id=101, entered_by_username="bob", entered_on_date_time=None,
+                last_modified_by_username=None, last_modified_on_date_time=None,
+                log_replies=None, log_reactions=None, log_entry="First reply.",
+            ),
+            SimpleNamespace(
+                log_id=102, entered_by_username="alice", entered_on_date_time=None,
+                last_modified_by_username=None, last_modified_on_date_time=None,
+                log_replies=None, log_reactions=None, log_entry="Second reply.",
+            ),
+        ]
+        return [SimpleNamespace(
+            log_id=100, entered_by_username="alice", entered_on_date_time=None,
+            last_modified_by_username=None, last_modified_on_date_time=None,
+            log_replies=replies, log_reactions=None, log_entry="Parent entry.",
+        )]
+
+
 class FakeLogbookApiWithImage(FakeLogbookApi):
     """Entry body is a single image-only paragraph (as the server appends after upload)."""
 
@@ -163,7 +186,7 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             await pilot.pause()
             self.assertEqual(screen.level, screen.LEVEL_ENTRIES)
             self.assertEqual(table.row_count, 1)
-            self.assertEqual(screen.shown_items[0].log_id, 100)
+            self.assertEqual(screen.shown_items[0].entry.log_id, 100)
             self.assertTrue(screen.query_one("#body-md", Markdown).display)
             # Entries always show the preview, even though 'i' was never pressed.
             self.assertTrue(screen.query_one("#preview").display)
@@ -276,7 +299,7 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
 
             await pilot.pause()  # let the real entries fetch complete and repopulate
             self.assertEqual(screen.level, screen.LEVEL_ENTRIES)
-            self.assertEqual(screen.shown_items[0].log_id, 100)
+            self.assertEqual(screen.shown_items[0].entry.log_id, 100)
 
     async def test_filter_narrows_table_row_count(self):
         data = LogbookData(FakeLogbookApi())
@@ -723,6 +746,56 @@ class ImagePreviewTests(unittest.IsolatedAsyncioTestCase):
                 await _wait_until(pilot, lambda: True, attempts=5)  # let the worker drain
 
                 self.assertEqual(len(list(screen.query(FakeImageWidget))), 0)
+
+
+class ReplyTreeTests(unittest.IsolatedAsyncioTestCase):
+    """BrowseScreen renders an entry's replies as indented tree rows."""
+
+    async def _open_entries(self, pilot):
+        await pilot.pause()
+        await pilot.press("enter")  # type -> docs
+        await pilot.pause()
+        await pilot.press("enter")  # docs -> entries
+        await pilot.pause()
+        await pilot.pause()
+
+    async def test_replies_render_as_indented_rows_under_the_parent(self):
+        data = LogbookData(FakeLogbookApiWithReplies())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await self._open_entries(pilot)
+            screen = app.screen
+            table = screen.query_one("#nav-table", DataTable)
+
+            self.assertEqual(table.row_count, 3)
+            self.assertEqual(
+                [n.entry.log_id for n in screen.shown_items], [100, 101, 102])
+            self.assertIn("▾", table.get_row_at(0)[2])
+            self.assertTrue(table.get_row_at(1)[2].startswith("  ├─ "))
+            self.assertTrue(table.get_row_at(2)[2].startswith("  └─ "))
+
+    async def test_current_entry_on_a_reply_row_returns_the_reply(self):
+        data = LogbookData(FakeLogbookApiWithReplies())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await self._open_entries(pilot)
+            screen = app.screen
+
+            await pilot.press("down")
+            await pilot.pause()
+            self.assertEqual(screen._current_entry().log_id, 101)
+            self.assertEqual(screen._current_node().parent.log_id, 100)
+
+    async def test_filtering_matches_entry_text_not_glyphs(self):
+        data = LogbookData(FakeLogbookApiWithReplies())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await self._open_entries(pilot)
+            screen = app.screen
+
+            screen._apply_filter("second")
+            self.assertEqual(len(screen.shown_items), 1)
+            self.assertEqual(screen.shown_items[0].entry.log_id, 102)
 
 
 if __name__ == "__main__":

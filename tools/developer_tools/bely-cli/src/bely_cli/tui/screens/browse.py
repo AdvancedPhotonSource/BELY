@@ -39,8 +39,10 @@ from ..format import (
     doc_metadata_rows,
     doc_row,
     entry_metadata_rows,
+    entry_node_row,
     entry_row,
     filter_items,
+    flatten_entries,
     format_attachment,
     format_doc,
     format_type,
@@ -70,7 +72,9 @@ class BrowseScreen(Screen):
     LEVEL_TYPES, LEVEL_DOCS, LEVEL_ENTRIES = range(3)
 
     LEVEL_COLUMNS = {LEVEL_TYPES: TYPE_COLUMNS, LEVEL_DOCS: DOC_COLUMNS, LEVEL_ENTRIES: ENTRY_COLUMNS}
-    LEVEL_ROW_FN = {LEVEL_TYPES: type_row, LEVEL_DOCS: doc_row, LEVEL_ENTRIES: entry_row}
+    LEVEL_ROW_FN = {LEVEL_TYPES: type_row, LEVEL_DOCS: doc_row, LEVEL_ENTRIES: entry_node_row}
+    # Entries render via entry_node_row (tree glyphs) but filter on the plain entry cells.
+    LEVEL_SEARCH_FN = {LEVEL_ENTRIES: lambda node: entry_row(node.entry)}
 
     # Per-level nav pane width (%), used whenever a preview/info panel is visible.
     LEVEL_WIDTH = {LEVEL_TYPES: 42, LEVEL_DOCS: 60, LEVEL_ENTRIES: 42}
@@ -118,6 +122,8 @@ class BrowseScreen(Screen):
         self.sel_doc = None
         self.all_items = []
         self.shown_items = []
+        self.entry_tree = []
+        self._collapsed = set()
         self._entry_key = None
         self._render_token = 0
         self._nav_hidden = False
@@ -182,9 +188,11 @@ class BrowseScreen(Screen):
 
     def show_level(self, level, *, preserve_filter=False):
         self.level = level
-        # "f" full-screen only applies at the entries level; reset it when leaving.
+        # "f" full-screen and the reply tree only apply at the entries level; reset when leaving.
         if level != self.LEVEL_ENTRIES:
             self._nav_hidden = False
+            self.entry_tree = []
+            self._collapsed = set()
         # cancel any in-flight preview/image workers so a stale, now-mistyped item can't reach _show_preview
         self.app.workers.cancel_group(self, "preview")
         self.app.workers.cancel_group(self, "images")
@@ -265,6 +273,9 @@ class BrowseScreen(Screen):
     def _populate(self, items):
         nav = self._nav()
         nav.set_loading(False)
+        if self.level == self.LEVEL_ENTRIES:
+            self.entry_tree = items
+            items = flatten_entries(items, self._collapsed)
         self.all_items = items
         self._apply_filter("")
         self._update_header()
@@ -272,9 +283,10 @@ class BrowseScreen(Screen):
 
     def _apply_filter(self, query):
         row_fn = self.LEVEL_ROW_FN[self.level]
+        search_fn = self.LEVEL_SEARCH_FN.get(self.level, row_fn)
         self.shown_items = filter_items(
             self.all_items, query,
-            lambda it: " ".join(str(c) for c in row_fn(it)),
+            lambda it: " ".join(str(c) for c in search_fn(it)),
         )
         self._ensure_columns()
         table = self._nav()
@@ -335,7 +347,7 @@ class BrowseScreen(Screen):
         elif self.level == self.LEVEL_DOCS:
             meta.update(rows_table(doc_metadata_rows(item)))
         else:
-            meta.update(rows_table(entry_metadata_rows(item, self.sel_doc)))
+            meta.update(rows_table(entry_metadata_rows(item.entry, self.sel_doc, parent=item.parent)))
 
     async def _show_preview(self, item):
         self._render_meta(item)
@@ -346,11 +358,12 @@ class BrowseScreen(Screen):
             body_blocks.display = False
             return
 
-        key = (self.sel_doc.id, item.log_id)
+        entry = item.entry
+        key = (self.sel_doc.id, entry.log_id)
         self._entry_key = key
         self._load_attachments(item)
 
-        segments = split_entry_markdown(item.log_entry or "")
+        segments = split_entry_markdown(entry.log_entry or "")
         widget_cls = getattr(self.app, "image_widget", None)
         image_segments_present = any(seg[0] == "image" for seg in segments)
 
@@ -359,7 +372,7 @@ class BrowseScreen(Screen):
                 self._maybe_hint_images_unavailable()
             body_blocks.display = False
             body_md.display = True
-            await body_md.update(item.log_entry or "")
+            await body_md.update(entry.log_entry or "")
             return
 
         body_md.display = False
@@ -436,22 +449,22 @@ class BrowseScreen(Screen):
         placeholder.remove_class("img-loading")
         placeholder.add_class("img-error")
 
-    def _load_attachments(self, entry):
-        self._fetch_attachments(self.sel_doc.id, entry.log_id, entry, self._entry_key)
+    def _load_attachments(self, node):
+        self._fetch_attachments(self.sel_doc.id, node.entry.log_id, node, self._entry_key)
 
     @work(thread=True, exclusive=True, group="attachments")
-    def _fetch_attachments(self, doc_id, log_id, entry, key):
+    def _fetch_attachments(self, doc_id, log_id, node, key):
         try:
             attachments = self.data.attachments(doc_id, log_id)
         except Exception:
             attachments = []
-        self.app.call_from_thread(self._apply_attachments, key, entry, attachments)
+        self.app.call_from_thread(self._apply_attachments, key, node, attachments)
 
-    def _apply_attachments(self, key, entry, attachments):
+    def _apply_attachments(self, key, node, attachments):
         if key != self._entry_key or not attachments:
             return
         meta = self.query_one("#meta", Static)
-        rows = entry_metadata_rows(entry, self.sel_doc)
+        rows = entry_metadata_rows(node.entry, self.sel_doc, parent=node.parent)
         rows.append(("attachments", "; ".join(format_attachment(a) for a in attachments)))
         meta.update(rows_table(rows))
 
@@ -481,7 +494,7 @@ class BrowseScreen(Screen):
             self.sel_doc = item
             self.show_level(self.LEVEL_ENTRIES)
         elif self.select_mode:
-            self.app.exit((self.sel_doc, item))
+            self.app.exit((self.sel_doc, item.entry))
         # else: entry already selected is just the live preview; Enter is a no-op.
 
     def action_back(self):
@@ -540,13 +553,17 @@ class BrowseScreen(Screen):
 
     # -- current-selection helpers --
 
-    def _current_entry(self):
+    def _current_node(self):
         if self.level != self.LEVEL_ENTRIES:
             return None
         table = self._nav()
         if table.cursor_row is None or table.cursor_row >= len(self.shown_items):
             return None
         return self.shown_items[table.cursor_row]
+
+    def _current_entry(self):
+        node = self._current_node()
+        return node.entry if node else None
 
     def _current_doc(self):
         """The document the 'n'/'u' actions apply to: the drilled-into doc at the
