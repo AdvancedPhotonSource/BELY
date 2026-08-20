@@ -2,37 +2,24 @@
 
 Wraps an OptionList with a filter Input (reusing format.filter_items, the
 same filtering used by BrowseScreen). Single-select dismisses with the chosen
-item on Enter. Multi-select toggles the highlighted item with `space` and
-dismisses with the list of selected items on Enter -- so Enter always means
-"confirm", whether that's one item or the current multi-selection.
-
-Also doubles as a lightweight yes/no confirm dialog: pass two plain strings
-as `items` with an identity `label_fn` (see ComposeScreen's discard-changes
-check and NewDocScreen's post-create prompts) rather than adding a separate
-screen class just for that.
+item on Enter or the Select button. Multi-select toggles the highlighted item
+with `space` and dismisses with the list of selected items on Enter or the
+Confirm button.
 """
 
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
-from textual.screen import ModalScreen
-from textual.widgets import Input, OptionList, Static
+from textual.widgets import Button, Input, OptionList, Static
 
 from ..format import filter_items
+from .dialog import CANCEL_HINT, DialogButtons, DialogScreen, hinted_label
 
 
-class PickerScreen(ModalScreen):
+class PickerScreen(DialogScreen):
     DEFAULT_CSS = """
-    PickerScreen {
-        align: center middle;
-    }
-
     #picker-dialog {
         width: 60;
-        height: auto;
-        border: thick $primary;
-        background: $surface;
-        padding: 1 2;
     }
 
     #picker-list {
@@ -41,10 +28,9 @@ class PickerScreen(ModalScreen):
     }
     """
 
-    BINDINGS = [
-        Binding("escape", "cancel", "Cancel"),
-        Binding("space", "toggle", "Toggle", show=False),
-    ]
+    BINDINGS = [Binding("space", "toggle", "Toggle", show=False)]
+
+    BUTTON_ROWS = [["picker-select", "picker-cancel"]]
 
     def __init__(self, title, items, label_fn, *, multi=False):
         super().__init__()
@@ -56,13 +42,14 @@ class PickerScreen(ModalScreen):
         self.shown = list(self.items)
 
     def compose(self) -> ComposeResult:
-        hint = ("[space] toggle   [enter] confirm   [escape] cancel" if self.multi
-                else "[enter] select   [escape] cancel")
-        with Vertical(id="picker-dialog"):
+        with Vertical(id="picker-dialog", classes="dialog"):
             yield Static(self.title_text, id="picker-title")
             yield Input(placeholder="type to filter", id="picker-filter")
             yield OptionList(id="picker-list")
-            yield Static(hint, id="picker-hint")
+            with DialogButtons():
+                select_label = "Confirm" if self.multi else "Select"
+                yield Button(hinted_label(select_label), variant="primary", id="picker-select")
+                yield Button(hinted_label("Cancel", CANCEL_HINT), id="picker-cancel")
 
     def on_mount(self):
         self._populate("")
@@ -97,10 +84,22 @@ class PickerScreen(ModalScreen):
     def on_option_list_option_selected(self, event):
         if event.option_list.id != "picker-list":
             return
+        self._select_highlighted()
+
+    def on_button_pressed(self, event):
+        if event.button.id == "picker-select":
+            self._select_highlighted()
+        elif event.button.id == "picker-cancel":
+            self.dismiss(None)
+
+    def _select_highlighted(self):
         if self.multi:
             self._confirm_multi()
-        else:
-            self.dismiss(self.shown[event.option_index])
+            return
+        lst = self.query_one("#picker-list", OptionList)
+        if lst.highlighted is None or not self.shown:
+            return
+        self.dismiss(self.shown[lst.highlighted])
 
     def action_toggle(self):
         if not self.multi:
@@ -119,6 +118,3 @@ class PickerScreen(ModalScreen):
 
     def _confirm_multi(self):
         self.dismiss([self.items[i] for i in sorted(self.selected)])
-
-    def action_cancel(self):
-        self.dismiss(None)

@@ -202,7 +202,7 @@ Mirrors `doc new`: a name field, plus pickers for type, systems, and template.
 | Key | Action |
 |-----|--------|
 | `ctrl+t` | Pick the logbook type. |
-| `ctrl+y` | Pick systems (multi-select — `space` toggles, `Enter` confirms). |
+| `ctrl+y` | Pick systems (multi-select — `space` toggles, `Enter`/Confirm button confirms). |
 | `ctrl+m` | Pick a template, or "(no template)" to skip. |
 | `ctrl+s` | Create the document. |
 | `Esc` | Cancel. |
@@ -235,8 +235,9 @@ Browsing needs no login. The first time you add or update an entry, create a doc
 save a config change, the app looks for the token the CLI already caches (see
 [Authentication](#authentication) above) and reuses it silently if it's valid — so if you've
 already run an authenticated `bely-cli` command, or a previous `tui` session, you won't be
-prompted again. Otherwise a login modal appears; a successful login is cached the same way
-the CLI caches it, shared by later `bely-cli` commands and TUI sessions alike.
+prompted again. Otherwise a login modal appears (username, password, and `Log in`/`Cancel`
+buttons — `ctrl+s` also submits, `Esc` also cancels); a successful login is cached the same
+way the CLI caches it, shared by later `bely-cli` commands and TUI sessions alike.
 
 #### `bely-cli tui lookup`
 

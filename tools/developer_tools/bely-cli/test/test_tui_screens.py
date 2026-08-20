@@ -130,6 +130,39 @@ class LoginScreenTests(unittest.IsolatedAsyncioTestCase):
             result = await task.wait()
         self.assertIsNone(result)
 
+    async def test_submit_button_dismisses_with_username_and_password(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(LoginScreen("alice")))
+            await pilot.pause()
+            screen = app.screen
+            screen.query_one("#login-password", Input).value = "secret"
+            screen.query_one("#login-submit", Button).press()
+            await pilot.pause()
+            result = await task.wait()
+        self.assertEqual(result, ("alice", "secret"))
+
+    async def test_cancel_button_dismisses_with_none(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(LoginScreen()))
+            await pilot.pause()
+            app.screen.query_one("#login-cancel", Button).press()
+            await pilot.pause()
+            result = await task.wait()
+        self.assertIsNone(result)
+
+    async def test_ctrl_s_submits(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(LoginScreen("alice")))
+            await pilot.pause()
+            app.screen.query_one("#login-password", Input).value = "secret"
+            await pilot.press("ctrl+s")
+            await pilot.pause()
+            result = await task.wait()
+        self.assertEqual(result, ("alice", "secret"))
+
 
 class PickerScreenTests(unittest.IsolatedAsyncioTestCase):
     async def test_single_select_enter_dismisses_item(self):
@@ -207,6 +240,46 @@ class PickerScreenTests(unittest.IsolatedAsyncioTestCase):
             await pilot.pause()
             result = await task.wait()
         self.assertIsNone(result)
+
+    async def test_select_button_dismisses_highlighted_item(self):
+        app = App()
+        items = [SimpleNamespace(name="Alpha"), SimpleNamespace(name="Beta")]
+        async with app.run_test() as pilot:
+            task = app.run_worker(
+                app.push_screen_wait(PickerScreen("Pick one", items, lambda i: i.name)))
+            await pilot.pause()
+            app.screen.query_one("#picker-select", Button).press()
+            await pilot.pause()
+            result = await task.wait()
+        self.assertEqual(result.name, "Alpha")
+
+    async def test_cancel_button_cancels_with_none(self):
+        app = App()
+        items = [SimpleNamespace(name="Alpha")]
+        async with app.run_test() as pilot:
+            task = app.run_worker(
+                app.push_screen_wait(PickerScreen("Pick", items, lambda i: i.name)))
+            await pilot.pause()
+            app.screen.query_one("#picker-cancel", Button).press()
+            await pilot.pause()
+            result = await task.wait()
+        self.assertIsNone(result)
+
+    async def test_confirm_button_dismisses_multi_selection(self):
+        app = App()
+        items = [SimpleNamespace(name="Alpha"), SimpleNamespace(name="Beta")]
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(
+                PickerScreen("Pick many", items, lambda i: i.name, multi=True)))
+            await pilot.pause()
+            await pilot.press("enter")  # filter -> list
+            await pilot.pause()
+            await pilot.press("space")  # toggle Alpha
+            await pilot.pause()
+            app.screen.query_one("#picker-select", Button).press()
+            await pilot.pause()
+            result = await task.wait()
+        self.assertEqual([i.name for i in result], ["Alpha"])
 
 
 class ComposeScreenTests(unittest.IsolatedAsyncioTestCase):
