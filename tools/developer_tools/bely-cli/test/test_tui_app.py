@@ -203,6 +203,31 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(table.display)
             self.assertFalse(screen.query_one("#preview").display)
 
+    async def test_going_back_from_full_screen_entry_restores_the_docs_view(self):
+        # Regression: escaping out of full-screen entries must not hide both panes.
+        data = LogbookData(FakeLogbookApi())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            screen = app.screen
+            table = screen.query_one("#nav-table", DataTable)
+            preview = screen.query_one("#preview")
+
+            await pilot.press("enter")  # type -> docs
+            await pilot.pause()
+            await pilot.press("enter")  # docs -> entries
+            await pilot.pause()
+
+            await pilot.press("f")  # full-screen the entry preview
+            await pilot.pause()
+            self.assertFalse(table.display)
+            self.assertTrue(preview.display)
+
+            await pilot.press("escape")  # back to docs
+            await pilot.pause()
+            self.assertTrue(table.display)
+            self.assertFalse(preview.display)
+
     async def test_filter_narrows_the_list(self):
         data = LogbookData(FakeLogbookApi())
         app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
@@ -293,15 +318,39 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             for action in entry_only_actions:
                 self.assertTrue(screen.check_action(action, ()))
 
-    async def test_escape_at_landing_screen_quits_the_app(self):
-        # mode="app" has no separate landing/home screen -- BrowseScreen IS the
-        # landing screen, so escape at its top level exits like tui lookup does.
+    async def test_escape_at_landing_screen_does_not_quit(self):
+        # BrowseScreen is the landing screen in mode="app" too; only `q` quits.
         data = LogbookData(FakeLogbookApi())
         app = BelyTuiApp(FakeSession(data), limit=10, mode="app")
         async with app.run_test() as pilot:
             await pilot.pause()
+            landing = app.screen
             self.assertFalse(app.screen.select_mode)
             await pilot.press("escape")
+            await pilot.pause()
+            self.assertIs(app.screen, landing)
+            self.assertTrue(app.is_running)
+            self.assertEqual(len(app._notifications), 1)
+
+    async def test_escape_at_lookup_landing_screen_does_not_quit(self):
+        # tui lookup's landing screen behaves the same as tui's -- q is the only quit key.
+        data = LogbookData(FakeLogbookApi())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            landing = app.screen
+            self.assertTrue(app.screen.select_mode)
+            await pilot.press("escape")
+            await pilot.pause()
+            self.assertIs(app.screen, landing)
+            self.assertTrue(app.is_running)
+
+    async def test_q_quits_the_app(self):
+        data = LogbookData(FakeLogbookApi())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="app")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            await pilot.press("q")
             await pilot.pause()
         self.assertIsNone(app.return_value)
 

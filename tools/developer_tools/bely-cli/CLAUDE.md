@@ -166,9 +166,10 @@ Split so that most of it needs no terminal to test:
   the `session` directly (like every other screen), not just its `data`. It's mode-aware:
   `select_mode` picks lookup's select-and-exit contract vs. the full app's stay-and-preview
   behavior, and `source` picks drilling in from logbook types vs. starting at the document
-  level with `core.recent_documents(...)`. Its `_exit_top()` quits when it's the bottom of
-  the screen stack (the landing case) and pops otherwise (e.g. a command-palette-pushed
-  "My documents" browse).
+  level with `core.recent_documents(...)`. Its `_exit_top()` pops back to whatever pushed
+  this browse (e.g. a command-palette-pushed "My documents" browse), or -- when `root=True`
+  (the landing screen `app.py` pushes on mount) -- does nothing but notify, since `q` is the
+  only quit key and an accidental escape shouldn't drop the user into an empty terminal.
 - `app.py` — `BelyTuiApp`, the shared CSS, `ensure_auth()` (see below), and
   `get_system_commands()`. Pushes `BrowseScreen` directly on mount for both modes;
   `mode="lookup"` sets `select_mode=True`. Everything that isn't tied to the current

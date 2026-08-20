@@ -4,14 +4,13 @@ This is the entry screen for both `bely-cli tui` modes -- BelyTuiApp pushes it
 directly on mount, there is no separate landing/home screen:
   - `bely-cli tui lookup` (select_mode=True, source="types"): the original
     select-and-exit contract. Enter on an entry exits the app with
-    (doc, entry); escape at the top level exits with None.
+    (doc, entry).
   - `bely-cli tui` (select_mode=False): Enter on an entry is a no-op (the
-    preview is already live); escape at the top level quits if this is the
-    bottom of the screen stack, otherwise pops back to whatever pushed this
-    screen (e.g. the "My documents" command from the command palette).
-    source="recent" starts at the document level with the current user's
-    recently modified documents (core.recent_documents) instead of drilling
-    in from logbook types.
+    preview is already live). source="recent" starts at the document level
+    with the current user's recently modified documents
+    (core.recent_documents) instead of drilling in from logbook types.
+
+Escape at the top level pops back to whatever pushed this screen, or (when `root=True`) does nothing -- `q` quits instead.
 
 All three levels (types/docs/entries) render as one #nav-table DataTable, so
 navigation, filtering, and the info/full-width toggles share a single code
@@ -106,13 +105,14 @@ class BrowseScreen(Screen):
         Binding("i", "toggle_info", "Info"),
     ]
 
-    def __init__(self, session, limit, *, select_mode=True, source="types"):
+    def __init__(self, session, limit, *, select_mode=True, source="types", root=False):
         super().__init__()
         self.session = session
         self.data = session.data
         self.limit = limit
         self.select_mode = select_mode
         self.source = source
+        self.root = root
         self.level = self.LEVEL_DOCS if source == "recent" else self.LEVEL_TYPES
         self.sel_type = None
         self.sel_doc = None
@@ -182,6 +182,9 @@ class BrowseScreen(Screen):
 
     def show_level(self, level, *, preserve_filter=False):
         self.level = level
+        # "f" full-screen only applies at the entries level; reset it when leaving.
+        if level != self.LEVEL_ENTRIES:
+            self._nav_hidden = False
         # cancel any in-flight preview/image workers so a stale, now-mistyped item can't reach _show_preview
         self.app.workers.cancel_group(self, "preview")
         self.app.workers.cancel_group(self, "images")
@@ -497,12 +500,11 @@ class BrowseScreen(Screen):
             self._exit_top()
 
     def _exit_top(self):
-        """Leave the screen from its top level: exit the app, or pop back to
-        whatever pushed this screen (e.g. a command-palette browse)."""
-        if self.select_mode or len(self.app.screen_stack) <= 1:
-            self.app.exit(None)
-        else:
+        """Escape at the top level: pop back to whatever pushed this screen, or notify if this is the landing screen."""
+        if not self.root:
             self.app.pop_screen()
+            return
+        self.notify("Press q to quit.")
 
     def action_quit_app(self):
         self.app.exit(None)

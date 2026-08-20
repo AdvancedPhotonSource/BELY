@@ -120,7 +120,9 @@ class BelyTuiApp(App):
         saved = config.get_setting("theme")
         self.theme = saved if saved in self.available_themes else DEFAULT_THEME
         self._theme_loaded = True
-        self.push_screen(BrowseScreen(self.session, self.limit, select_mode=(self.mode == "lookup")))
+        self.push_screen(
+            BrowseScreen(self.session, self.limit, select_mode=(self.mode == "lookup"), root=True)
+        )
 
     def watch_theme(self, theme_name):
         """Persist a theme picked from the built-in palette command (not the initial on_mount load)."""

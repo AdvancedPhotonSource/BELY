@@ -154,8 +154,8 @@ bely-cli tui --limit 50
 | `--limit INTEGER` | Recent documents to load per logbook (default: 100). |
 
 Browsing needs no authentication. `Enter` on an entry just keeps it in the preview
-instead of exiting, and `Esc` at the logbook list quits (there's nothing above it to pop
-back to). A few keys are available once you've drilled in:
+instead of exiting, and `Esc` at the logbook list does nothing (there's nothing above it to
+pop back to) — press `q` to quit. A few keys are available once you've drilled in:
 
 | Key | Level | Action |
 |-----|-------|--------|
@@ -283,7 +283,7 @@ on — `i` disappears once you drill into entries, and `s` / `y` / `e` / `f` onl
 | `Up` / `Down`, `PgUp` / `PgDn` | Move the highlight; the preview/info panel follows. |
 | `/` | Reveal and focus the filter box; incrementally filters the current table (case-insensitive substring). It hides itself again once it loses focus with nothing typed. |
 | `Enter` | In the filter box, return focus to the table. Elsewhere, drill into the highlighted row, or select the entry at the entries level. |
-| `Esc` / `Backspace` | Go back one level (from the table); quits from the logbook list. In the filter box, `Esc` returns focus to the table. |
+| `Esc` / `Backspace` | Go back one level (from the table); does nothing at the logbook list — press `q` to quit. In the filter box, `Esc` returns focus to the table. |
 | `d` | Logbook/document levels only: create a new document (see `bely-cli tui`'s "New document" above) — a mutation, so this is where the app authenticates if it hasn't already. |
 | `s` | Entries level only: save the highlighted entry's markdown to a file in the current directory. |
 | `y` | Entries level only: copy a `bely-cli entry get` reference for the highlighted entry to the clipboard. |
