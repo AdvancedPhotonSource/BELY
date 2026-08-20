@@ -17,8 +17,14 @@ from .. import core
 class LogbookData:
     """Wraps logbook_api with the caching the TUI needs."""
 
-    def __init__(self, logbook_api):
+    # Bound on the image-bytes cache: images are much larger than the metadata
+    # the other caches hold, so unlike those this one evicts (FIFO) rather
+    # than growing without limit for the life of a session.
+    MAX_CACHED_IMAGES = 32
+
+    def __init__(self, logbook_api, download_api=None):
         self._logbook_api = logbook_api
+        self._download_api = download_api
 
         self._types = None
         self._systems = None
@@ -27,6 +33,7 @@ class LogbookData:
         self._entries = {}       # doc_id -> list of LogEntry
         self._attachments = {}   # (doc_id, log_id) -> list of LogEntryAttachment
         self._recent = {}        # username -> list of recent documents
+        self._image_bytes = {}   # (stored_filename, scaling) -> bytes, FIFO-bounded
 
     def logbook_types(self):
         if self._types is None:
@@ -79,6 +86,31 @@ class LogbookData:
             self._attachments[key] = attachments
         return attachments
 
+    def attachment_bytes(self, stored_filename, scaling="scaled"):
+        """Raw image bytes for an attachment, preferring a server-scaled variant.
+
+        Falls back to the unscaled original if the scaled fetch fails (e.g. the
+        server doesn't have a scaled variant for this file type). Failures are
+        not cached, matching the other caches' rule; a successful fetch is
+        cached per (stored_filename, scaling), FIFO-evicted past
+        MAX_CACHED_IMAGES since images are far larger than the metadata the
+        other caches hold.
+        """
+        key = (stored_filename, scaling)
+        data = self._image_bytes.get(key)
+        if data is None:
+            try:
+                data = core.download_attachment(self._download_api, stored_filename, scaling)
+            except Exception:
+                if not scaling:
+                    raise
+                data = core.download_attachment(self._download_api, stored_filename)
+            self._image_bytes[key] = data
+            if len(self._image_bytes) > self.MAX_CACHED_IMAGES:
+                oldest = next(iter(self._image_bytes))
+                del self._image_bytes[oldest]
+        return data
+
     def invalidate(self, level, type_id=None, doc_id=None, username=None):
         """Drop the cache for one level so the next fetch hits the network.
 
@@ -101,6 +133,7 @@ class LogbookData:
             if doc_id is None:
                 self._entries.clear()
                 self._attachments.clear()
+                self._image_bytes.clear()
             else:
                 self._entries.pop(doc_id, None)
                 for key in [k for k in self._attachments if k[0] == doc_id]:
@@ -122,3 +155,4 @@ class LogbookData:
         self._entries.clear()
         self._attachments.clear()
         self._recent.clear()
+        self._image_bytes.clear()

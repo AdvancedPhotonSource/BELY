@@ -195,6 +195,21 @@ def upload_attachment(logbook_api, doc_id, log_id, path):
     }
 
 
+def download_attachment(download_api, stored_filename, scaling=None):
+    """Return an attachment's raw bytes, optionally a server-scaled variant.
+
+    The plain get_attachment()/get_attachment1() wrappers discard the response
+    body (their _response_types_map maps '200' to None) -- only the
+    _without_preload_content variants return the actual bytes.
+    """
+    if scaling:
+        response = download_api.get_attachment1_without_preload_content(
+            stored_filename, scaling)
+    else:
+        response = download_api.get_attachment_without_preload_content(stored_filename)
+    return response.data
+
+
 # -- config --
 
 def collect_config():

@@ -212,6 +212,33 @@ class AttachmentTests(unittest.TestCase):
         self.assertEqual(api.uploaded[1], 99)
 
 
+class FakeDownloadApi:
+    def __init__(self):
+        self.calls = []
+
+    def get_attachment_without_preload_content(self, attachment_name):
+        self.calls.append(("plain", attachment_name))
+        return SimpleNamespace(data=b"original-bytes")
+
+    def get_attachment1_without_preload_content(self, attachment_name, scaling):
+        self.calls.append(("scaled", attachment_name, scaling))
+        return SimpleNamespace(data=b"scaled-bytes")
+
+
+class DownloadAttachmentTests(unittest.TestCase):
+    def test_no_scaling_uses_plain_endpoint(self):
+        api = FakeDownloadApi()
+        data = core.download_attachment(api, "attachment.1.png")
+        self.assertEqual(data, b"original-bytes")
+        self.assertEqual(api.calls, [("plain", "attachment.1.png")])
+
+    def test_scaling_uses_scaled_endpoint(self):
+        api = FakeDownloadApi()
+        data = core.download_attachment(api, "attachment.1.png", "scaled")
+        self.assertEqual(data, b"scaled-bytes")
+        self.assertEqual(api.calls, [("scaled", "attachment.1.png", "scaled")])
+
+
 class RecentDocumentsTests(unittest.TestCase):
     def test_sorts_by_last_modified_desc_and_truncates(self):
         import datetime as dt

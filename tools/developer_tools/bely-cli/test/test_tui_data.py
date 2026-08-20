@@ -49,6 +49,22 @@ class FakeApi:
         return [SimpleNamespace(id=1, name="tmpl-a")]
 
 
+class FakeDownloadApi:
+    def __init__(self):
+        self.calls = []
+        self.fail_scaled = set()  # stored_filenames whose scaled fetch should fail
+
+    def get_attachment1_without_preload_content(self, attachment_name, scaling):
+        self.calls.append(("scaled", attachment_name, scaling))
+        if attachment_name in self.fail_scaled:
+            raise RuntimeError("no scaled variant")
+        return SimpleNamespace(data=f"scaled:{attachment_name}".encode())
+
+    def get_attachment_without_preload_content(self, attachment_name):
+        self.calls.append(("plain", attachment_name))
+        return SimpleNamespace(data=f"plain:{attachment_name}".encode())
+
+
 class FakeSearchResults:
     def __init__(self, docs):
         self.document_results = docs
@@ -90,7 +106,8 @@ class FakeFactory:
 class LogbookDataCachingTests(unittest.TestCase):
     def setUp(self):
         self.api = FakeApi()
-        self.data = LogbookData(self.api)
+        self.download_api = FakeDownloadApi()
+        self.data = LogbookData(self.api, self.download_api)
 
     def test_types_fetched_once_then_cached(self):
         self.data.logbook_types()
@@ -153,6 +170,12 @@ class LogbookDataCachingTests(unittest.TestCase):
         self.assertEqual(self.api.calls.count(("entries", 10, True, True)), 2)
         self.assertEqual(self.api.calls.count(("attachments", 10, 100)), 2)
 
+    def test_invalidate_entries_without_doc_id_also_drops_image_cache(self):
+        self.data.attachment_bytes("a.png")
+        self.data.invalidate("entries")
+        self.data.attachment_bytes("a.png")
+        self.assertEqual(self.download_api.calls.count(("scaled", "a.png", "scaled")), 2)
+
     def test_invalidate_unknown_level_raises(self):
         with self.assertRaises(ValueError):
             self.data.invalidate("bogus")
@@ -186,6 +209,7 @@ class LogbookDataCachingTests(unittest.TestCase):
         self.data.documents(1, 100)
         self.data.entries(10)
         self.data.attachments(10, 100)
+        self.data.attachment_bytes("a.png")
 
         self.data.clear()
 
@@ -195,12 +219,14 @@ class LogbookDataCachingTests(unittest.TestCase):
         self.data.documents(1, 100)
         self.data.entries(10)
         self.data.attachments(10, 100)
+        self.data.attachment_bytes("a.png")
         self.assertEqual(self.api.calls.count(("types",)), 2)
         self.assertEqual(self.api.calls.count(("systems",)), 2)
         self.assertEqual(self.api.calls.count(("templates",)), 2)
         self.assertEqual(self.api.calls.count(("docs", 1, 100)), 2)
         self.assertEqual(self.api.calls.count(("entries", 10, True, True)), 2)
         self.assertEqual(self.api.calls.count(("attachments", 10, 100)), 2)
+        self.assertEqual(self.download_api.calls.count(("scaled", "a.png", "scaled")), 2)
 
 
 class RecentDocumentsCachingTests(unittest.TestCase):
@@ -245,6 +271,56 @@ class RecentDocumentsCachingTests(unittest.TestCase):
         self.data.clear()
         self.data.recent_documents(self.factory, "alice", 10)
         self.assertEqual(self.factory.calls.count(("user", "alice")), 2)
+
+
+class AttachmentBytesCachingTests(unittest.TestCase):
+    def setUp(self):
+        self.download_api = FakeDownloadApi()
+        self.data = LogbookData(FakeApi(), self.download_api)
+
+    def test_fetches_scaled_by_default(self):
+        data = self.data.attachment_bytes("a.png")
+        self.assertEqual(data, b"scaled:a.png")
+        self.assertEqual(self.download_api.calls, [("scaled", "a.png", "scaled")])
+
+    def test_cached_per_filename_and_scaling(self):
+        self.data.attachment_bytes("a.png")
+        self.data.attachment_bytes("a.png")
+        self.data.attachment_bytes("a.png", scaling=None)
+        self.assertEqual(self.download_api.calls.count(("scaled", "a.png", "scaled")), 1)
+        self.assertEqual(self.download_api.calls.count(("plain", "a.png")), 1)
+
+    def test_falls_back_to_unscaled_when_scaled_fetch_fails(self):
+        self.download_api.fail_scaled.add("a.png")
+        data = self.data.attachment_bytes("a.png")
+        self.assertEqual(data, b"plain:a.png")
+        self.assertEqual(self.download_api.calls, [
+            ("scaled", "a.png", "scaled"), ("plain", "a.png"),
+        ])
+
+    def test_fallback_result_is_cached(self):
+        self.download_api.fail_scaled.add("a.png")
+        self.data.attachment_bytes("a.png")
+        self.data.attachment_bytes("a.png")
+        self.assertEqual(self.download_api.calls.count(("plain", "a.png")), 1)
+
+    def test_failures_are_not_cached(self):
+        # No scaling requested, so a failure propagates and must not be cached.
+        self.download_api.get_attachment_without_preload_content = lambda name: (_ for _ in ()).throw(
+            RuntimeError("boom"))
+        with self.assertRaises(RuntimeError):
+            self.data.attachment_bytes("a.png", scaling=None)
+        self.assertEqual(len(self.data._image_bytes), 0)
+
+    def test_evicts_oldest_past_bound(self):
+        self.data.MAX_CACHED_IMAGES = 2
+        self.data.attachment_bytes("a.png")
+        self.data.attachment_bytes("b.png")
+        self.data.attachment_bytes("c.png")
+        self.assertEqual(len(self.data._image_bytes), 2)
+        # "a.png" was evicted, so fetching it again hits the network.
+        self.data.attachment_bytes("a.png")
+        self.assertEqual(self.download_api.calls.count(("scaled", "a.png", "scaled")), 2)
 
 
 if __name__ == "__main__":

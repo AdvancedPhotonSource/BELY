@@ -19,7 +19,7 @@ from .data import LogbookData
 class TuiSession:
     def __init__(self, factory):
         self.factory = factory
-        self.data = LogbookData(factory.get_logbook_api())
+        self.data = LogbookData(factory.get_logbook_api(), factory.get_download_api())
         self._auth_factory = None
 
     def username(self):
