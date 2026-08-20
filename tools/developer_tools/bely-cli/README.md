@@ -219,12 +219,12 @@ field per setting (a dropdown for `images`, a text input for everything else), p
 from `settings.yaml`, alongside a summary of the current settings and any
 environment-variable overrides.
 
-| Key | Action |
-|-----|--------|
-| `ctrl+s` | Save changed fields (same effect as `config set FIELD VALUE`). |
-| `ctrl+e` | Suspend the TUI and open the settings file in `$EDITOR`, then reload. |
-| `r` | Reload from disk, discarding unsaved edits in the form. |
-| `Esc` | Close the dialog. |
+| Button | Action |
+|--------|--------|
+| Save  `^S` | Save changed fields (same effect as `config set FIELD VALUE`). Also `ctrl+s` from anywhere in the dialog. |
+| Edit file | Suspend the TUI and open the settings file in `$EDITOR`, then reload. |
+| Reload | Reload from disk, discarding unsaved edits in the form. |
+| Close  `Esc` | Close the dialog. Also `Esc` from anywhere in the dialog. |
 
 A field whose effective value comes from an environment variable (`BELY_HOST`, `BELY_USER`,
 `EDITOR`) shows that in its placeholder, and saving it warns that the env var will keep

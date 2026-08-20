@@ -13,34 +13,23 @@ from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
-from textual.screen import ModalScreen
-from textual.widgets import Input, Select, Static
+from textual.widgets import Button, Input, Select, Static
 
 from ... import config, core
 from ..images import IMAGE_MODE_HELP, IMAGE_MODES
+from .dialog import CANCEL_HINT, SAVE_HINT, DialogButtons, DialogScreen, hinted_label
 
 
-class ConfigScreen(ModalScreen):
+class ConfigScreen(DialogScreen):
     DEFAULT_CSS = """
-    ConfigScreen {
-        align: center middle;
-    }
-
     #config-dialog {
         width: 70;
-        height: auto;
-        border: thick $primary;
-        background: $surface;
-        padding: 1 2;
     }
     """
 
-    BINDINGS = [
-        Binding("escape", "back", "Back"),
-        Binding("ctrl+s", "save", "Save"),
-        Binding("ctrl+e", "open_editor", "Edit file"),
-        Binding("r", "reload", "Reload"),
-    ]
+    BINDINGS = [Binding("ctrl+s", "submit", "Save", show=False)]
+
+    BUTTON_ROWS = [["config-save", "config-edit", "config-reload", "config-close"]]
 
     # Fields whose effective value can be overridden by an env var the CLI
     # also honors (see auth.py's precedence) -- token_path has none.
@@ -50,7 +39,7 @@ class ConfigScreen(ModalScreen):
     FIELD_DEFAULTS = {"images": "auto"}
 
     def compose(self) -> ComposeResult:
-        with Vertical(id="config-dialog"):
+        with Vertical(id="config-dialog", classes="dialog"):
             yield Static(id="config-breadcrumb")
             yield Static(id="config-summary")
             for field in config.VALID_FIELDS:
@@ -63,19 +52,25 @@ class ConfigScreen(ModalScreen):
                     )
                 else:
                     yield Input(placeholder=field, id=f"config-{field}")
-            yield Static(
-                "[ctrl+s] save   [ctrl+e] edit file   [r] reload   [escape] back",
-                id="config-hint",
-            )
+            with DialogButtons():
+                yield Button(hinted_label("Save", SAVE_HINT), variant="primary", id="config-save")
+                yield Button(hinted_label("Edit file"), id="config-edit")
+                yield Button(hinted_label("Reload"), id="config-reload")
+                yield Button(hinted_label("Close", CANCEL_HINT), id="config-close")
 
     def on_mount(self):
         self._load()
+        self.query_one(f"#config-{config.VALID_FIELDS[0]}").focus()
 
-    def action_back(self):
-        self.dismiss(None)
-
-    def action_reload(self):
-        self._load()
+    def on_button_pressed(self, event):
+        if event.button.id == "config-save":
+            self._save()
+        elif event.button.id == "config-edit":
+            self._open_editor()
+        elif event.button.id == "config-reload":
+            self._load()
+        elif event.button.id == "config-close":
+            self.dismiss(None)
 
     def _load(self):
         data = core.collect_config()
@@ -110,7 +105,7 @@ class ConfigScreen(ModalScreen):
                 f"{field} (overridden by {env_var})" if env_var and env_var in env else field
             )
 
-    def action_save(self):
+    def action_submit(self):
         self._save()
 
     @work
@@ -149,9 +144,6 @@ class ConfigScreen(ModalScreen):
                         f"overriding the '{field}' setting.", severity="warning")
 
         self._load()
-
-    def action_open_editor(self):
-        self._open_editor()
 
     @work
     async def _open_editor(self):

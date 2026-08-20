@@ -658,6 +658,30 @@ class ConfigScreenTests(unittest.IsolatedAsyncioTestCase):
                 result = await task.wait()
         self.assertIsNone(result)
 
+    async def test_close_button_dismisses_the_modal(self):
+        state = {"settings_file": "/tmp/settings.yaml", "settings": {}, "environment": {}}
+        app = App()
+        with patch.object(configscreen.core, "collect_config", side_effect=lambda: dict(state)), \
+             patch.object(configscreen.config, "get_setting", side_effect=lambda k: None):
+            async with app.run_test() as pilot:
+                task = app.run_worker(app.push_screen_wait(ConfigScreen()))
+                await pilot.pause()
+                app.screen.query_one("#config-close", Button).press()
+                await pilot.pause()
+                result = await task.wait()
+        self.assertIsNone(result)
+
+    async def test_initial_focus_is_the_first_field(self):
+        state = {"settings_file": "/tmp/settings.yaml", "settings": {}, "environment": {}}
+        app = App()
+        with patch.object(configscreen.core, "collect_config", side_effect=lambda: dict(state)), \
+             patch.object(configscreen.config, "get_setting", side_effect=lambda k: None):
+            async with app.run_test() as pilot:
+                app.push_screen(ConfigScreen())
+                await pilot.pause()
+                screen = app.screen
+                self.assertIs(screen.focused, screen.query_one("#config-host", Input))
+
     async def test_load_prefills_inputs_and_flags_env_overrides(self):
         state = {
             "settings_file": "/tmp/settings.yaml",
@@ -704,6 +728,76 @@ class ConfigScreenTests(unittest.IsolatedAsyncioTestCase):
                 await pilot.pause()
 
         self.assertEqual(saved, [("host", "https://new")])
+
+    async def test_save_button_writes_changed_fields(self):
+        state = {
+            "settings_file": "/tmp/settings.yaml",
+            "settings": {"host": "https://old"},
+            "environment": {},
+        }
+        saved = []
+
+        def fake_set_setting(key, value):
+            saved.append((key, value))
+            state["settings"][key] = value
+
+        app = App()
+        with patch.object(configscreen.core, "collect_config", side_effect=lambda: dict(state)), \
+             patch.object(configscreen.config, "get_setting",
+                          side_effect=lambda k: state["settings"].get(k)), \
+             patch.object(configscreen.config, "set_setting", side_effect=fake_set_setting):
+            async with app.run_test() as pilot:
+                app.push_screen(ConfigScreen())
+                await pilot.pause()
+                screen = app.screen
+                screen.query_one("#config-host", Input).value = "https://new"
+                screen.query_one("#config-save", Button).press()
+                await pilot.pause()
+                await pilot.pause()
+
+        self.assertEqual(saved, [("host", "https://new")])
+
+    async def test_reload_button_reloads_from_disk(self):
+        state = {
+            "settings_file": "/tmp/settings.yaml",
+            "settings": {"host": "https://original"},
+            "environment": {},
+        }
+        app = App()
+        with patch.object(configscreen.core, "collect_config", side_effect=lambda: dict(state)), \
+             patch.object(configscreen.config, "get_setting",
+                          side_effect=lambda k: state["settings"].get(k)):
+            async with app.run_test() as pilot:
+                app.push_screen(ConfigScreen())
+                await pilot.pause()
+                screen = app.screen
+                host_input = screen.query_one("#config-host", Input)
+                host_input.value = "https://unsaved-edit"
+                screen.query_one("#config-reload", Button).press()
+                await pilot.pause()
+
+        self.assertEqual(host_input.value, "https://original")
+
+    async def test_edit_button_opens_editor_and_reloads(self):
+        from contextlib import nullcontext
+
+        state = {"settings_file": "/tmp/settings.yaml", "settings": {}, "environment": {}}
+        app = App()
+        with patch.object(configscreen.core, "collect_config", side_effect=lambda: dict(state)), \
+             patch.object(configscreen.config, "get_setting", side_effect=lambda k: None), \
+             patch.object(configscreen.core, "ensure_settings_file",
+                          return_value="/tmp/settings.yaml"), \
+             patch.object(configscreen.config, "get_editor", return_value="nano"), \
+             patch.object(configscreen, "subprocess") as fake_subprocess, \
+             patch.object(app, "suspend", return_value=nullcontext()):
+            async with app.run_test() as pilot:
+                app.push_screen(ConfigScreen())
+                await pilot.pause()
+                app.screen.query_one("#config-edit", Button).press()
+                await pilot.pause()
+                await pilot.pause()
+
+        fake_subprocess.call.assert_called_once_with(["nano", "/tmp/settings.yaml"])
 
     async def test_images_field_is_a_select_defaulting_to_auto(self):
         state = {"settings_file": "/tmp/settings.yaml", "settings": {}, "environment": {}}
