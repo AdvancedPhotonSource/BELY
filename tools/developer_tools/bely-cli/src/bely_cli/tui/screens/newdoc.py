@@ -18,38 +18,29 @@ from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
-from textual.screen import ModalScreen
-from textual.widgets import Input, Static
+from textual.widgets import Button, Input, Static
 
 from ... import core
 from ...common import find_logdoc
+from .dialog import CANCEL_HINT, SAVE_HINT, DialogButtons, DialogScreen, hinted_label
 
 # Sentinel for "explicitly skip the default template" -- distinct from
 # PickerScreen's own None-on-cancel so the two can't be confused.
 _NO_TEMPLATE = SimpleNamespace(id=None, name="(no template)")
 
 
-class NewDocScreen(ModalScreen):
+class NewDocScreen(DialogScreen):
     DEFAULT_CSS = """
-    NewDocScreen {
-        align: center middle;
-    }
-
     #newdoc-dialog {
         width: 70;
-        height: auto;
-        border: thick $primary;
-        background: $surface;
-        padding: 1 2;
     }
     """
 
-    BINDINGS = [
-        Binding("ctrl+t", "pick_type", "Type"),
-        Binding("ctrl+y", "pick_systems", "Systems"),
-        Binding("ctrl+m", "pick_template", "Template"),
-        Binding("ctrl+s", "submit", "Create"),
-        Binding("escape", "cancel", "Cancel"),
+    BINDINGS = [Binding("ctrl+s", "submit", "Create", show=False)]
+
+    BUTTON_ROWS = [
+        ["newdoc-pick-type", "newdoc-pick-systems", "newdoc-pick-template"],
+        ["newdoc-create", "newdoc-cancel"],
     ]
 
     def __init__(self, session, logbook_type=None):
@@ -61,21 +52,35 @@ class NewDocScreen(ModalScreen):
         self.skip_template = False
 
     def compose(self) -> ComposeResult:
-        with Vertical(id="newdoc-dialog"):
+        with Vertical(id="newdoc-dialog", classes="dialog"):
             yield Static("New document", id="newdoc-title")
             yield Input(placeholder="document name", id="newdoc-name")
             yield Static(id="newdoc-type")
             yield Static(id="newdoc-systems")
             yield Static(id="newdoc-template")
-            yield Static(
-                "[ctrl+t] type   [ctrl+y] systems   [ctrl+m] template   "
-                "[ctrl+s] create   [escape] cancel",
-                id="newdoc-hint",
-            )
+            with DialogButtons():
+                yield Button("Type…", id="newdoc-pick-type")
+                yield Button("Systems…", id="newdoc-pick-systems")
+                yield Button("Template…", id="newdoc-pick-template")
+            with DialogButtons():
+                yield Button(hinted_label("Create", SAVE_HINT), variant="primary", id="newdoc-create")
+                yield Button(hinted_label("Cancel", CANCEL_HINT), id="newdoc-cancel")
 
     def on_mount(self):
         self._refresh_labels()
         self.query_one("#newdoc-name", Input).focus()
+
+    def on_button_pressed(self, event):
+        if event.button.id == "newdoc-pick-type":
+            self._pick_type()
+        elif event.button.id == "newdoc-pick-systems":
+            self._pick_systems()
+        elif event.button.id == "newdoc-pick-template":
+            self._pick_template()
+        elif event.button.id == "newdoc-create":
+            self._create()
+        elif event.button.id == "newdoc-cancel":
+            self.dismiss(None)
 
     def _refresh_labels(self):
         type_label = self.logbook_type.name if self.logbook_type else "(none)"
@@ -92,13 +97,7 @@ class NewDocScreen(ModalScreen):
             template_label = "(none)"
         self.query_one("#newdoc-template", Static).update(f"Template: {template_label}")
 
-    def action_cancel(self):
-        self.dismiss(None)
-
     # -- pickers --
-
-    def action_pick_type(self):
-        self._pick_type()
 
     @work
     async def _pick_type(self):
@@ -116,9 +115,6 @@ class NewDocScreen(ModalScreen):
             self.logbook_type = choice
             self._refresh_labels()
 
-    def action_pick_systems(self):
-        self._pick_systems()
-
     @work
     async def _pick_systems(self):
         from .picker import PickerScreen
@@ -134,9 +130,6 @@ class NewDocScreen(ModalScreen):
         if choice is not None:
             self.systems = choice
             self._refresh_labels()
-
-    def action_pick_template(self):
-        self._pick_template()
 
     @work
     async def _pick_template(self):
@@ -173,7 +166,7 @@ class NewDocScreen(ModalScreen):
             self.notify("Document name is required.", severity="warning")
             return
         if self.logbook_type is None:
-            self.notify("Pick a logbook type (ctrl+t) first.", severity="warning")
+            self.notify("Pick a logbook type first.", severity="warning")
             return
 
         try:
@@ -206,7 +199,7 @@ class NewDocScreen(ModalScreen):
 
     async def _post_create(self, api, doc):
         from .compose import open_composer
-        from .picker import PickerScreen
+        from .confirm import ConfirmScreen
 
         try:
             entries = await asyncio.to_thread(api.get_log_entries, log_document_id=doc.id)
@@ -215,19 +208,19 @@ class NewDocScreen(ModalScreen):
 
         if entries:
             entry = entries[0]
-            choice = await self.app.push_screen_wait(
-                PickerScreen(
+            edit_now = await self.app.push_screen_wait(
+                ConfirmScreen(
                     f"Template generated log entry #{entry.log_id}. Edit it now?",
-                    ["Edit now", "Leave as-is"], lambda x: x,
+                    confirm_label="Edit now", cancel_label="Leave as-is",
                 )
             )
-            if choice == "Edit now":
+            if edit_now:
                 await open_composer(self.app, doc, api, entry=entry)
         else:
-            choice = await self.app.push_screen_wait(
-                PickerScreen("Create a log entry now?", ["Create entry", "Skip"], lambda x: x)
+            create_entry = await self.app.push_screen_wait(
+                ConfirmScreen("Create a log entry now?", confirm_label="Create entry", cancel_label="Skip")
             )
-            if choice == "Create entry":
+            if create_entry:
                 await open_composer(self.app, doc, api)
 
         self.dismiss(doc)

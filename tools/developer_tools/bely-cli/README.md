@@ -197,15 +197,16 @@ An empty new entry is skipped rather than saved, matching `entry add`'s behavior
 
 **New document**
 
-Mirrors `doc new`: a name field, plus pickers for type, systems, and template.
+Mirrors `doc new`: a name field, plus buttons that open pickers for type, systems, and
+template:
 
-| Key | Action |
-|-----|--------|
-| `ctrl+t` | Pick the logbook type. |
-| `ctrl+y` | Pick systems (multi-select — `space` toggles, `Enter`/Confirm button confirms). |
-| `ctrl+m` | Pick a template, or "(no template)" to skip. |
-| `ctrl+s` | Create the document. |
-| `Esc` | Cancel. |
+| Button | Action |
+|--------|--------|
+| Type… | Pick the logbook type. |
+| Systems… | Pick systems (multi-select — `space` toggles, `Enter`/Confirm button confirms). |
+| Template… | Pick a template, or "(no template)" to skip. |
+| Create  `^S` | Create the document. Also `ctrl+s` from anywhere in the dialog. |
+| Cancel  `Esc` | Cancel. Also `Esc` from anywhere in the dialog. |
 
 After creating, it reproduces `doc new`'s post-create prompts: if the template already
 generated an entry it offers to edit it, otherwise it offers to create one — both open the

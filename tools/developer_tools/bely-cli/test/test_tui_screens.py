@@ -538,14 +538,12 @@ class NewDocScreenPrefillTests(unittest.IsolatedAsyncioTestCase):
                     app.screen.query_one("#newdoc-type", Static).content, "Type: ops")
 
                 app.screen.query_one("#newdoc-name", Input).value = "New Doc"
-                await pilot.press("ctrl+s")  # create without ever touching ctrl+t
+                await pilot.press("ctrl+s")  # create without ever touching the type picker
                 await pilot.pause()
                 await pilot.pause()
 
-                await pilot.press("enter")  # filter -> list ("Create a log entry now?")
-                await pilot.pause()
-                await pilot.press("down")  # highlight "Skip"
-                await pilot.press("enter")
+                # no entries came back -> offered to create one; pick "Skip".
+                app.screen.query_one("#confirm-cancel", Button).press()
                 await pilot.pause()
 
                 doc = await task.wait()
@@ -568,7 +566,7 @@ class NewDocScreenTests(unittest.IsolatedAsyncioTestCase):
                 await pilot.pause()
                 app.screen.query_one("#newdoc-name", Input).value = "New Doc"
 
-                await pilot.press("ctrl+t")  # -> type picker
+                app.screen.query_one("#newdoc-pick-type", Button).press()  # -> type picker
                 await pilot.pause()
                 await pilot.pause()
                 await pilot.press("enter")  # filter -> list
@@ -576,7 +574,7 @@ class NewDocScreenTests(unittest.IsolatedAsyncioTestCase):
                 await pilot.press("enter")  # select "ops"
                 await pilot.pause()
 
-                await pilot.press("ctrl+y")  # -> systems picker (multi)
+                app.screen.query_one("#newdoc-pick-systems", Button).press()  # -> systems picker (multi)
                 await pilot.pause()
                 await pilot.pause()
                 await pilot.press("enter")  # filter -> list
@@ -586,7 +584,7 @@ class NewDocScreenTests(unittest.IsolatedAsyncioTestCase):
                 await pilot.press("enter")  # confirm selection
                 await pilot.pause()
 
-                await pilot.press("ctrl+m")  # -> template picker
+                app.screen.query_one("#newdoc-pick-template", Button).press()  # -> template picker
                 await pilot.pause()
                 await pilot.pause()
                 await pilot.press("enter")  # filter -> list, "(no template)" highlighted
@@ -601,10 +599,7 @@ class NewDocScreenTests(unittest.IsolatedAsyncioTestCase):
 
                 # no entries came back from the (empty) template -> offered to
                 # create one; pick "Skip".
-                await pilot.press("enter")  # filter -> list
-                await pilot.pause()
-                await pilot.press("down")  # highlight "Skip"
-                await pilot.press("enter")
+                app.screen.query_one("#confirm-cancel", Button).press()
                 await pilot.pause()
 
                 doc = await task.wait()
@@ -627,7 +622,7 @@ class NewDocScreenTests(unittest.IsolatedAsyncioTestCase):
                 await pilot.pause()
                 app.screen.query_one("#newdoc-name", Input).value = "Dup"
 
-                await pilot.press("ctrl+t")
+                app.screen.query_one("#newdoc-pick-type", Button).press()
                 await pilot.pause()
                 await pilot.pause()
                 await pilot.press("enter")
