@@ -7,38 +7,20 @@ PickerScreen (a filterable list) for a plain confirmation.
 """
 
 from textual.app import ComposeResult
-from textual.binding import Binding
-from textual.containers import Horizontal, Vertical
-from textual.screen import ModalScreen
+from textual.containers import Vertical
 from textual.widgets import Button, Static
 
+from .dialog import CANCEL_HINT, DialogButtons, DialogScreen, hinted_label
 
-class ConfirmScreen(ModalScreen):
+
+class ConfirmScreen(DialogScreen):
     DEFAULT_CSS = """
-    ConfirmScreen {
-        align: center middle;
-    }
-
     #confirm-dialog {
         width: 60;
-        height: auto;
-        border: thick $primary;
-        background: $surface;
-        padding: 1 2;
-    }
-
-    #confirm-buttons {
-        height: auto;
-        align: right middle;
-        margin-top: 1;
-    }
-
-    #confirm-buttons Button {
-        margin-left: 1;
     }
     """
 
-    BINDINGS = [Binding("escape", "cancel", "Cancel")]
+    BUTTON_ROWS = [["confirm-confirm", "confirm-cancel"]]
 
     def __init__(self, message, *, confirm_label="Yes", cancel_label="No",
                  confirm_variant="primary"):
@@ -49,14 +31,16 @@ class ConfirmScreen(ModalScreen):
         self.confirm_variant = confirm_variant
 
     def compose(self) -> ComposeResult:
-        with Vertical(id="confirm-dialog"):
+        with Vertical(id="confirm-dialog", classes="dialog"):
             yield Static(self.message, id="confirm-message")
-            with Horizontal(id="confirm-buttons"):
-                yield Button(self.cancel_label, id="confirm-cancel")
-                yield Button(self.confirm_label, variant=self.confirm_variant, id="confirm-confirm")
+            with DialogButtons():
+                yield Button(hinted_label(self.confirm_label), variant=self.confirm_variant, id="confirm-confirm")
+                yield Button(hinted_label(self.cancel_label, CANCEL_HINT), id="confirm-cancel")
 
     def on_mount(self):
-        self.query_one("#confirm-confirm", Button).focus()
+        # Destructive confirmations default focus to "cancel" rather than the risky action.
+        default_id = "confirm-cancel" if self.confirm_variant == "error" else "confirm-confirm"
+        self.query_one(f"#{default_id}", Button).focus()
 
     def on_button_pressed(self, event):
         if event.button.id == "confirm-confirm":

@@ -396,6 +396,55 @@ class ComposeScreenTests(unittest.IsolatedAsyncioTestCase):
                 await pilot.pause()
                 self.assertIs(screen.focused, area)
 
+    async def test_escape_without_changes_dismisses_with_none(self):
+        api = FakeLogbookApi()
+        doc = SimpleNamespace(id=1, name="Doc")
+        entry = SimpleNamespace(log_id=7, log_entry="existing text")
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(
+                app.push_screen_wait(ComposeScreen(doc, entry, api, is_new=False)))
+            await pilot.pause()
+            await pilot.press("escape")
+            await pilot.pause()
+            result = await task.wait()
+        self.assertIsNone(result)
+
+    async def test_escape_with_unsaved_changes_prompts_discard_confirmation(self):
+        api = FakeLogbookApi()
+        doc = SimpleNamespace(id=1, name="Doc")
+        entry = SimpleNamespace(log_id=7, log_entry="existing text")
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(
+                app.push_screen_wait(ComposeScreen(doc, entry, api, is_new=False)))
+            await pilot.pause()
+            area = app.screen.query_one("#compose-area", TextArea)
+            area.text = "existing text, changed"
+            await pilot.press("escape")
+            await pilot.pause()
+            self.assertEqual(type(app.screen).__name__, "ConfirmScreen")
+            app.screen.query_one("#confirm-confirm", Button).press()  # "Discard"
+            await pilot.pause()
+            result = await task.wait()
+        self.assertIsNone(result)
+
+    async def test_ctrl_s_saves(self):
+        api = FakeLogbookApi()
+        doc = SimpleNamespace(id=1, name="Doc")
+        entry = SimpleNamespace(log_id=None, log_entry="")
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(
+                app.push_screen_wait(ComposeScreen(doc, entry, api, is_new=True)))
+            await pilot.pause()
+            app.screen.query_one("#compose-area", TextArea).text = "hello world"
+            await pilot.press("ctrl+s")
+            await pilot.pause()
+            await pilot.pause()
+            saved = await task.wait()
+        self.assertEqual(saved.log_entry, "hello world")
+
 
 class NewDocScreenPrefillTests(unittest.IsolatedAsyncioTestCase):
     async def test_prefilled_logbook_type_skips_the_type_picker(self):
@@ -706,6 +755,40 @@ class ConfirmScreenTests(unittest.IsolatedAsyncioTestCase):
             await pilot.pause()
             result = await task.wait()
         self.assertFalse(result)
+
+    async def test_default_focus_is_confirm(self):
+        app = App()
+        async with app.run_test() as pilot:
+            app.run_worker(app.push_screen_wait(ConfirmScreen("Are you sure?")))
+            await pilot.pause()
+            self.assertIs(app.screen.focused, app.screen.query_one("#confirm-confirm", Button))
+
+    async def test_error_variant_defaults_focus_to_cancel(self):
+        app = App()
+        async with app.run_test() as pilot:
+            app.run_worker(app.push_screen_wait(
+                ConfirmScreen("Discard unsaved changes?", confirm_variant="error")))
+            await pilot.pause()
+            self.assertIs(app.screen.focused, app.screen.query_one("#confirm-cancel", Button))
+
+    async def test_left_and_right_arrows_cycle_between_buttons(self):
+        app = App()
+        async with app.run_test() as pilot:
+            app.run_worker(app.push_screen_wait(ConfirmScreen("Are you sure?")))
+            await pilot.pause()
+            screen = app.screen
+
+            await pilot.press("right")
+            await pilot.pause()
+            self.assertIs(screen.focused, screen.query_one("#confirm-cancel", Button))
+
+            await pilot.press("right")  # wraps back
+            await pilot.pause()
+            self.assertIs(screen.focused, screen.query_one("#confirm-confirm", Button))
+
+            await pilot.press("left")  # wraps the other way
+            await pilot.pause()
+            self.assertIs(screen.focused, screen.query_one("#confirm-cancel", Button))
 
 
 if __name__ == "__main__":

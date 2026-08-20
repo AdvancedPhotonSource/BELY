@@ -16,53 +16,31 @@ from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
-from textual.screen import ModalScreen
 from textual.widgets import Button, Input, Static, TextArea
 
 from ... import core
 from ...common import editor_changed
+from .dialog import CANCEL_HINT, SAVE_HINT, DialogButtons, DialogScreen, hinted_label
 
 
-class ComposeScreen(ModalScreen):
-    """Buttons-only entry composer; BINDINGS below are arrow-key focus navigation, not action shortcuts."""
+class ComposeScreen(DialogScreen):
+    """Markdown-aware entry composer with an optional attachment field."""
 
     DEFAULT_CSS = """
-    ComposeScreen {
-        align: center middle;
-    }
-
     #compose-dialog {
         width: 90%;
         height: 80%;
-        border: thick $primary;
-        background: $surface;
-        padding: 1 2;
     }
 
     #compose-area {
         height: 1fr;
     }
-
-    #compose-buttons {
-        height: auto;
-        align: right middle;
-        margin-top: 1;
-    }
-
-    #compose-buttons Button {
-        margin-left: 1;
-    }
     """
 
-    BINDINGS = [
-        Binding("up", "focus_up", show=False),
-        Binding("down", "focus_down", show=False),
-        Binding("left", "focus_left", show=False),
-        Binding("right", "focus_right", show=False),
-    ]
+    BINDINGS = [Binding("ctrl+s", "submit", "Save", show=False)]
 
     # Save first: right after the attachment field in tab order, since it's used most.
-    BUTTON_IDS = ["compose-save", "compose-editor", "compose-cancel"]
+    BUTTON_ROWS = [["compose-save", "compose-editor", "compose-cancel"]]
 
     def __init__(self, doc, entry, api, *, is_new):
         super().__init__()
@@ -75,16 +53,16 @@ class ComposeScreen(ModalScreen):
     def compose(self) -> ComposeResult:
         title = (f'New entry in "{self.doc.name}"' if self.is_new
                  else f'Update entry #{self.entry.log_id} in "{self.doc.name}"')
-        with Vertical(id="compose-dialog"):
+        with Vertical(id="compose-dialog", classes="dialog"):
             yield Static(title, id="compose-title")
             yield TextArea(self._initial_text, language="markdown", id="compose-area")
             with Horizontal(id="compose-attach-row"):
                 yield Static("Attachment:", id="compose-attach-label")
                 yield Input(placeholder="optional file path", id="compose-attach")
-            with Horizontal(id="compose-buttons"):
-                yield Button("Save", variant="primary", id="compose-save")
-                yield Button("Edit in $EDITOR", id="compose-editor")
-                yield Button("Cancel", id="compose-cancel")
+            with DialogButtons():
+                yield Button(hinted_label("Save", SAVE_HINT), variant="primary", id="compose-save")
+                yield Button(hinted_label("Edit in $EDITOR"), id="compose-editor")
+                yield Button(hinted_label("Cancel", CANCEL_HINT), id="compose-cancel")
 
     def on_mount(self):
         self.query_one("#compose-area", TextArea).focus()
@@ -97,29 +75,11 @@ class ComposeScreen(ModalScreen):
         elif event.button.id == "compose-cancel":
             self._cancel()
 
-    # -- arrow-key nav: TextArea/Input consume arrows themselves, so this only fires past both --
+    def action_submit(self):
+        self._save()
 
-    def action_focus_down(self):
-        if self.focused is self.query_one("#compose-attach", Input):
-            self.query_one(f"#{self.BUTTON_IDS[0]}", Button).focus()
-
-    def action_focus_up(self):
-        if isinstance(self.focused, Button):
-            self.query_one("#compose-attach", Input).focus()
-
-    def action_focus_left(self):
-        self._cycle_button(-1)
-
-    def action_focus_right(self):
-        self._cycle_button(1)
-
-    def _cycle_button(self, delta):
-        focused = self.focused
-        if not isinstance(focused, Button):
-            return
-        idx = self.BUTTON_IDS.index(focused.id)
-        target_id = self.BUTTON_IDS[(idx + delta) % len(self.BUTTON_IDS)]
-        self.query_one(f"#{target_id}", Button).focus()
+    def action_cancel(self):
+        self._cancel()
 
     # -- dirty check shared by cancel and save --
 

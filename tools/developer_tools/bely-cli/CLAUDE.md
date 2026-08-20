@@ -159,6 +159,14 @@ Split so that most of it needs no terminal to test:
   lazily-populated authenticated factory. No Textual import — `try_token()`/`login(u, p)`
   delegate to `auth.py`, `username()` wraps `auth.get_configured_username()`. Built once in
   `cmd_tui` and handed to `BelyTuiApp`.
+- `screens/dialog.py` — `DialogScreen`, the shared base every modal (`compose.py`,
+  `confirm.py`, `newdoc.py`, `configscreen.py`, `login.py`, `picker.py`) subclasses: a
+  bordered `.dialog` panel plus a `.dialog-buttons` row, `Esc` bound to cancel, and
+  up/down/left/right arrow actions that move between `BUTTON_ROWS` (a subclass-declared
+  list of button-id rows) — fields consume arrows themselves, so these only fire once focus
+  reaches the buttons. `ctrl+s` submits where a dialog has one primary action; button labels
+  carry the `^S`/`Esc` hints (`dialog.SAVE_HINT`/`CANCEL_HINT`) instead of a separate hint
+  line.
 - `screens/` — one module per screen (`browse.py`, `newdoc.py`, `compose.py`,
   `configscreen.py`, `login.py`, `picker.py`), each importing `core`/`config`/`common`
   directly rather than going through the Click layer. There is no separate landing/menu
