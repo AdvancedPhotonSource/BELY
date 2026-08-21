@@ -13,7 +13,7 @@ maintainers = [{ name = "Dariusz Jarosz", email = "djarosz@aps.anl.gov" }]
 dependencies = [
     "click>=8.1.0",
     "PyYAML>=6.0.0",
-    "bely-api>=2026.3.0",
+    "bely-api==2026.3.0",
     "textual>=0.86.0",
     "rich>=13.7.0",
 ]
@@ -34,4 +34,4 @@ dev = ["pytest>=7.0.0", "textual-image[textual]>=0.12.0"]
 where = ["src"]
 
 [tool.uv.sources]
-bely-api = { path = "../python-client/dist/bely_api-2026.3.0.tar.gz" }
+bely-api = { path = "../python-client/packages/api" }

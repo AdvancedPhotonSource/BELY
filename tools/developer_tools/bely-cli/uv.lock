@@ -18,14 +18,13 @@ wheels = [
 [[package]]
 name = "bely-api"
 version = "2026.3.0"
-source = { path = "../python-client/dist/bely_api-2026.3.0.tar.gz" }
+source = { directory = "../python-client/packages/api" }
 dependencies = [
     { name = "certifi" },
     { name = "pydantic" },
     { name = "python-dateutil" },
     { name = "urllib3" },
 ]
-sdist = { hash = "sha256:ee9327fc02ddf11e3c0d70ba2e0a7babb3ccb6872096cd413a174bdcdc563f1b" }
 
 [package.metadata]
 requires-dist = [
@@ -62,7 +61,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "bely-api", path = "../python-client/dist/bely_api-2026.3.0.tar.gz" },
+    { name = "bely-api", directory = "../python-client/packages/api" },
     { name = "click", specifier = ">=8.1.0" },
     { name = "pyyaml", specifier = ">=6.0.0" },
     { name = "rich", specifier = ">=13.7.0" },

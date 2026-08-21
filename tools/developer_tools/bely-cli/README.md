@@ -8,6 +8,12 @@ The published command is `bely-cli`.
 
 ## Installation
 
+From PyPI:
+
+```bash
+pip install bely-cli
+```
+
 For development, from this directory:
 
 ```bash
@@ -38,6 +44,7 @@ To view images inline in `bely-cli tui` (see [Images](#images) below), install t
 `images` extra — it pulls in Pillow and `textual-image`, which the base install skips:
 
 ```bash
+pip install 'bely-cli[images]'                  # from PyPI
 uv sync --extra images                        # development, via uv run
 uv tool install --force --editable '.[images]'  # development, editable tool install
 conda install bely-cli textual-image -c <channel>  # deployment
