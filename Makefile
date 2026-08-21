@@ -8,12 +8,55 @@ TOP = .
 #SUBDIRS = irmis src
 SUBDIRS = src
 
+.PHONY: help
 .PHONY: support support-mysql dev-config
 .PHONY: db backup db-dev deploy-web-portal undeploy-web-portal deploy-web-service undeploy-web-service
 .PHONY: db-dev backup-dev deploy-web-portal-dev undeploy-web-portal-dev deploy-web-service-dev undeploy-web-service-dev
 .PHONY: prepare-release release-python-client
 
 default:
+
+help:
+	@echo "BELY - available make targets"
+	@echo ""
+	@echo "Setup:"
+	@echo "  support               Install support software (Java, Payara, MySQL, etc.)"
+	@echo "  support-portal        Install support software for the web portal only"
+	@echo "  support-mysql         Install MySQL and deploy mysqld"
+	@echo "  support-netbeans      Install NetBeans IDE"
+	@echo "  dev-config            Create development configuration"
+	@echo "  configuration         Create deployment configuration"
+	@echo "  prepare-dev-env       support + db + dev-config"
+	@echo ""
+	@echo "Database:"
+	@echo "  clean-db              Create a clean database with schema"
+	@echo "  test-db               Create a test database with test data"
+	@echo "  db                    Create the database (interactive)"
+	@echo "  backup                Backup the database"
+	@echo ""
+	@echo "Build & Deploy:"
+	@echo "  configure-web-portal  Configure the web portal"
+	@echo "  deploy-web-portal     Deploy the web portal"
+	@echo "  deploy-web-service    Deploy the web service"
+	@echo "  deploy-cdb-plugin     Deploy a BELY plugin"
+	@echo "  unconfigure-web-portal  Unconfigure the web portal"
+	@echo "  undeploy-web-portal   Undeploy the web portal"
+	@echo "  undeploy-web-service  Undeploy the web service"
+	@echo ""
+	@echo "Testing:"
+	@echo "  test                  Run the full test suite (backs up DB, deploys test DB,"
+	@echo "                        runs tests, restores DB)"
+	@echo "  test-plugins          Run plugin utility tests"
+	@echo ""
+	@echo "Release:"
+	@echo "  prepare-release       Bump the version across the repo and scaffold release notes"
+	@echo "  release-python-client Build and publish bely-api, bely-cli, and"
+	@echo "                        bely-mqtt-framework to PyPI"
+	@echo ""
+	@echo "Development variants:"
+	@echo "  Most Setup/Database/Build & Deploy targets above have a '-dev' counterpart"
+	@echo "  (e.g. db-dev, backup-dev, deploy-web-portal-dev) that operates against the"
+	@echo "  dev configuration/database instead of the production one."
 
 prepare-release:
 	$(TOP)/sbin/bely_prepare_release.py
