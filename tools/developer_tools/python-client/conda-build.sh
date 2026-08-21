@@ -1,8 +1,5 @@
 #!/bin/bash
 
-MY_DIR=`dirname $0` && cd $MY_DIR && MY_DIR=`pwd`
-ROOT_DIR=$MY_DIR
-
 ENV_NAME=bely-api-env
 CONDA_DIR=$CONDA_PREFIX_1
 echo $CONDA_DIR
@@ -20,31 +17,37 @@ fi
 
 source $CONDA_DIR/etc/profile.d/conda.sh || exit 1
 
-# Prepare build source.
-rm -rf src  
-mkdir src 
-ln -s ../../../generatePyClient.sh src/
-cp ../../BelyApiFactory.py src/
-cp ../../setup-api.py src/setup.py
-cp ../../ClientApiConfig.yml src/
-## Clean up and build new version of bely api
-./src/generatePyClient.sh $1 || exit 1
+# Default URL for generating updated API
+DEFAULT_URL="http://localhost:8080/bely"
+
+# Check if the first argument is provided, otherwise use the default URL
+URL=${1:-$DEFAULT_URL}
+
+# Output the URL being used
+echo "Generating updated APIs using URL: $URL"
+
+./generatePyClient.sh $URL
+
+if [ $? -ne 0 ]; then
+  echo "Generating API failed. Exiting."
+  exit 1
+fi
 
 # Clean and Build
-rm -rvf ./build
-conda build . --output-folder ./build || exit 1
+rm -rf ./build
 
-# Install build into a new env 
+# Build API
+conda build conda-recipe/API --output-folder ./build || exit 1
+
+# Install build into a new env
 conda create -n $ENV_NAME -y || exit 1
 conda activate $ENV_NAME || exit 1
-conda install BELY-API -c ./build -y || exit 1
+conda install bely-api -c ./build -y || exit 1
 
 #Export
 conda list -n $ENV_NAME --explicit > $ENV_NAME.txt
 
 echo "Please use the c2 tool to upload the $ENV_NAME.txt"
 
-# Clean up
 conda activate
 conda env remove -n $ENV_NAME
-rm -rf src

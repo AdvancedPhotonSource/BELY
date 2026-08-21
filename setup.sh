@@ -117,7 +117,7 @@ if [ -z $PYTHONPATH ]; then
 else
     PYTHONPATH=$LOGR_ROOT_DIR/src/python:$PYTHONPATH
 fi
-PYTHONPATH=$LOGR_ROOT_DIR/tools/developer_tools/python-client:$PYTHONPATH
+PYTHONPATH=$LOGR_ROOT_DIR/tools/developer_tools/python-client/packages/api:$PYTHONPATH
 export PYTHONPATH
 
 # Done

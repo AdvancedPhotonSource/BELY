@@ -1,0 +1,15 @@
+# Copyright (c) UChicago Argonne, LLC. All rights reserved.
+# See LICENSE file.
+#
+# Virtual uv workspace root for the BELY python client. This project itself is
+# not published -- it just groups packages/api so it can be built/tested via uv.
+# See README.md for the full regenerate / build / publish procedure.
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+bely-api = { workspace = true }
+
+[dependency-groups]
+dev = ["pytest"]

@@ -23,10 +23,10 @@ jobs:
 
     env:
       UV_PYTHON: ${{ matrix.python-version }}
-      # pyproject.toml pins bely-api to a local sdist under ../python-client/dist,
-      # which is gitignored and so absent on a fresh checkout. The identical
-      # 2026.3.0 sdist is on PyPI (same sha256), so resolve just that one package
-      # from the registry. Job-level so `uv run` inside run_test.sh honours it too.
+      # pyproject.toml pins bely-api to the ../python-client/packages/api directory,
+      # whose generated belyApi/ subpackage is gitignored and so absent on a fresh
+      # checkout. Resolve just that one package from PyPI instead. Job-level so
+      # `uv run` inside run_test.sh honours it too.
       UV_NO_SOURCES_PACKAGE: bely-api
 
     steps:
