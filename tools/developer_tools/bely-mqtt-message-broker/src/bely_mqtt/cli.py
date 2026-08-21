@@ -169,11 +169,12 @@ def start(
             logger.error(f"Failed to load configuration file: {e}")
             sys.exit(1)
 
-    # Fall back to bely_url from config if --api-url not provided
+    # Fall back to api_url from config if --api-url not provided
+    # (global_config.api_url falls back to bely_url if api_url is not explicitly set)
     if not api_url and config_manager and config_manager.global_config:
-        api_url = config_manager.global_config.bely_url
+        api_url = config_manager.global_config.api_url
         if api_url:
-            logger.info(f"Using bely_url from config file: {api_url}")
+            logger.info(f"Using api_url from config file: {api_url}")
 
     # Initialize API factory if URL is provided
     api_factory = None
