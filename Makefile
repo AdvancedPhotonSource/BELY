@@ -11,8 +11,15 @@ SUBDIRS = src
 .PHONY: support support-mysql dev-config
 .PHONY: db backup db-dev deploy-web-portal undeploy-web-portal deploy-web-service undeploy-web-service
 .PHONY: db-dev backup-dev deploy-web-portal-dev undeploy-web-portal-dev deploy-web-service-dev undeploy-web-service-dev
+.PHONY: prepare-release release-python-client
 
 default:
+
+prepare-release:
+	$(TOP)/sbin/bely_prepare_release.py
+
+release-python-client:
+	$(TOP)/sbin/bely_release_pip.py
 
 prepare-dev-env: support db dev-config
 
