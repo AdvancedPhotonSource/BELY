@@ -1,23 +1,23 @@
-{% set name = "BELY-API" %}
+{% set name = "bely-api" %}
 {% set version = "2026.3.0" %}
 
 package:
-  name: "{{ name|lower }}"  
+  name: "{{ name|lower }}"
   version: "{{ version }}"
 
 source:
-  path: ./src
+  path: ../../packages/api
 
 build:
   number: 0
   noarch: python
-
+  script: {{ PYTHON }} -m pip install . --no-deps --no-build-isolation
 
 requirements:
-  build:
+  host:
+    - python>=3.10
+    - hatchling
     - pip
-    - python>3.10
-    - setuptools
   run:
     - python
     - python-dateutil
@@ -30,6 +30,6 @@ test:
     - BelyApiFactory
 
 about:
-  home: "https://git.aps.anl.gov/controls/hla/bely"
-  license: "Copyright (c) UChicago Argonne, LLC. All rights reserved."    
-  summary: "Library Containing Component DB APIs"
+  home: "https://github.com/AdvancedPhotonSource/BELY"
+  license: "Copyright (c) UChicago Argonne, LLC. All rights reserved."
+  summary: "Python client API library used to communicate with BELY API."

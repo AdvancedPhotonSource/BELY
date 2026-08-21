@@ -1,0 +1,46 @@
+name: Test BELY CLI
+
+on:
+  pull_request:
+    paths:
+      - 'tools/developer_tools/bely-cli/**'
+      - '.github/workflows/test-bely-cli.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run BELY CLI Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: tools/developer_tools/bely-cli
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
+      # pyproject.toml pins bely-api to the ../python-client/packages/api directory,
+      # whose generated belyApi/ subpackage is gitignored and so absent on a fresh
+      # checkout. Resolve just that one package from PyPI instead. Job-level so
+      # `uv run` inside run_test.sh honours it too.
+      UV_NO_SOURCES_PACKAGE: bely-api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: tools/developer_tools/bely-cli/uv.lock
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run tests
+        run: ./run_test.sh
