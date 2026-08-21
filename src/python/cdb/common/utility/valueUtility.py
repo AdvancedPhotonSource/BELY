@@ -19,7 +19,7 @@ class ValueUtility:
 #######################################################################
 # Testing.
 if __name__ == '__main__':
-    print ValueUtility.toBoolean('false')
-    print ValueUtility.toBoolean('True')
-    print ValueUtility.toBoolean(True)
+    print( ValueUtility.toBoolean('false'))
+    print( ValueUtility.toBoolean('True'))
+    print( ValueUtility.toBoolean(True))
 

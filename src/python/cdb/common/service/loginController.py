@@ -87,7 +87,7 @@ class LoginController(CdbController):
                 return (username, password)
             else:
                 raise AuthorizationError('Username and/or password not supplied.')
-        except Exception, ex:
+        except Exception as ex:
             errorMsg = 'Could not extract username/password from authorization header: %s' % ex
             raise AuthorizationError(errorMsg)
 
@@ -168,9 +168,9 @@ class LoginController(CdbController):
                 (username, password) = LoginController.parseBasicAuthorizationHeaders()
                 self.logger.debug('Retrieving principal for username %s' % (username))
             principal = LoginController.checkCredentials(username, password)
-        except CdbHttpError, ex:
+        except CdbHttpError as ex:
             raise
-        except CdbException, ex:
+        except CdbException as ex:
             self.logger.debug('Authorization failed (username %s): %s' % (username, ex))
             self.addCdbExceptionHeaders(ex)
             raise CdbHttpError(cdbHttpStatus.CDB_HTTP_UNAUTHORIZED, 'User Not Authorized', ex)

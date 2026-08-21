@@ -57,7 +57,7 @@ class LoggingManager:
         from cdb.common.utility.loggingManager import LoggingManager
         try:
             lm = LoggingManager()
-        except LoggingManager, ex:
+        except LoggingManager as ex:
             lm = ex
         return lm
 
@@ -88,7 +88,7 @@ class LoggingManager:
                  pattern = re.compile(regex)
                  tuple = (pattern, logging.getLevelName(level.upper()))
                  self.levelRegExList.append(tuple)
-            except Exception, ex:
+            except Exception as ex:
                  self.logger.error('Parser error in log configuration file: %s' % line)
                  self.logger.exception(ex)
 
@@ -98,7 +98,7 @@ class LoggingManager:
         # Level should be an integer
         try:
             return int(level) 
-        except ValueError, ex:
+        except ValueError as ex:
             raise ConfigurationError('"%s" is not valid log level' % levelStr)
 
     # Configure log handlers.
@@ -177,7 +177,7 @@ class LoggingManager:
                 pattern = re.compile(regex)
                 tuple = (pattern, logging.getLevelName(level.upper()))
                 self.levelRegExList.append(tuple)
-            except Exception, ex:
+            except Exception as ex:
                 # Do not fail
                 self.logger.error('Parser error in log configuration file: %s' % line)
                 self.logger.exception(ex)
@@ -189,7 +189,7 @@ class LoggingManager:
         try:
             if configParser is not None:
                 handlerOption = configParser.get(configSection, 'handler')
-        except Exception, ex:
+        except Exception as ex:
             pass
 
         # If handlerOption is empty, handler cannot be instantiated.
@@ -203,7 +203,7 @@ class LoggingManager:
             try:
                 exec 'from cdb.common.utility import %s' % (moduleName)
                 exec 'handler = %s.%s' % (moduleName, handlerOption)
-            except IOError, ex:
+            except IOError as ex:
                 errNo, errMsg = ex
                 import errno
 
@@ -213,7 +213,7 @@ class LoggingManager:
                 if errNo != errno.EACCES:
                     raise
                 handler = None 
-            except Exception, ex:
+            except Exception as ex:
                 raise ConfigurationError(exception=ex)
 
         # Only request setting from the config file if it was
@@ -229,7 +229,7 @@ class LoggingManager:
                 dateFormat = cm.getOptionFromConfigParser(configParser, configSection, 'dateFormat', defaults['dateFormat'])
 
                 handler.setFormatter(logging.Formatter(format, dateFormat))
-            except Exception, ex:
+            except Exception as ex:
                 raise ConfigurationError(exception=ex)
 
             # Apply filters to handler
@@ -238,7 +238,7 @@ class LoggingManager:
                 filter = configParser.get(configSection, 'filter')
                 if filter:
                     handler.addFilter(logging.Filter(filter))
-            except Exception, ex:
+            except Exception as ex:
                 pass
         return handler
 
@@ -275,7 +275,7 @@ class LoggingManager:
             self.consoleHandler.setLevel(intLevel)
             self.maxIntLevel = intLevel
             self.logger.setLevel(intLevel)
-        except Exception, ex:
+        except Exception as ex:
             raise ConfigurationError(exception=ex)
 
     def setFileLogLevel(self, level):
@@ -286,7 +286,7 @@ class LoggingManager:
                 handler.setLevel(intLevel)
             self.maxIntLevel = intLevel
             self.logger.setLevel(intLevel)
-        except Exception, ex:
+        except Exception as ex:
             raise ConfigurationError(exception=ex)
 
 #######################################################################

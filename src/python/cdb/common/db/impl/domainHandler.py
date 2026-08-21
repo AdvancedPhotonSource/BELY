@@ -64,6 +64,6 @@ class DomainHandler(CdbDbEntityHandler):
             query = session.query(AllowedEntityTypeDomain).filter(AllowedEntityTypeDomain.domain_id == domain_id)
             dbAllowedEntityTypeDomain = query.all()
             return dbAllowedEntityTypeDomain
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             entityDisplayName = self._getEntityDisplayName()
             raise ObjectNotFound("No %s with domain id: %s was found." % (entityDisplayName, domain_id))

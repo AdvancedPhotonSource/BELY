@@ -55,4 +55,4 @@ class CdbPortalUrlUtility:
 
 if __name__ == '__main__':
     urlUtility = CdbPortalUrlUtility.getInstance()
-    print urlUtility.getItemUrlAddress(653)
+    print( urlUtility.getItemUrlAddress(653))

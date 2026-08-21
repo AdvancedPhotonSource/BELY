@@ -47,9 +47,9 @@ class CdbDbApi:
                 kwargs['session'] = session
                 try:
                     return func(*args, **kwargs)
-                except CdbException, ex:
+                except CdbException as ex:
                     raise
-                except Exception, ex:
+                except Exception as ex:
                     cls.getLogger().exception('%s' % ex)
                     raise CdbException(exception=ex)
             finally:
@@ -80,10 +80,10 @@ class CdbDbApi:
                     result = func(*args, **kwargs)
                     session.commit()
                     return result
-                except CdbException, ex:
+                except CdbException as ex:
                     session.rollback()
                     raise
-                except Exception, ex:
+                except Exception as ex:
                     session.rollback()
                     cls.getLogger().exception('%s' % ex)
                     raise CdbException(exception=ex)
@@ -114,9 +114,9 @@ class CdbDbApi:
             connection = DbManager.getInstance().acquireConnection()
             try:
                 return connection.execute(query)
-            except CdbException, ex:
+            except CdbException as ex:
                 raise
-            except Exception, ex:
+            except Exception as ex:
                 cls.getLogger().exception('%s' % ex)
                 raise
         finally:
@@ -139,7 +139,7 @@ class CdbDbApi:
 
             try:
                 self.loadRelation(dbObject, k)
-            except InternalError, ex:
+            except InternalError as ex:
                 self.logger.error(ex)
 
     def toCdbObjectList(self, dbEntityList):

@@ -80,7 +80,7 @@ class ItemHandler(CdbDbEntityHandler):
         try:
             dbItem = session.query(Item).filter(Item.qr_id==qrId).one()
             return dbItem
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('No %s with QR-Id: %s found.'
                                  % (entityDisplayName, qrId))
 
@@ -96,7 +96,7 @@ class ItemHandler(CdbDbEntityHandler):
         try:
             dbItemElements = session.query(ItemElement).filter(ItemElement.parent_item_id==itemId).all()
             return dbItemElements
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('No %s with item id: %s found.'
                                  % (entityDisplayName, itemId))
 
@@ -110,7 +110,7 @@ class ItemHandler(CdbDbEntityHandler):
         try:
             self.getItemCategoryByName(session, itemCategoryName, dbDomain.id)
             raise ObjectAlreadyExists('%s %s for domain %s already exists.' % (entityDisplayName, itemCategoryName, dbDomain.name))
-        except ObjectNotFound, ex:
+        except ObjectNotFound as ex:
             # ok
             pass
 
@@ -145,7 +145,7 @@ class ItemHandler(CdbDbEntityHandler):
         try:
             self.getItemTypeByName(session, itemTypeName, dbDomain.id)
             raise ObjectAlreadyExists('%s %s for domain %s already exists.' % (entityDisplayName, itemTypeName, dbDomain.name))
-        except ObjectNotFound, ex:
+        except ObjectNotFound as ex:
             # ok
             pass
 
@@ -169,7 +169,7 @@ class ItemHandler(CdbDbEntityHandler):
             dbItem = session.query(ItemCategory).filter(ItemCategory.name==name)\
                 .filter(ItemCategory.domain_id == domainId).one()
             return dbItem
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('No %s with name: %s, domain id: %s exists.'
                                  % (entityDisplayName, name, domainId))
 
@@ -183,7 +183,7 @@ class ItemHandler(CdbDbEntityHandler):
             dbItem = session.query(ItemType).filter(ItemType.name==name)\
                 .filter(ItemType.domain_id == domainId).one()
             return dbItem
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('No %s with name: %s, domain id: %s exists.'
                                  % (entityDisplayName, name, domainId))
 
@@ -212,7 +212,7 @@ class ItemHandler(CdbDbEntityHandler):
                 .filter(Item.item_identifier2==itemIdentifier2)\
                 .filter(Item.derived_from_item_id==derivedFromItemId).one()
             return dbItem
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('No %s with name: %s, item identifier 1: %s, item identifier 2: %s in domain id %s exists.'
                                  % (entityDisplayName, name, itemIdentifier1, itemIdentifier1, domainId))
 
@@ -256,7 +256,7 @@ class ItemHandler(CdbDbEntityHandler):
         try:
             session.add(dbItem)
             session.flush()
-        except OperationalError, err:
+        except OperationalError as err:
             raise DbError(err.message)
 
         # Add self element
@@ -282,7 +282,7 @@ class ItemHandler(CdbDbEntityHandler):
                 .filter(ItemElement.name==None)\
                 .filter(ItemElement.derived_from_item_element_id==None).one()
             return dbItemElement
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('No self %s with item id %s exists.' % (entityDisplayName, itemId))
 
     def getItemsOfDomain(self, session, domainName):
@@ -294,7 +294,7 @@ class ItemHandler(CdbDbEntityHandler):
             dbItems = query.all()
             return dbItems
 
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound("No %ss with domain %s found." % (entityDisplayName, domainName))
 
     def getItemsOfDomainWithoutParents(self, session, domainName):
@@ -307,7 +307,7 @@ class ItemHandler(CdbDbEntityHandler):
             dbItems = query.all()
             return dbItems
 
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound("No %ss with domain %s found." % (entityDisplayName, domainName))
 
     def getItemsDerivedFromItem(self, session, derivedItemId):
@@ -319,7 +319,7 @@ class ItemHandler(CdbDbEntityHandler):
 
             dbItems = query.all()
             return dbItems
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound("No %ss derived from item id %s found." % (entityDisplayName, derivedItemId))
 
 
@@ -347,7 +347,7 @@ class ItemHandler(CdbDbEntityHandler):
             dbItems = query.all()
             return dbItems
 
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound("No %ss with property type %s found."  % (entityDisplayName, propertyTypeName))
 
 
@@ -416,7 +416,7 @@ class ItemHandler(CdbDbEntityHandler):
         try:
             session.add(dbItemElement)
             session.flush()
-        except OperationalError, err:
+        except OperationalError as err:
             raise DbError(err.message)
 
         self.logger.debug('Inserted item Element id %s' % dbItemElement.id)
@@ -451,7 +451,7 @@ class ItemHandler(CdbDbEntityHandler):
         try:
             session.add(dbItemElement)
             session.flush()
-        except OperationalError, err:
+        except OperationalError as err:
             raise DbError(err.message)
 
         self.logger.debug('Updated item Element id %s' % dbItemElement.id)

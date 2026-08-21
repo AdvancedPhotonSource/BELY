@@ -197,12 +197,12 @@ class CdbWebServiceBase:
 
             # Set up scheduled tasks performed web service.
             self.backgroundTaskManager = CdbBackgroundTaskManager()
-        except Exception, ex:
+        except Exception as ex:
             if self.logger is not None:
                 self.logger.exception(ex)
             else:
                 import traceback
-                print '\n%s' % sys.exc_info()[1]
+                print( '\n%s' % sys.exc_info()[1])
                 traceback.print_exc(file=sys.stderr)
             sys.exit(cdbStatus.CDB_ERROR)
 
@@ -262,7 +262,7 @@ class CdbWebServiceBase:
             self.logger.debug('Starting modules')
             self.initCdbModules()
             CdbModuleManager.getInstance().startModules()
-        except Exception, ex:
+        except Exception as ex:
             self.logger.exception('Service exiting: %s' % ex)
             CdbModuleManager.getInstance().stopModules()
             return cdbStatus.CDB_ERROR

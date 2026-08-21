@@ -26,14 +26,14 @@ class UserInfoHandler(CdbDbEntityHandler):
         try:
             dbUserInfo = session.query(UserInfo).filter(UserInfo.id==id).one()
             return dbUserInfo 
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('User id %s does not exist.' % (id))
 
     def findUserInfoByUsername(self, session, username):
         try:
             dbUserInfo = session.query(UserInfo).filter(UserInfo.username==username).one()
             return dbUserInfo 
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('User %s does not exist.' % (username))
 
     def getUserInfoWithPasswordByUsername(self, session, username):
@@ -44,7 +44,7 @@ class UserInfoHandler(CdbDbEntityHandler):
                 and_(UserUserGroup.user_id == dbUserInfo.id, UserUserGroup.user_group_id == UserGroup.id)).all()
             dbUserInfo.userGroupList = dbUserGroups
             return dbUserInfo
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('Username %s does not exist.' % (username))
 
     def getUserInfos(self, session):
@@ -66,7 +66,7 @@ class UserInfoHandler(CdbDbEntityHandler):
             # Remove password
             del dbUserInfo.password
             return dbUserInfo
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('User id %s does not exist.' % (id))
 
     def getUserInfoByUsername(self, session, username):
@@ -78,7 +78,7 @@ class UserInfoHandler(CdbDbEntityHandler):
             # Remove password
             del dbUserInfo.password
             return dbUserInfo
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('Username %s does not exist.' % (username))
 
     def addUser(self, session, username, firstName, lastName, middleName, email, description, password):
@@ -86,7 +86,7 @@ class UserInfoHandler(CdbDbEntityHandler):
         try:
             dbUserInfo = session.query(UserInfo).filter(UserInfo.username==username).one()
             raise ObjectAlreadyExists('User %s already exists.' % (username))
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             # ok
             pass
 

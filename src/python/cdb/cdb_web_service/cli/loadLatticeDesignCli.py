@@ -61,7 +61,7 @@ Description:
         api = DesignRestApi(self.getUsername(), self.getPassword(), self.getServiceHost(), self.getServicePort(), self.getServiceProtocol())
         designElementList = self.loadLatticeCsvFile(self.getCsvFile())
         design = api.loadDesign(self.getName(), self.getOwnerUserId(), self.getOwnerGroupId(), self.getIsGroupWriteable(), self.getDescription(), designElementList)
-        print design.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat())
+        print( design.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat()))
 
     # Utility methojd to load csv file and prepare list of design
     # element dictionaries.

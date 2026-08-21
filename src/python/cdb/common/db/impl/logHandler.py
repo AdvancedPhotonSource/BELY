@@ -136,7 +136,7 @@ class LogHandler(CdbDbEntityHandler):
 
             dbLogs = query.all()
             return dbLogs
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('No %s with item element id: %s found.'
                                  % (entityDisplayName, itemElementId))
 

@@ -81,7 +81,7 @@ Description:
         if password:
             cryptedPassword = CryptUtility.cryptPasswordWithPbkdf2(password)
         userInfo = api.addUser(username, firstName, lastName, middleName, email, description, cryptedPassword)
-        print userInfo.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat())
+        print( userInfo.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat()))
 
 #######################################################################
 # Run command.

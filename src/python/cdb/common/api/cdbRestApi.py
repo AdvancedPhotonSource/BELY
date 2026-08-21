@@ -180,13 +180,13 @@ if __name__ == '__main__':
     cm.setSessionCacheFile('/tmp/session')
     #print 'Non-session request'
     #print api.sendRequest('https://zagreb.svdev.net:10232/cdb/directory/list?path=/tmp', 'GET')
-    print 'Session request'
+    print( 'Session request')
     data = { 'path' : '/tmp/xyz' }
     #print api.sendSessionRequest('https://zagreb.svdev.net:10232/cdb/file/write?path=/tmp/xyz&content=xyz', 'POST', contentType='application/x-www-form-urlencoded', data=urllib.urlencode(data))
     #print api.sendSessionRequest('https://zagreb.svdev.net:10232/cdb/file/write', 'POST', data=data)
     postdata='path=/tmp/xyz'
     postdata+='&content=%s' % urllib.quote_plus('Hey there')
-    print api.sendSessionRequest('https://zagreb.svdev.net:10232/cdb/file/write', 'POST', contentType='application/x-www-form-urlencoded', data=postdata)
+    print( api.sendSessionRequest('https://zagreb.svdev.net:10232/cdb/file/write', 'POST', contentType='application/x-www-form-urlencoded', data=postdata))
 
 
 

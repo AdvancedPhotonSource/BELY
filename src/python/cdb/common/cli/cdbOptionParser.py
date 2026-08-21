@@ -34,7 +34,7 @@ class CdbOptionParser(OptionParser):
         sys.stdout = cliStdout
         OptionParser.print_usage(self, file)
         sys.stdout = sysStdout
-        print self.replaceKeys(cliStdout.getvalue())
+        print( self.replaceKeys(cliStdout.getvalue()))
 
     def printHelp(self, file=None):
         self.printHelp(file)
@@ -46,7 +46,7 @@ class CdbOptionParser(OptionParser):
         sys.stdout = cliStdout
         OptionParser.print_help(self, file)
         sys.stdout = sysStdout
-        print self.replaceKeys(cliStdout.getvalue())
+        print( self.replaceKeys(cliStdout.getvalue()))
 
 #######################################################################
 # Testing

@@ -42,10 +42,10 @@ class LdapUtility:
             ldapClient.simple_bind_s(bindDn, bindPass)
             return ldapClient
             # ldapClient.whoami_s()
-        except ldap.INVALID_CREDENTIALS, ex:
+        except ldap.INVALID_CREDENTIALS as ex:
             ldapClient.unbind()
             raise AuthenticationError('Invalid LDAP credentials for user %s' % bindDn)
-        except ldap.SERVER_DOWN, ex:
+        except ldap.SERVER_DOWN as ex:
             raise CommunicationError('Cannot reach LDAP server %s' % self.serverUrl)
 
     def __generateUserDn(self, username):

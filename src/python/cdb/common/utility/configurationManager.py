@@ -105,7 +105,7 @@ class ConfigurationManager(UserDict.UserDict):
         from cdb.common.utility.configurationManager import ConfigurationManager
         try:
             cm = ConfigurationManager()
-        except ConfigurationManager, ex:
+        except ConfigurationManager as ex:
             cm = ex
         return cm
 
@@ -231,7 +231,7 @@ class ConfigurationManager(UserDict.UserDict):
         try:
             v = open(varFile, 'r').readline()
             self[key] = v.lstrip().rstrip()
-        except Exception, ex:
+        except Exception as ex:
             pass
 
     def __getKeyValue(self, key, default='__cdb_default__'):
@@ -282,7 +282,7 @@ class ConfigurationManager(UserDict.UserDict):
         if self.hasConfigSection(configSection):
             try:
                 return configParser.get(configSection, key)
-            except ConfigParser.NoOptionError, ex:
+            except ConfigParser.NoOptionError as ex:
                 # ok, return default value
                 pass
         return defaultValue
@@ -882,4 +882,4 @@ class ConfigurationManager(UserDict.UserDict):
 
 if __name__ == '__main__':
     cm = ConfigurationManager.getInstance()
-    print cm
+    print( cm)

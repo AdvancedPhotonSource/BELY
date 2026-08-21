@@ -26,7 +26,7 @@ class SourceHandler(CdbDbEntityHandler):
         try:
             dbSource = session.query(Source).filter(Source.name==name).one()
             return dbSource
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('No Source with name %s exists.' % (name))
 
     def getSources(self, session):
@@ -39,7 +39,7 @@ class SourceHandler(CdbDbEntityHandler):
         try:
             dbSource = session.query(Source).filter(Source.name==sourceName).one()
             raise ObjectAlreadyExists('Source %s already exists.' % (sourceName))
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             # ok
             pass
 

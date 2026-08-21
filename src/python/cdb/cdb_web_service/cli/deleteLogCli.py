@@ -33,7 +33,7 @@ Description:
 
         cdbObject = api.deleteLogEntry(self.getLogId())
 
-        print cdbObject.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat())
+        print( cdbObject.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat()))
 
 #######################################################################
 # Run command.

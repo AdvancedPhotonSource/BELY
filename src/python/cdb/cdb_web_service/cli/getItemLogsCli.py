@@ -32,7 +32,7 @@ Description:
 
         logs = api.getLogEntriesForItemWithQrId(self.getQrId())
         for log in logs:
-            print log.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat())
+            print( log.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat()))
 
 #######################################################################
 # Run command.

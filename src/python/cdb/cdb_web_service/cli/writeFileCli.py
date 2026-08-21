@@ -37,7 +37,7 @@ Description:
         """)
         self.checkPath()
         api = FileSystemRestApi(self.getUsername(), self.getPassword(), self.getServiceHost(), self.getServicePort(), self.getServiceProtocol())
-        print api.writeFile(self.getPath(), self.getContent())
+        print( api.writeFile(self.getPath(), self.getContent()))
 
 #######################################################################
 # Run command.

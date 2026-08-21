@@ -102,7 +102,7 @@ def executeCommandAndIgnoreFailure(command):
     p = getSubprocess(command)
     try:
         p.run()
-    except CommandFailed, ex:
+    except CommandFailed as ex:
         p.getLogger().debug('Command failed, stdout: %s, stderr: %s' % (p.getStdOut(), p.getStdErr()))
     return p
 
@@ -115,8 +115,8 @@ def executeCommandAndLogToStdOut(command):
         outp = p.stdout.readline()
         if not outp:
             break
-        print outp,
-
+        print( outp, end=" ")
+    print() 
     retval = p.wait()
 
     p._logger.debug('Exit status: %s' % retval)
@@ -137,7 +137,7 @@ def executeCommandAndLogToStdOut(command):
 if __name__ == '__main__':
     p = CdbSubprocess('ls -l', useExceptions=False)
     p.run()
-    print p.getStdOut()
-    print p.getStdErr()
-    print p.getExitStatus()
+    print( p.getStdOut())
+    print( p.getStdErr())
+    print( p.getExitStatus())
 

@@ -131,32 +131,32 @@ if __name__ == '__main__':
     for i in range(0,5):
         item = Item(i)
         c.put(i, item)
-        print 'Added item: ', item
-        print 'Cache: ', c
+        print( 'Added item: ', item)
+        print( 'Cache: ', c)
         time.sleep(1)
 
     for j in range(0,3):
         item = Item(2)
         c.put(2, item)
-        print 'Updated item: ', item
-        print 'Cache: ', c
+        print( 'Updated item: ', item)
+        print( 'Cache: ', c)
         time.sleep(1)
 
     item = c.remove(2)
-    print 'Deleted item 2: ', item
-    print 'Cache: ', c
+    print( 'Deleted item 2: ', item)
+    print( 'Cache: ', c)
     time.sleep(1)
     item = c.get(2)
-    print 'Got item 2: ', item
-    print 'Cache: ', c
-    print
+    print( 'Got item 2: ', item)
+    print( 'Cache: ', c)
+    print()
     time.sleep(1)
 
-    print
+    print()
     c = ObjectCache(3)
     c.put('sv', Item2('sv')) 
-    print c
+    print( c)
     i = c.get('sv')
-    print i
-    print 'Done'
+    print( i)
+    print( 'Done')
 

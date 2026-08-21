@@ -72,5 +72,5 @@ class CdbPluginRouteMapper:
 
 
 if __name__ == '__main__':
-    print CdbPluginRouteMapper.getPluginRoutes()
+    print( CdbPluginRouteMapper.getPluginRoutes())
 

@@ -66,7 +66,7 @@ if __name__ == '__main__':
     api = UserRestApi('sveseli', 'sveseli', 'zagreb.svdev.net', 10232, 'http')
     userGroups = api.getUserGroups()
     for userGroup in userGroups:
-        print userGroup.getDisplayString()
+        print( userGroup.getDisplayString())
 
 
 

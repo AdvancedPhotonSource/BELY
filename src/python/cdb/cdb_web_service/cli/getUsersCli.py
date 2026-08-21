@@ -23,7 +23,7 @@ Description:
         api = UserRestApi(self.getUsername(), self.getPassword(), self.getServiceHost(), self.getServicePort(), self.getServiceProtocol())
         users = api.getUsers()
         for user in users:
-            print user.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat())
+            print( user.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat()))
 
 
 #######################################################################

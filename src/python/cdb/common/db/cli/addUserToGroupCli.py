@@ -42,7 +42,7 @@ Description:
         username = self.getUsername()
         groupName = self.getGroupName()
         userUserGroup = api.addUserToGroup(username, groupName)
-        print userUserGroup.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat())
+        print( userUserGroup.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat()))
 
 #######################################################################
 # Run command.
