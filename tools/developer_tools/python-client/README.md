@@ -52,8 +52,8 @@ Or use the wrapper script, which also regenerates `belyApi` first and prompts be
 ./sbin/bely_release_pip.py api --publish-url https://test.pypi.org/legacy/  # TestPyPI
 ```
 
-or `make release-python-client` from the repo root (publishes both `bely-api` and
-`bely-cli`).
+or `make release-python-client` from the repo root (publishes `bely-api`, `bely-cli`,
+and `bely-mqtt-framework`).
 
 `make prepare-release` (`sbin/bely_prepare_release.py`) bumps the version in
 `packages/api/pyproject.toml` (and everywhere else version strings live) and refreshes

@@ -133,7 +133,7 @@ make test
 source setup.sh
 make prepare-release          # bumps the version everywhere and scaffolds release notes
 # review the diff, then commit
-make release-python-client    # publishes bely-api and bely-cli to PyPI
+make release-python-client    # publishes bely-api, bely-cli, and bely-mqtt-framework to PyPI
 ```
 
 See `tools/developer_tools/python-client/README.md` for the full build/publish/conda

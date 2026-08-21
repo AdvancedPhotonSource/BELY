@@ -5,8 +5,8 @@ Copyright (c) UChicago Argonne, LLC. All rights reserved.
 See LICENSE file.
 """
 
-# Builds and publishes the BELY python client packages (bely-api, bely-cli)
-# to PyPI using uv.
+# Builds and publishes the BELY python client packages (bely-api, bely-cli,
+# bely-mqtt-framework) to PyPI using uv.
 #
 # DEV NOTE: To publish a release
 #   source setup.sh
@@ -26,6 +26,7 @@ import subprocess
 DIST_ROOT_DIRECTORY_ENV_KEY = "LOGR_ROOT_DIR"
 PYTHON_CLIENT_DIR = "tools/developer_tools/python-client"
 CLI_DIR = "tools/developer_tools/bely-cli"
+MQTT_DIR = "tools/developer_tools/bely-mqtt-message-broker"
 DEFAULT_PORTAL_URL = "http://localhost:8080/bely"
 
 rootDir = os.getenv(DIST_ROOT_DIRECTORY_ENV_KEY)
@@ -34,12 +35,14 @@ if rootDir is None:
 
 clientDir = os.path.join(rootDir, PYTHON_CLIENT_DIR)
 cliDir = os.path.join(rootDir, CLI_DIR)
+mqttDir = os.path.join(rootDir, MQTT_DIR)
 
-# Published first-to-last: bely-cli pins bely-api exactly, so bely-api must land on
-# PyPI before bely-cli is published against it.
+# Published first-to-last: bely-cli and bely-mqtt-framework both depend on bely-api,
+# so bely-api must land on PyPI before either of them is published.
 PACKAGES = {
     "api": {"cwd": clientDir, "build_args": ["--package", "bely-api"]},
     "cli": {"cwd": cliDir, "build_args": []},
+    "mqtt": {"cwd": mqttDir, "build_args": []},
 }
 
 
@@ -60,7 +63,10 @@ def build(name):
     dist_dir = os.path.join(spec["cwd"], "dist")
     if os.path.isdir(dist_dir):
         shutil.rmtree(dist_dir)
-    run(["uv", "lock"], spec["cwd"])
+    # Only refresh a lockfile for uv-managed projects; bely-mqtt-framework is a
+    # plain setuptools project with no uv.lock, and `uv build` doesn't need one.
+    if os.path.exists(os.path.join(spec["cwd"], "uv.lock")):
+        run(["uv", "lock"], spec["cwd"])
     run(["uv", "build", "--out-dir", dist_dir] + spec["build_args"], spec["cwd"])
     artifacts = sorted(glob.glob(os.path.join(dist_dir, "*")))
     if not artifacts:
@@ -81,8 +87,8 @@ def main():
     parser.add_argument(
         "packages",
         nargs="*",
-        default=["api", "cli"],
-        help="which package(s) to release: api, cli, or both (default: both)",
+        default=["api", "cli", "mqtt"],
+        help="which package(s) to release: api, cli, mqtt, or any combination (default: all)",
     )
     parser.add_argument(
         "--portal-url",
@@ -106,8 +112,8 @@ def main():
     if unknown:
         raise ValueError("Unknown package(s): %s (choose from %s)" % (", ".join(unknown), ", ".join(PACKAGES)))
 
-    # Always build/publish api before cli, regardless of the order given on the command line.
-    selected = [name for name in ("api", "cli") if name in args.packages]
+    # Always build/publish api first, regardless of the order given on the command line.
+    selected = [name for name in ("api", "cli", "mqtt") if name in args.packages]
 
     if "api" in selected and not args.skip_generate:
         regenerate_client(args.portal_url)
