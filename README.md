@@ -127,5 +127,17 @@ source setup.sh
 make test
 ```
 
+# Preparing a Release
+
+```sh
+source setup.sh
+make prepare-release          # bumps the version everywhere and scaffolds release notes
+# review the diff, then commit
+make release-python-client    # publishes bely-api, bely-cli, and bely-mqtt-framework to PyPI
+```
+
+See `tools/developer_tools/python-client/README.md` for the full build/publish/conda
+procedure, including TestPyPI dry runs.
+
 # License
 [Copyright (c) UChicago Argonne, LLC. All rights reserved.](https://github.com/AdvancedPhotonSource/ComponentDB/blob/master/LICENSE)

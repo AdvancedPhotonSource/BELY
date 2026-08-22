@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bely-mqtt-framework"
-version = "2026.3.dev0"
+version = "2026.3.1"
 description = "Pluggable Python framework for handling BELY MQTT events"
 readme = "README.md"
 requires-python = ">=3.10"

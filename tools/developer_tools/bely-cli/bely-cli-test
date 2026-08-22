@@ -1,0 +1,4 @@
+#!/bin/bash
+
+export BELY_HOST=https://tinkerbox.aps.anl.gov:8181/bely
+bely-cli "$@"

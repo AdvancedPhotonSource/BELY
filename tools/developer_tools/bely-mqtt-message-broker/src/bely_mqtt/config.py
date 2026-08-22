@@ -19,6 +19,17 @@ class GlobalConfig:
     Global configuration shared across all handlers.
 
     Stores configuration parameters that will be available to all handlers.
+
+    URL configuration fields:
+        bely_url: The public-facing URL that end-users access in their browser.
+                  Used to generate clickable links in notifications (log entry
+                  permalinks, unsubscribe URLs). Must be reachable by notification
+                  recipients.
+        api_url:  The internal URL used by the broker for server-to-server API
+                  calls to the BELY server. Defaults to bely_url if not set.
+                  Set this to localhost or an internal hostname when the broker
+                  runs on the same machine as BELY, so API calls bypass the
+                  public network. Never used in user-facing notification content.
     """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
@@ -46,12 +57,35 @@ class GlobalConfig:
     @property
     def bely_url(self) -> Optional[str]:
         """
-        Get the BELY URL from configuration.
+        Get the public-facing BELY URL from configuration.
+
+        This URL is used to generate user-facing links in notifications,
+        such as log entry permalinks and unsubscribe URLs. It must be
+        accessible by the end-users who receive those notifications.
 
         Returns:
-            BELY URL if configured, None otherwise.
+            Public BELY URL if configured, None otherwise.
         """
         return self.config.get("bely_url")
+
+    @property
+    def api_url(self) -> Optional[str]:
+        """
+        Get the BELY API URL for internal server-to-server API calls.
+
+        Used by BelyApiFactory for making API requests to the BELY server.
+        Defaults to bely_url if not explicitly configured, which is correct
+        when the broker accesses BELY through the same public URL.
+
+        Set api_url explicitly when the broker runs on the same host as BELY
+        and should use localhost or an internal hostname for API calls, while
+        bely_url remains the public URL for notification links.
+
+        Returns:
+            API URL if configured, otherwise falls back to bely_url.
+            Returns None if neither is configured.
+        """
+        return self.config.get("api_url") or self.bely_url
 
     def __repr__(self) -> str:
         """Return string representation."""
@@ -117,7 +151,8 @@ class ConfigManager:
             global:
               shared_param: value
               another_param: value
-              bely_url: https://bely.example.com
+              bely_url: https://bely.example.com  # public URL for notification links
+              api_url: http://localhost:8080       # optional; internal API URL, defaults to bely_url
 
             handlers:
               AdvancedLoggingHandler:
