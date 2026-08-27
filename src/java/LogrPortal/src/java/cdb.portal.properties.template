@@ -24,3 +24,8 @@ cdb.portal.handler.http.linkDisplayLength=32
 # CDB Web Service
 cdb.webService.url=http://localhost:10232/cdb
 cdb.permanentContextRoot.url=http://localhost:8080/cdb
+
+# Model Context Protocol (MCP) endpoint at /api/mcp
+cdb.portal.mcp.enabled=true
+cdb.portal.mcp.requireAuth=false
+cdb.portal.mcp.allowedOrigins=
