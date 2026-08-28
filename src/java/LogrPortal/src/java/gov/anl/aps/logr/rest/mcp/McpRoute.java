@@ -41,6 +41,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.ejb.EJB;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -51,7 +53,12 @@ import javax.ws.rs.core.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/** Stateless MCP Streamable HTTP endpoint, revision {@code 2026-07-28} only, at a single POST {@code /api/mcp}. */
+/**
+ * Dual-era MCP Streamable HTTP endpoint at a single POST {@code /api/mcp}: modern
+ * ({@code 2026-07-28}) per-request-metadata clients are served statelessly, and legacy
+ * ({@code 2025-03-26} through {@code 2025-11-25}) clients are served via a sessionless
+ * {@code initialize} handshake (no {@code Mcp-Session-Id} is issued or required).
+ */
 @Hidden
 @Path("/mcp")
 public class McpRoute {
@@ -111,13 +118,18 @@ public class McpRoute {
             JsonRpcRequest request = JsonRpcRequest.parse(root);
             id = request.getId();
 
-            validateHeaders(request, headers);
-
-            UserInfo currentUser = resolveUser(headers);
-
+            // Notification POSTs (no "id") are not subject to header validation per spec; ack and return.
             if (!request.hasId()) {
                 return Response.status(Response.Status.ACCEPTED).build();
             }
+
+            // Modern (2026-07-28) requests always carry Mcp-Method; legacy requests (including
+            // "initialize" itself) never do and skip per-request header validation entirely.
+            if (headers.getHeaderString(McpConstants.HEADER_METHOD) != null) {
+                validateHeaders(request, headers);
+            }
+
+            UserInfo currentUser = resolveUser(headers);
 
             ObjectNode result = dispatch(request, currentUser);
             return Response.ok(JsonRpcResponse.success(id, result)).build();
@@ -131,6 +143,20 @@ public class McpRoute {
                     new JsonRpcError(McpConstants.ERR_INTERNAL_ERROR, "Internal error")))
                     .build();
         }
+    }
+
+    @GET
+    public Response getNotAllowed() {
+        return methodNotAllowed();
+    }
+
+    @DELETE
+    public Response deleteNotAllowed() {
+        return methodNotAllowed();
+    }
+
+    private Response methodNotAllowed() {
+        return Response.status(Response.Status.METHOD_NOT_ALLOWED).header("Allow", "POST").build();
     }
 
     private boolean isEnabled() {
@@ -171,12 +197,8 @@ public class McpRoute {
         }
 
         if (!McpConstants.SUPPORTED_PROTOCOL_VERSIONS.contains(requestedVersion)) {
-            ObjectNode data = McpConstants.MAPPER.createObjectNode();
-            ArrayNode supported = data.putArray("supported");
-            McpConstants.SUPPORTED_PROTOCOL_VERSIONS.forEach(supported::add);
-            data.put("requested", requestedVersion);
             throw new McpProtocolException(400, McpConstants.ERR_UNSUPPORTED_VERSION,
-                    "Unsupported protocol version: " + requestedVersion, data);
+                    "Unsupported protocol version: " + requestedVersion, unsupportedVersionData(requestedVersion));
         }
 
         if ("tools/call".equals(request.getMethod())) {
@@ -187,6 +209,16 @@ public class McpRoute {
                         "Mcp-Name header must equal params.name");
             }
         }
+    }
+
+    private static ObjectNode unsupportedVersionData(String requestedVersion) {
+        ObjectNode data = McpConstants.MAPPER.createObjectNode();
+        ArrayNode supported = data.putArray("supported");
+        McpConstants.SUPPORTED_PROTOCOL_VERSIONS.forEach(supported::add);
+        if (requestedVersion != null) {
+            data.put("requested", requestedVersion);
+        }
+        return data;
     }
 
     // Decodes the =?base64?<b64>?= sentinel wrapper for non-ASCII header values; non-matching/invalid input passes through unchanged.
@@ -225,33 +257,61 @@ public class McpRoute {
 
     private ObjectNode dispatch(JsonRpcRequest request, UserInfo currentUser) throws McpProtocolException {
         switch (request.getMethod()) {
+            case "initialize":
+                return initializeLegacy(request);
             case "server/discover":
                 return discover();
             case "tools/list":
                 return listTools();
             case "tools/call":
                 return callTool(request, currentUser);
-            case "initialize":
-                throw new McpProtocolException(400, McpConstants.ERR_UNSUPPORTED_VERSION,
-                        "This server implements MCP revision " + McpConstants.PROTOCOL_VERSION
-                                + " only (stateless — no \"initialize\" handshake). Supported versions: "
-                                + McpConstants.SUPPORTED_PROTOCOL_VERSIONS);
             default:
                 throw new McpProtocolException(404, McpConstants.ERR_METHOD_NOT_FOUND, "Method not found: " + request.getMethod());
         }
     }
 
-    private ObjectNode discover() {
+    // Package-private (not private) so McpInitializeLegacyTest can call it directly, without a container.
+    // Sessionless: no Mcp-Session-Id is issued, since BELY's tools carry no per-connection state.
+    ObjectNode initializeLegacy(JsonRpcRequest request) {
+        JsonNode params = request.getParams();
+        String requestedVersion = params != null && params.has("protocolVersion")
+                ? params.get("protocolVersion").asText() : null;
+        String negotiatedVersion = McpConstants.LEGACY_PROTOCOL_VERSIONS.contains(requestedVersion)
+                ? requestedVersion : McpConstants.LEGACY_PROTOCOL_VERSION_DEFAULT;
+
+        ObjectNode result = McpConstants.MAPPER.createObjectNode();
+        result.put("protocolVersion", negotiatedVersion);
+
+        ObjectNode capabilities = result.putObject("capabilities");
+        ObjectNode toolsCapability = capabilities.putObject("tools");
+        toolsCapability.put("listChanged", false);
+
+        ObjectNode serverInfo = result.putObject("serverInfo");
+        serverInfo.put("name", McpConstants.SERVER_NAME);
+        serverInfo.put("title", McpConstants.SERVER_TITLE);
+        serverInfo.put("version", McpConstants.SERVER_VERSION);
+
+        result.put("instructions", McpConstants.INSTRUCTIONS);
+        return result;
+    }
+
+    // Package-private (not private) so McpDiscoverShapeTest can call it directly, without a container.
+    ObjectNode discover() {
         ObjectNode result = McpConstants.MAPPER.createObjectNode();
         result.put("resultType", "complete");
-        result.put("protocolVersion", McpConstants.PROTOCOL_VERSION);
-        ArrayNode supported = result.putArray("supportedProtocolVersions");
+        ArrayNode supported = result.putArray("supportedVersions");
         McpConstants.SUPPORTED_PROTOCOL_VERSIONS.forEach(supported::add);
 
         ObjectNode serverInfo = result.putObject("serverInfo");
         serverInfo.put("name", McpConstants.SERVER_NAME);
         serverInfo.put("title", McpConstants.SERVER_TITLE);
         serverInfo.put("version", McpConstants.SERVER_VERSION);
+
+        ObjectNode meta = result.putObject("_meta");
+        ObjectNode metaServerInfo = meta.putObject(McpConstants.META_SERVER_INFO);
+        metaServerInfo.put("name", McpConstants.SERVER_NAME);
+        metaServerInfo.put("title", McpConstants.SERVER_TITLE);
+        metaServerInfo.put("version", McpConstants.SERVER_VERSION);
 
         ObjectNode capabilities = result.putObject("capabilities");
         ObjectNode toolsCapability = capabilities.putObject("tools");
@@ -296,7 +356,7 @@ public class McpRoute {
         try {
             result = tool.call(arguments, ctx);
         } catch (McpArgumentException e) {
-            throw new McpProtocolException(200, McpConstants.ERR_INVALID_PARAMS, e.getMessage());
+            result = McpToolResult.error(e.getMessage());
         }
 
         return result.toJson();

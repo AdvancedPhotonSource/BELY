@@ -5,6 +5,7 @@
 package gov.anl.aps.logr.rest.mcp;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -19,6 +20,10 @@ public final class McpConstants {
     public static final String PROTOCOL_VERSION = "2026-07-28";
     public static final List<String> SUPPORTED_PROTOCOL_VERSIONS = Collections.singletonList(PROTOCOL_VERSION);
 
+    // Legacy (pre-2026-07-28) revisions served via a sessionless "initialize" handshake; see McpRoute#initializeLegacy.
+    public static final List<String> LEGACY_PROTOCOL_VERSIONS = Arrays.asList("2025-11-25", "2025-06-18", "2025-03-26");
+    public static final String LEGACY_PROTOCOL_VERSION_DEFAULT = "2025-11-25";
+
     public static final String HEADER_PROTOCOL_VERSION = "MCP-Protocol-Version";
     public static final String HEADER_METHOD = "Mcp-Method";
     public static final String HEADER_NAME = "Mcp-Name";
@@ -28,6 +33,7 @@ public final class McpConstants {
     public static final String META_PROTOCOL_VERSION = "io.modelcontextprotocol/protocolVersion";
     public static final String META_CLIENT_INFO = "io.modelcontextprotocol/clientInfo";
     public static final String META_CLIENT_CAPABILITIES = "io.modelcontextprotocol/clientCapabilities";
+    public static final String META_SERVER_INFO = "io.modelcontextprotocol/serverInfo";
 
     public static final int ERR_PARSE_ERROR = -32700;
     public static final int ERR_INVALID_REQUEST = -32600;
