@@ -66,7 +66,7 @@ class SessionManager:
             data = { 'username' : self.getUsername(username), 'password' : self.getPassword(password) }
             self.logger.debug('Establishing session for user %s @ %s)' % (username, url))
             (response,responseData) = self.sendRequest(url='%s%s' % (url, selector), method='POST', contentType='application/x-www-form-urlencoded', data=urllib.urlencode(data))
-        except urllib2.URLError, ex:
+        except urllib2.URLError as ex:
             self.logger.exception('%s' % ex)
             raise UrlError(exception=ex)
 
@@ -106,7 +106,7 @@ class SessionManager:
         try:
             self.logger.debug('Clearing session cache: %s' % (self.sessionCacheFile))
             OsUtility.removeFile(self.sessionCacheFile)
-        except Exception, ex:
+        except Exception as ex:
             # ignore errors.
             self.logger.warn('Could not clear session cache: %s' % (ex))
             pass
@@ -121,7 +121,7 @@ class SessionManager:
             f.write('%s' % sessionCookie)
             f.close()
             os.chmod(self.sessionCacheFile, stat.S_IRUSR|stat.S_IWUSR|stat.S_IXUSR)
-        except Exception, ex:
+        except Exception as ex:
             self.logger.warn('Could not save session: %s' % (ex))
 
     def loadSession(self):
@@ -138,7 +138,7 @@ class SessionManager:
             else:
                 self.logger.debug('Loaded session from %s: %s' % (self.sessionCacheFile, session))
                 return session
-        except Exception, ex:
+        except Exception as ex:
             self.logger.warn('Could not load session: %s' % (ex))
         return None
 
@@ -195,7 +195,7 @@ class SessionManager:
             self.checkResponseHeadersForErrors(ex.hdrs)
             self.logger.exception('%s' % ex)
             raise UrlError(exception=ex)
-        except urllib2.URLError, ex:
+        except urllib2.URLError as ex:
             self.logger.exception('%s' % ex)
             raise UrlError(exception=ex)
 
@@ -212,7 +212,7 @@ class SessionManager:
             self.establishSession(self.host, self.username, self.password)
         try:
             return self.sendRequest(url, method, contentType, data)
-        except InvalidSession, ex:
+        except InvalidSession as ex:
             self.clearSessionFile()
             self.establishSession(self.host, self.username, self.password)
             return self.sendRequest(url, method, contentType, data)
@@ -223,14 +223,14 @@ class SessionManager:
             sessionCookie = responseHeaders.get('Set-Cookie')
             self.saveSession(sessionCookie)
             return sessionCookie
-        except (AuthorizationError, InvalidSession), ex:
+        except (AuthorizationError, InvalidSession) as ex:
             self.clearSessionFile()
             raise
 
     def checkResponseHeadersForErrors(self, responseHeaders):
         try:
             CdbExceptionMapper.checkStatus(responseHeaders)
-        except AuthorizationError, ex:
+        except AuthorizationError as ex:
             self.clearSessionFile()
             raise
 

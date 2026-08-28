@@ -41,14 +41,14 @@ class PropertyValueHandler(CdbDbEntityHandler):
         try:
             dbPropertyValueList = session.query(PropertyValue).filter(PropertyValue.property_type_id==propertyTypeId).all()
             return dbPropertyValueList
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('Property value(s) with property type id %s do(es) not exists' % (propertyTypeId))
 
     def findPropertyValueById(self, session, id):
         try:
             dbPropertyValue = session.query(PropertyValue).filter(PropertyValue.id==id).one()
             return dbPropertyValue
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('Property value id %s does not exist.' % (id))
 
     def getPropertyValueById(self, session, id):
@@ -56,7 +56,7 @@ class PropertyValueHandler(CdbDbEntityHandler):
             self.logger.debug('Retrieving property value id %s' % id)
             dbPropertyValue = self.findPropertyValueById(session, id)
             return dbPropertyValue
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('Property value id %s does not exist.' % (id))
 
     def addPropertyValueHistory(self, session, propertyValueId, tag, value, units, description, enteredByUserId, enteredOnDateTime, displayValue, targetValue):
@@ -101,7 +101,7 @@ class PropertyValueHandler(CdbDbEntityHandler):
         try:
             dbPropertyMetadata = query.one()
             return dbPropertyMetadata
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('Metadata for property value id %s with key %s do(es) not exists' % (propertyValueId, metadataKey))
 
     def addPropertyValueMetadata(self, session, propertyValueId, metadataKey, metadataValue, userId):
@@ -110,7 +110,7 @@ class PropertyValueHandler(CdbDbEntityHandler):
         try:
             self.getPropertyValueMetadataByKey(session, propertyValueId, metadataKey)
             raise ObjectAlreadyExists ('%s with key %s for property id %s already exists.' % (entityDisplayName, metadataKey, propertyValueId))
-        except ObjectNotFound, ex:
+        except ObjectNotFound as ex:
             # ok
             pass
 
@@ -251,7 +251,7 @@ class PropertyValueHandler(CdbDbEntityHandler):
 
             dbPropertyValues = query.all()
             return dbPropertyValues
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('No %s for item with id %s found.' % (entityDisplayName, id))
 
     def createUnverifiedPropertyValue(self, session, propertyTypeName, tag, value, units, description, enteredByUserId):

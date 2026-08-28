@@ -41,7 +41,7 @@ class DbManager:
         from cdb.common.db.impl.dbManager import DbManager
         try:
             mgr = DbManager()
-        except DbManager, ex:
+        except DbManager as ex:
             mgr = ex
         return mgr 
 
@@ -167,6 +167,6 @@ if __name__ == '__main__':
     ConfigurationManager.getInstance().setConsoleLogLevel('debug')
     mgr = DbManager.getInstance()
     mgr.acquireConnection()
-    print 'Got connection'
+    print( 'Got connection')
 
 

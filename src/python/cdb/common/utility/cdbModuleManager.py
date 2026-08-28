@@ -25,7 +25,7 @@ class CdbModuleManager:
         from cdb.common.utility.cdbModuleManager import CdbModuleManager
         try:
             mgr = CdbModuleManager()
-        except CdbModuleManager, ex:
+        except CdbModuleManager as ex:
             mgr = ex
         return mgr
 

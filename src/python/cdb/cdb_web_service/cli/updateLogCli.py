@@ -53,7 +53,7 @@ Description:
 
         log = api.updateLogEntry(self.getLogId(), self.getLogText(), self.getEffectiveFromDate(), self.getEffectiveToDate(), self.getLogTopicName())
 
-        print log.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat())
+        print( log.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat()))
 
 #######################################################################
 # Run command.

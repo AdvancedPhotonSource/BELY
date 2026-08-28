@@ -45,7 +45,7 @@ Description:
 
         logAttachment = api.addLogAttachment(self.getLogId(), self.getAttachment(), self.getAttachmentDescription())
 
-        print logAttachment.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat())
+        print( logAttachment.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat()))
 
 #######################################################################
 # Run command.

@@ -34,9 +34,9 @@ class CdbApi(object):
             try:
                 response = func(*args, **kwargs)
                 return response
-            except CdbException, ex:
+            except CdbException as ex:
                 raise
-            except Exception, ex:
+            except Exception as ex:
                 cls.getLogger().exception('%s' % ex)
                 raise CdbException(exception=ex)
         return decorate

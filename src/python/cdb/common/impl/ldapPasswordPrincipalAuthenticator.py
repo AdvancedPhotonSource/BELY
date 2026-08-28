@@ -24,7 +24,7 @@ class LdapPasswordPrincipalAuthenticator(AuthorizationPrincipalAuthenticator):
                 self.logger.debug('Checking credentials for %s' % principal.getName())
                 self.ldapUtility.checkCredentials(principal.getName(), password)
                 return principal
-            except Exception, ex:
+            except Exception as ex:
                 self.logger.debug(ex)
         return None
 

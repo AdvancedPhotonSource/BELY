@@ -43,7 +43,7 @@ class CdbDbEntityHandler:
         try:
             dbObj = session.query(entityDbObject).filter(entityDbObject.name==name).one()
             return dbObj
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('No %s with name %s exist.' % (entityDisplayName, name))
 
     def _findDbObjById(self, session, entityDbObject, id):
@@ -51,7 +51,7 @@ class CdbDbEntityHandler:
         try:
             dbObj = session.query(entityDbObject).filter(entityDbObject.id==id).one()
             return dbObj
-        except NoResultFound, ex:
+        except NoResultFound assssssssssss ex:
             raise ObjectNotFound('No %s with id %s exists.' % (entityDisplayName, id))
 
     def _prepareAddUniqueNameObj(self, session, entityDbObject, name):
@@ -60,7 +60,7 @@ class CdbDbEntityHandler:
         try:
             session.query(entityDbObject).filter(entityDbObject.name==name).one()
             raise ObjectAlreadyExists('%s %s already exists.' % (entityDisplayName, name))
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             # ok
             pass
 

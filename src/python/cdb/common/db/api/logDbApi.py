@@ -164,7 +164,7 @@ class LogDbApi(CdbDbApi):
 if __name__ == '__main__':
     api = LogDbApi()
 
-    print api.getLogAttachments()
-    print api.getLogs()
+    print( api.getLogAttachments())
+    print( api.getLogs())
 
-    print api.addLogAttachment(1, 'hello world', 'hi', 'desc')
+    print( api.addLogAttachment(1, 'hello world', 'hi', 'desc'))

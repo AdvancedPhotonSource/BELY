@@ -55,9 +55,9 @@ Description:
 
         if isinstance(propertyMetadata, list):
             for metadata in propertyMetadata:
-                print metadata.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat())
+                print( metadata.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat()))
         else:
-            print propertyMetadata.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat())
+            print( propertyMetadata.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat()))
 
 #######################################################################
 # Run command.

@@ -73,5 +73,5 @@ class PermissionHandler(CdbDbEntityHandler):
             query = session.query(ItemElementProperty).filter(ItemElementProperty.property_value_id == propertyValueId)
             dbItemElementProperty = query.one()
             return dbItemElementProperty
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound("No %s for property value with id %s found." % (entityDisplayName, propertyValueId))

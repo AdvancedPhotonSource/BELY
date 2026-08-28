@@ -86,31 +86,31 @@ prependPathIfDirExists $LOGR_SUPPORT_DIR/java/$LOGR_HOST_ARCH/bin
 prependPathIfDirExists $LOGR_SUPPORT_DIR/ant/bin
 prependPathIfDirExists $LOGR_SUPPORT_DIR/netbeans/currentNetbeans/bin
 prependPathIfDirExists $LOGR_ROOT_DIR/bin
-prependPathIfDirExists $LOGR_SUPPORT_DIR/anaconda/$LOGR_HOST_ARCH/bin
+#prependPathIfDirExists $LOGR_SUPPORT_DIR/anaconda/$LOGR_HOST_ARCH/bin
 prependPathIfDirExists $LOGR_SUPPORT_DIR/netbeans/currentNetbeans/java/maven/bin
 prependPathIfDirExists $LOGR_ROOT_DIR/tools/developer_tools/portal_testing/PythonSeleniumTest/support_bin
 
-mysqlPath=$LOGR_SUPPORT_DIR/mysql/$LOGR_HOST_ARCH
-if [ -d $mysqlPath ]; then
-    cd $mysqlPath
-    pythonDir=`pwd`
-    export PATH=`pwd`/bin:$PATH
-    export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH    
-fi
+#mysqlPath=$LOGR_SUPPORT_DIR/mysql/$LOGR_HOST_ARCH
+#if [ -d $mysqlPath ]; then
+#    cd $mysqlPath
+#    pythonDir=`pwd`
+#    export PATH=`pwd`/bin:$PATH
+#    export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH    
+#fi
 
 # Check if we have  local python
-if [ -z $LOGR_PYTHON_DIR ]; then
-    pythonDir=$LOGR_SUPPORT_DIR/python/$LOGR_HOST_ARCH
-else
-    pythonDir=$LOGR_PYTHON_DIR
-fi
-if [ -d $pythonDir ]; then
-    cd $pythonDir
-    pythonDir=`pwd`
-    export PATH=`pwd`/bin:$PATH
-    export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
-    export LOGR_PYTHON_DIR=$pythonDir
-fi
+#if [ -z $LOGR_PYTHON_DIR ]; then
+#    pythonDir=$LOGR_SUPPORT_DIR/python/$LOGR_HOST_ARCH
+#else
+#    pythonDir=$LOGR_PYTHON_DIR
+#fi
+#if [ -d $pythonDir ]; then
+#    cd $pythonDir
+#    pythonDir=`pwd`
+#    export PATH=`pwd`/bin:$PATH
+#    export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
+#    export LOGR_PYTHON_DIR=$pythonDir
+#fi
 
 if [ -z $PYTHONPATH ]; then
     PYTHONPATH=$LOGR_ROOT_DIR/src/python

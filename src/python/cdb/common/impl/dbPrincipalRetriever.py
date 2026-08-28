@@ -28,7 +28,7 @@ class DbPrincipalRetriever(AuthorizationPrincipalRetriever):
                 for userGroup in user.get('userGroupList', []):
                     if userGroup.get('name') == self.adminGroupName:
                         principal.setRole(cdbRole.CDB_ADMIN_ROLE)
-        except Exception, ex:
+        except Exception as ex:
             self.logger.debug(ex)
         return principal
 

@@ -139,19 +139,19 @@ class UserDbApi(CdbDbApi):
 if __name__ == '__main__':
     api = UserDbApi()
     user = api.getUserByUsername('sveseli')
-    print user
+    print( user)
     user = api.getUserWithPasswordByUsername('sveseli')
-    print user
+    print( user)
     users = api.getUsers()
     for user in users:
-        print user.getDictRep()
-        print user.__dict__
+        print( user.getDictRep())
+        print( user.__dict__)
 
-    print 
-    print 'User Groups'
-    print '***********'
+    print() 
+    print( 'User Groups')
+    print( '***********')
     userGroups = api.getUserGroups()
     for userGroup in userGroups:
-        print userGroup.getDictRep()
+        print( userGroup.getDictRep())
 
-    print api.addUserToGroup('sv', 'CDB_ADMIN')
+    print( api.addUserToGroup('sv', 'CDB_ADMIN'))

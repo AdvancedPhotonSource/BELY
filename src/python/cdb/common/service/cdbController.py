@@ -115,11 +115,11 @@ class CdbController(object):
             try:
                 response = func(*args, **kwargs)
                 cherrypy.response.headers["Access-Control-Allow-Origin"] = "*"
-            except CdbException, ex:
+            except CdbException as ex:
                 cls.getLogger().error('%s' % ex)
                 cls.handleException(ex)
                 response = ex.getFullJsonRep()
-            except Exception, ex:
+            except Exception as ex:
                 cls.getLogger().error('%s' % ex)
                 cls.handleException(ex)
                 response = InternalError(ex).getFullJsonRep()

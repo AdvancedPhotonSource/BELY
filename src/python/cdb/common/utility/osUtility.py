@@ -37,7 +37,7 @@ class OsUtility:
         """ Remove file on a given path and ignore any errors. """
         try:
             os.remove(path)
-        except Exception, ex:
+        except Exception as ex:
             pass
 
     @classmethod

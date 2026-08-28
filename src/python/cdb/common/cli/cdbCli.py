@@ -98,7 +98,7 @@ class CdbCli(object):
         try:
             (self.options, self.args) = self.parser.parse_args()
             self.processArgs()
-        except SystemExit, rc:
+        except SystemExit as rc:
             sys.stdout.flush()
             sys.stderr.flush()
             sys.exit(int(str(rc)))
@@ -113,7 +113,7 @@ class CdbCli(object):
 
         optDict = self.options.__dict__
         if optDict.get('version'):
-            print 'CDB Software Version: %s' % (cdb.__version__)
+            print( 'CDB Software Version: %s' % (cdb.__version__))
             sys.exit(0)
 
         # Logging level. First try from command line, then from env variable.
@@ -130,7 +130,7 @@ class CdbCli(object):
         configManager = ConfigurationManager.getInstance()
         try:
             self.checkSessionCache()
-        except Exception, ex:
+        except Exception as ex:
             self.logger.warn('Disabling session cache: %s' % ex)
             configManager.setSessionCacheFile(None)
 
@@ -151,7 +151,8 @@ class CdbCli(object):
     def usage(self, s=None):
         """ Print help provided by optparse. """
         if s:
-            print >>sys.stderr, 'Error: ', s, '\n'
+#            print >>sys.stderr, 'Error: ', s, '\n'
+            print('Error: ', s, '\n', file=sys.stderr)
         self.parser.print_help()
         sys.exit(cdbStatus.CDB_ERROR)
 
@@ -218,15 +219,15 @@ class CdbCli(object):
         """ This method invokes runCommand() and handles any exceptions. """
         try:
             self.runCommand()
-        except CdbException, ex:
+        except CdbException as ex:
             self.logger.exception('%s' % ex)
-            print '%s' % ex.getErrorMessage()
+            print( '%s' % ex.getErrorMessage())
             raise SystemExit(ex.getErrorCode())
-        except SystemExit, ex:
+        except SystemExit as ex:
             raise
-        except Exception, ex:
+        except Exception as ex:
             self.logger.exception('%s' % ex)
-            print >>sys.stderr, '%s' % ex
+            print('%s' % ex, file=sys.stderr)
             raise SystemExit(cdbStatus.CDB_ERROR)
 
     def getId(self):
@@ -253,32 +254,32 @@ if __name__ == '__main__':
     cli.addOption("-f", "--file", dest="filename", help="write report to FILE", metavar="FILE")
     cli.addOption("-q", "--quiet", action="store_false", dest="verbose", default=True, help="don't print log messages to stdout")
     (options, args) = cli.parseArgs()
-    print 'After parse:'
-    print 'OPTIONS: ', options
-    print 'ARGS: ', args
-    print 'From CLI'
-    print 'OPTIONS: ', cli.getOptions()
-    print 'ARGS: ', cli.getArgs()
-    print
-    print 'FILENAME'
-    print 'options.filename', options.filename
-    print 'cli.getOptions().filename', cli.getOptions().filename
+    print( 'After parse:')
+    print( 'OPTIONS: ', options)
+    print( 'ARGS: ', args)
+    print( 'From CLI')
+    print( 'OPTIONS: ', cli.getOptions())
+    print( 'ARGS: ', cli.getArgs())
+    print()
+    print( 'FILENAME')
+    print( 'options.filename', options.filename)
+    print( 'cli.getOptions().filename', cli.getOptions().filename)
     o = cli.getOptions()
-    print 'o.filename', o.filename
-    print 'cli.getArgs()', cli.getArgs()
-    print 'len(cli.getArgs())', len(cli.getArgs())
+    print( 'o.filename', o.filename)
+    print( 'cli.getArgs()', cli.getArgs())
+    print( 'len(cli.getArgs())', len(cli.getArgs()))
 
     for a in cli.getArgs():
-        print 'arg', a
+        print( 'arg', a)
 
     first_arg = cli.getArg(0)
-    print 'first_arg', first_arg
+    print( 'first_arg', first_arg)
 
     second_arg = cli.getArg(1)
-    print 'second_arg', second_arg
+    print( 'second_arg', second_arg)
 
     try:
         third_arg = cli.getArg(2)
-        print 'third_arg', third_arg
+        print( 'third_arg', third_arg)
     except:
-        print 'no third arg'
+        print( 'no third arg')

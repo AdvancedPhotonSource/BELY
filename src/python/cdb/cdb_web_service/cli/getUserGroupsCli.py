@@ -23,7 +23,7 @@ Description:
         api = UserRestApi(self.getUsername(), self.getPassword(), self.getServiceHost(), self.getServicePort(), self.getServiceProtocol())
         userGroups = api.getUserGroups()
         for userGroup in userGroups:
-            print userGroup.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat())
+            print( userGroup.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat()))
 
 
 #######################################################################

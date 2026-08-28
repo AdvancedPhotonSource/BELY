@@ -147,15 +147,15 @@ class CdbObject(UserDict.UserDict):
 if __name__ == '__main__':
     x = {'name' : 'XYZ', 'one':1, 'two':2 }
     o = CdbObject(x)
-    print 'CDB Object: ', o
-    print 'Type of CDB object: ', type(o)
-    print 'JSON Rep:  ', o.getJsonRep()
-    print 'Type of JSON rep: ', type(o.getJsonRep())
+    print( 'CDB Object: ', o)
+    print( 'Type of CDB object: ', type(o))
+    print( 'JSON Rep:  ', o.getJsonRep())
+    print( 'Type of JSON rep: ', type(o.getJsonRep()))
     j = '{"name" : "XYZ", "one":1, "two":2 }'
-    print 'String: ', j
+    print( 'String: ', j)
     x2 = CdbObject.fromJsonString(j)
-    print 'CDB Object 2: ', x2
-    print 'Type of CDB object 2: ', type(x2)
-    print x2.getDisplayString(displayKeyList='__all__')
+    print( 'CDB Object 2: ', x2)
+    print( 'Type of CDB object 2: ', type(x2))
+    print( x2.getDisplayString(displayKeyList='__all__'))
 
 

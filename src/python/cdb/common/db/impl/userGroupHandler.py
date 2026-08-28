@@ -22,14 +22,14 @@ class UserGroupHandler(CdbDbEntityHandler):
         try:
             dbUserGroup = session.query(UserGroup).filter(UserGroup.id==id).one()
             return dbUserGroup
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('User group id %s does not exist.' % (id))
 
     def findUserGroupByName(self, session, name):
         try:
             dbUserGroup = session.query(UserGroup).filter(UserGroup.name==name).one()
             return dbUserGroup
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('User group %s does not exist.' % (name))
 
     def getUserGroups(self, session):
@@ -42,7 +42,7 @@ class UserGroupHandler(CdbDbEntityHandler):
             self.logger.debug('Retrieving user group id %s' % id)
             dbUserGroup = session.query(UserGroup).filter(UserGroup.id==id).one()
             return dbUserGroup
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             raise ObjectNotFound('User group id %s does not exist.' % (id))
 
     def getUserGroupByName(self, session, name):
@@ -54,7 +54,7 @@ class UserGroupHandler(CdbDbEntityHandler):
         try:
             dbGroupInfo = session.query(UserGroup).filter(UserGroup.name==groupName).one()
             raise ObjectAlreadyExists('Group %s already exists.' % (groupName))
-        except NoResultFound, ex:
+        except NoResultFound as ex:
             # ok
             pass
 

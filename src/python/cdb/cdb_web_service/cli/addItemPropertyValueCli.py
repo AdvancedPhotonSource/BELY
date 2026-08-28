@@ -47,7 +47,7 @@ Description:
 
         propertyValue = api.addPropertyValueToItemWithId(self.getItemId(), self.getPropertyTypeName(), value=self.getValue(), displayValue=self.getDisplayValue())
 
-        print propertyValue.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat())
+        print( propertyValue.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat()))
 
 #######################################################################
 # Run command.

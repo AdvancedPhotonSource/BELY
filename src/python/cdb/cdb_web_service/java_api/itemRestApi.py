@@ -29,13 +29,13 @@ class ItemRestApi(CdbRestApi):
 if __name__ == "__main__":
 	itemApi = ItemRestApi(username='cdb', password='cdb', host='localhost', port=8080, protocol='http')
 
-	print itemApi.getItemById(500)['name']
-	print itemApi.getItemById(1233)['name']
-	print itemApi.getItemById(51)['name']
-	print itemApi.getItemById(5)['name']
-	print itemApi.getItemById(3000)['name']
+	print( itemApi.getItemById(500)['name'])
+	print( itemApi.getItemById(1233)['name'])
+	print( itemApi.getItemById(51)['name'])
+	print( itemApi.getItemById(5)['name'])
+	print( itemApi.getItemById(3000)['name'])
 
-	print itemApi.getItemByQrId(240)['name']
+	print( itemApi.getItemByQrId(240)['name'])
 
 """
 	

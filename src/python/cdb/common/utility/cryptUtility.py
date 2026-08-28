@@ -8,10 +8,11 @@ See LICENSE file.
 
 import random
 import string
-import crypt
+#import crypt
 #import md5
 import hashlib
 import base64
+from passlib.hash import pbkdf2_sha512 
 
 class CryptUtility:
 
@@ -36,20 +37,23 @@ class CryptUtility:
         #md5Salt = calculator.hexdigest()
         #return crypt.crypt(cleartext, md5Salt)
 
-        salt = CryptUtility.getRandomWord(CryptUtility.SALT_LENGTH_IN_BYTES)
-        salt = '%s%s%s%s%s' % (CryptUtility.SALT_DELIMITER, CryptUtility.CRYPT_TYPE, CryptUtility.SALT_DELIMITER, salt, CryptUtility.SALT_DELIMITER)
-        return crypt.crypt(password, salt)
+        #salt = CryptUtility.getRandomWord(CryptUtility.SALT_LENGTH_IN_BYTES)
+        #salt = '%s%s%s%s%s' % (CryptUtility.SALT_DELIMITER, CryptUtility.CRYPT_TYPE, CryptUtility.SALT_DELIMITER, salt, CryptUtility.SALT_DELIMITER)
+        #return crypt.crypt(password, salt)
+        return pbkdf2_sha512.hash(password)
 
     @classmethod
     def verifyPassword(cls, password, cryptedPassword):
         """ Verify crypted password. """
-        return cryptedPassword == crypt.crypt(password, cryptedPassword)
+        #return cryptedPassword == crypt.crypt(password, cryptedPassword)
+        return pbkdf2_sha512.verify(password,cryptedPassword)
 
     @classmethod
     def cryptPasswordWithPbkdf2(cls, password):
         """ Crypt password with pbkdf2 package and encode with b64. """
-        salt = CryptUtility.getRandomWord(CryptUtility.SALT_LENGTH_IN_BYTES)
-        return cls.saltAndCryptPasswordWithPbkdf2(password, salt)
+        #salt = CryptUtility.getRandomWord(CryptUtility.SALT_LENGTH_IN_BYTES)
+        #return cls.saltAndCryptPasswordWithPbkdf2(password, salt)
+        return pbkdf2_sha512.hash(password)
 
     @classmethod
     def saltAndCryptPasswordWithPbkdf2(cls, password, salt):
@@ -68,9 +72,10 @@ class CryptUtility:
     def verifyPasswordWithPbkdf2(cls, password, cryptedPassword):
         """ Verify crypted password. """
         # Get salt
-        salt = '%s' % cryptedPassword.split(CryptUtility.SALT_DELIMITER)[0]
+        #salt = '%s' % cryptedPassword.split(CryptUtility.SALT_DELIMITER)[0]
         # Verify crypted password
-        return cryptedPassword == cls.saltAndCryptPasswordWithPbkdf2(password, salt)
+        #return cryptedPassword == cls.saltAndCryptPasswordWithPbkdf2(password, salt)
+        return pbkdf2_sha512.verify(password,cryptedPassword)
 
 #######################################################################
 # Testing.

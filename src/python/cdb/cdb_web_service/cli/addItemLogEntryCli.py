@@ -50,7 +50,7 @@ Description:
         else:
             log = api.addLogEntryToItemWithQrId(self.getQrId(), self.getLogEntry(), self.getAttachment())
 
-        print log.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat())
+        print( log.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat()))
 
 #######################################################################
 # Run command.

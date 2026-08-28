@@ -39,7 +39,7 @@ Description:
             userInfo = api.getUserById(self.getId())
         else:
             userInfo = api.getUserByUsername(self.getUsername())
-        print userInfo.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat())
+        print( userInfo.getDisplayString(self.getDisplayKeys(), self.getDisplayFormat()))
 
 #######################################################################
 # Run command.
