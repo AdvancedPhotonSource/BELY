@@ -1,0 +1,99 @@
+name: Test BELY Portal
+
+on:
+  pull_request:
+    paths:
+      - 'src/java/LogrPortal/src/java/**'
+      - 'src/java/LogrPortal/test/**'
+      - '.github/workflows/test-belyportal.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Compile and Run BELY Portal Java Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: src/java/LogrPortal
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+
+      - name: Fetch JAXB API (removed from the JDK since Java 11)
+        run: |
+          set -euo pipefail
+          # javax.xml.bind was dropped from the JDK in Java 11 (JEP 320). The
+          # application normally compiles against Payara's bundled JAXB
+          # implementation via NetBeans' j2ee.platform.classpath, which this
+          # CI-only javac/java build path does not use. Fetch a standalone
+          # JAXB API jar (interfaces only, sufficient for compilation) instead.
+          mkdir -p build/extra-libs
+          curl -fsSL -o build/extra-libs/jaxb-api-2.3.1.jar \
+            https://repo1.maven.org/maven2/javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1.jar
+
+      - name: Compile main sources
+        run: |
+          set -euo pipefail
+          mkdir -p build/classes
+          find src/java -name '*.java' > build/main-sources.txt
+          javac -proc:none -source 11 -target 11 \
+            -cp 'lib/*:build/extra-libs/*' \
+            -d build/classes \
+            @build/main-sources.txt
+
+      - name: Compile test sources
+        run: |
+          set -euo pipefail
+          mkdir -p build/test-classes
+          find test -name '*.java' > build/test-sources.txt
+          javac -proc:none -source 11 -target 11 \
+            -cp 'lib/*:build/extra-libs/*:build/classes' \
+            -d build/test-classes \
+            @build/test-sources.txt
+
+      - name: Discover and run tests
+        run: |
+          set -uo pipefail
+          CP="lib/*:build/extra-libs/*:build/classes:build/test-classes"
+
+          mapfile -t TEST_CLASSES < <(
+            find test -name '*Test.java' \
+              | sed -e 's#^test/##' -e 's/\.java$//' -e 's#/#.#g' \
+              | sort
+          )
+
+          if [ "${#TEST_CLASSES[@]}" -eq 0 ]; then
+            echo "::error::No test classes discovered under test/ (pattern *Test.java)."
+            exit 1
+          fi
+
+          echo "Discovered ${#TEST_CLASSES[@]} test classes:"
+          printf '  %s\n' "${TEST_CLASSES[@]}"
+
+          FAILED=0
+          for class in "${TEST_CLASSES[@]}"; do
+            echo "::group::${class}"
+            java -cp "$CP" "$class"
+            rc=$?
+            if [ "$rc" -eq 0 ]; then
+              echo "${class}: PASS"
+            else
+              echo "${class}: FAIL (exit ${rc})"
+              FAILED=1
+            fi
+            echo "::endgroup::"
+          done
+
+          if [ "$FAILED" -ne 0 ]; then
+            echo "::error::One or more test classes failed."
+            exit 1
+          fi
+          echo "All test classes passed."
