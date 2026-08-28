@@ -39,6 +39,32 @@ jobs:
           curl -fsSL -o build/extra-libs/jaxb-api-2.3.1.jar \
             https://repo1.maven.org/maven2/javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1.jar
 
+      - name: Generate default PluginRegistrar
+        run: |
+          set -euo pipefail
+          # src/java/.../plugins/support/ is gitignored (see .gitignore) and is
+          # normally populated by tools/developer_tools/logr_plugins at deploy
+          # time based on which plugins are installed. CdbPluginManager.java
+          # imports PluginRegistrar unconditionally, so a fresh checkout can't
+          # compile without it. Generate the no-plugins-installed version.
+          REGISTRAR_DIR=src/java/gov/anl/aps/logr/portal/plugins/support
+          REGISTRAR_FILE="$REGISTRAR_DIR/PluginRegistrar.java"
+          if [ ! -f "$REGISTRAR_FILE" ]; then
+            mkdir -p "$REGISTRAR_DIR"
+            cat > "$REGISTRAR_FILE" <<'EOF'
+          package gov.anl.aps.logr.portal.plugins.support;
+
+          import gov.anl.aps.logr.portal.plugins.CdbPluginManager;
+
+          public abstract class PluginRegistrar {
+
+              public static void registerPlugins(CdbPluginManager cdbPluginManager) {
+                  // No plugins installed for this CI build.
+              }
+          }
+          EOF
+          fi
+
       - name: Compile main sources
         run: |
           set -euo pipefail
@@ -64,7 +90,10 @@ jobs:
           set -uo pipefail
           CP="lib/*:build/extra-libs/*:build/classes:build/test-classes"
 
-          mapfile -t TEST_CLASSES < <(
+          TEST_CLASSES=()
+          while IFS= read -r class; do
+            TEST_CLASSES+=("$class")
+          done < <(
             find test -name '*Test.java' \
               | sed -e 's#^test/##' -e 's/\.java$//' -e 's#/#.#g' \
               | sort
