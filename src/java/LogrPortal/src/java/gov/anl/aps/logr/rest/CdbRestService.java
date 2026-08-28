@@ -45,6 +45,7 @@ public class CdbRestService extends Application {
         resources.add(gov.anl.aps.logr.rest.routes.DomainRoute.class);
         resources.add(gov.anl.aps.logr.rest.routes.DownloadRoute.class);
         resources.add(gov.anl.aps.logr.rest.routes.LogbookRoute.class);
+        resources.add(gov.anl.aps.logr.rest.mcp.McpRoute.class);
         resources.add(gov.anl.aps.logr.rest.routes.NotificationConfigurationRoute.class);
         resources.add(gov.anl.aps.logr.rest.routes.PropertyValueRoute.class);
         resources.add(gov.anl.aps.logr.rest.routes.SearchRoute.class);       

@@ -11,7 +11,8 @@ package gov.anl.aps.logr.common.mqtt.constants;
 public enum CallSource {
 
     API("API"),
-    Portal("Portal");
+    Portal("Portal"),
+    MCP("MCP");
 
     private final String value;
 
