@@ -145,7 +145,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     private static final String OPS_ENTITY_TYPE_NAME = "ops";
 
-    // Entity type url parameter value requesting log documents of every logbook type. 
+    // Entity type url parameter requesting every logbook type. 
     private static final int FULL_LIST_ET_ID = -1;
     private static final String FULL_LIST_URL = "fullList";
     private static final String FULL_LIST_PAGE_TITLE = "All Log Documents";
@@ -901,12 +901,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         super.processPreRenderList();
     }
 
-    /**
-     * Prepare the list of log documents that includes every logbook type.
-     *
-     * Bypasses the entity type specific processPreRenderList() of this class to
-     * prevent a redirect to a single logbook type list.
-     */
+    // Calls super.processPreRenderList() to skip this class' redirect to a single type list. 
     public void processPreRenderFullList() {
         super.processPreRenderList();
 

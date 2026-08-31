@@ -31,8 +31,7 @@ public class ItemDomainLogbookQueryBuilder extends ItemQueryBuilder {
         super.generateWhereString();
 
         if (allLogbookTypes) {
-            // Show top level log documents of every logbook type. Templates are 
-            // excluded since their only entity type is the template entity type. 
+            // Top level log documents of every logbook type, excluding templates. 
             appendRawWhere("i.itemElementMemberList IS EMPTY");
             appendRawWhere(ENTITY_TYPE_LIST_JOIN_NAME + ".name <> '" + EntityTypeName.template.getValue() + "'");
             include_etl = true;

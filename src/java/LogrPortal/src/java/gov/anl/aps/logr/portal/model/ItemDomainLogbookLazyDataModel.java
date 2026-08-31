@@ -44,9 +44,7 @@ public class ItemDomainLogbookLazyDataModel extends ItemLazyDataModel<ItemDomain
         return new ItemDomainLogbookQueryBuilder(itemDomain.getId(), filterMap, sortField, sortOrder, settings, allLogbookTypes);
     }
 
-    /**
-     * Show log documents of every logbook type instead of a single type.
-     */
+    // Show log documents of every logbook type instead of a single type. 
     public void setAllLogbookTypes() {
         allLogbookTypes = true;
         setCurrentEntityType(null);
