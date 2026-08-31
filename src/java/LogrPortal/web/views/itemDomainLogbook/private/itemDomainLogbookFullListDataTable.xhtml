@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="../../item/private/templates/itemListDataTableTemplate.xhtml">
+
+    <!--
+        Log document list data table that additionally identifies the logbook 
+        type of each document. Used by the list that displays log documents of 
+        every logbook type. 
+    -->
+
+    <ui:define name="domainEntityListExtraColumns">
+        <p:column headerText="Logbook"
+                  sortBy="#{itemListObject.longEntityTypeString}"
+                  filterBy="#{itemListObject.longEntityTypeString}"
+                  filterMatchMode="contains">
+            #{itemListObject.longEntityTypeString}
+        </p:column>
+    </ui:define>
+
+</ui:composition>
