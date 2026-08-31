@@ -1036,6 +1036,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     public void navigateToLogDocumentList() {
+        if (fullListMode) {
+            redirectToFullList();
+            return;
+        }
+
         EntityType entityType = getCurrent().getEntityTypeList().get(0);
 
         redirectToEntityTypeList(entityType);
@@ -1047,8 +1052,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         boolean nextDocLoaded = currentDoc.getNextDocLoaded();
         if (!nextDocLoaded) {
             Integer logId = currentDoc.getId();
-            String entityTypeName = currentDoc.getEntityTypeList().get(0).getName();
-            nextDoc = itemDomainLogbookFacade.getNextLogDocument(entityTypeName, logId);
+            if (fullListMode) {
+                nextDoc = itemDomainLogbookFacade.getNextLogDocument(logId);
+            } else {
+                String entityTypeName = currentDoc.getEntityTypeList().get(0).getName();
+                nextDoc = itemDomainLogbookFacade.getNextLogDocument(entityTypeName, logId);
+            }
             currentDoc.setNextDoc(nextDoc);
             currentDoc.setNextDocLoaded(true);
         } else {
@@ -1063,8 +1072,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         boolean prevDocLoaded = currentDoc.getPrevDocLoaded();
         if (!prevDocLoaded) {
             Integer logId = currentDoc.getId();
-            String entityTypeName = currentDoc.getEntityTypeList().get(0).getName();
-            prevDoc = itemDomainLogbookFacade.getPreviousLogDocument(entityTypeName, logId);
+            if (fullListMode) {
+                prevDoc = itemDomainLogbookFacade.getPreviousLogDocument(logId);
+            } else {
+                String entityTypeName = currentDoc.getEntityTypeList().get(0).getName();
+                prevDoc = itemDomainLogbookFacade.getPreviousLogDocument(entityTypeName, logId);
+            }
             currentDoc.setPrevDoc(prevDoc);
             currentDoc.setPrevDocLoaded(true);
         } else {
