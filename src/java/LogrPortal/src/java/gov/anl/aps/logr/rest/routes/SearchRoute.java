@@ -8,8 +8,6 @@ import gov.anl.aps.logr.common.exceptions.InvalidArgument;
 import gov.anl.aps.logr.common.exceptions.InvalidRequest;
 import gov.anl.aps.logr.common.mqtt.constants.CallSource;
 import gov.anl.aps.logr.common.mqtt.model.entities.LogbookSearchOptions;
-import gov.anl.aps.logr.portal.constants.EntityTypeName;
-import gov.anl.aps.logr.portal.constants.ItemDomainName;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemCategoryControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemElementControllerUtility;
@@ -22,7 +20,6 @@ import gov.anl.aps.logr.portal.controllers.utilities.UserGroupControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.UserInfoControllerUtility;
 import gov.anl.aps.logr.portal.model.db.beans.DomainFacade;
 import gov.anl.aps.logr.portal.model.db.beans.UserInfoFacade;
-import gov.anl.aps.logr.portal.model.db.entities.Domain;
 import gov.anl.aps.logr.portal.model.db.entities.EntityType;
 import gov.anl.aps.logr.portal.model.db.entities.ItemType;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
@@ -30,6 +27,7 @@ import gov.anl.aps.logr.portal.utilities.SearchResult;
 import gov.anl.aps.logr.rest.entities.LogbookSearchResults;
 import gov.anl.aps.logr.rest.entities.SearchEntitiesOptions;
 import gov.anl.aps.logr.rest.entities.SearchEntitiesResults;
+import gov.anl.aps.logr.rest.utilities.LogbookDomainUtility;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -195,28 +193,14 @@ public class SearchRoute {
         return results;
     }
 
-    private Domain getLogbookDomain() {
-        return domainFacade.find(ItemDomainName.LOGBOOK_ID);
-    }
-
+    // Delegates to the shared helper, which copies before removing the template type instead of filtering the domain's managed list in place.
     private List<EntityType> getLogbookTypes() {
-        Domain domain = getLogbookDomain();
-        List<EntityType> logbookTypes = domain.getAllowedEntityTypeList();
-        // Remove template
-        for (EntityType logbookType : logbookTypes) {
-            if (logbookType.getName().equals(EntityTypeName.template.getValue())) {
-                logbookTypes.remove(logbookType);
-                break;
-            }
-        }
-
-        return logbookTypes;
+        return LogbookDomainUtility.getLogbookTypes(domainFacade);
     }
 
+    // Delegates to the shared helper; behavior is unchanged, the item type list is returned unfiltered.
     private List<ItemType> getLogbookSystems() {
-        Domain domain = getLogbookDomain();
-
-        return domain.getItemTypeList();
+        return LogbookDomainUtility.getLogbookSystems(domainFacade);
     }
 
     private List<EntityType> resolveEntityTypeList(List<Integer> idList) throws InvalidArgument {

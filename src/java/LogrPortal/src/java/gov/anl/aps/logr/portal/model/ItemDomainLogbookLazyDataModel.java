@@ -21,6 +21,8 @@ import org.primefaces.model.SortOrder;
  */
 public class ItemDomainLogbookLazyDataModel extends ItemLazyDataModel<ItemDomainLogbookFacade, ItemDomainLogbookQueryBuilder> {
 
+    private boolean allLogbookTypes = false;
+
     public ItemDomainLogbookLazyDataModel(ItemDomainLogbookFacade facade, Domain itemDomain, ItemSettings settings) {
         super(facade, itemDomain, settings);
         
@@ -39,10 +41,24 @@ public class ItemDomainLogbookLazyDataModel extends ItemLazyDataModel<ItemDomain
 
     @Override
     protected ItemDomainLogbookQueryBuilder getQueryBuilder(Map filterMap, String sortField, SortOrder sortOrder) {
-        return new ItemDomainLogbookQueryBuilder(itemDomain.getId(), filterMap, sortField, sortOrder, settings);
+        return new ItemDomainLogbookQueryBuilder(itemDomain.getId(), filterMap, sortField, sortOrder, settings, allLogbookTypes);
+    }
+
+    // Show log documents of every logbook type instead of a single type. 
+    public void setAllLogbookTypes() {
+        allLogbookTypes = true;
+        setCurrentEntityType(null);
+    }
+
+    public boolean isAllLogbookTypes() {
+        return allLogbookTypes;
     }
     
     public void setCurrentEntityType(String entityType) {
+        if (entityType != null) {
+            allLogbookTypes = false;
+        }
+
         if (entityType == null) {
             setDefaultFilterBy(null);
         } else {

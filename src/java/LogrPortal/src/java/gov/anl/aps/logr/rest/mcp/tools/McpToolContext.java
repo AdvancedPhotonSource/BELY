@@ -4,18 +4,15 @@
  */
 package gov.anl.aps.logr.rest.mcp.tools;
 
-import gov.anl.aps.logr.portal.constants.EntityTypeName;
-import gov.anl.aps.logr.portal.constants.ItemDomainName;
 import gov.anl.aps.logr.portal.model.db.beans.DomainFacade;
 import gov.anl.aps.logr.portal.model.db.beans.ItemDomainLogbookFacade;
 import gov.anl.aps.logr.portal.model.db.beans.ItemFacade;
 import gov.anl.aps.logr.portal.model.db.beans.UserGroupFacade;
 import gov.anl.aps.logr.portal.model.db.beans.UserInfoFacade;
-import gov.anl.aps.logr.portal.model.db.entities.Domain;
 import gov.anl.aps.logr.portal.model.db.entities.EntityType;
 import gov.anl.aps.logr.portal.model.db.entities.ItemType;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
-import java.util.ArrayList;
+import gov.anl.aps.logr.rest.utilities.LogbookDomainUtility;
 import java.util.List;
 
 /** Facade bundle plus the resolved current user, built once per MCP request and passed to every {@link McpTool#call}. */
@@ -63,20 +60,13 @@ public class McpToolContext {
         return currentUser;
     }
 
-    private Domain getLogbookDomain() {
-        return domainFacade.find(ItemDomainName.LOGBOOK_ID);
-    }
-
-    // Copies before filtering — SearchRoute/LogbookRoute's equivalent helper mutates the shared, JPA-managed list in place.
+    // Delegates to the shared helper so REST and MCP filter logbook types identically.
     public List<EntityType> getLogbookTypes() {
-        Domain domain = getLogbookDomain();
-        List<EntityType> logbookTypes = new ArrayList<>(domain.getAllowedEntityTypeList());
-        logbookTypes.removeIf(t -> t.getName().equals(EntityTypeName.template.getValue()));
-        return logbookTypes;
+        return LogbookDomainUtility.getLogbookTypes(domainFacade);
     }
 
+    // Delegates to the shared helper so REST and MCP resolve systems identically.
     public List<ItemType> getLogbookSystems() {
-        Domain domain = getLogbookDomain();
-        return domain.getItemTypeList();
+        return LogbookDomainUtility.getLogbookSystems(domainFacade);
     }
 }

@@ -61,6 +61,7 @@ public final class McpConstants {
             + "once you know its id. All tools are read-only.";
 
     public static final String PROP_ENABLED = "cdb.portal.mcp.enabled";
+    // Defaults to false by design: all MCP tools are read-only and the equivalent REST reads are unauthenticated too. Set true to require a valid token header.
     public static final String PROP_REQUIRE_AUTH = "cdb.portal.mcp.requireAuth";
     public static final String PROP_ALLOWED_ORIGINS = "cdb.portal.mcp.allowedOrigins";
 }

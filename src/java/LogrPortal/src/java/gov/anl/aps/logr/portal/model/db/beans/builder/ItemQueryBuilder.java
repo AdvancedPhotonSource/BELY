@@ -42,7 +42,7 @@ public abstract class ItemQueryBuilder extends CdbQueryBuilder {
     private static final String QUERY_STRING_START = "SELECT DISTINCT(i) FROM Item i ";
     private static final String ITEM_ELEMENTS_LIST_JOIN_NAME = "fiel";
     private static final String ITEM_PROJECT_LIST_JOIN_NAME = "ipl";
-    private static final String ENTITY_TYPE_LIST_JOIN_NAME = "etl";
+    protected static final String ENTITY_TYPE_LIST_JOIN_NAME = "etl";
     private static final String ITEM_CATEGORY_LIST_JOIN_NAME = "icl";
     private static final String ITEM_TYPE_LIST_JOIN_NAME = "itl";
     private static final String ITEM_SOURCE_LIST_JOIN_NAME = "isl";

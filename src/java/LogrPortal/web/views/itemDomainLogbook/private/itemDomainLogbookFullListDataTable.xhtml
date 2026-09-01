@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="../../item/private/templates/itemListDataTableTemplate.xhtml">
+
+    <!-- Log document data table that also identifies the logbook type of each document. -->
+
+    <!-- Sort/filter must key on entityTypeString; QueryTranslator maps it to etl.name and silently drops unmapped fields. -->
+    <ui:define name="domainEntityListExtraColumns">
+        <p:column headerText="Logbook"
+                  sortBy="#{itemListObject.entityTypeString}"
+                  filterBy="#{itemListObject.entityTypeString}"
+                  filterMatchMode="contains"
+                  filterOptions="#{entityController.entityTypesForDataTableFilterSelectOne}">
+            #{itemListObject.longEntityTypeString}
+        </p:column>
+    </ui:define>
+
+</ui:composition>

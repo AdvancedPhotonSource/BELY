@@ -54,6 +54,12 @@ See LICENSE file.
                         </p:submenu>
                     </c:if>                                        
                 </c:forEach>              
+
+                <p:menuitem id="generatedLogbookFullListMenuItem" 
+                            value="All Logbooks"
+                            icon="fa fa-book"
+                            url="#{request.contextPath}/views/itemDomainLogbook/fullList"
+                            styleClass="#{fn:endsWith(view.viewId, '/views/itemDomainLogbook/fullList.xhtml') ? 'activeMenuItem' : ''}"/>
             </p:submenu>
 
             <f:facet name="options">

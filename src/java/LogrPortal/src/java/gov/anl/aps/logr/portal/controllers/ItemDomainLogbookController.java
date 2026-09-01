@@ -101,6 +101,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     LogReactionFacade logReactionFacade;
 
     private EntityType currentEntityType = null;
+    private boolean fullListMode = false;
     private Log lastLog;
 
     private List<SearchResult> logResults;
@@ -143,6 +144,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private LogReactionControllerUtility logReactionControllerUtility;
 
     private static final String OPS_ENTITY_TYPE_NAME = "ops";
+
+    // Entity type url parameter requesting every logbook type. 
+    private static final int FULL_LIST_ET_ID = -1;
+    private static final String FULL_LIST_URL = "fullList";
+    private static final String FULL_LIST_PAGE_TITLE = "All Log Documents";
 
     private static final String LOGBOOK_SETTINGS_SHOW_TIMESTAMP_KEY = LogDocumentSettings.showTimestampKey.getValue();
     private static final String LOGBOOK_SETTINGS_TEMPLATE_LOG_MODE_KEY = LogDocumentSettings.logTemplateModeKey.getValue();
@@ -779,6 +785,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     public void processPreRenderOPSList() {
+        fullListMode = false;
         if (currentEntityType != null && itemLazyDataModel != null) {
             String name = currentEntityType.getName();
             if (name.equals(OPS_ENTITY_TYPE_NAME)) {
@@ -839,12 +846,21 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public void processPreRenderList() {
         super.processPreRenderList();
 
+        fullListMode = false;
+
         EntityType lastEntityType = currentEntityType;
         String currentEntityTypeIdStr = SessionUtility.getRequestParameterValue("et");
 
         if (currentEntityTypeIdStr != null) {
             // Load up entityTypeId that was specified. 
             int etId = Integer.parseInt(currentEntityTypeIdStr);
+
+            if (etId == FULL_LIST_ET_ID) {
+                // Request for log documents of every logbook type. 
+                redirectToFullList();
+                return;
+            }
+
             EntityType et = entityTypeFacade.find(etId);
             redirectToEntityTypeList(et);
             return;
@@ -881,7 +897,34 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @Override
     public void processPreRenderTemplateList() {
+        fullListMode = false;
         super.processPreRenderList();
+    }
+
+    // Calls super.processPreRenderList() to skip this class' redirect to a single type list. 
+    public void processPreRenderFullList() {
+        super.processPreRenderList();
+
+        fullListMode = true;
+        currentEntityType = null;
+
+        ItemDomainLogbookLazyDataModel dataModel = getItemLazyDataModel();
+        dataModel.setAllLogbookTypes();
+        dataModel.refreshDataModel();
+    }
+
+    private void redirectToFullList() {
+        String redirect = String.format("%s/%s", getDomainPath(), FULL_LIST_URL);
+        try {
+            SessionUtility.redirectTo(redirect);
+        } catch (IOException ex) {
+            logger.error(ex);
+            SessionUtility.addErrorMessage("Error", ex.getMessage());
+        }
+    }
+
+    public boolean isFullListMode() {
+        return fullListMode;
     }
 
     @Override
@@ -976,6 +1019,10 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     public String getItemListPageTitle() {
         String itemListPageTitle = super.getItemListPageTitle();
 
+        if (fullListMode) {
+            return FULL_LIST_PAGE_TITLE;
+        }
+
         if (currentEntityType != null) {
             String displayName = currentEntityType.getLongDisplayName();;
 
@@ -989,6 +1036,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     }
 
     public void navigateToLogDocumentList() {
+        if (fullListMode) {
+            redirectToFullList();
+            return;
+        }
+
         EntityType entityType = getCurrent().getEntityTypeList().get(0);
 
         redirectToEntityTypeList(entityType);
@@ -1000,8 +1052,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         boolean nextDocLoaded = currentDoc.getNextDocLoaded();
         if (!nextDocLoaded) {
             Integer logId = currentDoc.getId();
-            String entityTypeName = currentDoc.getEntityTypeList().get(0).getName();
-            nextDoc = itemDomainLogbookFacade.getNextLogDocument(entityTypeName, logId);
+            if (fullListMode) {
+                nextDoc = itemDomainLogbookFacade.getNextLogDocument(logId);
+            } else {
+                String entityTypeName = currentDoc.getEntityTypeList().get(0).getName();
+                nextDoc = itemDomainLogbookFacade.getNextLogDocument(entityTypeName, logId);
+            }
             currentDoc.setNextDoc(nextDoc);
             currentDoc.setNextDocLoaded(true);
         } else {
@@ -1016,8 +1072,12 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         boolean prevDocLoaded = currentDoc.getPrevDocLoaded();
         if (!prevDocLoaded) {
             Integer logId = currentDoc.getId();
-            String entityTypeName = currentDoc.getEntityTypeList().get(0).getName();
-            prevDoc = itemDomainLogbookFacade.getPreviousLogDocument(entityTypeName, logId);
+            if (fullListMode) {
+                prevDoc = itemDomainLogbookFacade.getPreviousLogDocument(logId);
+            } else {
+                String entityTypeName = currentDoc.getEntityTypeList().get(0).getName();
+                prevDoc = itemDomainLogbookFacade.getPreviousLogDocument(entityTypeName, logId);
+            }
             currentDoc.setPrevDoc(prevDoc);
             currentDoc.setPrevDocLoaded(true);
         } else {
@@ -1519,6 +1579,11 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     // </editor-fold>
     public final String getCurrentListPermalink() {
+        if (fullListMode) {
+            String redirect = String.format("%s/list?et=%d", getDomainPath(), FULL_LIST_ET_ID);
+            return String.format("%s%s", contextRootPermanentUrl, redirect);
+        }
+
         if (currentEntityType != null) {
             String redirect = getListRedirectForEntityType(currentEntityType, true, true);
             String viewPath = String.format("%s%s", contextRootPermanentUrl, redirect);

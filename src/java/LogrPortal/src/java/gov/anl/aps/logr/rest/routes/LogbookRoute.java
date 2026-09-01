@@ -16,7 +16,6 @@ import gov.anl.aps.logr.portal.model.db.beans.DomainFacade;
 import gov.anl.aps.logr.portal.model.db.beans.ItemDomainLogbookFacade;
 import gov.anl.aps.logr.portal.model.db.beans.LogFacade;
 import gov.anl.aps.logr.portal.model.db.entities.Attachment;
-import gov.anl.aps.logr.portal.model.db.entities.Domain;
 import gov.anl.aps.logr.portal.model.db.entities.EntityInfo;
 import gov.anl.aps.logr.portal.model.db.entities.EntityType;
 import gov.anl.aps.logr.portal.model.db.entities.Item;
@@ -32,6 +31,7 @@ import gov.anl.aps.logr.rest.entities.LogDocumentOptions;
 import gov.anl.aps.logr.rest.entities.LogDocumentSection;
 import gov.anl.aps.logr.rest.entities.LogEntry;
 import gov.anl.aps.logr.rest.entities.LogEntryAttachment;
+import gov.anl.aps.logr.rest.utilities.LogbookDomainUtility;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -77,38 +77,24 @@ public class LogbookRoute extends ItemBaseRoute {
     @EJB
     LogFacade logFacade;
 
-    private Domain getLogbookDomain() {
-        return domainFacade.find(ItemDomainName.LOGBOOK_ID);
-    }
-
+    // Delegates to the shared helper, which copies before removing the template type instead of filtering the domain's managed list in place.
     @GET
     @Path("/LogbookTypes")
     @Operation(responses = {
         @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<EntityType> getLogbookTypes() {
-        Domain domain = getLogbookDomain();
-        List<EntityType> logbookTypes = domain.getAllowedEntityTypeList();
-        // Remove template 
-        for (EntityType logbookType : logbookTypes) {
-            if (logbookType.getName().equals(EntityTypeName.template.getValue())) {
-                logbookTypes.remove(logbookType);
-                break;
-            }
-        }
-
-        return logbookTypes;
+        return LogbookDomainUtility.getLogbookTypes(domainFacade);
     }
 
+    // Delegates to the shared helper; behavior is unchanged, the item type list is returned unfiltered.
     @GET
     @Path("/LogbookSystems")
     @Operation(responses = {
         @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<ItemType> getLogbookSystems() {
-        Domain domain = getLogbookDomain();
-
-        return domain.getItemTypeList();
+        return LogbookDomainUtility.getLogbookSystems(domainFacade);
     }
 
     @GET
