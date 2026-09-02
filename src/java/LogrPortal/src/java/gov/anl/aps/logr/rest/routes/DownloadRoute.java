@@ -24,6 +24,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import javax.ejb.EJB;
@@ -197,13 +200,11 @@ public class DownloadRoute extends BaseRoute {
         File file = new File(storageFilePath);
 
         if (file.exists()) {
-            String headerObject = "";
-            if (isAttachment) {
-                headerObject += "attachment; ";
-            } else {
-                headerObject += "inline; ";
-            }
-            headerObject += "filename=" + fileName;
+            // Callers may force a download; otherwise the resolved type decides.
+            boolean forceDownload = isAttachment || !DownloadRouteMimeType.isInlineViewable(fileName);
+
+            String headerObject = forceDownload ? "attachment; " : "inline; ";
+            headerObject += buildFilenameHeaderParameters(fileName);
             
             ResponseBuilder response = null;
                         
@@ -214,6 +215,9 @@ public class DownloadRoute extends BaseRoute {
                     headerObject);
             
             response.header("Content-Length", file.length()); 
+
+            // Keep browsers from sniffing a different type than the one we declared.
+            response.header("X-Content-Type-Options", "nosniff");
             
             return response.build();
         }
@@ -221,6 +225,43 @@ public class DownloadRoute extends BaseRoute {
         FileNotFoundException fileNotFoundException = new FileNotFoundException(errorFileTypeColonName + " requested was not found.");
         LOGGER.error(fileNotFoundException);
         throw fileNotFoundException;
+    }
+
+    /** RFC 6266 filename parameters: quoted ASCII fallback plus RFC 5987 encoded form. */
+    private String buildFilenameHeaderParameters(String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            fileName = "download";
+        }
+
+        // Never let a path escape into the suggested name.
+        fileName = fileName.replace('\\', '/');
+        int lastSeparator = fileName.lastIndexOf('/');
+        if (lastSeparator >= 0) {
+            fileName = fileName.substring(lastSeparator + 1);
+        }
+        if (fileName.isEmpty()) {
+            fileName = "download";
+        }
+
+        StringBuilder asciiFallback = new StringBuilder();
+        for (char c : fileName.toCharArray()) {
+            if (c < 32 || c > 126 || c == '"' || c == '\\') {
+                asciiFallback.append('_');
+            } else {
+                asciiFallback.append(c);
+            }
+        }
+
+        String encoded;
+        try {
+            encoded = URLEncoder.encode(fileName, StandardCharsets.UTF_8.name())
+                    .replace("+", "%20");
+        } catch (UnsupportedEncodingException ex) {
+            // UTF-8 is always available.
+            encoded = asciiFallback.toString();
+        }
+
+        return "filename=\"" + asciiFallback + "\"; filename*=UTF-8''" + encoded;
     }
 
 }
