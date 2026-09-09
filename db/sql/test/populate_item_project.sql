@@ -1,5 +1,9 @@
+--
+-- Copyright (c) UChicago Argonne, LLC. All rights reserved.
+-- See LICENSE file.
+--
+
 LOCK TABLES `item_project` WRITE;
-SET SESSION FOREIGN_KEY_CHECKS=0;
 /*!40000 ALTER TABLE `item_project` DISABLE KEYS */;
 INSERT INTO `item_project` VALUES
 (1,'Sample',NULL);

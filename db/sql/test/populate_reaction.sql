@@ -1,5 +1,9 @@
+--
+-- Copyright (c) UChicago Argonne, LLC. All rights reserved.
+-- See LICENSE file.
+--
+
 LOCK TABLES `reaction` WRITE;
-SET SESSION FOREIGN_KEY_CHECKS=0;
 /*!40000 ALTER TABLE `reaction` DISABLE KEYS */;
 INSERT INTO `reaction` VALUES
 (1,'Like',128077,NULL,1.00),
