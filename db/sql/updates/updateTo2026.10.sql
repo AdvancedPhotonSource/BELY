@@ -1,3 +1,5 @@
+-- Execute by running `mysql BELY_DB_NAME --host=127.0.0.1 --user=logr -p < updateTo2026.10.sql`
+
 --
 -- Default owner user group per logbook type (entity_type)
 --
