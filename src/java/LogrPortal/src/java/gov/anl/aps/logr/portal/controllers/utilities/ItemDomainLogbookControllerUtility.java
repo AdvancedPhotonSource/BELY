@@ -21,6 +21,7 @@ import gov.anl.aps.logr.portal.model.db.entities.ItemElement;
 import gov.anl.aps.logr.portal.model.db.entities.ItemType;
 import gov.anl.aps.logr.portal.model.db.entities.Log;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
+import gov.anl.aps.logr.portal.model.db.entities.UserGroup;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.utilities.AuthorizationUtility;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
@@ -116,7 +117,34 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
             }
         }
 
+        // Applied after the template so the logbook default always takes precedence.
+        applyDefaultOwnerUserGroup(newLogbookDoc, entityType);
+
         return newLogbookDoc;
+    }
+
+    // Resolves the logbook's default owner group, or null if it does not apply to this document.
+    private static UserGroup resolveDefaultOwnerUserGroup(ItemDomainLogbook logbookDoc, EntityType logbookType) {
+        if (logbookDoc == null || logbookType == null || logbookDoc.getEntityInfo() == null) {
+            return null;
+        }
+
+        return logbookType.getDefaultOwnerUserGroup();
+    }
+
+    // Assigns the logbook's default owner group to the new document; no-op if none is set.
+    public static void applyDefaultOwnerUserGroup(ItemDomainLogbook logbookDoc, EntityType logbookType) {
+        UserGroup defaultOwnerUserGroup = resolveDefaultOwnerUserGroup(logbookDoc, logbookType);
+        if (defaultOwnerUserGroup != null) {
+            logbookDoc.getEntityInfo().setOwnerUserGroup(defaultOwnerUserGroup);
+        }
+    }
+
+    // True if the document's current owner group matches its logbook's default owner group.
+    public static boolean isOwnerUserGroupDefaultForLogbookType(ItemDomainLogbook logbookDoc, EntityType logbookType) {
+        UserGroup defaultOwnerUserGroup = resolveDefaultOwnerUserGroup(logbookDoc, logbookType);
+        return defaultOwnerUserGroup != null
+                && defaultOwnerUserGroup.equals(logbookDoc.getEntityInfo().getOwnerUserGroup());
     }
 
     @Override
