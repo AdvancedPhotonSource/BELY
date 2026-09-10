@@ -18,6 +18,10 @@ See LICENSE file.
 
     <ui:param name="entityController" value="#{itemDomainLogbookController}"/>                
 
+    <!-- ui:param falls through the include chain to drive the Owner Group auto-selected icon. -->
+    <ui:param name="autoSelectedOwnerGroupMessage"
+              value="#{itemDomainLogbookController.autoSelectedOwnerGroupMessage}"/>
+
     <ui:define name="itemCreatedFromTemplateValue">
         <p:outputPanel rendered="#{entityController.displayCreatedFromTemplateForCurrent}">            
             <p:selectOneMenu value="#{entityController.templateToCreateNewItem}"
