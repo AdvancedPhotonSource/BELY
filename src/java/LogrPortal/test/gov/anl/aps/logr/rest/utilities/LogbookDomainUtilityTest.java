@@ -71,12 +71,77 @@ public class LogbookDomainUtilityTest {
                 new EntityType(EntityTypeName.TEMPLATE_ID, TEMPLATE),
                 new EntityType(2, "Maintenance"));
 
-        List<EntityType> result = LogbookDomainUtility.getLogbookTypes(domain);
+        List<EntityType> result = LogbookDomainUtility.getLogbookTypes(domain, false);
 
         check(!containsName(result, TEMPLATE), "template must be filtered out of the logbook types");
         check(result.size() == 2, "the two non-template types must survive, got " + result.size());
         check(containsName(result, "Ops-Shift") && containsName(result, "Maintenance"),
                 "non-template types must be preserved");
+    }
+
+    static void testParentTypesAreFilteredWhenIncludeParentsIsFalse() {
+        EntityType parent = new EntityType(1, "Operations");
+        EntityType child = new EntityType(2, "Storage-Ring");
+        child.setParentEntityType(parent);
+        parent.setEntityTypeChildren(new ArrayList<>(Arrays.asList(child)));
+        child.setEntityTypeChildren(new ArrayList<>());
+        Domain domain = domainWithAllowedTypes(parent, child);
+
+        List<EntityType> result = LogbookDomainUtility.getLogbookTypes(domain, false);
+
+        check(result.size() == 1 && result.get(0).equals(child),
+                "the default list must contain leaves only");
+    }
+
+    static void testIncludeParentsPreservesParentTypes() {
+        EntityType parent = new EntityType(1, "Operations");
+        EntityType child = new EntityType(2, "Storage-Ring");
+        parent.setEntityTypeChildren(new ArrayList<>(Arrays.asList(child)));
+        child.setEntityTypeChildren(new ArrayList<>());
+        Domain domain = domainWithAllowedTypes(parent, child);
+
+        List<EntityType> result = LogbookDomainUtility.getLogbookTypes(domain, true);
+
+        check(result.size() == 2 && containsName(result, "Operations"),
+                "includeAll must preserve grouping types");
+    }
+
+    static void testHierarchyReturnsSortedRootsWithNestedChildren() {
+        EntityType secondRoot = new EntityType(1, "Second");
+        secondRoot.setSortOrder(2.0f);
+        secondRoot.setEntityTypeChildren(new ArrayList<>());
+        EntityType firstRoot = new EntityType(2, "First");
+        firstRoot.setSortOrder(1.0f);
+        EntityType child = new EntityType(3, "Child");
+        child.setParentEntityType(firstRoot);
+        child.setEntityTypeChildren(new ArrayList<>());
+        firstRoot.setEntityTypeChildren(new ArrayList<>(Arrays.asList(child)));
+        EntityType template = new EntityType(EntityTypeName.TEMPLATE_ID, TEMPLATE);
+        template.setEntityTypeChildren(new ArrayList<>());
+        Domain domain = domainWithAllowedTypes(secondRoot, child, template, firstRoot);
+
+        List<EntityType> result = LogbookDomainUtility.getLogbookTypeHierarchy(domain);
+
+        check(result.size() == 2, "the hierarchy must return only non-template roots");
+        check(result.get(0).equals(firstRoot) && result.get(1).equals(secondRoot),
+                "hierarchy roots must be ordered by sort order");
+        check(result.get(0).getEntityTypeChildren().size() == 1
+                && result.get(0).getEntityTypeChildren().get(0).equals(child),
+                "children must remain nested under their root");
+    }
+
+    static void testHierarchyDoesNotMutateSourceList() {
+        EntityType root = new EntityType(1, "Operations");
+        root.setEntityTypeChildren(new ArrayList<>());
+        EntityType template = new EntityType(EntityTypeName.TEMPLATE_ID, TEMPLATE);
+        template.setEntityTypeChildren(new ArrayList<>());
+        Domain domain = domainWithAllowedTypes(template, root);
+        List<EntityType> managedList = domain.getAllowedEntityTypeList();
+
+        LogbookDomainUtility.getLogbookTypeHierarchy(domain);
+
+        check(managedList.size() == 2 && containsName(managedList, TEMPLATE),
+                "building the hierarchy must not mutate the managed list");
     }
 
     // The actual regression guard for the in-place mutation bug.
@@ -86,7 +151,7 @@ public class LogbookDomainUtilityTest {
                 new EntityType(EntityTypeName.TEMPLATE_ID, TEMPLATE));
         List<EntityType> managedList = domain.getAllowedEntityTypeList();
 
-        LogbookDomainUtility.getLogbookTypes(domain);
+        LogbookDomainUtility.getLogbookTypes(domain, false);
 
         check(managedList.size() == 2,
                 "the domain's managed allowed-entity-type list must not be modified, size is " + managedList.size());
@@ -100,7 +165,7 @@ public class LogbookDomainUtilityTest {
     static void testReturnedListIsNotTheManagedList() {
         Domain domain = domainWithAllowedTypes(new EntityType(1, "Ops-Shift"));
 
-        List<EntityType> result = LogbookDomainUtility.getLogbookTypes(domain);
+        List<EntityType> result = LogbookDomainUtility.getLogbookTypes(domain, false);
 
         check(result != domain.getAllowedEntityTypeList(),
                 "callers must receive a copy, never the managed collection itself");
@@ -115,9 +180,9 @@ public class LogbookDomainUtilityTest {
                 new EntityType(1, "Ops-Shift"),
                 new EntityType(EntityTypeName.TEMPLATE_ID, TEMPLATE));
 
-        List<EntityType> first = LogbookDomainUtility.getLogbookTypes(domain);
-        List<EntityType> second = LogbookDomainUtility.getLogbookTypes(domain);
-        List<EntityType> third = LogbookDomainUtility.getLogbookTypes(domain);
+        List<EntityType> first = LogbookDomainUtility.getLogbookTypes(domain, false);
+        List<EntityType> second = LogbookDomainUtility.getLogbookTypes(domain, false);
+        List<EntityType> third = LogbookDomainUtility.getLogbookTypes(domain, false);
 
         check(first.size() == second.size() && second.size() == third.size(),
                 "repeated calls on the same domain must return identically sized results");
@@ -128,7 +193,7 @@ public class LogbookDomainUtilityTest {
     static void testNoTemplatePresentIsANoOp() {
         Domain domain = domainWithAllowedTypes(new EntityType(1, "Ops-Shift"), new EntityType(2, "Maintenance"));
 
-        List<EntityType> result = LogbookDomainUtility.getLogbookTypes(domain);
+        List<EntityType> result = LogbookDomainUtility.getLogbookTypes(domain, false);
 
         check(result.size() == 2, "a domain without a template entry must be returned intact");
     }
@@ -136,7 +201,7 @@ public class LogbookDomainUtilityTest {
     static void testEmptyAllowedListReturnsEmpty() {
         Domain domain = domainWithAllowedTypes();
 
-        List<EntityType> result = LogbookDomainUtility.getLogbookTypes(domain);
+        List<EntityType> result = LogbookDomainUtility.getLogbookTypes(domain, false);
 
         check(result != null && result.isEmpty(), "an empty allowed list must yield an empty result, not null");
     }
@@ -145,13 +210,13 @@ public class LogbookDomainUtilityTest {
         Domain domain = new Domain();
         domain.setAllowedEntityTypeList(null);
 
-        List<EntityType> result = LogbookDomainUtility.getLogbookTypes(domain);
+        List<EntityType> result = LogbookDomainUtility.getLogbookTypes(domain, false);
 
         check(result != null && result.isEmpty(), "a null allowed list must yield an empty result, not throw");
     }
 
     static void testNullDomainReturnsEmptyTypes() {
-        List<EntityType> result = LogbookDomainUtility.getLogbookTypes((Domain) null);
+        List<EntityType> result = LogbookDomainUtility.getLogbookTypes((Domain) null, false);
 
         check(result != null && result.isEmpty(), "a null domain must yield an empty result, not throw");
     }
@@ -162,7 +227,7 @@ public class LogbookDomainUtilityTest {
         domain.setAllowedEntityTypeList(new ArrayList<>(Arrays.asList(
                 new EntityType(1, "Ops-Shift"), null, new EntityType(EntityTypeName.TEMPLATE_ID, TEMPLATE))));
 
-        List<EntityType> result = LogbookDomainUtility.getLogbookTypes(domain);
+        List<EntityType> result = LogbookDomainUtility.getLogbookTypes(domain, false);
 
         check(!containsNull(result) || result.size() == 2, "a null entry must not cause a NullPointerException");
         check(!containsName(stripNulls(result), TEMPLATE), "template must still be filtered alongside a null entry");
@@ -231,11 +296,27 @@ public class LogbookDomainUtilityTest {
                 new EntityType(EntityTypeName.TEMPLATE_ID, TEMPLATE));
         RecordingDomainFacade facade = new RecordingDomainFacade(domain);
 
-        List<EntityType> result = LogbookDomainUtility.getLogbookTypes(facade);
+        List<EntityType> result = LogbookDomainUtility.getLogbookTypes(facade, false);
 
         check(facade.requestedId != null && facade.requestedId == ItemDomainName.LOGBOOK_ID,
                 "the facade must be queried with the logbook domain id, got " + facade.requestedId);
         check(result.size() == 1, "the facade overload must apply the same template filtering");
+    }
+
+    static void testFacadeIncludeAllAndHierarchyOverloads() {
+        EntityType parent = new EntityType(1, "Operations");
+        EntityType child = new EntityType(2, "Storage-Ring");
+        child.setParentEntityType(parent);
+        parent.setEntityTypeChildren(new ArrayList<>(Arrays.asList(child)));
+        child.setEntityTypeChildren(new ArrayList<>());
+        Domain domain = domainWithAllowedTypes(parent, child);
+        RecordingDomainFacade facade = new RecordingDomainFacade(domain);
+
+        check(LogbookDomainUtility.getLogbookTypes(facade, true).size() == 2,
+                "facade includeAll overload must preserve grouping types");
+        List<EntityType> hierarchy = LogbookDomainUtility.getLogbookTypeHierarchy(facade);
+        check(hierarchy.size() == 1 && hierarchy.get(0).equals(parent),
+                "facade hierarchy overload must return roots");
     }
 
     // The facade overload must not mutate the domain it resolves either.
@@ -245,7 +326,7 @@ public class LogbookDomainUtilityTest {
                 new EntityType(EntityTypeName.TEMPLATE_ID, TEMPLATE));
         List<EntityType> managedList = domain.getAllowedEntityTypeList();
 
-        LogbookDomainUtility.getLogbookTypes(new RecordingDomainFacade(domain));
+        LogbookDomainUtility.getLogbookTypes(new RecordingDomainFacade(domain), false);
 
         check(managedList.size() == 2,
                 "the facade overload must leave the managed list intact, size is " + managedList.size());
@@ -265,7 +346,7 @@ public class LogbookDomainUtilityTest {
     static void testNullFacadeIsSafe() {
         check(LogbookDomainUtility.getLogbookDomain(null) == null,
                 "a null facade must resolve to a null domain, not throw");
-        check(LogbookDomainUtility.getLogbookTypes((DomainFacade) null).isEmpty(),
+        check(LogbookDomainUtility.getLogbookTypes((DomainFacade) null, false).isEmpty(),
                 "a null facade must yield empty logbook types, not throw");
         check(LogbookDomainUtility.getLogbookSystems((DomainFacade) null).isEmpty(),
                 "a null facade must yield empty systems, not throw");

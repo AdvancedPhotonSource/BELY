@@ -195,7 +195,7 @@ public class SearchRoute {
 
     // Delegates to the shared helper, which copies before removing the template type instead of filtering the domain's managed list in place.
     private List<EntityType> getLogbookTypes() {
-        return LogbookDomainUtility.getLogbookTypes(domainFacade);
+        return LogbookDomainUtility.getLogbookTypes(domainFacade, false);
     }
 
     // Delegates to the shared helper; behavior is unchanged, the item type list is returned unfiltered.

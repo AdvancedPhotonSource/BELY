@@ -105,6 +105,15 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
     }
 
     public ItemDomainLogbook completeCreateEntityInstance(ItemDomainLogbook newLogbookDoc, EntityType logbookType, UserInfo userInfo, boolean attachDefaultTemplate) throws CdbException, CloneNotSupportedException {
+        if (logbookType == null) {
+            throw new InvalidObjectState("A logbook type is required to create a log document.");
+        }
+        if (logbookType.isHasChildren()) {
+            throw new InvalidObjectState(String.format(
+                    "'%s' is a grouping logbook type and cannot contain log documents. Select one of its child logbook types.",
+                    logbookType.getAvailableLongDisplayName()));
+        }
+
         newLogbookDoc.setEntityTypeList(new ArrayList<>());
         EntityType entityType = logbookType;
         newLogbookDoc.getEntityTypeList().add(entityType);

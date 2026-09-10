@@ -12,6 +12,7 @@ import gov.anl.aps.logr.portal.model.db.entities.EntityType;
 import gov.anl.aps.logr.portal.model.db.entities.ItemType;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 // Shared logbook domain lookups for the REST and MCP layers; copies before filtering so the domain's managed collection is never modified.
@@ -25,9 +26,12 @@ public final class LogbookDomainUtility {
         return domainFacade == null ? null : domainFacade.find(ItemDomainName.LOGBOOK_ID);
     }
 
-    // Convenience overload so callers holding only the facade need no domain lookup of their own.
-    public static List<EntityType> getLogbookTypes(DomainFacade domainFacade) {
-        return getLogbookTypes(getLogbookDomain(domainFacade));
+    public static List<EntityType> getLogbookTypes(DomainFacade domainFacade, boolean includeParents) {
+        return getLogbookTypes(getLogbookDomain(domainFacade), includeParents);
+    }
+
+    public static List<EntityType> getLogbookTypeHierarchy(DomainFacade domainFacade) {
+        return getLogbookTypeHierarchy(getLogbookDomain(domainFacade));
     }
 
     // Convenience overload so callers holding only the facade need no domain lookup of their own.
@@ -35,26 +39,45 @@ public final class LogbookDomainUtility {
         return getLogbookSystems(getLogbookDomain(domainFacade));
     }
 
-    // Allowed logbook types minus the template type, as a new list; never returns the managed collection.
-    public static List<EntityType> getLogbookTypes(Domain domain) {
-        // Callers may hold no domain; return an empty, modifiable list rather than throwing.
-        if (domain == null) {
-            return new ArrayList<>();
+    public static List<EntityType> getLogbookTypes(Domain domain, boolean includeParents) {
+        List<EntityType> logbookTypes = getAllLogbookTypes(domain);
+        if (!includeParents) {
+            logbookTypes.removeIf(type -> type != null && type.isHasChildren());
         }
-
-        List<EntityType> allowedEntityTypeList = domain.getAllowedEntityTypeList();
-        // A domain with no configured allowed types is valid, not an error.
-        if (allowedEntityTypeList == null) {
-            return new ArrayList<>();
-        }
-
-        // Copy before filtering; never mutate the domain's managed collection.
-        List<EntityType> logbookTypes = new ArrayList<>(allowedEntityTypeList);
-        String templateName = EntityTypeName.template.getValue();
-        // Null-tolerant exact-name match, preserving the original filtering semantics.
-        logbookTypes.removeIf(t -> t != null && templateName.equals(t.getName()));
-
         return logbookTypes;
+    }
+
+    public static List<EntityType> getLogbookTypeHierarchy(Domain domain) {
+        List<EntityType> roots = getAllLogbookTypes(domain);
+        roots.removeIf(type -> type == null || type.getParentEntityType() != null);
+        roots.sort(Comparator.comparing(EntityType::getSortOrder,
+                Comparator.nullsLast(Comparator.naturalOrder())));
+        for (EntityType root : roots) {
+            initializeChildren(root);
+        }
+        return roots;
+    }
+
+    private static List<EntityType> getAllLogbookTypes(Domain domain) {
+        if (domain == null || domain.getAllowedEntityTypeList() == null) {
+            return new ArrayList<>();
+        }
+
+        List<EntityType> logbookTypes = new ArrayList<>(domain.getAllowedEntityTypeList());
+        String templateName = EntityTypeName.template.getValue();
+        logbookTypes.removeIf(type -> type != null && templateName.equals(type.getName()));
+        return logbookTypes;
+    }
+
+    private static void initializeChildren(EntityType entityType) {
+        List<EntityType> children = entityType.getEntityTypeChildren();
+        if (children == null) {
+            return;
+        }
+        children.size();
+        for (EntityType child : children) {
+            initializeChildren(child);
+        }
     }
 
     // Systems configured for the logbook domain; unfiltered, empty when unavailable.
