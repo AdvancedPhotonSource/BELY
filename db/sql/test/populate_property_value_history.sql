@@ -1,7 +1,9 @@
+--
+-- Copyright (c) UChicago Argonne, LLC. All rights reserved.
+-- See LICENSE file.
+--
+
 LOCK TABLES `property_value_history` WRITE;
-SET SESSION FOREIGN_KEY_CHECKS=0;
 /*!40000 ALTER TABLE `property_value_history` DISABLE KEYS */;
-INSERT INTO `property_value_history` VALUES
-(1,3,NULL,'',NULL,NULL,'2024-08-29 14:47:33',1,'2024-08-29 14:47:33',NULL,NULL,NULL);
 /*!40000 ALTER TABLE `property_value_history` ENABLE KEYS */;
 UNLOCK TABLES;

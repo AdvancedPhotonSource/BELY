@@ -7,6 +7,7 @@ See LICENSE file.
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://java.sun.com/jsf/facelets"
                 xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:h="http://xmlns.jcp.org/jsf/html">  
     
     <ui:param name="nameEditable"
@@ -38,6 +39,19 @@ See LICENSE file.
         <p:inputText id="editCustomListUrl#{viewName}" value="#{entityType.customListUrl}">
             <p:tooltip for="editCustomListUrl#{viewName}" value="(Optional) Special list URL for entity type. Usually left blank." /> 
         </p:inputText>
+
+        <h:outputLabel for="editDefaultOwnerGroup#{viewName}" value="Default Owner Group" />
+        <p:selectOneMenu id="editDefaultOwnerGroup#{viewName}"
+                         value="#{entityType.defaultOwnerUserGroup}"
+                         converter="userGroupConverter"
+                         filter="true" filterMatchMode="contains">
+            <f:selectItem itemLabel="Select" itemValue="#{null}"/>
+            <f:selectItems var="defaultOwnerGroup"
+                           value="#{userGroupController.availableItems}"
+                           itemLabel="#{defaultOwnerGroup.name}"
+                           itemValue="#{defaultOwnerGroup}"/>
+            <p:tooltip for="editDefaultOwnerGroup#{viewName}" value="(Optional) Default group for new log documents." /> 
+        </p:selectOneMenu>
         
         <ui:insert name="additionalPanelGridItems" /> 
     </p:panelGrid>

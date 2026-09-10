@@ -1,5 +1,9 @@
+--
+-- Copyright (c) UChicago Argonne, LLC. All rights reserved.
+-- See LICENSE file.
+--
+
 LOCK TABLES `domain` WRITE;
-SET SESSION FOREIGN_KEY_CHECKS=0;
 /*!40000 ALTER TABLE `domain` DISABLE KEYS */;
 INSERT INTO `domain` VALUES
 (1,'Logbook','Item domain to maintain logbooks.',NULL,'UID','System',NULL);

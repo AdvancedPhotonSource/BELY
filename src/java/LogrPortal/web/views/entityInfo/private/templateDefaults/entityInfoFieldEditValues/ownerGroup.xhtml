@@ -24,11 +24,22 @@ See LICENSE file.
             <f:selectItem itemLabel="Select" itemValue="#{null}"/>
             <f:selectItems var="ownerGroup" value="#{userGroupController.availableItems}" itemLabel="#{ownerUserGroup.name}" itemValue="#{ownerGroup}"/>
         </p:selectOneMenu>
+        <!-- Auto-selected indicator; explained by the panel tooltip below. -->
+        <h:panelGroup layout="span"
+                      styleClass="fa fa-link-icon fa-info-circle"
+                      rendered="#{not empty autoSelectedOwnerGroupMessage}"/>
+
         <p:remoteCommand name="updateOwnerGroup#{viewName}"
                          update="ownerGroup#{viewName}"/>        
 
         <p:message for="ownerGroup#{viewName}"/> 
-        <p:tooltip for="ownerGroup#{viewName}" value="Any user who is a member of the owner group has the ability to modify this entity if the group-writeable flag is set."/>
+        <p:tooltip for="ownerGroup#{viewName}">
+            <h:outputText value="Any user who is a member of the owner group has the ability to modify this entity if the group-writeable flag is set."/>
+            <h:panelGroup rendered="#{not empty autoSelectedOwnerGroupMessage}">
+                <br/>
+                <h:outputText value="#{autoSelectedOwnerGroupMessage}"/>
+            </h:panelGroup>
+        </p:tooltip>
     </p:outputPanel>
 
 </ui:composition>

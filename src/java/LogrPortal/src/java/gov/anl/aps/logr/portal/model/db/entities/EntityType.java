@@ -97,6 +97,9 @@ public class EntityType extends CdbEntity implements Serializable {
     @JoinColumn(name = "primary_template_item_id", referencedColumnName = "id")
     @ManyToOne(cascade = CascadeType.ALL)
     private Item primaryTemplateItem;
+    @JoinColumn(name = "default_owner_user_group_id", referencedColumnName = "id")
+    @ManyToOne
+    private UserGroup defaultOwnerUserGroup;
     
     private transient String listUrl = null; 
 
@@ -263,6 +266,17 @@ public class EntityType extends CdbEntity implements Serializable {
     public void setPrimaryTemplateItem(Item primaryTemplateItem) {
         this.primaryTemplateItem = primaryTemplateItem;
     }    
+
+    // Owner group applied by default to new items of this entity type (logbook); may be null.
+    @JsonIgnore
+    @XmlTransient
+    public UserGroup getDefaultOwnerUserGroup() {
+        return defaultOwnerUserGroup;
+    }
+
+    public void setDefaultOwnerUserGroup(UserGroup defaultOwnerUserGroup) {
+        this.defaultOwnerUserGroup = defaultOwnerUserGroup;
+    }
     
     @JsonIgnore
     public boolean isHasChildren() {

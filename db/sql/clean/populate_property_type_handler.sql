@@ -12,7 +12,5 @@ INSERT INTO `property_type_handler` VALUES
 (4,'Currency','Handler for monetary values.'),
 (5,'Boolean','Handler for boolean values.'),
 (6,'Date','Handler for date values.');
--- (7,'Traveler Template','Handler used for creating/viewing traveler templates in the traveler system.'),
--- (8,'Traveler Instance','Handler used for creating/viewing traveler instances in the traveler system.');
 /*!40000 ALTER TABLE `property_type_handler` ENABLE KEYS */;
 UNLOCK TABLES;

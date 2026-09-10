@@ -1628,6 +1628,26 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         return super.prepareCreate();
     }
 
+    // True while the item's owner group is still the one auto-applied from the current logbook.
+    public boolean isOwnerGroupAutoSelectedForCurrent() {
+        return ItemDomainLogbookControllerUtility.isOwnerUserGroupDefaultForLogbookType(
+                getCurrent(), currentEntityType);
+    }
+
+    // Tooltip text for the auto-selected owner group indicator, or null if not auto-selected.
+    public String getAutoSelectedOwnerGroupMessage() {
+        if (!isOwnerGroupAutoSelectedForCurrent()) {
+            return null;
+        }
+
+        String groupName = getCurrent().getEntityInfo().getOwnerUserGroup().getName();
+        String logbookName = currentEntityType.getAvailableLongDisplayName();
+
+        return String.format(
+                "Owner group '%s' was automatically selected as the default group for logbook '%s'. You may change it.",
+                groupName, logbookName);
+    }
+
     @Override
     public String create() {
         if (!generatedName.isBlank()) {

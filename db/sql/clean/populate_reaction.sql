@@ -6,10 +6,10 @@
 LOCK TABLES `reaction` WRITE;
 /*!40000 ALTER TABLE `reaction` DISABLE KEYS */;
 INSERT INTO `reaction` VALUES
-(1,'Like',128077,NULL,1.0),
-(2,'Thinking',129300,NULL,2.0),
-(3,'Great Job!',128175,NULL,3.0),
-(4,'Laugh',128516,NULL,4.0),
-(5,"Celebrate",127881,NULL,5.0);
+(1,'Like',128077,NULL,1.00),
+(2,'Thinking',129300,NULL,2.00),
+(3,'Great Job!',128175,NULL,3.00),
+(4,'Laugh',128516,NULL,4.00),
+(5,'Celebrate',127881,NULL,5.00);
 /*!40000 ALTER TABLE `reaction` ENABLE KEYS */;
 UNLOCK TABLES;
