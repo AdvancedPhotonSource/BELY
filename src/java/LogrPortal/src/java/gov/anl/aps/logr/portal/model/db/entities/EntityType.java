@@ -142,6 +142,13 @@ public class EntityType extends CdbEntity implements Serializable {
         this.description = description;
     }
 
+    public String getParentDisplayName() {
+        if (getParentEntityType() != null) {
+            return getParentEntityType().getDisplayName();
+        }
+        return null;
+    }
+
     @XmlTransient
     public List<EntityType> getAllowedEntityTypeList() {
         return allowedEntityTypeList;
@@ -240,7 +247,6 @@ public class EntityType extends CdbEntity implements Serializable {
         this.isInternal = isInternal;
     }
 
-    @XmlTransient
     public List<EntityType> getEntityTypeChildren() {
         return entityTypeChildren;
     }
@@ -280,7 +286,7 @@ public class EntityType extends CdbEntity implements Serializable {
     
     @JsonIgnore
     public boolean isHasChildren() {
-        return !entityTypeChildren.isEmpty(); 
+        return entityTypeChildren != null && !entityTypeChildren.isEmpty();
     }
     
     @JsonIgnore    
