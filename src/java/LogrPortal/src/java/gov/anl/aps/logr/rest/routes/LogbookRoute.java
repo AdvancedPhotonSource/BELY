@@ -83,8 +83,19 @@ public class LogbookRoute extends ItemBaseRoute {
     @Operation(responses = {
         @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
-    public List<EntityType> getLogbookTypes() {
-        return LogbookDomainUtility.getLogbookTypes(domainFacade);
+    public List<EntityType> getLogbookTypes(
+            @Parameter(description = "Include logbook types that have children (grouping types).")
+            @QueryParam("includeAll") boolean includeAll) {
+        return LogbookDomainUtility.getLogbookTypes(domainFacade, includeAll);
+    }
+
+    @GET
+    @Path("/LogbookTypeHierarchy")
+    @Operation(responses = {
+        @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<EntityType> getLogbookTypeHierarchy() {
+        return LogbookDomainUtility.getLogbookTypeHierarchy(domainFacade);
     }
 
     // Delegates to the shared helper; behavior is unchanged, the item type list is returned unfiltered.
@@ -114,7 +125,7 @@ public class LogbookRoute extends ItemBaseRoute {
         @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @Produces(MediaType.APPLICATION_JSON)
     public List<ItemDomainLogbook> getLogDocuments(@PathParam("logbookTypeId") int logbookTypeId, @PathParam("limit") int rowLimit) throws InvalidArgument {
-        List<EntityType> logbookTypes = getLogbookTypes();
+        List<EntityType> logbookTypes = LogbookDomainUtility.getLogbookTypes(domainFacade, false);
         EntityType logbookType = null;
 
         for (EntityType type : logbookTypes) {
@@ -479,7 +490,7 @@ public class LogbookRoute extends ItemBaseRoute {
     }
 
     private EntityType verifyLogbookTypeArgument(Integer logbookTypeId) throws InvalidArgument {
-        List<EntityType> logbookTypes = getLogbookTypes();
+        List<EntityType> logbookTypes = LogbookDomainUtility.getLogbookTypes(domainFacade, false);
 
         for (EntityType logbookType : logbookTypes) {
             if (logbookType.getId() == logbookTypeId) {
