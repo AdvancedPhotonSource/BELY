@@ -62,7 +62,7 @@ public class McpToolContext {
 
     // Delegates to the shared helper so REST and MCP filter logbook types identically.
     public List<EntityType> getLogbookTypes() {
-        return LogbookDomainUtility.getLogbookTypes(domainFacade);
+        return LogbookDomainUtility.getLogbookTypes(domainFacade, false);
     }
 
     // Delegates to the shared helper so REST and MCP resolve systems identically.
