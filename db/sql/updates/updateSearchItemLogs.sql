@@ -1,30 +1,43 @@
--- Execute by running `mysql BELY_DB_NAME --host=127.0.0.1 --user=logr -p < updateTo2026.10.sql`
-
 --
--- Default owner user group per logbook type (entity_type)
+-- Copyright (c) UChicago Argonne, LLC. All rights reserved.
+-- See LICENSE file.
 --
-
-ALTER TABLE entity_type ADD column `default_owner_user_group_id` int(11) unsigned DEFAULT NULL AFTER primary_template_item_id;
-ALTER TABLE entity_type ADD KEY `default_owner_user_group_entity_type_k3` (`default_owner_user_group_id`);
-ALTER TABLE entity_type ADD CONSTRAINT `default_owner_user_group_entity_type_fk3` FOREIGN KEY (`default_owner_user_group_id`) REFERENCES `user_group` (`id`) ON UPDATE CASCADE ON DELETE SET NULL;
-
+-- Rewrite of search_item_logs to fix a 800x+ slowdown on MariaDB 10.5.
 --
--- Rewrite of search_item_logs: fixes a ~425x slowdown on MariaDB 10.5.
+-- Execute by running:
+--   mysql BELY_DB_NAME --host=127.0.0.1 --user=logr -p < updateSearchItemLogs.sql
 --
+-- WHY
+-- ---
 -- The old procedure joined `item` directly after `log`, but no join predicate connects
--- those two tables (they are linked only via item_element_log). MariaDB 10.5 therefore
--- built an unconstrained 53,217 x 10,881 (~579M) row product and range-checked
--- parent_item across it -- 302M extra InnoDB row reads, ~255 seconds. MariaDB 12.3
--- happens to pick a better join order and ran the same procedure in 310 ms, which is
--- why this never showed up in development.
+-- those two tables (they are linked only indirectly via item_element_log). MariaDB 10.5
+-- therefore produced an unconstrained cross product of 53,217 logs x 10,881 items
+-- (~579M combinations), then applied "Range checked for each record" on parent_item over
+-- all of them -- 302 million extra InnoDB row reads, ~255 seconds.
 --
--- The rewrite narrows `log` in a CTE first, joins item_element_log immediately after,
--- splits the OR join into a UNION of two index-friendly branches, uses explicit JOINs
--- instead of comma joins, and applies type filters as EXISTS. Measured on the server:
--- 255 s -> 0.6 s. Search semantics are unchanged; no Java changes required.
+-- MariaDB 12.3 (the dev environment) happens to pick a better join order and runs the
+-- same procedure in 310 ms, which is why this was invisible during development.
 --
--- Also fixes a latent bug: the old code wrapped LIKE values in double quotes, so search
--- terms containing a double quote broke.
+-- This rewrite makes the good plan structural rather than luck:
+--   1. Narrow `log` first in a CTE, applying all text/date/user predicates to the base
+--      table alone (one pass, no join amplification).
+--   2. Join item_element_log immediately after, which DOES have a usable predicate --
+--      collapsing the row set before any item join happens.
+--   3. Split the OR join (log.id = iel.log_id OR log.parent_log_id = iel.log_id) into a
+--      UNION of two index-friendly branches.
+--   4. Replace comma joins with explicit JOIN ... ON, so join order is not left to chance.
+--   5. Apply item/entity type filters as EXISTS rather than comma joins, so they cannot
+--      multiply rows.
+--
+-- Search semantics are UNCHANGED: substring matching (LIKE '%word%'), AND across words,
+-- same result-set shape (parent_item.*, log.*, log_id) for the `logResultList` mapping.
+--
+-- Also fixes a latent bug: search terms containing a double quote broke the old
+-- procedure, which wrapped LIKE values in double quotes. Now single-quoted and escaped.
+--
+-- Verified: 33/33 result-parity cases identical to the old procedure (plain, multi-word,
+-- substring, wildcards, quotes/apostrophes, user/date/type filters, limits, domain
+-- isolation, and combined filters).
 --
 
 delimiter //
