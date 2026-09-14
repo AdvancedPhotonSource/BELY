@@ -149,39 +149,23 @@ END //
 
 DROP PROCEDURE IF EXISTS search_item_logs;//
 CREATE PROCEDURE `search_item_logs` (
-	IN limit_row int, 
-	IN domain_id int, 
-	IN entity_type_id_list TEXT, 
-	IN item_type_id_list TEXT, 
-	IN user_id_list TEXT, 
-	IN start_modified_time datetime, 
-	IN end_modified_time datetime, 
-	IN start_created_time datetime, 
-	IN end_created_time datetime, 
+	IN limit_row int,
+	IN domain_id int,
+	IN entity_type_id_list TEXT,
+	IN item_type_id_list TEXT,
+	IN user_id_list TEXT,
+	IN start_modified_time datetime,
+	IN end_modified_time datetime,
+	IN start_created_time datetime,
+	IN end_created_time datetime,
 	IN search_string VARCHAR(255)
-	) 
+	)
 BEGIN
-	SET @select_stmt = "SELECT DISTINCT parent_item.*, log.*, log.id as log_id ";
-	SET @from_stmt = "FROM item
-	INNER JOIN v_item_self_element ise ON item.id = ise.item_id
-	INNER JOIN item_element ie ON ise.self_element_id = ie.id
-	LEFT OUTER JOIN item_element_log iel on iel.item_element_id = ie.id
-	LEFT OUTER JOIN v_item_hierarchy cih on cih.child_item_id = item.id";
-	SET @from_tbls = ", item as parent_item, log";
+	-- Predicates that apply to the `log` table alone, so they can be pushed into a CTE
+	-- that narrows `log` before any item join happens.
+	SET @log_where = "WHERE 1=1 ";
 
-	SET @where_stmt = "WHERE ";
-	SET @where_stmt = CONCAT(@where_stmt, 'item.domain_id = ', domain_id, ' ');
-
-	SET @where_stmt = CONCAT(@where_stmt, "AND (log.id = iel.log_id or log.parent_log_id = iel.log_id) ");
-
-	SET @where_stmt = CONCAT(@where_stmt, "AND (
-		parent_item.id = cih.parent_item_id
-		OR
-		(cih.parent_item_id IS NULL AND
-		parent_item.id = item.id
-		)) ");
-
-	-- Split search_string into words and require each word to match log text
+	-- Split search_string into words; require each word to match the log text.
 	SET @remaining = TRIM(search_string);
 	WHILE LENGTH(@remaining) > 0 DO
 		SET @space_pos = LOCATE(' ', @remaining);
@@ -194,61 +178,100 @@ BEGIN
 		END IF;
 
 		IF LENGTH(@word) > 0 THEN
-			SET @where_stmt = CONCAT(@where_stmt, 'AND (log.text LIKE "%', @word, '%") ');
+			-- Single-quoted and escaped; the old double-quoted form broke on terms
+			-- containing a double quote. Note % and _ are deliberately NOT escaped:
+			-- the Java layer converts user wildcards (* ?) into them.
+			SET @log_where = CONCAT(@log_where, "AND (l.text LIKE '%",
+				REPLACE(REPLACE(@word, '\\', '\\\\'), "'", "\\'"), "%') ");
 		END IF;
-	END WHILE; 
+	END WHILE;
 
-	IF user_id_list THEN 
-		SET @where_stmt = CONCAT(@where_stmt, 
+	IF user_id_list THEN
+		SET @log_where = CONCAT(@log_where,
 		"AND (",
-		"FIND_IN_SET(log.entered_by_user_id, '", user_id_list, "')",		
-		"OR FIND_IN_SET(log.last_modified_by_user_id, '", user_id_list, "')",
+		"FIND_IN_SET(l.entered_by_user_id, '", user_id_list, "')",
+		"OR FIND_IN_SET(l.last_modified_by_user_id, '", user_id_list, "')",
 		")");
-	END IF; 
-
-	IF item_type_id_list THEN 
-		SET @from_tbls = CONCAT(@from_tbls, ", item_item_type iit");		
-		set @where_stmt = CONCAT(@where_stmt, "
-			AND parent_item.id = iit.item_id 
-			AND FIND_IN_SET(iit.item_type_id, '", item_type_id_list, "') ");
-	END IF; 
-
-	IF entity_type_id_list THEN			
-		SET @from_tbls = CONCAT(@from_tbls, ", item_entity_type as iet");
-		SET @where_stmt = CONCAT(@where_stmt, "
-			AND parent_item.id = iet.item_id 
-			AND FIND_IN_SET(iet.entity_type_id, '", entity_type_id_list, "') ");			
 	END IF;
-	
+
 	IF start_modified_time THEN
-		SET @where_stmt = CONCAT(@where_stmt, "
-			AND log.last_modified_on_date_time > '", start_modified_time, "' ");
+		SET @log_where = CONCAT(@log_where,
+			"AND l.last_modified_on_date_time > '", start_modified_time, "' ");
 	END IF;
 
 	IF end_modified_time THEN
-		SET @where_stmt = CONCAT(@where_stmt, "
-			AND log.last_modified_on_date_time < '", end_modified_time, "' ");			
+		SET @log_where = CONCAT(@log_where,
+			"AND l.last_modified_on_date_time < '", end_modified_time, "' ");
 	END IF;
 
 	IF start_created_time THEN
-		SET @where_stmt = CONCAT(@where_stmt, "
-			AND log.entered_on_date_time > '", start_created_time, "' ");
+		SET @log_where = CONCAT(@log_where,
+			"AND l.entered_on_date_time > '", start_created_time, "' ");
 	END IF;
 
 	IF end_created_time THEN
-		SET @where_stmt = CONCAT(@where_stmt, "
-			AND log.entered_on_date_time < '", end_created_time, "' ");			
+		SET @log_where = CONCAT(@log_where,
+			"AND l.entered_on_date_time < '", end_created_time, "' ");
 	END IF;
 
-	SET @from_stmt = CONCAT(@from_stmt, @from_tbls, " "); 
-		
-	SET @sql_stmt = CONCAT(@select_stmt, @from_stmt, @where_stmt, "
-		ORDER BY log.last_modified_on_date_time DESC 
-		LIMIT ", limit_row);
+	-- Filters on the resolved parent item. EXISTS rather than a comma join, so they
+	-- cannot multiply rows.
+	SET @parent_filter = "";
+	IF item_type_id_list THEN
+		SET @parent_filter = CONCAT(@parent_filter,
+			" AND EXISTS (SELECT 1 FROM item_item_type iit
+			              WHERE iit.item_id = r.parent_item_id
+			                AND FIND_IN_SET(iit.item_type_id, '", item_type_id_list, "')) ");
+	END IF;
+	IF entity_type_id_list THEN
+		SET @parent_filter = CONCAT(@parent_filter,
+			" AND EXISTS (SELECT 1 FROM item_entity_type iet
+			              WHERE iet.item_id = r.parent_item_id
+			                AND FIND_IN_SET(iet.entity_type_id, '", entity_type_id_list, "')) ");
+	END IF;
 
-	prepare stmt from @sql_stmt; 
+	SET @sql_stmt = CONCAT(
+	"WITH matching_logs AS (
+		SELECT l.id, l.parent_log_id, l.last_modified_on_date_time
+		FROM log l ", @log_where, "
+	),
+	-- Link each matching log to the logbook item holding it. The old OR predicate
+	-- (log.id = iel.log_id OR log.parent_log_id = iel.log_id) is split into two
+	-- index-friendly branches; UNION also removes the duplicates the OR produced.
+	-- The item_element conditions inline v_item_self_element.
+	linked AS (
+		SELECT ml.id AS log_id, ml.last_modified_on_date_time, ie.parent_item_id AS item_id
+		FROM matching_logs ml
+		JOIN item_element_log iel ON iel.log_id = ml.id
+		JOIN item_element ie ON ie.id = iel.item_element_id
+		     AND ie.name IS NULL AND ie.derived_from_item_element_id IS NULL
+		UNION
+		SELECT ml.id AS log_id, ml.last_modified_on_date_time, ie.parent_item_id AS item_id
+		FROM matching_logs ml
+		JOIN item_element_log iel ON iel.log_id = ml.parent_log_id
+		JOIN item_element ie ON ie.id = iel.item_element_id
+		     AND ie.name IS NULL AND ie.derived_from_item_element_id IS NULL
+	),
+	-- Resolve each item to its hierarchy parent, falling back to the item itself when it
+	-- has none (the old 'cih.parent_item_id IS NULL' branch). Inlines v_item_hierarchy.
+	resolved AS (
+		SELECT DISTINCT lk.log_id, lk.last_modified_on_date_time,
+		       COALESCE(pie.parent_item_id, lk.item_id) AS parent_item_id
+		FROM linked lk
+		JOIN item i ON i.id = lk.item_id AND i.domain_id = ", domain_id, "
+		LEFT JOIN item_element pie ON pie.contained_item_id1 = lk.item_id
+	)
+	SELECT parent_item.*, log.*, log.id AS log_id
+	FROM resolved r
+	JOIN item AS parent_item ON parent_item.id = r.parent_item_id
+	JOIN log ON log.id = r.log_id
+	WHERE 1=1 ", @parent_filter, "
+	ORDER BY log.last_modified_on_date_time DESC
+	LIMIT ", limit_row);
+
+	prepare stmt from @sql_stmt;
 	execute stmt;
-	deallocate prepare stmt;	
+	deallocate prepare stmt;
 END //
 
 DROP PROCEDURE IF EXISTS search_items_no_entity_type;//
