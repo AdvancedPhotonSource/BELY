@@ -17,7 +17,7 @@ wheels = [
 
 [[package]]
 name = "bely-api"
-version = "2026.3.0"
+version = "2026.3.1"
 source = { directory = "../python-client/packages/api" }
 dependencies = [
     { name = "certifi" },
@@ -36,7 +36,7 @@ requires-dist = [
 
 [[package]]
 name = "bely-cli"
-version = "2026.3.0"
+version = "2026.3.1"
 source = { editable = "." }
 dependencies = [
     { name = "bely-api" },
