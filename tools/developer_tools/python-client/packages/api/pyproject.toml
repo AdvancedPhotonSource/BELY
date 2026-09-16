@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bely-api"
-version = "2026.3.0"
+version = "2026.3.1"
 description = "Python client API library used to communicate with BELY API."
 license = { text = "Copyright (c) UChicago Argonne, LLC. All rights reserved." }
 maintainers = [
