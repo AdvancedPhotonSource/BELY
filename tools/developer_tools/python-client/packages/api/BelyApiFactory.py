@@ -2,23 +2,28 @@
 
 # Copyright (c) UChicago Argonne, LLC. All rights reserved.
 # See LICENSE file.
+
+# Annotations are stored as strings so that the API return types below can be
+# named without importing them at module load time.
+from __future__ import annotations
+
 import base64
 import os
 import warnings
+import typing
 
-from belyApi import Configuration, ApiClient
-from belyApi import (
-    DomainApi,
-    DownloadsApi,
-    UsersApi,
-    PropertyValueApi,
-    SystemLogApi,
-    SearchApi,
-    AuthenticationApi,
-    LogbookApi,
-    NotificationConfigurationApi,
-)
-from belyApi import ApiExceptionMessage
+if typing.TYPE_CHECKING:
+    from belyApi import (
+        AuthenticationApi,
+        DomainApi,
+        DownloadsApi,
+        LogbookApi,
+        NotificationConfigurationApi,
+        PropertyValueApi,
+        SearchApi,
+        SystemLogApi,
+        UsersApi,
+    )
 
 
 class BelyApiFactory:
@@ -28,33 +33,73 @@ class BelyApiFactory:
 
     LOGBOOK_DOMAIN_ID = 1
 
+    # attribute name -> generated api class. Each api is built on first access by
+    # __getattr__ so that importing this module does not drag in every belyApi
+    # model; see the "Known startup cost" section of bely-cli/CLAUDE.md. The
+    # generator's lazyImports option only pays off while this stays lazy.
+    _API_CLASSES = {
+        "auth_api": "AuthenticationApi",
+        "domain_api": "DomainApi",
+        "downloads_api": "DownloadsApi",
+        "logbook_api": "LogbookApi",
+        "notification_configuration_api": "NotificationConfigurationApi",
+        "property_value_api": "PropertyValueApi",
+        "search_api": "SearchApi",
+        "systemlog_api": "SystemLogApi",
+        "users_api": "UsersApi",
+    }
+
+    # Deprecated camelCase aliases -> canonical attribute name
+    _API_ALIASES = {
+        "domainApi": "domain_api",
+        "downloadsApi": "downloads_api",
+        "propertyValueApi": "property_value_api",
+        "searchApi": "search_api",
+        "systemlogApi": "systemlog_api",
+        "usersApi": "users_api",
+    }
+
     def __init__(self, bely_url):
+        from belyApi import ApiClient, Configuration
+
         self.bely_url = bely_url
         self.config = Configuration(host=self.bely_url)
         self.api_client = ApiClient(configuration=self.config)
 
-        self.logbook_api = LogbookApi(api_client=self.api_client)
-        self.notification_configuration_api = NotificationConfigurationApi(
-            api_client=self.api_client
+    def __getattr__(self, name):
+        """Build api instances on first access.
+
+        Only called when normal attribute lookup fails, so each api is created
+        once and then cached in __dict__.
+        """
+        canonical = self._API_ALIASES.get(name, name)
+        class_name = self._API_CLASSES.get(canonical)
+        if class_name is None:
+            raise AttributeError(
+                f"{type(self).__name__!r} object has no attribute {name!r}"
+            )
+
+        # __init__ must have run; guard against access on a half-built instance
+        # (e.g. during unpickling) recursing back into __getattr__.
+        if "api_client" not in self.__dict__:
+            raise AttributeError(
+                f"cannot build {canonical!r} before BelyApiFactory.__init__ has run"
+            )
+
+        import belyApi
+
+        api = getattr(belyApi, class_name)(api_client=self.api_client)
+        setattr(self, canonical, api)
+        if name != canonical:
+            setattr(self, name, api)
+        return api
+
+    def __dir__(self):
+        return sorted(
+            set(super().__dir__())
+            | set(self._API_CLASSES)
+            | set(self._API_ALIASES)
         )
-
-        self.downloads_api = DownloadsApi(api_client=self.api_client)
-        self.property_value_api = PropertyValueApi(api_client=self.api_client)
-        self.users_api = UsersApi(api_client=self.api_client)
-        self.domain_api = DomainApi(api_client=self.api_client)
-
-        self.systemlog_api = SystemLogApi(api_client=self.api_client)
-        self.search_api = SearchApi(api_client=self.api_client)
-
-        # Deprecated camelCase aliases
-        self.downloadsApi = self.downloads_api
-        self.propertyValueApi = self.property_value_api
-        self.usersApi = self.users_api
-        self.domainApi = self.domain_api
-        self.systemlogApi = self.systemlog_api
-        self.searchApi = self.search_api
-
-        self.auth_api = AuthenticationApi(api_client=self.api_client)
 
     def _deprecated(self, old_name, new_name):
         warnings.warn(
@@ -110,6 +155,8 @@ class BelyApiFactory:
         self.auth_api.log_out()
 
     def parse_api_exception(self, open_api_exception):
+        from belyApi import ApiExceptionMessage
+
         response_type = ApiExceptionMessage.__name__
         open_api_exception.data = open_api_exception.body
         ex_obj = self.api_client.deserialize(open_api_exception, response_type)
