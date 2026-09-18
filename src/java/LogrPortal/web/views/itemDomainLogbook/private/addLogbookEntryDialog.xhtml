@@ -36,7 +36,7 @@ See LICENSE file.
                     </p:column>
 
                     <p:column>
-                        <h:outputLabel for="logbookLogEntryValue" value="Log Entry" styleClass="entityDataEmphasizedLabel"/>
+                        <h:outputLabel value="Log Entry" styleClass="entityDataEmphasizedLabel"/>
                     </p:column>
                 </p:row>
 
@@ -50,10 +50,41 @@ See LICENSE file.
                     </p:column>
 
                     <p:column colspan="#{saveConflict ? 1 : 2}">
-                        <h:inputTextarea styleClass="logEntryDialogEntryValue"
-                                         id="logbookLogEntryValue"
-                                         value="#{logObject.text}"
-                                         onblur="logbookLogEntryValueBlur()"/>
+                        <p:tabView id="logEntryEditTabView"
+                                   widgetVar="logEntryEditTabViewWidget"
+                                   styleClass="logEntryEditTabView"
+                                   dynamic="true">
+
+                            <p:ajax event="tabChange"
+                                    process="@this logbookLogEntryValue"
+                                    oncomplete="reloadLogEntryMarkdownPreview()"/>
+
+                            <p:tab title="Edit">
+                                <h:inputTextarea styleClass="logEntryDialogEntryValue"
+                                                 id="logbookLogEntryValue"
+                                                 value="#{logObject.text}"
+                                                 onblur="logbookLogEntryValueBlur()"/>
+
+                                <p:remoteCommand name="logbookLogEntryValueBlur"
+                                                 process="logbookLogEntryValue"
+                                                 update="logbookLogEntryValue"/>
+                            </p:tab>
+
+                            <p:tab title="Preview" id="logEntryMarkdownPreviewTab">
+                                <div class="logEntryPreviewContainer">
+                                    <p:outputPanel id="logEntryMarkdownPreview"
+                                                   styleClass="logEntry logEntryMarkdownPreview">
+                                        <h:outputText escape="false"
+                                                      value="#{itemDomainLogbookController.logEntryPreviewHtml}"/>
+                                    </p:outputPanel>
+                                </div>
+
+                                <p:remoteCommand name="reloadLogEntryMarkdownPreview"
+                                                 action="#{itemDomainLogbookController.reloadLogEntryMarkdownPreview()}"
+                                                 update="logEntryMarkdownPreview"
+                                                 oncomplete="addCodeBlockCopyButtons()"/>
+                            </p:tab>
+                        </p:tabView>
                     </p:column>
                 </p:row>
 
@@ -105,9 +136,6 @@ See LICENSE file.
 
                 <h:outputText id="lastFileReference" value="#{logAttachmentUploadBean.lastFileReference}" /> 
             </p:outputPanel>
-
-            <p:remoteCommand name="logbookLogEntryValueBlur" 
-                             update="logbookLogEntryValue"/> 
 
         </p:outputPanel>
 

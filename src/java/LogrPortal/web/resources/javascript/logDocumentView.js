@@ -7,10 +7,13 @@ document.addEventListener('paste', pasteLogTextArea);
 
 const linkRegex = new RegExp("^(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})(\.[a-zA-Z0-9]{2,})?");
 
+// Id suffix match: the textarea sits inside a tab view (a naming container).
+const logEntryValueSelector = 'textarea[id$=":logbookLogEntryValue"]';
+
 function pasteLogTextArea(event) {
     // Ignore non text area 
     let srcElement = event.srcElement;
-    if (srcElement.id !== 'logbookViewForm:logbookLogEntryValue') {
+    if (!srcElement.matches || !srcElement.matches(logEntryValueSelector)) {
         return;
     }
 
@@ -53,7 +56,7 @@ function pasteLatestFileReference() {
 }
 
 function addCustomDataToLogEntryValue(newData) {
-    let textArea = document.getElementById('logbookViewForm:logbookLogEntryValue');
+    let textArea = document.querySelector(logEntryValueSelector);
 
     let exitingValue = $(textArea).val();
     let curPos = textArea.selectionStart;
