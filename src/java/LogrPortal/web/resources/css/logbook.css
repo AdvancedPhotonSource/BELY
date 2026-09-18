@@ -43,6 +43,7 @@ html, body {
 }
 
 .logEntryDialogEntryValue {
+    box-sizing: border-box;
     width: 600px;
     height: 400px;
 }
@@ -103,6 +104,30 @@ html, body {
 .logEntryPreviewContainer .logEntryMarkdownPreview {
     display: block;
     background: transparent;
+}
+
+/* Buttons live in the dialog content, not a footer facet. */
+.logEntryDialogFooter {
+    display: block;
+    padding: 1.5rem 1.5rem 0 1.5rem;
+}
+
+/* Maximized: let the editor and preview grow with the dialog. */
+.logEntryDialog.ui-dialog-maximized .ui-panelgrid,
+.logEntryDialog.ui-dialog-maximized .logEntryEditTabView,
+.logEntryDialog.ui-dialog-maximized .logEntryEditTabView .ui-tabs-panels,
+.logEntryDialog.ui-dialog-maximized .logEntryEditTabView .ui-tabs-panel {
+    width: 100%;
+}
+
+.logEntryDialog.ui-dialog-maximized .logEntryEditTabView .ui-tabs-panel {
+    height: calc(100vh - 300px);
+}
+
+.logEntryDialog.ui-dialog-maximized .logEntryDialogEntryValue,
+.logEntryDialog.ui-dialog-maximized .logEntryPreviewContainer {
+    width: 100%;
+    height: 100%;
 }
 
 .logTimestamp {

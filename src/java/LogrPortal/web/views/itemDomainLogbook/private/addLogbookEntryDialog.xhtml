@@ -13,8 +13,9 @@ See LICENSE file.
     <p:dialog id="#{entityTypeName}LogbookLogAddDialog"
               widgetVar="#{entityTypeName}LogbookLogAddDialogWidget" 
               header="Add Log Entry" 
-              styleClass="viewTransparentBackgroundDialog"
+              styleClass="viewTransparentBackgroundDialog logEntryDialog"
               closable="false"
+              maximizable="true"
               modal="true">
 
         <p:outputPanel id="#{entityTypeName}LogbookLogAddDialogContents">
@@ -137,10 +138,7 @@ See LICENSE file.
                 <h:outputText id="lastFileReference" value="#{logAttachmentUploadBean.lastFileReference}" /> 
             </p:outputPanel>
 
-        </p:outputPanel>
-
-        <f:facet name="footer" class="dialog">
-            <p:outputPanel rendered="#{logObject != null}">
+            <p:outputPanel styleClass="logEntryDialogFooter" rendered="#{logObject != null}">
                 <p:commandButton value="Save" alt="Save" 
                                  id="#{entityTypeName}SaveLogbookLogButton"
                                  onclick="PF('loadingDialog').show()"
@@ -158,7 +156,8 @@ See LICENSE file.
                 <p:remoteCommand name="failSaveLogEntry"
                                  oncomplete="PF('#{entityTypeName}LogbookLogAddDialogWidget').initPosition();  PF('loadingDialog').hide();"/>
             </p:outputPanel>
-        </f:facet>
+
+        </p:outputPanel>
 
     </p:dialog>
 
