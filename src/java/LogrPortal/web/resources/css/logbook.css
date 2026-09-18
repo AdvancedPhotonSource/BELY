@@ -43,8 +43,91 @@ html, body {
 }
 
 .logEntryDialogEntryValue {
+    box-sizing: border-box;
     width: 600px;
     height: 400px;
+}
+
+/* Lock both tabs to the textarea size so the dialog does not resize on tab change. */
+.logEntryEditTabView,
+.logEntryEditTabView .ui-tabs-panels,
+.logEntryEditTabView .ui-tabs-panel {
+    box-sizing: border-box;
+    width: 620px;
+}
+
+.logEntryEditTabView .ui-tabs-panel {
+    height: 410px;
+    padding: 5px 10px;
+    overflow: hidden;
+}
+
+/* Match the transparent dialog background. */
+.logEntryEditTabView,
+.logEntryEditTabView .ui-tabs-panels,
+.logEntryEditTabView .ui-tabs-panel,
+.logEntryEditTabView .ui-tabs-nav,
+.logEntryEditTabView .ui-tabs-nav .ui-state-default {
+    background: transparent !important;
+    border: none !important;
+}
+
+.logEntryEditTabView .ui-tabs-nav .ui-tabs-selected {
+    background: rgba(255, 255, 255, 0.6) !important;
+}
+
+.logEntryEditTabView .ui-tabs-nav {
+    text-align: left;
+    padding-left: 5px;
+}
+
+/* Insulate the preview from dialog styles so it renders like the main log view. */
+.logEntryPreviewContainer {
+    box-sizing: border-box;
+    width: 600px;
+    height: 400px;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0;
+    text-align: left;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 12px;
+    font-family: Verdana, "Verdana CE", Arial, "Arial CE", "Lucida Grande CE", lucida, "Helvetica CE", sans-serif;
+    line-height: normal;
+    color: #000000;
+    background-color: white !important;
+    border: 1px solid #cfcfcf;
+    border-radius: 5px;
+}
+
+.logEntryPreviewContainer .logEntryMarkdownPreview {
+    display: block;
+    background: transparent;
+}
+
+/* Buttons live in the dialog content, not a footer facet. */
+.logEntryDialogFooter {
+    display: block;
+    padding: 1.5rem 1.5rem 0 1.5rem;
+}
+
+/* Maximized: let the editor and preview grow with the dialog. */
+.logEntryDialog.ui-dialog-maximized .ui-panelgrid,
+.logEntryDialog.ui-dialog-maximized .logEntryEditTabView,
+.logEntryDialog.ui-dialog-maximized .logEntryEditTabView .ui-tabs-panels,
+.logEntryDialog.ui-dialog-maximized .logEntryEditTabView .ui-tabs-panel {
+    width: 100%;
+}
+
+.logEntryDialog.ui-dialog-maximized .logEntryEditTabView .ui-tabs-panel {
+    height: calc(100vh - 300px);
+}
+
+.logEntryDialog.ui-dialog-maximized .logEntryDialogEntryValue,
+.logEntryDialog.ui-dialog-maximized .logEntryPreviewContainer {
+    width: 100%;
+    height: 100%;
 }
 
 .logTimestamp {
