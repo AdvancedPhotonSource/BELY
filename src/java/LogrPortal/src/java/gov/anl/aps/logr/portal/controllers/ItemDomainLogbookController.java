@@ -103,6 +103,7 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
     private EntityType currentEntityType = null;
     private boolean fullListMode = false;
     private Log lastLog;
+    private String logEntryPreviewHtml = null;
 
     private List<SearchResult> logResults;
     private List<EntityType> logbookEntityTypes;
@@ -1267,6 +1268,31 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
         }
 
         return null;
+    }
+
+    public String getLogEntryPreviewHtml() {
+        return logEntryPreviewHtml;
+    }
+
+    // Kept on the controller so previews of unsaved text do not poison Log's cached html.
+    public void reloadLogEntryMarkdownPreview() {
+        logEntryPreviewHtml = "";
+
+        if (getCurrent() == null) {
+            return;
+        }
+
+        Log newLogEdit = getNewLogEdit();
+        if (newLogEdit == null) {
+            return;
+        }
+
+        String text = newLogEdit.getText();
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+
+        logEntryPreviewHtml = MarkdownParser.parseMarkdownAsHTML(text);
     }
 
     public String renderExampleMarkdown() {
