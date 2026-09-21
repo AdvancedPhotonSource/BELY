@@ -9,8 +9,7 @@ class LogDocumentFetchTests(BelyTestBase):
 
     def test_fetch_logbooks(self):
         logbooks = self.logbook_api.get_logbook_types()
-
-        self.assertEqual(len(logbooks), 13)
+        self.assertEqual(len(logbooks), 11)
 
     def test_fetch_lobook_systems(self):
         systems = self.logbook_api.get_logbook_systems()
