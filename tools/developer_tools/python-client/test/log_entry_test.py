@@ -1,5 +1,5 @@
 import unittest
-from belyApi import OpenApiException
+from belyApi import LogDocumentOptions, OpenApiException
 from test.bely_test_base import BelyTestBase
 
 
@@ -137,6 +137,73 @@ class LogEntryEditTests(BelyTestBase):
         log_entry = log_entries[0]
         log_reply = log_entry.log_replies[0]
         self.assertEqual(log_entry_text, log_reply.log_entry)
+
+    def _create_document_and_entry(self):
+        self.login_as_user()
+        options = LogDocumentOptions(
+            name=f"Delete entry {self._gen_unique_name()}",
+            logbook_type_id=self.CTL_LOGBOOK_ID,
+        )
+        document = self.logbook_api.create_logbook_document(options)
+        entry = self.logbook_api.get_log_entry_template(document.id)
+        entry.log_entry = "entry to delete"
+        return document, self.logbook_api.add_update_log_entry(entry)
+
+    def test_delete_log_entry(self):
+        document, entry = self._create_document_and_entry()
+
+        result = self.logbook_api.delete_log_entry(document.id, entry.log_id)
+
+        self.assertIsNone(result)
+        self.assertEqual([], self.logbook_api.get_log_entries(document.id))
+
+    def test_delete_log_entry_requires_authentication(self):
+        with self.assertRaises(OpenApiException):
+            self.logbook_api.delete_log_entry(self.DOC_WITH_ENTRIES, 1)
+
+    def test_delete_log_entry_rejects_mismatched_document(self):
+        document, entry = self._create_document_and_entry()
+
+        with self.assertRaises(OpenApiException):
+            self.logbook_api.delete_log_entry(self.DOC_WITH_ENTRIES, entry.log_id)
+
+        entries = self.logbook_api.get_log_entries(document.id)
+        self.assertEqual([entry.log_id], [item.log_id for item in entries])
+
+    def test_delete_log_entry_requires_document_permission(self):
+        self.login_as_admin()
+        entry = self.logbook_api.get_log_entry_template(self.DOC_SAMPLE_ID)
+        entry.log_entry = "permission test entry"
+        entry = self.logbook_api.add_update_log_entry(entry)
+
+        self.login_as_user()
+        with self.assertRaises(OpenApiException):
+            self.logbook_api.delete_log_entry(self.DOC_SAMPLE_ID, entry.log_id)
+
+        self.login_as_admin()
+        entry_ids = [
+            item.log_id
+            for item in self.logbook_api.get_log_entries(self.DOC_SAMPLE_ID)
+        ]
+        self.assertIn(entry.log_id, entry_ids)
+        self.logbook_api.delete_log_entry(self.DOC_SAMPLE_ID, entry.log_id)
+
+    def test_delete_log_reply(self):
+        self.login_as_user()
+        entries = self.logbook_api.get_log_entries(
+            self.DOC_WITH_ENTRIES, load_replies=True
+        )
+        entry = entries[0]
+        reply_id = entry.log_replies[0].log_id
+
+        result = self.logbook_api.delete_log_entry(self.DOC_WITH_ENTRIES, reply_id)
+
+        self.assertIsNone(result)
+        updated_entries = self.logbook_api.get_log_entries(
+            self.DOC_WITH_ENTRIES, load_replies=True
+        )
+        updated_reply_ids = [reply.log_id for reply in updated_entries[0].log_replies]
+        self.assertNotIn(reply_id, updated_reply_ids)
 
 
 if __name__ == "__main__":

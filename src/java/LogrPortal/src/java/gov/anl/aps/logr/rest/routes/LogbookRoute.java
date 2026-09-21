@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.ejb.EJB;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.PUT;
@@ -54,6 +55,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -256,6 +258,28 @@ public class LogbookRoute extends ItemBaseRoute {
         updateModifiedDateForLogDocument(logDocument, user);
 
         return new LogEntry(itemId, logEntity, false, false);
+    }
+
+    @DELETE
+    @Path("/DeleteLogEntry/{logDocumentId}/{logId}")
+    @Operation(summary = "Delete a log entry or reply from a log document or section.", responses = {
+        @ApiResponse(responseCode = "204", description = "Deleted")})
+    @SecurityRequirement(name = "belyAuth")
+    @Secured
+    public Response deleteLogEntry(
+            @PathParam("logDocumentId") int logDocumentId,
+            @PathParam("logId") int logId) throws CdbException {
+        ItemDomainLogbook logDocument = getLogDocumentById(logDocumentId);
+        verifyCurrentUserPermissionForItem(logDocument);
+
+        Log logEntity = findLogInDocument(logDocument, logId);
+        UserInfo user = getCurrentRequestUserInfo();
+        ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();
+        utility.verifySaveLogLockoutsForItem(logDocument, logEntity, user);
+        utility.destroyLogEntry(logEntity, user);
+
+        updateModifiedDateForLogDocument(logDocument, user);
+        return Response.noContent().build();
     }
 
     @PUT
