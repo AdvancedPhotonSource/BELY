@@ -23,6 +23,7 @@ public class LogEntry {
 
     private int itemId;
     private Integer logId;
+    private Integer parentLogId;
     private String logEntry;
 
     private Date enteredOnDateTime;
@@ -40,6 +41,8 @@ public class LogEntry {
     public LogEntry(int itemId, Log log, boolean loadReplies, boolean loadReactions) {
         this.itemId = itemId;
         logId = log.getId();
+        Log parentLog = log.getParentLog();
+        parentLogId = parentLog == null ? null : parentLog.getId();
         logEntry = log.getText();
 
         enteredOnDateTime = log.getEnteredOnDateTime();
@@ -73,6 +76,14 @@ public class LogEntry {
 
     public Integer getLogId() {
         return logId;
+    }
+
+    public Integer getParentLogId() {
+        return parentLogId;
+    }
+
+    public void setParentLogId(Integer parentLogId) {
+        this.parentLogId = parentLogId;
     }
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)

@@ -42,7 +42,6 @@ import gov.anl.aps.logr.portal.model.db.entities.Reaction;
 import gov.anl.aps.logr.portal.model.db.entities.SettingType;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.model.db.utilities.EntityInfoUtility;
-import gov.anl.aps.logr.portal.model.db.utilities.LogUtility;
 import gov.anl.aps.logr.portal.utilities.MarkdownParser;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
@@ -512,12 +511,8 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     public Log prepareAddLogReply(Log parentLog) {
         UserInfo user = SessionUtility.getUser();
-
-        Log logEntry = LogUtility.createLogEntry(user);
-        logEntry.setParentLog(parentLog);
-
+        Log logEntry = getControllerUtility().prepareAddLogReply(parentLog, user);
         setNewLogEdit(logEntry);
-
         return logEntry;
     }
 
@@ -961,37 +956,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @Override
     protected void performDestroyOperation(ItemDomainLogbook entity) throws CdbException {
-        // Remove placeholder settings or other property value
-        // No need to perform destroy operation on non-existing entities, causes exception. 
-        List<PropertyValue> propertyValueList = entity.getPropertyValueList();
-        for (int i = 0; i < propertyValueList.size(); i++) {
-            PropertyValue pv = propertyValueList.get(i);
-
-            if (pv.getId() == null) {
-                propertyValueList.remove(i);
-            }
-        }
-
-        if (entity.getIsItemTemplate()) {
-            List<Item> itemsCreatedFromThisTemplateItem = entity.getItemsCreatedFromThisTemplateItem();
-
-            if (itemsCreatedFromThisTemplateItem.size() > 0) {
-                throw new CdbException("The item has template instances.");
-            }
-        }
-
         ItemDomainLogbookControllerUtility controllerUtility = getControllerUtility();
         UserInfo user = SessionUtility.getUser();
-
-        List<ItemDomainLogbook> itemsToDestroy = new ArrayList<>();
-
-        for (ItemElement child : entity.getItemElementDisplayList()) {
-            ItemDomainLogbook containedItem = (ItemDomainLogbook) child.getContainedItem();
-            itemsToDestroy.add(containedItem);
-        }
-
-        controllerUtility.destroy(entity, user);
-        controllerUtility.destroyList(itemsToDestroy, null, user);
+        controllerUtility.destroyLogDocument(entity, user);
     }
 
     @Override

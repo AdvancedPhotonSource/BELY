@@ -4,6 +4,7 @@
 --
 
 LOCK TABLES `connector_type` WRITE;
+SET SESSION FOREIGN_KEY_CHECKS=0;
 /*!40000 ALTER TABLE `connector_type` DISABLE KEYS */;
 /*!40000 ALTER TABLE `connector_type` ENABLE KEYS */;
 UNLOCK TABLES;

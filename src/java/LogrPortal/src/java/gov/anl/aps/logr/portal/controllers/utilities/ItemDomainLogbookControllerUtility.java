@@ -23,6 +23,7 @@ import gov.anl.aps.logr.portal.model.db.entities.Log;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
 import gov.anl.aps.logr.portal.model.db.entities.UserGroup;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.model.db.utilities.LogUtility;
 import gov.anl.aps.logr.portal.utilities.AuthorizationUtility;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
 import java.util.ArrayList;
@@ -58,6 +59,25 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
     @Override
     protected ItemDomainLogbook instenciateNewItemDomainEntity() {
         return new ItemDomainLogbook();
+    }
+
+    public void destroyLogDocument(ItemDomainLogbook entity, UserInfo user) throws CdbException {
+        // Remove placeholder settings or empty property values.
+        // No need to remove non-existing entities, causes execptions.
+        List<PropertyValue> propertyValueList = entity.getPropertyValueList();
+        propertyValueList.removeIf(propertyValue -> propertyValue.getId() == null);
+
+        if (entity.getIsItemTemplate() && !entity.getItemsCreatedFromThisTemplateItem().isEmpty()) {
+            throw new CdbException("The item has template instances.");
+        }
+
+        List<ItemDomainLogbook> sections = new ArrayList<>();
+        for (ItemElement child : entity.getItemElementDisplayList()) {
+            sections.add((ItemDomainLogbook) child.getContainedItem());
+        }
+
+        destroy(entity, user);
+        destroyList(sections, null, user);
     }
 
     @Override
@@ -209,6 +229,12 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
 
             ie.setContainedItem(newItem);
         }
+    }
+
+    public Log prepareAddLogReply(Log parentLog, UserInfo user) {
+        Log reply = LogUtility.createLogEntry(user);
+        reply.setParentLog(parentLog);
+        return reply;
     }
 
     public ItemDomainLogbook createLogbookSectionItem(UserInfo user) throws CdbException {

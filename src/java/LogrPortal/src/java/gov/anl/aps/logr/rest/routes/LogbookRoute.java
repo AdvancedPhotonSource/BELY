@@ -12,6 +12,7 @@ import gov.anl.aps.logr.portal.constants.EntityTypeName;
 import gov.anl.aps.logr.portal.constants.ItemDomainName;
 import gov.anl.aps.logr.portal.controllers.utilities.EntityInfoControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
+import gov.anl.aps.logr.portal.model.db.beans.AttachmentFacade;
 import gov.anl.aps.logr.portal.model.db.beans.DomainFacade;
 import gov.anl.aps.logr.portal.model.db.beans.ItemDomainLogbookFacade;
 import gov.anl.aps.logr.portal.model.db.beans.LogFacade;
@@ -46,6 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.ejb.EJB;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.PUT;
@@ -54,6 +56,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -76,6 +79,9 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @EJB
     LogFacade logFacade;
+
+    @EJB
+    AttachmentFacade attachmentFacade;
 
     // Delegates to the shared helper, which copies before removing the template type instead of filtering the domain's managed list in place.
     @GET
@@ -222,7 +228,7 @@ public class LogbookRoute extends ItemBaseRoute {
     @Path("/AddUpdateLogEntry")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Add/Update a log entry to a log document or section. Will only update the core log entry not related reply/reaction.", responses = {
+    @Operation(summary = "Add a log entry or reply, or update an existing log entry or reply. Set parentLogId when creating a reply. Does not modify related replies or reactions.", responses = {
         @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @SecurityRequirement(name = "belyAuth")
     @Secured
@@ -238,7 +244,14 @@ public class LogbookRoute extends ItemBaseRoute {
         ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();
 
         if (logId == null) {
-            logEntity = utility.prepareAddLog(logDocument, user);
+            Integer parentLogId = logEntry.getParentLogId();
+            if (parentLogId == null) {
+                logEntity = utility.prepareAddLog(logDocument, user);
+            } else {
+                Log parentLog = findTopLevelLogInDocument(logDocument, parentLogId);
+                utility.verifySaveLogLockoutsForItem(logDocument, parentLog, user);
+                logEntity = utility.prepareAddLogReply(parentLog, user);
+            }
         } else {
             logEntity = findLogInDocument(logDocument, logId);
             utility.verifySaveLogLockoutsForItem(logDocument, logEntity, user);
@@ -256,6 +269,75 @@ public class LogbookRoute extends ItemBaseRoute {
         updateModifiedDateForLogDocument(logDocument, user);
 
         return new LogEntry(itemId, logEntity, false, false);
+    }
+
+    @DELETE
+    @Path("/DeleteLogEntry/{logDocumentId}/{logId}")
+    @Operation(summary = "Delete a log entry or reply from a log document or section.", responses = {
+        @ApiResponse(responseCode = "204", description = "Deleted")})
+    @SecurityRequirement(name = "belyAuth")
+    @Secured
+    public Response deleteLogEntry(
+            @PathParam("logDocumentId") int logDocumentId,
+            @PathParam("logId") int logId) throws CdbException {
+        ItemDomainLogbook logDocument = getLogDocumentById(logDocumentId);
+        verifyCurrentUserPermissionForItem(logDocument);
+
+        Log logEntity = findLogInDocument(logDocument, logId);
+        UserInfo user = getCurrentRequestUserInfo();
+        ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();
+        utility.verifySaveLogLockoutsForItem(logDocument, logEntity, user);
+        utility.destroyLogEntry(logEntity, user);
+
+        updateModifiedDateForLogDocument(logDocument, user);
+        return Response.noContent().build();
+    }
+
+    @DELETE
+    @Path("/DeleteLogDocument/{logDocumentId}")
+    @Operation(summary = "Delete a top-level log document and its sections.", responses = {
+        @ApiResponse(responseCode = "204", description = "Deleted")})
+    @SecurityRequirement(name = "belyAuth")
+    @Secured
+    public Response deleteLogDocument(@PathParam("logDocumentId") int logDocumentId) throws CdbException {
+        ItemDomainLogbook logDocument = getLogDocumentById(logDocumentId);
+        if (!Objects.equals(logDocument.getTopLevelLogDocument().getId(), logDocument.getId())) {
+            throw new InvalidArgument("Log document id identifies a section.");
+        }
+        if (logDocument.getIsItemTemplate()) {
+            throw new InvalidArgument("Log document id identifies a template.");
+        }
+        verifyCurrentUserPermissionForItem(logDocument);
+
+        UserInfo user = getCurrentRequestUserInfo();
+        ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();
+        utility.destroyLogDocument(logDocument, user);
+        return Response.noContent().build();
+    }
+
+    @DELETE
+    @Path("/DeleteLogDocumentSection/{logDocumentId}/{sectionId}")
+    @Operation(summary = "Delete a section from a top-level log document.", responses = {
+        @ApiResponse(responseCode = "204", description = "Deleted")})
+    @SecurityRequirement(name = "belyAuth")
+    @Secured
+    public Response deleteLogDocumentSection(
+            @PathParam("logDocumentId") int logDocumentId,
+            @PathParam("sectionId") int sectionId) throws CdbException {
+        ItemDomainLogbook logDocument = getLogDocumentById(logDocumentId);
+        if (!Objects.equals(logDocument.getTopLevelLogDocument().getId(), logDocument.getId())) {
+            throw new InvalidArgument("Log document id identifies a section.");
+        }
+        verifyCurrentUserPermissionForItem(logDocument);
+
+        ItemElement sectionElement = findSectionElement(logDocument, sectionId);
+        ItemDomainLogbook section = (ItemDomainLogbook) sectionElement.getContainedItem();
+        sectionElement.setMarkedForDeletion(true);
+
+        UserInfo user = getCurrentRequestUserInfo();
+        ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();
+        utility.destroy(section, user);
+        return Response.noContent().build();
     }
 
     @PUT
@@ -375,15 +457,51 @@ public class LogbookRoute extends ItemBaseRoute {
             ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();
             Log originalLogEntry = logFacade.find(logId);
             utility.saveLog(logEntity, user, originalLogEntry);
+            attachment = attachmentFacade.findByName(attachment.getName());
 
             updateModifiedDateForLogDocument(logDocument, user);
 
             String downloadPath = "/api/Downloads/Attachments/" + attachment.getName();
-            return new LogEntryAttachment(markdownReference, downloadPath, fileName, attachment.getName());
+            return new LogEntryAttachment(attachment.getId(), markdownReference, downloadPath, fileName, attachment.getName());
         } catch (IOException ex) {
             LOGGER.error(ex);
             throw new CdbException("Failed to upload attachment: " + ex.getMessage());
         }
+    }
+
+    @DELETE
+    @Path("/DeleteAttachment/{logDocumentId}/{logId}/{attachmentId}")
+    @Operation(summary = "Delete an attachment from a log entry.", responses = {
+        @ApiResponse(responseCode = "204", description = "Deleted")})
+    @SecurityRequirement(name = "belyAuth")
+    @Secured
+    public Response deleteAttachment(
+            @PathParam("logDocumentId") int logDocumentId,
+            @PathParam("logId") int logId,
+            @PathParam("attachmentId") int attachmentId) throws CdbException {
+        ItemDomainLogbook logDocument = getLogDocumentById(logDocumentId);
+        verifyCurrentUserPermissionForItem(logDocument);
+
+        Log logEntity = findLogInDocument(logDocument, logId);
+        Attachment attachment = findAttachmentInLog(logEntity, attachmentId);
+        UserInfo user = getCurrentRequestUserInfo();
+        ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();
+        utility.verifySaveLogLockoutsForItem(logDocument, logEntity, user);
+
+        Log originalLogEntry = logFacade.find(logId);
+        logEntity.getAttachmentList().remove(attachment);
+        utility.saveLog(logEntity, user, originalLogEntry);
+        attachmentFacade.remove(attachment);
+
+        try {
+            LogAttachmentUtility.deleteAttachmentFiles(attachment);
+        } catch (IOException ex) {
+            LOGGER.error(ex);
+            throw new CdbException("Failed to delete attachment files: " + ex.getMessage());
+        }
+
+        updateModifiedDateForLogDocument(logDocument, user);
+        return Response.noContent().build();
     }
 
     @GET
@@ -408,11 +526,51 @@ public class LogbookRoute extends ItemBaseRoute {
                 }
                 String markdownReference = LogAttachmentUtility.buildMarkdownReference(originalFilename, attachment);
                 String downloadPath = "/api/Downloads/Attachments/" + attachment.getName();
-                result.add(new LogEntryAttachment(markdownReference, downloadPath, originalFilename, attachment.getName()));
+                result.add(new LogEntryAttachment(attachment.getId(), markdownReference, downloadPath, originalFilename, attachment.getName()));
             }
         }
 
         return result;
+    }
+
+    private ItemElement findSectionElement(ItemDomainLogbook logDocument, int sectionId) throws ObjectNotFound {
+        for (ItemElement itemElement : logDocument.getItemElementDisplayList()) {
+            Item containedItem = itemElement.getContainedItem();
+            if (containedItem != null && Objects.equals(containedItem.getId(), sectionId)) {
+                return itemElement;
+            }
+        }
+
+        throw new ObjectNotFound(
+                String.format("Section id %d does not exist for log document %d.",
+                        sectionId, logDocument.getId()));
+    }
+
+    private Attachment findAttachmentInLog(Log logEntity, int attachmentId) throws ObjectNotFound {
+        List<Attachment> attachments = logEntity.getAttachmentList();
+        if (attachments != null) {
+            for (Attachment attachment : attachments) {
+                if (Objects.equals(attachment.getId(), attachmentId)) {
+                    return attachment;
+                }
+            }
+        }
+
+        throw new ObjectNotFound(
+                String.format("Attachment id %d does not exist for log entry %d.",
+                        attachmentId, logEntity.getId()));
+    }
+
+    private Log findTopLevelLogInDocument(ItemDomainLogbook logDocument, int logId) throws ObjectNotFound {
+        for (Log log : logDocument.getLogList()) {
+            if (Objects.equals(log.getId(), logId)) {
+                return log;
+            }
+        }
+
+        throw new ObjectNotFound(
+                String.format("Top-level log id %d does not exist for log document %d.",
+                        logId, logDocument.getId()));
     }
 
     private Log findLogInDocument(ItemDomainLogbook logDocument, int logId) throws ObjectNotFound {

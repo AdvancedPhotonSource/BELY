@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from belyApi import OpenApiException
+from belyApi import LogDocumentOptions, OpenApiException
 from test.bely_test_base import BelyTestBase
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
@@ -28,6 +28,7 @@ class AttachmentUploadTests(BelyTestBase):
             file_name="AnlLogo.png",
         )
 
+        self.assertIsNotNone(result.id)
         self.assertIsNotNone(result.markdown_reference)
         self.assertIsNotNone(result.download_path)
         self.assertIsNotNone(result.original_filename)
@@ -47,6 +48,7 @@ class AttachmentUploadTests(BelyTestBase):
             file_name="AnlLogo.png",
         )
 
+        self.assertIsNotNone(result.id)
         self.assertIsNotNone(result.markdown_reference)
         self.assertIsNotNone(result.download_path)
         self.assertIsNotNone(result.original_filename)
@@ -89,6 +91,7 @@ class AttachmentUploadTests(BelyTestBase):
 
         filenames = [a.original_filename for a in attachments]
         self.assertIn("AnlLogo.png", filenames)
+        self.assertTrue(all(attachment.id is not None for attachment in attachments))
 
     def test_download_attachment(self):
         doc_id, log_id = self._create_log_entry()
@@ -126,6 +129,105 @@ class AttachmentUploadTests(BelyTestBase):
         entry = next(e for e in log_entries if e.log_id == log_id)
 
         self.assertIn(result.markdown_reference, entry.log_entry)
+
+
+class AttachmentDeleteTests(BelyTestBase):
+
+    def _create_document_entry_and_attachment(self, as_admin=False, append_reference=False):
+        if as_admin:
+            self.login_as_admin()
+        else:
+            self.login_as_user()
+        options = LogDocumentOptions(
+            name=f"Delete attachment {self._gen_unique_name()}",
+            logbook_type_id=self.CTL_LOGBOOK_ID,
+        )
+        document = self.logbook_api.create_logbook_document(options)
+        entry = self.logbook_api.get_log_entry_template(document.id)
+        entry.log_entry = "attachment delete test"
+        entry = self.logbook_api.add_update_log_entry(entry)
+        attachment = self.logbook_api.upload_attachment(
+            log_document_id=document.id,
+            log_id=entry.log_id,
+            body=TEST_IMAGE,
+            file_name="AnlLogo.png",
+            append_reference=append_reference,
+        )
+        return document, entry, attachment
+
+    def test_delete_attachment(self):
+        document, entry, attachment = self._create_document_entry_and_attachment(
+            append_reference=True
+        )
+
+        result = self.logbook_api.delete_attachment(
+            document.id, entry.log_id, attachment.id
+        )
+
+        self.assertIsNone(result)
+        self.assertEqual(
+            [], self.logbook_api.get_log_entry_attachments(document.id, entry.log_id)
+        )
+        updated_entry = self.logbook_api.get_log_entries(document.id)[0]
+        self.assertIn(attachment.markdown_reference, updated_entry.log_entry)
+        download_api = self.factory.get_download_api()
+        with self.assertRaises(OpenApiException):
+            download_api.get_attachment(attachment.stored_filename)
+        for scaling in ("original", "scaled", "thumbnail"):
+            with self.assertRaises(OpenApiException):
+                download_api.get_attachment1(attachment.stored_filename, scaling)
+        self.logbook_api.delete_log_document(document.id)
+
+    def test_delete_attachment_requires_authentication(self):
+        document, entry, attachment = self._create_document_entry_and_attachment()
+        self.factory.logout_user()
+        self.loggedIn = False
+
+        with self.assertRaises(OpenApiException):
+            self.logbook_api.delete_attachment(
+                document.id, entry.log_id, attachment.id
+            )
+
+        self.login_as_user()
+        self.logbook_api.delete_attachment(document.id, entry.log_id, attachment.id)
+        self.logbook_api.delete_log_document(document.id)
+
+    def test_delete_attachment_requires_permission(self):
+        document, entry, attachment = self._create_document_entry_and_attachment(
+            as_admin=True
+        )
+
+        self.login_as_user()
+        with self.assertRaises(OpenApiException):
+            self.logbook_api.delete_attachment(
+                document.id, entry.log_id, attachment.id
+            )
+
+        self.login_as_admin()
+        attachments = self.logbook_api.get_log_entry_attachments(
+            document.id, entry.log_id
+        )
+        self.assertIn(attachment.id, [item.id for item in attachments])
+        self.logbook_api.delete_attachment(document.id, entry.log_id, attachment.id)
+        self.logbook_api.delete_log_document(document.id)
+
+    def test_delete_attachment_rejects_mismatched_entry(self):
+        document, entry, attachment = self._create_document_entry_and_attachment()
+        other_entry = self.logbook_api.get_log_entry_template(document.id)
+        other_entry.log_entry = "other entry"
+        other_entry = self.logbook_api.add_update_log_entry(other_entry)
+
+        with self.assertRaises(OpenApiException):
+            self.logbook_api.delete_attachment(
+                document.id, other_entry.log_id, attachment.id
+            )
+
+        attachments = self.logbook_api.get_log_entry_attachments(
+            document.id, entry.log_id
+        )
+        self.assertIn(attachment.id, [item.id for item in attachments])
+        self.logbook_api.delete_attachment(document.id, entry.log_id, attachment.id)
+        self.logbook_api.delete_log_document(document.id)
 
 
 if __name__ == "__main__":

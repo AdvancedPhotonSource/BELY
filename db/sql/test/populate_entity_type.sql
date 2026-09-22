@@ -4,6 +4,7 @@
 --
 
 LOCK TABLES `entity_type` WRITE;
+SET SESSION FOREIGN_KEY_CHECKS=0;
 /*!40000 ALTER TABLE `entity_type` DISABLE KEYS */;
 INSERT INTO `entity_type` VALUES
 (1,'Template','Template',NULL,'classification for template items',NULL,NULL,NULL,NULL,NULL,1),
