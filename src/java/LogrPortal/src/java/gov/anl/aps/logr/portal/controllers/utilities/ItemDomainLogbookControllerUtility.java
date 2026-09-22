@@ -23,6 +23,7 @@ import gov.anl.aps.logr.portal.model.db.entities.Log;
 import gov.anl.aps.logr.portal.model.db.entities.PropertyValue;
 import gov.anl.aps.logr.portal.model.db.entities.UserGroup;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
+import gov.anl.aps.logr.portal.model.db.utilities.LogUtility;
 import gov.anl.aps.logr.portal.utilities.AuthorizationUtility;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
 import java.util.ArrayList;
@@ -228,6 +229,12 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
 
             ie.setContainedItem(newItem);
         }
+    }
+
+    public Log prepareAddLogReply(Log parentLog, UserInfo user) {
+        Log reply = LogUtility.createLogEntry(user);
+        reply.setParentLog(parentLog);
+        return reply;
     }
 
     public ItemDomainLogbook createLogbookSectionItem(UserInfo user) throws CdbException {
