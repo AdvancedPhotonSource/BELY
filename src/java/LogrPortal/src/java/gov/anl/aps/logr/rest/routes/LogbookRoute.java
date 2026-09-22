@@ -12,6 +12,7 @@ import gov.anl.aps.logr.portal.constants.EntityTypeName;
 import gov.anl.aps.logr.portal.constants.ItemDomainName;
 import gov.anl.aps.logr.portal.controllers.utilities.EntityInfoControllerUtility;
 import gov.anl.aps.logr.portal.controllers.utilities.ItemDomainLogbookControllerUtility;
+import gov.anl.aps.logr.portal.model.db.beans.AttachmentFacade;
 import gov.anl.aps.logr.portal.model.db.beans.DomainFacade;
 import gov.anl.aps.logr.portal.model.db.beans.ItemDomainLogbookFacade;
 import gov.anl.aps.logr.portal.model.db.beans.LogFacade;
@@ -78,6 +79,9 @@ public class LogbookRoute extends ItemBaseRoute {
 
     @EJB
     LogFacade logFacade;
+
+    @EJB
+    AttachmentFacade attachmentFacade;
 
     // Delegates to the shared helper, which copies before removing the template type instead of filtering the domain's managed list in place.
     @GET
@@ -421,15 +425,51 @@ public class LogbookRoute extends ItemBaseRoute {
             ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();
             Log originalLogEntry = logFacade.find(logId);
             utility.saveLog(logEntity, user, originalLogEntry);
+            attachment = attachmentFacade.findByName(attachment.getName());
 
             updateModifiedDateForLogDocument(logDocument, user);
 
             String downloadPath = "/api/Downloads/Attachments/" + attachment.getName();
-            return new LogEntryAttachment(markdownReference, downloadPath, fileName, attachment.getName());
+            return new LogEntryAttachment(attachment.getId(), markdownReference, downloadPath, fileName, attachment.getName());
         } catch (IOException ex) {
             LOGGER.error(ex);
             throw new CdbException("Failed to upload attachment: " + ex.getMessage());
         }
+    }
+
+    @DELETE
+    @Path("/DeleteAttachment/{logDocumentId}/{logId}/{attachmentId}")
+    @Operation(summary = "Delete an attachment from a log entry.", responses = {
+        @ApiResponse(responseCode = "204", description = "Deleted")})
+    @SecurityRequirement(name = "belyAuth")
+    @Secured
+    public Response deleteAttachment(
+            @PathParam("logDocumentId") int logDocumentId,
+            @PathParam("logId") int logId,
+            @PathParam("attachmentId") int attachmentId) throws CdbException {
+        ItemDomainLogbook logDocument = getLogDocumentById(logDocumentId);
+        verifyCurrentUserPermissionForItem(logDocument);
+
+        Log logEntity = findLogInDocument(logDocument, logId);
+        Attachment attachment = findAttachmentInLog(logEntity, attachmentId);
+        UserInfo user = getCurrentRequestUserInfo();
+        ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();
+        utility.verifySaveLogLockoutsForItem(logDocument, logEntity, user);
+
+        Log originalLogEntry = logFacade.find(logId);
+        logEntity.getAttachmentList().remove(attachment);
+        utility.saveLog(logEntity, user, originalLogEntry);
+        attachmentFacade.remove(attachment);
+
+        try {
+            LogAttachmentUtility.deleteAttachmentFiles(attachment);
+        } catch (IOException ex) {
+            LOGGER.error(ex);
+            throw new CdbException("Failed to delete attachment files: " + ex.getMessage());
+        }
+
+        updateModifiedDateForLogDocument(logDocument, user);
+        return Response.noContent().build();
     }
 
     @GET
@@ -454,11 +494,26 @@ public class LogbookRoute extends ItemBaseRoute {
                 }
                 String markdownReference = LogAttachmentUtility.buildMarkdownReference(originalFilename, attachment);
                 String downloadPath = "/api/Downloads/Attachments/" + attachment.getName();
-                result.add(new LogEntryAttachment(markdownReference, downloadPath, originalFilename, attachment.getName()));
+                result.add(new LogEntryAttachment(attachment.getId(), markdownReference, downloadPath, originalFilename, attachment.getName()));
             }
         }
 
         return result;
+    }
+
+    private Attachment findAttachmentInLog(Log logEntity, int attachmentId) throws ObjectNotFound {
+        List<Attachment> attachments = logEntity.getAttachmentList();
+        if (attachments != null) {
+            for (Attachment attachment : attachments) {
+                if (Objects.equals(attachment.getId(), attachmentId)) {
+                    return attachment;
+                }
+            }
+        }
+
+        throw new ObjectNotFound(
+                String.format("Attachment id %d does not exist for log entry %d.",
+                        attachmentId, logEntity.getId()));
     }
 
     private Log findLogInDocument(ItemDomainLogbook logDocument, int logId) throws ObjectNotFound {
