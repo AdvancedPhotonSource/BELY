@@ -961,37 +961,9 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     @Override
     protected void performDestroyOperation(ItemDomainLogbook entity) throws CdbException {
-        // Remove placeholder settings or other property value
-        // No need to perform destroy operation on non-existing entities, causes exception. 
-        List<PropertyValue> propertyValueList = entity.getPropertyValueList();
-        for (int i = 0; i < propertyValueList.size(); i++) {
-            PropertyValue pv = propertyValueList.get(i);
-
-            if (pv.getId() == null) {
-                propertyValueList.remove(i);
-            }
-        }
-
-        if (entity.getIsItemTemplate()) {
-            List<Item> itemsCreatedFromThisTemplateItem = entity.getItemsCreatedFromThisTemplateItem();
-
-            if (itemsCreatedFromThisTemplateItem.size() > 0) {
-                throw new CdbException("The item has template instances.");
-            }
-        }
-
         ItemDomainLogbookControllerUtility controllerUtility = getControllerUtility();
         UserInfo user = SessionUtility.getUser();
-
-        List<ItemDomainLogbook> itemsToDestroy = new ArrayList<>();
-
-        for (ItemElement child : entity.getItemElementDisplayList()) {
-            ItemDomainLogbook containedItem = (ItemDomainLogbook) child.getContainedItem();
-            itemsToDestroy.add(containedItem);
-        }
-
-        controllerUtility.destroy(entity, user);
-        controllerUtility.destroyList(itemsToDestroy, null, user);
+        controllerUtility.destroyLogDocument(entity, user);
     }
 
     @Override

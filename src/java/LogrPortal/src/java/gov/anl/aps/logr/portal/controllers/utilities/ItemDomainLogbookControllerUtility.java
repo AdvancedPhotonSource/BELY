@@ -60,6 +60,25 @@ public class ItemDomainLogbookControllerUtility extends ItemControllerUtility<It
         return new ItemDomainLogbook();
     }
 
+    public void destroyLogDocument(ItemDomainLogbook entity, UserInfo user) throws CdbException {
+        // Remove placeholder settings or empty property values.
+        // No need to remove non-existing entities, causes execptions.
+        List<PropertyValue> propertyValueList = entity.getPropertyValueList();
+        propertyValueList.removeIf(propertyValue -> propertyValue.getId() == null);
+
+        if (entity.getIsItemTemplate() && !entity.getItemsCreatedFromThisTemplateItem().isEmpty()) {
+            throw new CdbException("The item has template instances.");
+        }
+
+        List<ItemDomainLogbook> sections = new ArrayList<>();
+        for (ItemElement child : entity.getItemElementDisplayList()) {
+            sections.add((ItemDomainLogbook) child.getContainedItem());
+        }
+
+        destroy(entity, user);
+        destroyList(sections, null, user);
+    }
+
     @Override
     public boolean isEntityHasQrId() {
         return false;
