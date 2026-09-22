@@ -1,5 +1,5 @@
 import unittest
-from belyApi import LogDocumentOptions, OpenApiException
+from belyApi import LogDocumentOptions, LogEntry, OpenApiException
 from test.bely_test_base import BelyTestBase
 
 
@@ -188,22 +188,82 @@ class LogEntryEditTests(BelyTestBase):
         self.assertIn(entry.log_id, entry_ids)
         self.logbook_api.delete_log_entry(self.DOC_SAMPLE_ID, entry.log_id)
 
-    def test_delete_log_reply(self):
-        self.login_as_user()
-        entries = self.logbook_api.get_log_entries(
-            self.DOC_WITH_ENTRIES, load_replies=True
-        )
-        entry = entries[0]
-        reply_id = entry.log_replies[0].log_id
+    def test_create_and_delete_log_reply(self):
+        document, entry = self._create_document_and_entry()
+        reply_text = f"Reply-{self._gen_unique_name()}"
 
-        result = self.logbook_api.delete_log_entry(self.DOC_WITH_ENTRIES, reply_id)
+        reply_template = LogEntry(
+            item_id=document.id,
+            parent_log_id=entry.log_id,
+            log_entry=reply_text,
+        )
+        reply = self.logbook_api.add_update_log_entry(reply_template)
+
+        self.assertIsNotNone(reply.log_id)
+        self.assertEqual(entry.log_id, reply.parent_log_id)
+        self.assertEqual(reply_text, reply.log_entry)
+        entries = self.logbook_api.get_log_entries(document.id, load_replies=True)
+        self.assertEqual([reply.log_id], [item.log_id for item in entries[0].log_replies])
+
+        updated_reply_text = f"Updated-{reply_text}"
+        reply.log_entry = updated_reply_text
+        updated_reply = self.logbook_api.add_update_log_entry(reply)
+        self.assertEqual(reply.log_id, updated_reply.log_id)
+        self.assertEqual(updated_reply_text, updated_reply.log_entry)
+
+        entries = self.logbook_api.get_log_entries(document.id, load_replies=True)
+        self.assertEqual(updated_reply_text, entries[0].log_replies[0].log_entry)
+
+        result = self.logbook_api.delete_log_entry(document.id, reply.log_id)
 
         self.assertIsNone(result)
         updated_entries = self.logbook_api.get_log_entries(
-            self.DOC_WITH_ENTRIES, load_replies=True
+            document.id, load_replies=True
         )
-        updated_reply_ids = [reply.log_id for reply in updated_entries[0].log_replies]
-        self.assertNotIn(reply_id, updated_reply_ids)
+        self.assertEqual([], updated_entries[0].log_replies)
+        self.logbook_api.delete_log_document(document.id)
+
+    def test_create_log_reply_requires_authentication(self):
+        reply = LogEntry(
+            item_id=self.DOC_WITH_ENTRIES,
+            parent_log_id=1,
+            log_entry="reply",
+        )
+        with self.assertRaises(OpenApiException):
+            self.logbook_api.add_update_log_entry(reply)
+
+    def test_create_log_reply_rejects_mismatched_document(self):
+        document, entry = self._create_document_and_entry()
+
+        reply = LogEntry(
+            item_id=self.DOC_WITH_ENTRIES,
+            parent_log_id=entry.log_id,
+            log_entry="reply",
+        )
+        with self.assertRaises(OpenApiException):
+            self.logbook_api.add_update_log_entry(reply)
+
+        self.logbook_api.delete_log_document(document.id)
+
+    def test_create_log_reply_rejects_reply_parent(self):
+        document, entry = self._create_document_and_entry()
+        reply = self.logbook_api.add_update_log_entry(
+            LogEntry(
+                item_id=document.id,
+                parent_log_id=entry.log_id,
+                log_entry="reply",
+            )
+        )
+        nested_reply = LogEntry(
+            item_id=document.id,
+            parent_log_id=reply.log_id,
+            log_entry="nested reply",
+        )
+
+        with self.assertRaises(OpenApiException):
+            self.logbook_api.add_update_log_entry(nested_reply)
+
+        self.logbook_api.delete_log_document(document.id)
 
 
 if __name__ == "__main__":
