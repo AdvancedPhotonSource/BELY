@@ -264,6 +264,34 @@ public class LogbookRoute extends ItemBaseRoute {
         return new LogEntry(itemId, logEntity, false, false);
     }
 
+    @PUT
+    @Path("/CreateLogReply/{logDocumentId}/{parentLogId}")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Create a reply to a top-level log entry.", responses = {
+        @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
+    @SecurityRequirement(name = "belyAuth")
+    @Secured
+    public LogEntry createLogReply(
+            @PathParam("logDocumentId") int logDocumentId,
+            @PathParam("parentLogId") int parentLogId,
+            @RequestBody(required = true) String replyText) throws CdbException {
+        ItemDomainLogbook logDocument = getLogDocumentById(logDocumentId);
+        verifyCurrentUserPermissionForItem(logDocument);
+
+        Log parentLog = findTopLevelLogInDocument(logDocument, parentLogId);
+        UserInfo user = getCurrentRequestUserInfo();
+        ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();
+        utility.verifySaveLogLockoutsForItem(logDocument, parentLog, user);
+
+        Log reply = utility.prepareAddLogReply(parentLog, user);
+        reply.setText(replyText);
+        reply = utility.saveLog(reply, user, null);
+
+        updateModifiedDateForLogDocument(logDocument, user);
+        return new LogEntry(logDocumentId, reply, false, false);
+    }
+
     @DELETE
     @Path("/DeleteLogEntry/{logDocumentId}/{logId}")
     @Operation(summary = "Delete a log entry or reply from a log document or section.", responses = {
@@ -552,6 +580,18 @@ public class LogbookRoute extends ItemBaseRoute {
         throw new ObjectNotFound(
                 String.format("Attachment id %d does not exist for log entry %d.",
                         attachmentId, logEntity.getId()));
+    }
+
+    private Log findTopLevelLogInDocument(ItemDomainLogbook logDocument, int logId) throws ObjectNotFound {
+        for (Log log : logDocument.getLogList()) {
+            if (Objects.equals(log.getId(), logId)) {
+                return log;
+            }
+        }
+
+        throw new ObjectNotFound(
+                String.format("Top-level log id %d does not exist for log document %d.",
+                        logId, logDocument.getId()));
     }
 
     private Log findLogInDocument(ItemDomainLogbook logDocument, int logId) throws ObjectNotFound {
