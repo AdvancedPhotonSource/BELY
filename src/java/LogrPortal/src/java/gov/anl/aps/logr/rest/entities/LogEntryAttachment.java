@@ -11,6 +11,7 @@ package gov.anl.aps.logr.rest.entities;
  */
 public class LogEntryAttachment {
 
+    private Integer id;
     private String markdownReference;
     private String downloadPath;
     private String originalFilename;
@@ -19,11 +20,20 @@ public class LogEntryAttachment {
     public LogEntryAttachment() {
     }
 
-    public LogEntryAttachment(String markdownReference, String downloadPath, String originalFilename, String storedFilename) {
+    public LogEntryAttachment(Integer id, String markdownReference, String downloadPath, String originalFilename, String storedFilename) {
+        this.id = id;
         this.markdownReference = markdownReference;
         this.downloadPath = downloadPath;
         this.originalFilename = originalFilename;
         this.storedFilename = storedFilename;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public String getMarkdownReference() {
