@@ -308,6 +308,31 @@ public class LogbookRoute extends ItemBaseRoute {
         return Response.noContent().build();
     }
 
+    @DELETE
+    @Path("/DeleteLogDocumentSection/{logDocumentId}/{sectionId}")
+    @Operation(summary = "Delete a section from a top-level log document.", responses = {
+        @ApiResponse(responseCode = "204", description = "Deleted")})
+    @SecurityRequirement(name = "belyAuth")
+    @Secured
+    public Response deleteLogDocumentSection(
+            @PathParam("logDocumentId") int logDocumentId,
+            @PathParam("sectionId") int sectionId) throws CdbException {
+        ItemDomainLogbook logDocument = getLogDocumentById(logDocumentId);
+        if (!Objects.equals(logDocument.getTopLevelLogDocument().getId(), logDocument.getId())) {
+            throw new InvalidArgument("Log document id identifies a section.");
+        }
+        verifyCurrentUserPermissionForItem(logDocument);
+
+        ItemElement sectionElement = findSectionElement(logDocument, sectionId);
+        ItemDomainLogbook section = (ItemDomainLogbook) sectionElement.getContainedItem();
+        sectionElement.setMarkedForDeletion(true);
+
+        UserInfo user = getCurrentRequestUserInfo();
+        ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();
+        utility.destroy(section, user);
+        return Response.noContent().build();
+    }
+
     @PUT
     @Path("/CreateLogDocument")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -499,6 +524,19 @@ public class LogbookRoute extends ItemBaseRoute {
         }
 
         return result;
+    }
+
+    private ItemElement findSectionElement(ItemDomainLogbook logDocument, int sectionId) throws ObjectNotFound {
+        for (ItemElement itemElement : logDocument.getItemElementDisplayList()) {
+            Item containedItem = itemElement.getContainedItem();
+            if (containedItem != null && Objects.equals(containedItem.getId(), sectionId)) {
+                return itemElement;
+            }
+        }
+
+        throw new ObjectNotFound(
+                String.format("Section id %d does not exist for log document %d.",
+                        sectionId, logDocument.getId()));
     }
 
     private Attachment findAttachmentInLog(Log logEntity, int attachmentId) throws ObjectNotFound {

@@ -298,6 +298,68 @@ class LogDocumentEditTests(BelyTestBase):
         with self.assertRaises(OpenApiException):
             self.logbook_api.delete_log_document(self.DOC_TEMPLATE_COPY_ID)
 
+    def test_delete_log_document_section(self):
+        document, section = self._create_document_for_delete(with_section=True)
+
+        result = self.logbook_api.delete_log_document_section(document.id, section.id)
+
+        self.assertIsNone(result)
+        self.assertEqual([], self.logbook_api.get_logbook_sections(document.id))
+        with self.assertRaises(OpenApiException):
+            self.logbook_api.get_log_entries(section.id)
+        self.logbook_api.delete_log_document(document.id)
+
+    def test_delete_log_document_section_requires_authentication(self):
+        document, section = self._create_document_for_delete(with_section=True)
+        self.factory.logout_user()
+        self.loggedIn = False
+
+        with self.assertRaises(OpenApiException):
+            self.logbook_api.delete_log_document_section(document.id, section.id)
+
+        self.login_as_user()
+        self.logbook_api.delete_log_document_section(document.id, section.id)
+        self.logbook_api.delete_log_document(document.id)
+
+    def test_delete_log_document_section_requires_permission(self):
+        document, section = self._create_document_for_delete(
+            with_section=True, as_admin=True
+        )
+
+        self.login_as_user()
+        with self.assertRaises(OpenApiException):
+            self.logbook_api.delete_log_document_section(document.id, section.id)
+
+        self.login_as_admin()
+        section_ids = [
+            item.id for item in self.logbook_api.get_logbook_sections(document.id)
+        ]
+        self.assertIn(section.id, section_ids)
+        self.logbook_api.delete_log_document_section(document.id, section.id)
+        self.logbook_api.delete_log_document(document.id)
+
+    def test_delete_log_document_section_rejects_mismatched_parent(self):
+        document, section = self._create_document_for_delete(with_section=True)
+        other_document, _ = self._create_document_for_delete()
+
+        with self.assertRaises(OpenApiException):
+            self.logbook_api.delete_log_document_section(other_document.id, section.id)
+
+        section_ids = [
+            item.id for item in self.logbook_api.get_logbook_sections(document.id)
+        ]
+        self.assertIn(section.id, section_ids)
+        self.logbook_api.delete_log_document(document.id)
+        self.logbook_api.delete_log_document(other_document.id)
+
+    def test_delete_log_document_section_rejects_section_parent(self):
+        document, section = self._create_document_for_delete(with_section=True)
+
+        with self.assertRaises(OpenApiException):
+            self.logbook_api.delete_log_document_section(section.id, section.id)
+
+        self.logbook_api.delete_log_document(document.id)
+
 
 if __name__ == "__main__":
     unittest.main()
