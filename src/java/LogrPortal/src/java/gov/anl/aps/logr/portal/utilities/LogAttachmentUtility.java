@@ -4,6 +4,7 @@
  */
 package gov.anl.aps.logr.portal.utilities;
 
+import gov.anl.aps.logr.common.constants.CdbPropertyValue;
 import gov.anl.aps.logr.common.utilities.FileUtility;
 import gov.anl.aps.logr.portal.model.db.entities.Attachment;
 import gov.anl.aps.logr.portal.model.db.entities.Log;
@@ -71,6 +72,15 @@ public class LogAttachmentUtility {
         }
 
         return attachment;
+    }
+
+    public static void deleteAttachmentFiles(Attachment attachment) throws IOException {
+        String name = attachment.getName();
+        Files.deleteIfExists(Paths.get(StorageUtility.getFileSystemLogAttachmentPath(name)));
+        Files.deleteIfExists(Paths.get(StorageUtility.getFileSystemLogAttachmentPath(
+                name + CdbPropertyValue.SCALED_IMAGE_EXTENSION)));
+        Files.deleteIfExists(Paths.get(StorageUtility.getFileSystemLogAttachmentPath(
+                name + CdbPropertyValue.THUMBNAIL_IMAGE_EXTENSION)));
     }
 
     /**
