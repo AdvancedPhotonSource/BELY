@@ -78,6 +78,8 @@ public class LogAttachmentUtility {
         String name = attachment.getName();
         Files.deleteIfExists(Paths.get(StorageUtility.getFileSystemLogAttachmentPath(name)));
         Files.deleteIfExists(Paths.get(StorageUtility.getFileSystemLogAttachmentPath(
+                name + CdbPropertyValue.ORIGINAL_IMAGE_EXTENSION)));
+        Files.deleteIfExists(Paths.get(StorageUtility.getFileSystemLogAttachmentPath(
                 name + CdbPropertyValue.SCALED_IMAGE_EXTENSION)));
         Files.deleteIfExists(Paths.get(StorageUtility.getFileSystemLogAttachmentPath(
                 name + CdbPropertyValue.THUMBNAIL_IMAGE_EXTENSION)));
