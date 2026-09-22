@@ -228,7 +228,7 @@ public class LogbookRoute extends ItemBaseRoute {
     @Path("/AddUpdateLogEntry")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Add/Update a log entry to a log document or section. Will only update the core log entry not related reply/reaction.", responses = {
+    @Operation(summary = "Add a log entry or reply, or update an existing log entry or reply. Set parentLogId when creating a reply. Does not modify related replies or reactions.", responses = {
         @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
     @SecurityRequirement(name = "belyAuth")
     @Secured
@@ -244,7 +244,14 @@ public class LogbookRoute extends ItemBaseRoute {
         ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();
 
         if (logId == null) {
-            logEntity = utility.prepareAddLog(logDocument, user);
+            Integer parentLogId = logEntry.getParentLogId();
+            if (parentLogId == null) {
+                logEntity = utility.prepareAddLog(logDocument, user);
+            } else {
+                Log parentLog = findTopLevelLogInDocument(logDocument, parentLogId);
+                utility.verifySaveLogLockoutsForItem(logDocument, parentLog, user);
+                logEntity = utility.prepareAddLogReply(parentLog, user);
+            }
         } else {
             logEntity = findLogInDocument(logDocument, logId);
             utility.verifySaveLogLockoutsForItem(logDocument, logEntity, user);
@@ -262,34 +269,6 @@ public class LogbookRoute extends ItemBaseRoute {
         updateModifiedDateForLogDocument(logDocument, user);
 
         return new LogEntry(itemId, logEntity, false, false);
-    }
-
-    @PUT
-    @Path("/CreateLogReply/{logDocumentId}/{parentLogId}")
-    @Consumes(MediaType.TEXT_PLAIN)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create a reply to a top-level log entry.", responses = {
-        @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)})
-    @SecurityRequirement(name = "belyAuth")
-    @Secured
-    public LogEntry createLogReply(
-            @PathParam("logDocumentId") int logDocumentId,
-            @PathParam("parentLogId") int parentLogId,
-            @RequestBody(required = true) String replyText) throws CdbException {
-        ItemDomainLogbook logDocument = getLogDocumentById(logDocumentId);
-        verifyCurrentUserPermissionForItem(logDocument);
-
-        Log parentLog = findTopLevelLogInDocument(logDocument, parentLogId);
-        UserInfo user = getCurrentRequestUserInfo();
-        ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();
-        utility.verifySaveLogLockoutsForItem(logDocument, parentLog, user);
-
-        Log reply = utility.prepareAddLogReply(parentLog, user);
-        reply.setText(replyText);
-        reply = utility.saveLog(reply, user, null);
-
-        updateModifiedDateForLogDocument(logDocument, user);
-        return new LogEntry(logDocumentId, reply, false, false);
     }
 
     @DELETE
