@@ -282,6 +282,28 @@ public class LogbookRoute extends ItemBaseRoute {
         return Response.noContent().build();
     }
 
+    @DELETE
+    @Path("/DeleteLogDocument/{logDocumentId}")
+    @Operation(summary = "Delete a top-level log document and its sections.", responses = {
+        @ApiResponse(responseCode = "204", description = "Deleted")})
+    @SecurityRequirement(name = "belyAuth")
+    @Secured
+    public Response deleteLogDocument(@PathParam("logDocumentId") int logDocumentId) throws CdbException {
+        ItemDomainLogbook logDocument = getLogDocumentById(logDocumentId);
+        if (!Objects.equals(logDocument.getTopLevelLogDocument().getId(), logDocument.getId())) {
+            throw new InvalidArgument("Log document id identifies a section.");
+        }
+        if (logDocument.getIsItemTemplate()) {
+            throw new InvalidArgument("Log document id identifies a template.");
+        }
+        verifyCurrentUserPermissionForItem(logDocument);
+
+        UserInfo user = getCurrentRequestUserInfo();
+        ItemDomainLogbookControllerUtility utility = new ItemDomainLogbookControllerUtility();
+        utility.destroyLogDocument(logDocument, user);
+        return Response.noContent().build();
+    }
+
     @PUT
     @Path("/CreateLogDocument")
     @Consumes(MediaType.APPLICATION_JSON)
