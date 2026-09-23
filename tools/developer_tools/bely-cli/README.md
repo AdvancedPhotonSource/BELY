@@ -257,9 +257,13 @@ All three levels render as full-width, aligned tables (rows stay in API order, n
 
 | Level | Columns |
 |-------|---------|
-| Logbook | Name, Display, Description |
-| Document | Name, Description, Systems, Owner, Modified |
+| Logbook | Display, Description |
+| Document | Name, Systems, Owner, Modified |
 | Entry | Date, Author, Entry (a snippet of the first line) — replies render as indented rows beneath their parent, expanded by default |
+
+Logbook types render as an indented hierarchy in API order. Grouping parents are
+informational; select a leaf to browse or create documents. Filtering includes hierarchy
+labels and type metadata.
 
 Press `i` at the logbook/document levels to open a side info panel with a few extra fields
 for the highlighted row (it splits the table's width; `i` again closes it). Entries always
@@ -300,7 +304,7 @@ on — `i` disappears once you drill into entries, and `s` / `y` / `e` / `f` / `
 | `t` | Entries level only: collapse/expand the reply thread under the highlighted entry (or its parent, if the highlight is on a reply). Replies start expanded. |
 | `i` | Logbook/document levels only: toggle the side info panel. |
 | `f` | Entries level only: toggle the table to widen the preview pane. |
-| `r` | Refresh the current level, bypassing the in-session cache. Collapsed threads stay collapsed. |
+| `r` | Refresh the current level, bypassing the in-session cache. Entry selection, preview scroll, filters, and collapsed threads are preserved when possible. |
 | `q` | Quit without selecting. |
 
 Replies only ever nest one level deep — the server doesn't return replies-to-replies — and
