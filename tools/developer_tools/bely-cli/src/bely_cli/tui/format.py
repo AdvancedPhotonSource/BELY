@@ -77,15 +77,14 @@ def type_row(t):
 
 
 DOC_COLUMNS = [
-    ("Name", 32), ("Description", None), ("Systems", 20), ("Owner", 14), ("Modified", 16),
+    ("Name", None), ("Systems", 20), ("Owner", 14), ("Modified", 16),
 ]
 
 
 def doc_row(d):
     """DataTable row cells for a log document (ItemDomainLogbook)."""
     name = getattr(d, "name", None) or "(unnamed)"
-    description = getattr(d, "description", None) or ""
-    return (name, description, _doc_systems(d), _doc_owner(d), _doc_modified(d))
+    return (name, _doc_systems(d), _doc_owner(d), _doc_modified(d))
 
 
 ENTRY_COLUMNS = [("Date", 16), ("Author", 16), ("Entry", None)]
@@ -220,8 +219,13 @@ def summarize_reactions(reactions):
 def entry_metadata_rows(entry, doc, parent=None):
     """[(label, value)] metadata rows for the entry preview header."""
     rows = [("log_id", str(getattr(entry, "log_id", "") or ""))]
-    if parent is not None:
-        rows.append(("reply to", str(getattr(parent, "log_id", "") or "")))
+    doc_id = getattr(entry, "item_id", None) or getattr(doc, "id", None) or ""
+    rows.append(("log_doc_id", str(doc_id)))
+    parent_id = getattr(entry, "parent_log_id", None)
+    if parent_id is None and parent is not None:
+        parent_id = getattr(parent, "log_id", None)
+    if parent_id is not None:
+        rows.append(("parent_log_id", str(parent_id)))
     rows.append(("doc", getattr(doc, "name", None) or ""))
 
     entered_by = getattr(entry, "entered_by_username", None) or ""

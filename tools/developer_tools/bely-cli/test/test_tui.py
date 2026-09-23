@@ -32,7 +32,7 @@ class TypeRowTests(unittest.TestCase):
 
 
 class DocRowTests(unittest.TestCase):
-    def test_returns_name_description_systems_owner_modified(self):
+    def test_returns_name_systems_owner_modified(self):
         more_info = SimpleNamespace(
             last_modified_on_date_time=datetime.datetime(2026, 6, 19, 14, 30),
             owner_username="alice",
@@ -44,12 +44,12 @@ class DocRowTests(unittest.TestCase):
         )
         self.assertEqual(
             fmt.doc_row(d),
-            ("Shift Report", "daily notes", "SR, software", "alice", "2026-06-19 14:30"),
+            ("Shift Report", "SR, software", "alice", "2026-06-19 14:30"),
         )
 
     def test_none_more_info_and_item_type_list_do_not_raise(self):
         d = SimpleNamespace(name=None, description=None, item_type_list=None, more_info=None)
-        self.assertEqual(fmt.doc_row(d), ("(unnamed)", "", "", "", ""))
+        self.assertEqual(fmt.doc_row(d), ("(unnamed)", "", "", ""))
 
 
 class RowColumnArityTests(unittest.TestCase):
@@ -253,11 +253,13 @@ class EntryMetadataRowsTests(unittest.TestCase):
         base.update(overrides)
         return SimpleNamespace(**base)
 
-    def test_minimal_entry_has_log_id_and_doc(self):
+    def test_minimal_entry_has_log_and_document_ids(self):
         doc = SimpleNamespace(id=1, name="Ops")
         rows = fmt.entry_metadata_rows(self._entry(entered_by_username=None), doc)
+        values = dict(rows)
         labels = [label for label, _ in rows]
-        self.assertIn("log_id", labels)
+        self.assertEqual(values["log_id"], "4821")
+        self.assertEqual(values["log_doc_id"], "1")
         self.assertIn("doc", labels)
         self.assertNotIn("by", labels)
         self.assertNotIn("replies", labels)
@@ -273,19 +275,30 @@ class EntryMetadataRowsTests(unittest.TestCase):
         self.assertEqual(rows["replies"], "2")
         self.assertEqual(rows["reactions"], "👍 1")
 
-    def test_parent_adds_reply_to_row_right_after_log_id(self):
+    def test_entry_item_id_precedes_selected_document_id(self):
+        doc = SimpleNamespace(id=1, name="Ops")
+        rows = dict(fmt.entry_metadata_rows(self._entry(item_id=42), doc))
+        self.assertEqual(rows["log_doc_id"], "42")
+
+    def test_parent_adds_parent_log_id(self):
         doc = SimpleNamespace(id=1, name="Ops")
         parent = SimpleNamespace(log_id=100)
         rows = fmt.entry_metadata_rows(self._entry(), doc, parent=parent)
         labels = [label for label, _ in rows]
-        self.assertEqual(labels[0], "log_id")
-        self.assertEqual(labels[1], "reply to")
-        self.assertEqual(dict(rows)["reply to"], "100")
+        self.assertEqual(labels[:3], ["log_id", "log_doc_id", "parent_log_id"])
+        self.assertEqual(dict(rows)["parent_log_id"], "100")
 
-    def test_no_parent_omits_reply_to_row(self):
+    def test_entry_parent_id_precedes_tree_parent(self):
+        doc = SimpleNamespace(id=1, name="Ops")
+        parent = SimpleNamespace(log_id=100)
+        rows = dict(fmt.entry_metadata_rows(
+            self._entry(parent_log_id=99), doc, parent=parent))
+        self.assertEqual(rows["parent_log_id"], "99")
+
+    def test_no_parent_omits_parent_log_id(self):
         doc = SimpleNamespace(id=1, name="Ops")
         rows = fmt.entry_metadata_rows(self._entry(), doc)
-        self.assertNotIn("reply to", dict(rows))
+        self.assertNotIn("parent_log_id", dict(rows))
 
 
 class DocMetadataRowsTests(unittest.TestCase):
