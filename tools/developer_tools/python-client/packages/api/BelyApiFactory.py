@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import base64
+import json
 import os
 import warnings
 import typing
@@ -155,13 +156,30 @@ class BelyApiFactory:
         self.auth_api.log_out()
 
     def parse_api_exception(self, open_api_exception):
+        """Parse an API exception response into an ApiExceptionMessage."""
         from belyApi import ApiExceptionMessage
 
-        response_type = ApiExceptionMessage.__name__
-        open_api_exception.data = open_api_exception.body
-        ex_obj = self.api_client.deserialize(open_api_exception, response_type)
-        ex_obj.status = open_api_exception.status
-        return ex_obj
+        payload = open_api_exception.body
+        if payload is None:
+            payload = open_api_exception.data
+        if isinstance(payload, bytes):
+            payload = payload.decode("utf-8")
+        if isinstance(payload, str):
+            payload = json.loads(payload)
+        if not isinstance(payload, dict):
+            raise ValueError("API exception does not contain a JSON object")
+
+        parsed = ApiExceptionMessage.from_dict(payload)
+        if not parsed.message:
+            exception = parsed.exception
+            parsed.message = (
+                getattr(exception, "message", None)
+                or getattr(exception, "localized_message", None)
+                or parsed.simple_name
+                or getattr(open_api_exception, "reason", None)
+                or "API request failed"
+            )
+        return parsed
 
     # -- Deprecated camelCase wrappers --
 

@@ -25,6 +25,27 @@ def is_no_prompt():
     return _no_prompt
 
 
+def format_error_message(error, factory=None):
+    """Return a concise server message for API errors, or the normal exception text."""
+    try:
+        import belyApi
+
+        if not isinstance(error, belyApi.exceptions.ApiException):
+            return str(error)
+    except Exception:
+        return str(error)
+
+    try:
+        if factory is None:
+            from . import auth
+
+            factory = auth.get_factory()
+        parsed = factory.parse_api_exception(error)
+        return parsed.message or str(error)
+    except Exception:
+        return str(error)
+
+
 def print_items(items, columns, fmt="text"):
     """Print a list of dicts as a table, JSON array, or YAML sequence.
 

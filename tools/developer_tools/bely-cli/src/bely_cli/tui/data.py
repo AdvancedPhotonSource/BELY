@@ -34,7 +34,7 @@ class LogbookData:
 
     def logbook_types(self):
         if self._types is None:
-            self._types = self._logbook_api.get_logbook_types()
+            self._types = self._logbook_api.get_logbook_type_hierarchy()
         return self._types
 
     def logbook_systems(self):

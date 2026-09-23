@@ -11,11 +11,46 @@ from typing import NamedTuple, Optional
 # -- list-row formatting (used by both the old curses UI and the new
 #    Textual OptionList rows) --
 
+class TypeNode(NamedTuple):
+    """One flattened hierarchy row wrapping its original EntityType."""
+
+    entity: object
+    depth: int
+    branch: str
+    selectable: bool
+    hierarchy_text: str
+
+
+def flatten_types(types):
+    """Flatten EntityType children depth-first while retaining hierarchy guides."""
+    rows = []
+
+    def walk(items, depth, prefix_lasts, ancestors):
+        for index, entity in enumerate(items or []):
+            is_last = index == len(items) - 1
+            branch = _branch_prefix(prefix_lasts, is_last) if depth else ""
+            children = getattr(entity, "entity_type_children", None) or []
+            name = getattr(entity, "name", None) or ""
+            hierarchy_text = " / ".join(ancestors + [name])
+            rows.append(TypeNode(entity, depth, branch, not children, hierarchy_text))
+            if children:
+                next_prefix = prefix_lasts + [is_last] if depth else []
+                walk(children, depth + 1, next_prefix, ancestors + [name])
+
+    walk(types, 0, [], [])
+    return rows
+
+
+def type_entity(t):
+    return t.entity if isinstance(t, TypeNode) else t
+
+
 def format_type(t):
-    """Display string for a logbook type (EntityType)."""
-    display = getattr(t, "display_name", None) or ""
-    name = getattr(t, "name", None) or ""
-    return f"{name}  ({display})" if display else name
+    """Display name for a logbook type, with hierarchy guides when present."""
+    node = t if isinstance(t, TypeNode) else None
+    entity = type_entity(t)
+    label = getattr(entity, "display_name", None) or getattr(entity, "name", None) or ""
+    return f"{node.branch}{label}" if node else label
 
 
 def format_doc(d):
@@ -65,27 +100,29 @@ def _doc_owner(d):
     return getattr(more_info, "owner_username", None) or ""
 
 
-TYPE_COLUMNS = [("Name", 24), ("Display", 24), ("Description", None)]
+TYPE_COLUMNS = [("Display", 32), ("Description", None)]
 
 
 def type_row(t):
-    """DataTable row cells for a logbook type (EntityType)."""
-    name = getattr(t, "name", None) or ""
-    display = getattr(t, "display_name", None) or ""
-    description = getattr(t, "description", None) or ""
-    return (name, display, description)
+    """DataTable row cells for a logbook type (EntityType or TypeNode)."""
+    node = t if isinstance(t, TypeNode) else None
+    entity = type_entity(t)
+    display = getattr(entity, "display_name", None) or getattr(entity, "name", None) or ""
+    if node:
+        display = node.branch + display
+    description = getattr(entity, "description", None) or ""
+    return (display, description)
 
 
 DOC_COLUMNS = [
-    ("Name", 32), ("Description", None), ("Systems", 20), ("Owner", 14), ("Modified", 16),
+    ("Name", None), ("Systems", 20), ("Owner", 14), ("Modified", 16),
 ]
 
 
 def doc_row(d):
     """DataTable row cells for a log document (ItemDomainLogbook)."""
     name = getattr(d, "name", None) or "(unnamed)"
-    description = getattr(d, "description", None) or ""
-    return (name, description, _doc_systems(d), _doc_owner(d), _doc_modified(d))
+    return (name, _doc_systems(d), _doc_owner(d), _doc_modified(d))
 
 
 ENTRY_COLUMNS = [("Date", 16), ("Author", 16), ("Entry", None)]
@@ -220,8 +257,13 @@ def summarize_reactions(reactions):
 def entry_metadata_rows(entry, doc, parent=None):
     """[(label, value)] metadata rows for the entry preview header."""
     rows = [("log_id", str(getattr(entry, "log_id", "") or ""))]
-    if parent is not None:
-        rows.append(("reply to", str(getattr(parent, "log_id", "") or "")))
+    doc_id = getattr(entry, "item_id", None) or getattr(doc, "id", None) or ""
+    rows.append(("log_doc_id", str(doc_id)))
+    parent_id = getattr(entry, "parent_log_id", None)
+    if parent_id is None and parent is not None:
+        parent_id = getattr(parent, "log_id", None)
+    if parent_id is not None:
+        rows.append(("parent_log_id", str(parent_id)))
     rows.append(("doc", getattr(doc, "name", None) or ""))
 
     entered_by = getattr(entry, "entered_by_username", None) or ""
@@ -284,6 +326,7 @@ def doc_metadata_rows(doc):
 
 def type_metadata_rows(t):
     """[(label, value)] metadata rows for the logbook-type preview header."""
+    t = type_entity(t)
     rows = [("name", getattr(t, "name", None) or "")]
 
     display_name = getattr(t, "display_name", None)

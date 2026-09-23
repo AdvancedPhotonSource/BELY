@@ -21,10 +21,13 @@ def get_token_file():
 
 
 def get_host():
-    """Return the BELY server URL from env var or settings."""
+    """Return the BELY server URL from env var or settings without trailing slashes."""
     host = os.environ.get("BELY_HOST") or get_setting("host")
     if not host:
         raise ValueError("no host configured. Set BELY_HOST or add 'host' to settings.yaml.")
+    host = host.rstrip("/")
+    if not host:
+        raise ValueError("BELY host must not contain only slashes.")
     return host
 
 
@@ -130,7 +133,9 @@ def login(username, password):
     except belyApi.exceptions.UnauthorizedException:
         raise ValueError(f"Authentication failed: invalid credentials for user '{username}'")
     except Exception as e:
-        raise RuntimeError(f"Authentication failed: {e}") from e
+        from .common import format_error_message
+
+        raise RuntimeError(f"Authentication failed: {format_error_message(e, factory)}") from e
     save_token(factory.get_authenticate_token())
     return factory
 

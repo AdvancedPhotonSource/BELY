@@ -32,12 +32,13 @@ class PickerScreen(DialogScreen):
 
     BUTTON_ROWS = [["picker-select", "picker-cancel"]]
 
-    def __init__(self, title, items, label_fn, *, multi=False):
+    def __init__(self, title, items, label_fn, *, multi=False, selectable_fn=None):
         super().__init__()
         self.title_text = title
         self.items = list(items)
         self.label_fn = label_fn
         self.multi = multi
+        self.selectable_fn = selectable_fn or (lambda item: True)
         self.selected = set()
         self.shown = list(self.items)
 
@@ -60,7 +61,7 @@ class PickerScreen(DialogScreen):
         if not self.multi:
             return label
         idx = self.items.index(item)
-        mark = "[x]" if idx in self.selected else "[ ]"
+        mark = "☒" if idx in self.selected else "☐"
         return f"{mark} {label}"
 
     def _populate(self, query):
@@ -99,7 +100,11 @@ class PickerScreen(DialogScreen):
         lst = self.query_one("#picker-list", OptionList)
         if lst.highlighted is None or not self.shown:
             return
-        self.dismiss(self.shown[lst.highlighted])
+        item = self.shown[lst.highlighted]
+        if not self.selectable_fn(item):
+            self.notify("Select a leaf logbook type.")
+            return
+        self.dismiss(item)
 
     def action_toggle(self):
         if not self.multi:

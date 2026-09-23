@@ -21,7 +21,8 @@ from textual.containers import Vertical
 from textual.widgets import Button, Input, Static
 
 from ... import core
-from ...common import find_logdoc
+from ...common import find_logdoc, format_error_message
+from ..format import flatten_types, format_type
 from .dialog import CANCEL_HINT, SAVE_HINT, DialogButtons, DialogScreen, hinted_label
 
 # Sentinel for "explicitly skip the default template" -- distinct from
@@ -104,15 +105,19 @@ class NewDocScreen(DialogScreen):
         from .picker import PickerScreen
 
         try:
-            types = await asyncio.to_thread(self.session.data.logbook_types)
+            types = flatten_types(await asyncio.to_thread(self.session.data.logbook_types))
         except Exception as e:
-            self.notify(f"Could not load types: {e}", severity="error")
+            self.notify(
+                f"Could not load types: {format_error_message(e, self.session.factory)}",
+                severity="error",
+            )
             return
         choice = await self.app.push_screen_wait(
-            PickerScreen("Logbook type", types, lambda t: t.name or "")
+            PickerScreen(
+                "Logbook type", types, format_type, selectable_fn=lambda node: node.selectable)
         )
         if choice is not None:
-            self.logbook_type = choice
+            self.logbook_type = choice.entity
             self._refresh_labels()
 
     @work
@@ -122,7 +127,10 @@ class NewDocScreen(DialogScreen):
         try:
             systems = await asyncio.to_thread(self.session.data.logbook_systems)
         except Exception as e:
-            self.notify(f"Could not load systems: {e}", severity="error")
+            self.notify(
+                f"Could not load systems: {format_error_message(e, self.session.factory)}",
+                severity="error",
+            )
             return
         choice = await self.app.push_screen_wait(
             PickerScreen("Systems (space to toggle)", systems, lambda s: s.name or "", multi=True)
@@ -138,7 +146,10 @@ class NewDocScreen(DialogScreen):
         try:
             templates = await asyncio.to_thread(self.session.data.logbook_templates)
         except Exception as e:
-            self.notify(f"Could not load templates: {e}", severity="error")
+            self.notify(
+                f"Could not load templates: {format_error_message(e, self.session.factory)}",
+                severity="error",
+            )
             return
         items = [_NO_TEMPLATE] + list(templates)
         choice = await self.app.push_screen_wait(
@@ -191,7 +202,10 @@ class NewDocScreen(DialogScreen):
                 skip_default_template=self.skip_template,
             )
         except Exception as e:
-            self.notify(f"Create failed: {e}", severity="error")
+            self.notify(
+                f"Create failed: {format_error_message(e, self.session.factory)}",
+                severity="error",
+            )
             return
 
         self.notify(f'Document "{doc.name}" created, id={doc.id}')
@@ -215,12 +229,13 @@ class NewDocScreen(DialogScreen):
                 )
             )
             if edit_now:
-                await open_composer(self.app, doc, api, entry=entry)
+                await open_composer(
+                    self.app, doc, api, entry=entry, factory=self.session.factory)
         else:
             create_entry = await self.app.push_screen_wait(
                 ConfirmScreen("Create a log entry now?", confirm_label="Create entry", cancel_label="Skip")
             )
             if create_entry:
-                await open_composer(self.app, doc, api)
+                await open_composer(self.app, doc, api, factory=self.session.factory)
 
         self.dismiss(doc)

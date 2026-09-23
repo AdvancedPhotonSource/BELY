@@ -19,7 +19,7 @@ from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Input, Static, TextArea
 
 from ... import core
-from ...common import editor_changed
+from ...common import editor_changed, format_error_message
 from .dialog import CANCEL_HINT, SAVE_HINT, DialogButtons, DialogScreen, hinted_label
 
 
@@ -42,17 +42,23 @@ class ComposeScreen(DialogScreen):
     # Save first: right after the attachment field in tab order, since it's used most.
     BUTTON_ROWS = [["compose-save", "compose-editor", "compose-cancel"]]
 
-    def __init__(self, doc, entry, api, *, is_new):
+    def __init__(self, doc, entry, api, *, is_new, factory=None, reply_to=None):
         super().__init__()
         self.doc = doc
         self.entry = entry
         self.api = api
+        self.factory = factory
         self.is_new = is_new
+        self.reply_to = reply_to
         self._initial_text = entry.log_entry or ""
 
     def compose(self) -> ComposeResult:
-        title = (f'New entry in "{self.doc.name}"' if self.is_new
-                 else f'Update entry #{self.entry.log_id} in "{self.doc.name}"')
+        if self.reply_to is not None:
+            title = f'Reply to entry #{self.reply_to.log_id} in "{self.doc.name}"'
+        elif self.is_new:
+            title = f'New entry in "{self.doc.name}"'
+        else:
+            title = f'Update entry #{self.entry.log_id} in "{self.doc.name}"'
         with Vertical(id="compose-dialog", classes="dialog"):
             yield Static(title, id="compose-title")
             yield TextArea(self._initial_text, language="markdown", id="compose-area")
@@ -150,13 +156,14 @@ class ComposeScreen(DialogScreen):
                 await asyncio.to_thread(
                     core.upload_attachment, self.api, self.doc.id, saved_entry.log_id, attach_path)
         except Exception as e:
-            self.notify(f"Save failed: {e}", severity="error")
+            self.notify(
+                f"Save failed: {format_error_message(e, self.factory)}", severity="error")
             return
 
         self.dismiss(saved_entry)
 
 
-async def open_composer(app, doc, api, *, entry=None):
+async def open_composer(app, doc, api, *, entry=None, factory=None, reply_to=None):
     """Push ComposeScreen for a new or existing entry.
 
     When `entry` is None, fetches a fresh template first (needs an
@@ -171,9 +178,16 @@ async def open_composer(app, doc, api, *, entry=None):
         try:
             entry = await asyncio.to_thread(core.new_entry_template, api, doc.id)
         except Exception as e:
-            app.notify(f"Could not load entry template: {e}", severity="error")
+            app.notify(
+                f"Could not load entry template: {format_error_message(e, factory)}",
+                severity="error",
+            )
             return None
+        if reply_to is not None:
+            entry.parent_log_id = reply_to.log_id
         is_new = True
     else:
         is_new = False
-    return await app.push_screen_wait(ComposeScreen(doc, entry, api, is_new=is_new))
+    return await app.push_screen_wait(
+        ComposeScreen(
+            doc, entry, api, is_new=is_new, factory=factory, reply_to=reply_to))

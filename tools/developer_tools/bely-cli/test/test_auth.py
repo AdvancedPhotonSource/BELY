@@ -47,6 +47,22 @@ def _fake_factory_class(valid_token=None, login_ok=True, login_token="new-token"
     return FakeFactory
 
 
+class GetHostTests(unittest.TestCase):
+    @patch.dict(os.environ, {"BELY_HOST": "https://example.test/bely///"}, clear=True)
+    def test_environment_host_drops_trailing_slashes(self):
+        self.assertEqual(auth.get_host(), "https://example.test/bely")
+
+    @patch.dict(os.environ, {}, clear=True)
+    @patch.object(auth, "get_setting", return_value="https://example.test/bely/")
+    def test_settings_host_drops_trailing_slash(self, _get_setting):
+        self.assertEqual(auth.get_host(), "https://example.test/bely")
+
+    @patch.dict(os.environ, {"BELY_HOST": "///"}, clear=True)
+    def test_slashes_only_host_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "only slashes"):
+            auth.get_host()
+
+
 class AuthTestCase(unittest.TestCase):
     """Points auth.py's token file at a scratch path and stubs get_host()."""
 

@@ -12,12 +12,12 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from textual.app import App
-from textual.widgets import Button, Input, Select, Static, TextArea
+from textual.widgets import Button, Input, OptionList, Select, Static, TextArea
 
 from bely_cli.tui.app import BelyTuiApp
 from bely_cli.tui.data import LogbookData
 from bely_cli.tui.screens import configscreen
-from bely_cli.tui.screens.compose import ComposeScreen
+from bely_cli.tui.screens.compose import ComposeScreen, open_composer
 from bely_cli.tui.screens.confirm import ConfirmScreen
 from bely_cli.tui.screens.configscreen import ConfigScreen
 from bely_cli.tui.screens.login import LoginScreen
@@ -34,7 +34,7 @@ class FakeLogbookApi:
         self.created = None
         self._existing_doc = existing_doc
 
-    def get_logbook_types(self):
+    def get_logbook_type_hierarchy(self):
         return [SimpleNamespace(id=1, name="ops", display_name="Ops")]
 
     def get_logbook_systems(self):
@@ -207,6 +207,9 @@ class PickerScreenTests(unittest.IsolatedAsyncioTestCase):
             await pilot.press("enter")  # filter -> list
             await pilot.pause()
             await pilot.press("space")  # toggle Alpha
+            await pilot.pause()
+            picker = app.screen
+            self.assertTrue(str(picker.query_one("#picker-list", OptionList).get_option_at_index(0).prompt).startswith("☒"))
             await pilot.press("down")
             await pilot.press("space")  # toggle Beta
             await pilot.pause()
@@ -283,6 +286,58 @@ class PickerScreenTests(unittest.IsolatedAsyncioTestCase):
 
 
 class ComposeScreenTests(unittest.IsolatedAsyncioTestCase):
+    async def test_reply_loads_blank_template_sets_parent_and_titles_composer(self):
+        api = FakeLogbookApi()
+        doc = SimpleNamespace(id=1, name="Doc")
+        parent = SimpleNamespace(log_id=7)
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(open_composer(app, doc, api, reply_to=parent))
+            await pilot.pause()
+            screen = app.screen
+            self.assertIn("Reply to entry #7", str(screen.query_one("#compose-title", Static).render()))
+            self.assertEqual(screen.entry.parent_log_id, 7)
+            screen.query_one("#compose-area", TextArea).text = "reply text"
+            screen.query_one("#compose-save", Button).press()
+            await pilot.pause()
+            await pilot.pause()
+            saved = await task.wait()
+        self.assertEqual(saved.parent_log_id, 7)
+        self.assertEqual(saved.log_entry, "reply text")
+
+    async def test_reply_uses_existing_attachment_flow(self):
+        api = FakeLogbookApi()
+        api.upload_attachment = lambda **kwargs: None
+        doc = SimpleNamespace(id=1, name="Doc")
+        parent = SimpleNamespace(log_id=7)
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(open_composer(app, doc, api, reply_to=parent))
+            await pilot.pause()
+            screen = app.screen
+            screen.query_one("#compose-area", TextArea).text = "reply text"
+            screen.query_one("#compose-attach", Input).value = "/tmp/reply.txt"
+            with patch("bely_cli.core.validate_attachment_path", return_value="/tmp/reply.txt"), \
+                 patch("bely_cli.core.upload_attachment") as upload:
+                screen.query_one("#compose-save", Button).press()
+                await pilot.pause()
+                await pilot.pause()
+                saved = await task.wait()
+        upload.assert_called_once_with(api, 1, saved.log_id, "/tmp/reply.txt")
+
+    async def test_reply_cancel_returns_none(self):
+        api = FakeLogbookApi()
+        doc = SimpleNamespace(id=1, name="Doc")
+        parent = SimpleNamespace(log_id=7)
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(open_composer(app, doc, api, reply_to=parent))
+            await pilot.pause()
+            app.screen.query_one("#compose-cancel", Button).press()
+            await pilot.pause()
+            result = await task.wait()
+        self.assertIsNone(result)
+
     async def test_save_button_saves_and_dismisses_with_entry(self):
         api = FakeLogbookApi()
         doc = SimpleNamespace(id=1, name="Doc")
@@ -698,8 +753,18 @@ class ConfigScreenTests(unittest.IsolatedAsyncioTestCase):
                 screen = app.screen
                 self.assertEqual(screen.query_one("#config-host", Input).value, "https://example")
                 self.assertEqual(screen.query_one("#config-editor", Input).value, "nano")
-                self.assertIn(
-                    "overridden by BELY_USER", screen.query_one("#config-user", Input).placeholder)
+                labels = {
+                    field: str(screen.query_one(f"#config-{field}-label", Static).render())
+                    for field in configscreen.config.VALID_FIELDS
+                }
+                self.assertEqual(labels["host"], "Host:")
+                self.assertEqual(labels["editor"], "Editor:")
+                self.assertEqual(labels["token_path"], "Token path:")
+                self.assertEqual(labels["theme"], "Theme:")
+                self.assertEqual(labels["images"], "Images:")
+                self.assertIn("User:", labels["user"])
+                self.assertIn("overridden by BELY_USER", labels["user"])
+                self.assertEqual(screen.query_one("#config-user", Input).placeholder, "")
 
     async def test_save_writes_changed_fields_and_warns_on_env_override(self):
         state = {
