@@ -22,6 +22,15 @@ class FilterItemsTests(unittest.TestCase):
 
 
 class TypeRowTests(unittest.TestCase):
+    def test_picker_format_uses_display_name_and_hierarchy(self):
+        entity = SimpleNamespace(name="ops", display_name="Operations", entity_type_children=[])
+        row = fmt.flatten_types([entity])[0]
+        self.assertEqual(fmt.format_type(row), "Operations")
+
+    def test_picker_format_falls_back_to_name(self):
+        entity = SimpleNamespace(name="ops", display_name=None, entity_type_children=[])
+        self.assertEqual(fmt.format_type(fmt.flatten_types([entity])[0]), "ops")
+
     def test_flattens_hierarchy_depth_first_with_guides(self):
         leaf_a = SimpleNamespace(name="a", entity_type_children=[])
         leaf_b = SimpleNamespace(name="b", entity_type_children=[])

@@ -46,12 +46,10 @@ def type_entity(t):
 
 
 def format_type(t):
-    """Display string for a logbook type (EntityType or TypeNode)."""
+    """Display name for a logbook type, with hierarchy guides when present."""
     node = t if isinstance(t, TypeNode) else None
     entity = type_entity(t)
-    display = getattr(entity, "display_name", None) or ""
-    name = getattr(entity, "name", None) or ""
-    label = f"{name}  ({display})" if display else name
+    label = getattr(entity, "display_name", None) or getattr(entity, "name", None) or ""
     return f"{node.branch}{label}" if node else label
 
 
