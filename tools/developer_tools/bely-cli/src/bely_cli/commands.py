@@ -12,6 +12,13 @@ from .core import find_logbook_type, find_systems, find_template  # noqa: F401
 ENV_VARS = core.ENV_VARS
 
 
+def cmd_logout(fmt="text"):
+    """Invalidate the current token and remove it from the local cache."""
+    logged_out = auth.logout()
+    message = "Logged out." if logged_out else "Not logged in."
+    print_result({"logged_out": logged_out}, message, fmt)
+
+
 def cmd_show_config(fmt="text"):
     """Show current configuration from settings file and environment."""
     data = core.collect_config()

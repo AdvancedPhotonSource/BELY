@@ -95,6 +95,13 @@ lookups (listing types, systems, templates, finding documents) do not.
 
 On success a token is cached at `~/.config/bely/token` (permissions `0600`) and reused on
 later runs. Expired or invalid tokens are discarded and you re-authenticate automatically.
+To invalidate the current token on the server and remove it locally, run:
+
+```bash
+bely-cli logout
+```
+
+If no token is cached, the command reports `Not logged in.` and succeeds.
 
 The token location can be changed with the `token_path` setting; by default it sits beside
 the settings file (see [Configuration & environment](#configuration--environment)).

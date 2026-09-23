@@ -17,6 +17,7 @@ $RUNNER python -m unittest
 # (appended to a leaf command, not at the top level).
 $RUNNER bely-cli -h > /dev/null
 $RUNNER bely-cli doc list -h | grep -q -- --format
+$RUNNER bely-cli logout -h | grep -q -- --format
 $RUNNER bely-cli tui lookup -h | grep -q -- --format
 # Bare `tui` is the one group that carries --limit/--format itself (see CLAUDE.md).
 $RUNNER bely-cli tui -h | grep -q -- --limit

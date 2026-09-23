@@ -40,6 +40,32 @@ class FakeApi:
         return log_entry
 
 
+class CmdLogoutTests(unittest.TestCase):
+    def test_logs_out_current_session(self):
+        with patch.object(commands.auth, "logout", return_value=True):
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                commands.cmd_logout()
+
+        self.assertEqual(buf.getvalue(), "Logged out.\n")
+
+    def test_reports_when_not_logged_in(self):
+        with patch.object(commands.auth, "logout", return_value=False):
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                commands.cmd_logout()
+
+        self.assertEqual(buf.getvalue(), "Not logged in.\n")
+
+    def test_structured_output_reports_status(self):
+        with patch.object(commands.auth, "logout", return_value=True):
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                commands.cmd_logout(fmt="json")
+
+        self.assertEqual(buf.getvalue(), '{"logged_out": true}\n')
+
+
 class CmdNewDocTests(unittest.TestCase):
     def test_creates_doc_and_first_entry_from_file(self):
         api = FakeApi()

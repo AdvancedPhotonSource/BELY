@@ -44,6 +44,10 @@ def _fake_factory_class(valid_token=None, login_ok=True, login_token="new-token"
         def get_authenticate_token(self):
             return self.api_client.default_headers[self.HEADER_TOKEN_KEY]
 
+        def logout_user(self):
+            if self.api_client.default_headers.get(self.HEADER_TOKEN_KEY) != valid_token:
+                raise _Unauthorized()
+
     return FakeFactory
 
 
@@ -116,6 +120,42 @@ class AuthenticatedFactoryFromTokenTests(AuthTestCase):
         factory = auth.authenticated_factory_from_token()
 
         self.assertIsNone(factory)
+        self.assertIsNone(auth.load_token())
+
+
+class LogoutTests(AuthTestCase):
+    def test_no_cached_token_returns_false(self):
+        self._install_factory(valid_token="good-token")
+
+        self.assertFalse(auth.logout())
+
+    def test_valid_cached_token_is_invalidated_and_deleted(self):
+        self._install_factory(valid_token="good-token")
+        auth.save_token("good-token")
+
+        self.assertTrue(auth.logout())
+        self.assertIsNone(auth.load_token())
+
+    def test_rejected_cached_token_is_still_deleted(self):
+        self._install_factory(valid_token="good-token")
+        auth.save_token("stale-token")
+
+        self.assertTrue(auth.logout())
+        self.assertIsNone(auth.load_token())
+
+    def test_other_failure_still_deletes_local_token(self):
+        fake_cls = _fake_factory_class(valid_token="good-token")
+
+        class BoomFactory(fake_cls):
+            def logout_user(self):
+                raise RuntimeError("network down")
+
+        self._install_factory_class(BoomFactory)
+        auth.save_token("good-token")
+
+        with self.assertRaisesRegex(RuntimeError, "Logout failed"):
+            auth.logout()
+
         self.assertIsNone(auth.load_token())
 
 

@@ -119,6 +119,31 @@ def authenticated_factory_from_token():
     return factory
 
 
+def logout():
+    """Invalidate and remove the cached token. Return False if no token was cached."""
+    import belyApi
+    from BelyApiFactory import BelyApiFactory
+
+    token = load_token()
+    if not token:
+        return False
+
+    factory = BelyApiFactory(bely_url=get_host())
+    factory.api_client.set_default_header(BelyApiFactory.HEADER_TOKEN_KEY, token)
+    try:
+        factory.logout_user()
+    except belyApi.exceptions.UnauthorizedException:
+        pass
+    except Exception as e:
+        from .common import format_error_message
+
+        raise RuntimeError(f"Logout failed: {format_error_message(e, factory)}") from e
+    finally:
+        delete_token()
+
+    return True
+
+
 def login(username, password):
     """Authenticate with credentials, cache the resulting token, and return the factory.
 
