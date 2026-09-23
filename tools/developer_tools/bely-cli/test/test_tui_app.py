@@ -160,6 +160,14 @@ class FakeFactory:
 
 
 class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
+    async def _open_entries(self, pilot):
+        await pilot.pause()
+        await pilot.press("enter")  # type -> docs
+        await pilot.pause()
+        await pilot.press("enter")  # docs -> entries
+        await pilot.pause()
+        await pilot.pause()
+
     async def test_browse_populates_list_and_drives_preview(self):
         data = LogbookData(FakeLogbookApi())
         app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
@@ -168,7 +176,7 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             screen = app.screen
             table = screen.query_one("#nav-table", DataTable)
             self.assertEqual(table.row_count, 1)
-            self.assertEqual(screen.shown_items[0].name, "ops")
+            self.assertEqual(screen.shown_items[0].entity.name, "ops")
             # No info panel open yet: the table gets the full width, no preview.
             self.assertFalse(screen.query_one("#preview").display)
             self.assertEqual(table.styles.width.value, 100)
