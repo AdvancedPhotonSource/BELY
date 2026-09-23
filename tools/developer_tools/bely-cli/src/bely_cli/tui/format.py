@@ -102,19 +102,18 @@ def _doc_owner(d):
     return getattr(more_info, "owner_username", None) or ""
 
 
-TYPE_COLUMNS = [("Name", 24), ("Display", 24), ("Description", None)]
+TYPE_COLUMNS = [("Display", 32), ("Description", None)]
 
 
 def type_row(t):
     """DataTable row cells for a logbook type (EntityType or TypeNode)."""
     node = t if isinstance(t, TypeNode) else None
     entity = type_entity(t)
-    name = getattr(entity, "name", None) or ""
+    display = getattr(entity, "display_name", None) or getattr(entity, "name", None) or ""
     if node:
-        name = node.branch + name
-    display = getattr(entity, "display_name", None) or ""
+        display = node.branch + display
     description = getattr(entity, "description", None) or ""
-    return (name, display, description)
+    return (display, description)
 
 
 DOC_COLUMNS = [

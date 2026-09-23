@@ -52,11 +52,11 @@ class TypeRowTests(unittest.TestCase):
 
     def test_returns_name_display_description(self):
         t = SimpleNamespace(name="ops", display_name="Ops", description="Operations log")
-        self.assertEqual(fmt.type_row(t), ("ops", "Ops", "Operations log"))
+        self.assertEqual(fmt.type_row(t), ("Ops", "Operations log"))
 
     def test_missing_fields_become_empty_strings(self):
         t = SimpleNamespace(name="ops", display_name=None, description=None)
-        self.assertEqual(fmt.type_row(t), ("ops", "", ""))
+        self.assertEqual(fmt.type_row(t), ("ops", ""))
 
 
 class DocRowTests(unittest.TestCase):
