@@ -146,6 +146,13 @@ class EntryTests(unittest.TestCase):
         self.assertEqual(saved.log_id, 99)
         self.assertIs(api.saved, entry)
 
+    def test_save_entry_preserves_reply_parent(self):
+        api = FakeLogbookApi()
+        entry = SimpleNamespace(log_id=None, log_entry="", parent_log_id=7)
+        saved = core.save_entry(api, entry, "reply")
+        self.assertEqual(saved.parent_log_id, 7)
+        self.assertIs(api.saved, entry)
+
     def test_find_entry_found_and_missing(self):
         entries = [SimpleNamespace(log_id=1), SimpleNamespace(log_id=2)]
         self.assertIs(core.find_entry(entries, 2), entries[1])

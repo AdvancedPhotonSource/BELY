@@ -486,6 +486,46 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(screen.level, screen.LEVEL_ENTRIES)
             self.assertEqual(len(screen.shown_items), 1)
 
+    async def test_reply_key_targets_top_level_parent_and_focuses_saved_reply(self):
+        api = FakeLogbookApiWithReplies()
+        data = LogbookData(api)
+        session = FakeSession(data, factory=FakeFactory(api=api))
+        app = BelyTuiApp(session, limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await self._open_entries(pilot)
+            screen = app.screen
+            screen._nav().move_cursor(row=1)  # select a reply
+            await pilot.pause()
+
+            await pilot.press("p")
+            await pilot.pause()
+            await pilot.pause()
+            self.assertEqual(type(app.screen).__name__, "ComposeScreen")
+            self.assertEqual(app.screen.reply_to.log_id, 100)
+            self.assertEqual(app.screen.entry.parent_log_id, 100)
+
+            from textual.widgets import Button, TextArea
+            app.screen.query_one("#compose-area", TextArea).text = "new reply"
+            app.screen.query_one("#compose-save", Button).press()
+            await pilot.pause()
+            await pilot.pause()
+            await pilot.pause()
+
+            self.assertIs(app.screen, screen)
+            self.assertNotIn(100, screen._collapsed)
+            self.assertEqual(screen._current_entry().log_id, 101)
+
+    async def test_reply_binding_only_available_for_entries_with_selection(self):
+        api = FakeLogbookApi()
+        app = BelyTuiApp(FakeSession(LogbookData(api)), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            screen = app.screen
+            self.assertIsNone(screen.check_action("reply", ()))
+            await self._open_entries(pilot)
+            self.assertTrue(screen.check_action("reply", ()))
+            self.assertTrue(screen.check_action("refresh_level", ()))
+
     async def test_update_entry_key_opens_compose_prefilled_and_cancel_returns(self):
         api = FakeLogbookApi()
         data = LogbookData(api)
