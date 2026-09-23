@@ -133,7 +133,9 @@ def login(username, password):
     except belyApi.exceptions.UnauthorizedException:
         raise ValueError(f"Authentication failed: invalid credentials for user '{username}'")
     except Exception as e:
-        raise RuntimeError(f"Authentication failed: {e}") from e
+        from .common import format_error_message
+
+        raise RuntimeError(f"Authentication failed: {format_error_message(e, factory)}") from e
     save_token(factory.get_authenticate_token())
     return factory
 

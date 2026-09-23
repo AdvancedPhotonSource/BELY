@@ -2,7 +2,7 @@ import sys
 
 import click
 
-from .common import FORMATS, set_no_prompt
+from .common import FORMATS, format_error_message, set_no_prompt
 from .config import VALID_FIELDS
 from .commands import (
     cmd_new_doc,
@@ -212,7 +212,7 @@ def main():
     try:
         cli()
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f"Error: {format_error_message(e)}", file=sys.stderr)
         sys.exit(1)
 
 
