@@ -12,7 +12,7 @@ import subprocess
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Vertical
+from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Input, Select, Static
 
 from ... import config, core
@@ -24,6 +24,20 @@ class ConfigScreen(DialogScreen):
     DEFAULT_CSS = """
     #config-dialog {
         width: 70;
+    }
+
+    .config-field {
+        height: auto;
+        align: left middle;
+        margin-top: 1;
+    }
+
+    .config-label {
+        width: 24;
+    }
+
+    .config-field Input, .config-field Select {
+        width: 1fr;
     }
     """
 
@@ -37,21 +51,35 @@ class ConfigScreen(DialogScreen):
 
     FIELD_CHOICES = {"images": IMAGE_MODES}  # enum fields get a Select instead of an Input
     FIELD_DEFAULTS = {"images": "auto"}
+    FIELD_LABELS = {
+        "host": "Host",
+        "user": "User",
+        "editor": "Editor",
+        "token_path": "Token path",
+        "theme": "Theme",
+        "images": "Images",
+    }
 
     def compose(self) -> ComposeResult:
         with Vertical(id="config-dialog", classes="dialog"):
             yield Static(id="config-breadcrumb")
             yield Static(id="config-summary")
             for field in config.VALID_FIELDS:
-                choices = self.FIELD_CHOICES.get(field)
-                if choices:
-                    yield Select(
-                        [(f"{choice} — {IMAGE_MODE_HELP[choice]}", choice)
-                         for choice in choices],
-                        allow_blank=False, id=f"config-{field}",
+                with Horizontal(classes="config-field"):
+                    yield Static(
+                        f"{self.FIELD_LABELS[field]}:",
+                        id=f"config-{field}-label",
+                        classes="config-label",
                     )
-                else:
-                    yield Input(placeholder=field, id=f"config-{field}")
+                    choices = self.FIELD_CHOICES.get(field)
+                    if choices:
+                        yield Select(
+                            [(f"{choice} — {IMAGE_MODE_HELP[choice]}", choice)
+                             for choice in choices],
+                            allow_blank=False, id=f"config-{field}",
+                        )
+                    else:
+                        yield Input(id=f"config-{field}")
             with DialogButtons():
                 yield Button(hinted_label("Save", SAVE_HINT), variant="primary", id="config-save")
                 yield Button(hinted_label("Edit file"), id="config-edit")
@@ -101,9 +129,10 @@ class ConfigScreen(DialogScreen):
             box = self.query_one(f"#config-{field}", Input)
             box.value = str(settings.get(field, "") or "")
             env_var = self.ENV_FOR_FIELD.get(field)
-            box.placeholder = (
-                f"{field} (overridden by {env_var})" if env_var and env_var in env else field
-            )
+            label = f"{self.FIELD_LABELS[field]}:"
+            if env_var and env_var in env:
+                label += f" [dim](overridden by {env_var})[/dim]"
+            self.query_one(f"#config-{field}-label", Static).update(label)
 
     def action_submit(self):
         self._save()

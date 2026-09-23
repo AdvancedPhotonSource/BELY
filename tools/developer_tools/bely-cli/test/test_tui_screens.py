@@ -698,8 +698,18 @@ class ConfigScreenTests(unittest.IsolatedAsyncioTestCase):
                 screen = app.screen
                 self.assertEqual(screen.query_one("#config-host", Input).value, "https://example")
                 self.assertEqual(screen.query_one("#config-editor", Input).value, "nano")
-                self.assertIn(
-                    "overridden by BELY_USER", screen.query_one("#config-user", Input).placeholder)
+                labels = {
+                    field: str(screen.query_one(f"#config-{field}-label", Static).render())
+                    for field in configscreen.config.VALID_FIELDS
+                }
+                self.assertEqual(labels["host"], "Host:")
+                self.assertEqual(labels["editor"], "Editor:")
+                self.assertEqual(labels["token_path"], "Token path:")
+                self.assertEqual(labels["theme"], "Theme:")
+                self.assertEqual(labels["images"], "Images:")
+                self.assertIn("User:", labels["user"])
+                self.assertIn("overridden by BELY_USER", labels["user"])
+                self.assertEqual(screen.query_one("#config-user", Input).placeholder, "")
 
     async def test_save_writes_changed_fields_and_warns_on_env_override(self):
         state = {
