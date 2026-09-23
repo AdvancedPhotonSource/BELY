@@ -7,6 +7,7 @@ from .config import VALID_FIELDS
 from .commands import (
     cmd_new_doc,
     cmd_list_docs,
+    cmd_logout,
     cmd_show_config,
     cmd_edit_config,
     cmd_set_config,
@@ -54,6 +55,13 @@ def common_options(f):
 def cli():
     """BELY logbook CLI"""
     pass
+
+
+@cli.command("logout")
+@common_options
+def logout(output_format):
+    """Log out and remove the cached authentication token."""
+    cmd_logout(fmt=output_format)
 
 
 # -- doc --
