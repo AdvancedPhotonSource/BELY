@@ -44,10 +44,12 @@ from ..format import (
     entry_row,
     filter_items,
     flatten_entries,
+    flatten_types,
     format_attachment,
     format_doc,
     format_type,
     reference_command,
+    type_entity,
     type_metadata_rows,
     type_row,
 )
@@ -75,7 +77,10 @@ class BrowseScreen(Screen):
     LEVEL_COLUMNS = {LEVEL_TYPES: TYPE_COLUMNS, LEVEL_DOCS: DOC_COLUMNS, LEVEL_ENTRIES: ENTRY_COLUMNS}
     LEVEL_ROW_FN = {LEVEL_TYPES: type_row, LEVEL_DOCS: doc_row, LEVEL_ENTRIES: entry_node_row}
     # Entries render via entry_node_row (tree glyphs) but filter on the plain entry cells.
-    LEVEL_SEARCH_FN = {LEVEL_ENTRIES: lambda node: entry_row(node.entry)}
+    LEVEL_SEARCH_FN = {
+        LEVEL_TYPES: lambda node: type_row(node) + (node.hierarchy_text,),
+        LEVEL_ENTRIES: lambda node: entry_row(node.entry),
+    }
 
     # Per-level nav pane width (%), used whenever a preview/info panel is visible.
     LEVEL_WIDTH = {LEVEL_TYPES: 42, LEVEL_DOCS: 60, LEVEL_ENTRIES: 42}
@@ -132,6 +137,7 @@ class BrowseScreen(Screen):
         self._nav_hidden = False
         self._info_open = False
         self._table_columns_for = None
+        self._pending_entry_restore = None
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -189,7 +195,13 @@ class BrowseScreen(Screen):
 
     # -- level loading --
 
-    def show_level(self, level, *, preserve_filter=False):
+    def show_level(self, level, *, preserve_filter=False, preserve_entry_position=False):
+        if preserve_entry_position and self.level == self.LEVEL_ENTRIES:
+            node = self._current_node()
+            row = self._nav().cursor_row or 0
+            scroll_y = self.query_one("#preview", VerticalScroll).scroll_y
+            self._pending_entry_restore = (
+                getattr(node.entry, "log_id", None) if node else None, row, scroll_y)
         self.level = level
         # "f" full-screen and the reply tree only apply at the entries level; reset when leaving.
         if level != self.LEVEL_ENTRIES:
@@ -226,7 +238,7 @@ class BrowseScreen(Screen):
     @work(thread=True, exclusive=True, group="fetch")
     def _load_types(self):
         try:
-            items = self.data.logbook_types()
+            items = flatten_types(self.data.logbook_types())
         except Exception as e:
             self.app.call_from_thread(
                 self._fetch_failed, format_error_message(e, self.session.factory))
@@ -284,10 +296,32 @@ class BrowseScreen(Screen):
             self.entry_tree = items
             items = flatten_entries(items, self._collapsed)
         self.all_items = items
-        self._apply_filter("")
+        query = self.query_one("#filter", Input).value
+        self._apply_filter(query)
+        if self.level == self.LEVEL_ENTRIES and self._pending_entry_restore is not None:
+            self._restore_entry_position()
         self._update_header()
         self.refresh_bindings()
         nav.focus()
+
+    def _restore_entry_position(self):
+        log_id, prior_row, scroll_y = self._pending_entry_restore
+        self._pending_entry_restore = None
+        row = next(
+            (index for index, node in enumerate(self.shown_items)
+             if node.entry.log_id == log_id),
+            min(prior_row, len(self.shown_items) - 1) if self.shown_items else None,
+        )
+        if row is None:
+            return
+        self._nav().move_cursor(row=row)
+        self.run_worker(
+            partial(self._show_preview, self.shown_items[row]), exclusive=True, group="preview")
+        self.call_after_refresh(self._restore_preview_scroll, scroll_y)
+
+    def _restore_preview_scroll(self, scroll_y):
+        preview = self.query_one("#preview", VerticalScroll)
+        preview.scroll_to(y=min(scroll_y, preview.max_scroll_y), animate=False)
 
     def _apply_filter(self, query):
         row_fn = self.LEVEL_ROW_FN[self.level]
@@ -496,7 +530,10 @@ class BrowseScreen(Screen):
             return
         item = self.shown_items[event.cursor_row]
         if self.level == self.LEVEL_TYPES:
-            self.sel_type = item
+            if not item.selectable:
+                self.notify("Select a leaf logbook type.")
+                return
+            self.sel_type = type_entity(item)
             self.show_level(self.LEVEL_DOCS)
         elif self.level == self.LEVEL_DOCS:
             self.sel_doc = item
@@ -549,6 +586,10 @@ class BrowseScreen(Screen):
             return None
         if action == "new_entry" and self._current_doc() is None:
             return None
+        if action == "new_doc" and self.level == self.LEVEL_TYPES:
+            item = self._current_item()
+            if item is not None and not item.selectable:
+                return None
         return True
 
     def action_refresh_level(self):
@@ -561,9 +602,19 @@ class BrowseScreen(Screen):
                 self.data.invalidate("docs", type_id=self.sel_type.id)
         else:
             self.data.invalidate("entries", doc_id=self.sel_doc.id)
-        self.show_level(self.level, preserve_filter=True)
+        self.show_level(
+            self.level,
+            preserve_filter=True,
+            preserve_entry_position=self.level == self.LEVEL_ENTRIES,
+        )
 
     # -- current-selection helpers --
+
+    def _current_item(self):
+        table = self._nav()
+        if table.cursor_row is None or table.cursor_row >= len(self.shown_items):
+            return None
+        return self.shown_items[table.cursor_row]
 
     def _current_node(self):
         if self.level != self.LEVEL_ENTRIES:
@@ -599,7 +650,8 @@ class BrowseScreen(Screen):
             table = self._nav()
             if table.cursor_row is None or table.cursor_row >= len(self.shown_items):
                 return None
-            return self.shown_items[table.cursor_row]
+            node = self.shown_items[table.cursor_row]
+            return type_entity(node) if node.selectable else None
         return None
 
     # -- entry actions --
@@ -704,7 +756,8 @@ class BrowseScreen(Screen):
             return
 
         self.data.invalidate("entries", doc_id=self.sel_doc.id)
-        self.show_level(self.LEVEL_ENTRIES, preserve_filter=True)
+        self.show_level(
+            self.LEVEL_ENTRIES, preserve_filter=True, preserve_entry_position=True)
         self.notify("Entry saved.")
 
     # -- add / update entry (mutating: goes through the auth gate) --
@@ -739,7 +792,8 @@ class BrowseScreen(Screen):
         self.sel_doc = doc
         self.data.invalidate("entries", doc_id=doc.id)
         if self.level == self.LEVEL_ENTRIES:
-            self.show_level(self.LEVEL_ENTRIES, preserve_filter=True)
+            self.show_level(
+                self.LEVEL_ENTRIES, preserve_filter=True, preserve_entry_position=True)
         else:
             self.show_level(self.LEVEL_ENTRIES)
 
