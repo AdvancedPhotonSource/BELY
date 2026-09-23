@@ -207,6 +207,9 @@ class PickerScreenTests(unittest.IsolatedAsyncioTestCase):
             await pilot.press("enter")  # filter -> list
             await pilot.pause()
             await pilot.press("space")  # toggle Alpha
+            await pilot.pause()
+            picker = app.screen
+            self.assertTrue(str(picker.query_one("#picker-list", OptionList).get_option_at_index(0).prompt).startswith("☒"))
             await pilot.press("down")
             await pilot.press("space")  # toggle Beta
             await pilot.pause()

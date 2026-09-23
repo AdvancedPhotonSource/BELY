@@ -61,7 +61,7 @@ class PickerScreen(DialogScreen):
         if not self.multi:
             return label
         idx = self.items.index(item)
-        mark = "[x]" if idx in self.selected else "[ ]"
+        mark = "☒" if idx in self.selected else "☐"
         return f"{mark} {label}"
 
     def _populate(self, query):
