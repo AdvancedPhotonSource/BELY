@@ -190,7 +190,7 @@ equivalent of Home's old menu items, plus what Textual provides by default:
 |---------|--------|
 | Configuration | Opens the configuration dialog — equivalent of `config show` / `config set` / `config edit`. |
 | My documents | Opens a browse starting at your recently modified documents — equivalent of `doc list`. `Esc` pops back to wherever you opened it from. |
-| Log in | Authenticate now instead of waiting for the first mutation. |
+| Log in / Log out | Authenticate now instead of waiting for the first mutation, or end the current authenticated session and remove its cached token. |
 | Refresh cache | Discard all cached logbook data so the next view re-fetches from the server. |
 | Theme | Built-in: change the app's color theme; the choice is saved as the `theme` setting and reused on the next launch. |
 | Quit | Built-in: exit the app. |
@@ -252,7 +252,9 @@ save a config change, the app looks for the token the CLI already caches (see
 already run an authenticated `bely-cli` command, or a previous `tui` session, you won't be
 prompted again. Otherwise a login modal appears (username, password, and `Log in`/`Cancel`
 buttons — `ctrl+s` also submits, `Esc` also cancels); a successful login is cached the same
-way the CLI caches it, shared by later `bely-cli` commands and TUI sessions alike.
+way the CLI caches it, shared by later `bely-cli` commands and TUI sessions alike. Once
+logged in, the command palette offers `Log out`, which invalidates the server session,
+removes the cached token, and returns the TUI to its unauthenticated state.
 
 #### `bely-cli tui lookup`
 

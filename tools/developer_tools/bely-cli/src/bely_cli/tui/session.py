@@ -50,6 +50,14 @@ class TuiSession:
         """
         self._auth_factory = auth.login(username, password)
 
+    def logout(self):
+        """Invalidate the active session and remove its cached token."""
+        factory = self._auth_factory
+        try:
+            return auth.logout(factory)
+        finally:
+            self._auth_factory = None
+
     def authenticated_factory(self):
         """The authenticated BelyApiFactory. Raises RuntimeError if not authenticated yet."""
         if self._auth_factory is None:

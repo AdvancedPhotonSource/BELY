@@ -138,8 +138,12 @@ class BelyTuiApp(App):
                 "My documents", "Browse your recently modified documents", self._cmd_recent)
             yield SystemCommand(
                 "Refresh cache", "Discard all cached logbook data", self._cmd_refresh)
-        yield SystemCommand(
-            "Log in", "Authenticate now instead of at the first mutation", self._cmd_login)
+        if self.session.is_authenticated():
+            yield SystemCommand(
+                "Log out", "End the current authenticated session", self._cmd_logout)
+        else:
+            yield SystemCommand(
+                "Log in", "Authenticate now instead of at the first mutation", self._cmd_login)
 
     def _cmd_config(self):
         from .screens.configscreen import ConfigScreen
@@ -158,6 +162,20 @@ class BelyTuiApp(App):
 
     def _cmd_login(self):
         self.run_worker(self._do_login(), exclusive=True, group="login")
+
+    def _cmd_logout(self):
+        self.run_worker(self._do_logout(), exclusive=True, group="login")
+
+    async def _do_logout(self):
+        try:
+            await asyncio.to_thread(self.session.logout)
+        except RuntimeError as e:
+            self.notify(str(e), severity="error")
+        screen = self.screen
+        if isinstance(screen, BrowseScreen):
+            screen._update_auth_status()
+        if not self.session.is_authenticated():
+            self.notify("Logged out.")
 
     async def _do_login(self):
         api = await self.ensure_auth()

@@ -35,6 +35,10 @@ class FakeSession:
     def try_token(self):
         return self._authenticated
 
+    def logout(self):
+        self._authenticated = False
+        return True
+
 
 class FakeLogbookApi:
     def get_logbook_type_hierarchy(self):
@@ -385,7 +389,7 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             await pilot.pause()
         self.assertIsNone(app.return_value)
 
-    async def test_command_palette_offers_config_recent_and_login(self):
+    async def test_command_palette_offers_config_recent_and_logout_when_authenticated(self):
         data = LogbookData(FakeLogbookApi())
         app = BelyTuiApp(FakeSession(data), limit=10, mode="app")
         async with app.run_test() as pilot:
@@ -394,7 +398,33 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("Configuration", titles)
             self.assertIn("My documents", titles)
             self.assertIn("Refresh cache", titles)
+            self.assertIn("Log out", titles)
+            self.assertNotIn("Log in", titles)
+
+    async def test_command_palette_offers_login_when_unauthenticated(self):
+        data = LogbookData(FakeLogbookApi())
+        app = BelyTuiApp(FakeSession(data, authenticated=False), limit=10, mode="app")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            titles = {cmd.title for cmd in app.get_system_commands(app.screen)}
             self.assertIn("Log in", titles)
+            self.assertNotIn("Log out", titles)
+
+    async def test_logout_command_clears_session_and_updates_palette(self):
+        data = LogbookData(FakeLogbookApi())
+        session = FakeSession(data)
+        app = BelyTuiApp(session, limit=10, mode="app")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            app._cmd_logout()
+            await pilot.pause()
+            await pilot.pause()
+
+            self.assertFalse(session.is_authenticated())
+            titles = {cmd.title for cmd in app.get_system_commands(app.screen)}
+            self.assertIn("Log in", titles)
+            self.assertNotIn("Log out", titles)
+            self.assertEqual(len(app._notifications), 1)
 
     async def test_search_and_resize_bindings_are_gone(self):
         keys = {b.key for b in BrowseScreen.BINDINGS}
