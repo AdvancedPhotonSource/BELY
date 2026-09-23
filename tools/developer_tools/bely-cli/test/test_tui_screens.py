@@ -34,7 +34,7 @@ class FakeLogbookApi:
         self.created = None
         self._existing_doc = existing_doc
 
-    def get_logbook_types(self):
+    def get_logbook_type_hierarchy(self):
         return [SimpleNamespace(id=1, name="ops", display_name="Ops")]
 
     def get_logbook_systems(self):

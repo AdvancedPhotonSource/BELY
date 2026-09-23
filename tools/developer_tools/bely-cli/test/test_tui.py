@@ -22,6 +22,34 @@ class FilterItemsTests(unittest.TestCase):
 
 
 class TypeRowTests(unittest.TestCase):
+    def test_flattens_hierarchy_depth_first_with_guides(self):
+        leaf_a = SimpleNamespace(name="a", entity_type_children=[])
+        leaf_b = SimpleNamespace(name="b", entity_type_children=[])
+        group = SimpleNamespace(name="group", entity_type_children=[leaf_a, leaf_b])
+        leaf_c = SimpleNamespace(name="c", entity_type_children=[])
+
+        rows = fmt.flatten_types([group, leaf_c])
+
+        self.assertEqual([row.entity.name for row in rows], ["group", "a", "b", "c"])
+        self.assertEqual([row.selectable for row in rows], [False, True, True, True])
+        self.assertEqual(fmt.type_row(rows[1])[0], "  ├─ a")
+        self.assertEqual(fmt.type_row(rows[2])[0], "  └─ b")
+
+    def test_hierarchy_text_is_filterable(self):
+        leaf = SimpleNamespace(
+            name="leaf", display_name="Leaf", description="Operations",
+            entity_type_children=[])
+        row = fmt.flatten_types([leaf])[0]
+        result = fmt.filter_items([row], "operations", lambda item: " ".join(fmt.type_row(item)))
+        self.assertEqual(result, [row])
+
+        child = SimpleNamespace(
+            name="child", display_name="Child", description="", entity_type_children=[])
+        parent = SimpleNamespace(
+            name="parent", display_name="Parent", description="", entity_type_children=[child])
+        child_row = fmt.flatten_types([parent])[1]
+        self.assertIn("parent", child_row.hierarchy_text)
+
     def test_returns_name_display_description(self):
         t = SimpleNamespace(name="ops", display_name="Ops", description="Operations log")
         self.assertEqual(fmt.type_row(t), ("ops", "Ops", "Operations log"))

@@ -9,7 +9,7 @@ class FakeApi:
         self.calls = []
         self.fail_next = False
 
-    def get_logbook_types(self):
+    def get_logbook_type_hierarchy(self):
         self.calls.append(("types",))
         if self.fail_next:
             self.fail_next = False

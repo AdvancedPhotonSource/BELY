@@ -37,7 +37,7 @@ class FakeSession:
 
 
 class FakeLogbookApi:
-    def get_logbook_types(self):
+    def get_logbook_type_hierarchy(self):
         return [SimpleNamespace(id=1, name="ops", display_name="Ops")]
 
     def get_log_documents(self, logbook_type_id, limit):
