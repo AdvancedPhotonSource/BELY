@@ -95,6 +95,7 @@ class BrowseScreen(Screen):
         "copy_reference": (LEVEL_ENTRIES,),
         "open_editor": (LEVEL_ENTRIES,),
         "update_entry": (LEVEL_ENTRIES,),
+        "reply": (LEVEL_ENTRIES,),
         "new_entry": (LEVEL_DOCS, LEVEL_ENTRIES),
         "new_doc": (LEVEL_TYPES, LEVEL_DOCS),
         "toggle_info": (LEVEL_TYPES, LEVEL_DOCS),
@@ -112,6 +113,7 @@ class BrowseScreen(Screen):
         Binding("e", "open_editor", "Edit in editor"),
         Binding("n", "new_entry", "New entry"),
         Binding("u", "update_entry", "Edit in TUI"),
+        Binding("p", "reply", "Reply"),
         Binding("d", "new_doc", "New doc"),
         Binding("r", "refresh_level", "Refresh"),
         Binding("i", "toggle_info", "Info"),
@@ -586,6 +588,8 @@ class BrowseScreen(Screen):
             return None
         if action == "new_entry" and self._current_doc() is None:
             return None
+        if action == "reply" and self._current_node() is None:
+            return None
         if action == "new_doc" and self.level == self.LEVEL_TYPES:
             item = self._current_item()
             if item is not None and not item.selectable:
@@ -769,6 +773,14 @@ class BrowseScreen(Screen):
             return
         self._run_compose(doc, None)
 
+    def action_reply(self):
+        node = self._current_node()
+        if node is None:
+            self.notify("Select an entry first.", severity="warning")
+            return
+        target = node.parent if node.depth > 0 else node.entry
+        self._run_compose(self.sel_doc, None, reply_to=target)
+
     def action_update_entry(self):
         entry = self._current_entry()
         if entry is None:
@@ -777,8 +789,8 @@ class BrowseScreen(Screen):
         self._run_compose(self.sel_doc, entry)
 
     @work
-    async def _run_compose(self, doc, entry):
-        """Authenticate, then push ComposeScreen for a new or existing entry."""
+    async def _run_compose(self, doc, entry, reply_to=None):
+        """Authenticate, then push ComposeScreen for a new, reply, or existing entry."""
         from .compose import open_composer
 
         api = await self.app.ensure_auth()
@@ -786,14 +798,22 @@ class BrowseScreen(Screen):
             return
 
         saved = await open_composer(
-            self.app, doc, api, entry=entry, factory=self.session.factory)
+            self.app, doc, api, entry=entry, factory=self.session.factory, reply_to=reply_to)
         if not saved:
             return
         self.sel_doc = doc
         self.data.invalidate("entries", doc_id=doc.id)
+        if reply_to is not None:
+            self._collapsed.discard(reply_to.log_id)
+            saved_id = getattr(saved, "log_id", None) or reply_to.log_id
+            preview = self.query_one("#preview", VerticalScroll)
+            self._pending_entry_restore = (saved_id, self._nav().cursor_row or 0, preview.scroll_y)
         if self.level == self.LEVEL_ENTRIES:
             self.show_level(
-                self.LEVEL_ENTRIES, preserve_filter=True, preserve_entry_position=True)
+                self.LEVEL_ENTRIES,
+                preserve_filter=True,
+                preserve_entry_position=reply_to is None,
+            )
         else:
             self.show_level(self.LEVEL_ENTRIES)
 

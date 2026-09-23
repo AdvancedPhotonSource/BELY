@@ -42,18 +42,23 @@ class ComposeScreen(DialogScreen):
     # Save first: right after the attachment field in tab order, since it's used most.
     BUTTON_ROWS = [["compose-save", "compose-editor", "compose-cancel"]]
 
-    def __init__(self, doc, entry, api, *, is_new, factory=None):
+    def __init__(self, doc, entry, api, *, is_new, factory=None, reply_to=None):
         super().__init__()
         self.doc = doc
         self.entry = entry
         self.api = api
         self.factory = factory
         self.is_new = is_new
+        self.reply_to = reply_to
         self._initial_text = entry.log_entry or ""
 
     def compose(self) -> ComposeResult:
-        title = (f'New entry in "{self.doc.name}"' if self.is_new
-                 else f'Update entry #{self.entry.log_id} in "{self.doc.name}"')
+        if self.reply_to is not None:
+            title = f'Reply to entry #{self.reply_to.log_id} in "{self.doc.name}"'
+        elif self.is_new:
+            title = f'New entry in "{self.doc.name}"'
+        else:
+            title = f'Update entry #{self.entry.log_id} in "{self.doc.name}"'
         with Vertical(id="compose-dialog", classes="dialog"):
             yield Static(title, id="compose-title")
             yield TextArea(self._initial_text, language="markdown", id="compose-area")
@@ -158,7 +163,7 @@ class ComposeScreen(DialogScreen):
         self.dismiss(saved_entry)
 
 
-async def open_composer(app, doc, api, *, entry=None, factory=None):
+async def open_composer(app, doc, api, *, entry=None, factory=None, reply_to=None):
     """Push ComposeScreen for a new or existing entry.
 
     When `entry` is None, fetches a fresh template first (needs an
@@ -178,8 +183,11 @@ async def open_composer(app, doc, api, *, entry=None, factory=None):
                 severity="error",
             )
             return None
+        if reply_to is not None:
+            entry.parent_log_id = reply_to.log_id
         is_new = True
     else:
         is_new = False
     return await app.push_screen_wait(
-        ComposeScreen(doc, entry, api, is_new=is_new, factory=factory))
+        ComposeScreen(
+            doc, entry, api, is_new=is_new, factory=factory, reply_to=reply_to))
