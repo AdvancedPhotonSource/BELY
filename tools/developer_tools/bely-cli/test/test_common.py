@@ -4,6 +4,28 @@ from unittest.mock import patch
 from bely_cli import common
 
 
+class FormatErrorMessageTests(unittest.TestCase):
+    def test_non_api_error_uses_exception_text(self):
+        self.assertEqual(common.format_error_message(ValueError("concise")), "concise")
+
+    def test_api_error_uses_factory_parser_message(self):
+        import belyApi
+
+        error = belyApi.exceptions.ApiException(status=400, body="long response")
+        factory = unittest.mock.Mock()
+        factory.parse_api_exception.return_value.message = "short message"
+        self.assertEqual(common.format_error_message(error, factory), "short message")
+        factory.parse_api_exception.assert_called_once_with(error)
+
+    def test_parser_failure_falls_back_to_exception_text(self):
+        import belyApi
+
+        error = belyApi.exceptions.ApiException(status=400, body="response")
+        factory = unittest.mock.Mock()
+        factory.parse_api_exception.side_effect = ValueError("bad response")
+        self.assertEqual(common.format_error_message(error, factory), str(error))
+
+
 class OpenInEditorTests(unittest.TestCase):
     def test_shell_style_editor_command_is_split(self):
         with patch.object(common.config, "get_editor", return_value="code -w"), \

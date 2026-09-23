@@ -439,6 +439,23 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             await pilot.pause()
             self.assertTrue(screen.check_action("new_entry", ()))
 
+    async def test_new_entry_is_unavailable_with_empty_document_list(self):
+        api = FakeLogbookApi()
+        api.get_log_documents = lambda logbook_type_id, limit: []
+        data = LogbookData(api)
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            screen = app.screen
+            await pilot.press("enter")
+            await pilot.pause()
+            await pilot.pause()
+            self.assertEqual(screen.level, screen.LEVEL_DOCS)
+            self.assertIsNone(screen.check_action("new_entry", ()))
+            await pilot.press("n")
+            await pilot.pause()
+            self.assertIs(app.screen, screen)
+
     async def test_new_entry_key_creates_entry_and_refreshes(self):
         api = FakeLogbookApi()
         data = LogbookData(api)
