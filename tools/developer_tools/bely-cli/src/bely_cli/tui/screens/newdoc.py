@@ -22,6 +22,7 @@ from textual.widgets import Button, Input, Static
 
 from ... import core
 from ...common import find_logdoc, format_error_message
+from ..format import flatten_types, format_type
 from .dialog import CANCEL_HINT, SAVE_HINT, DialogButtons, DialogScreen, hinted_label
 
 # Sentinel for "explicitly skip the default template" -- distinct from
@@ -104,7 +105,7 @@ class NewDocScreen(DialogScreen):
         from .picker import PickerScreen
 
         try:
-            types = await asyncio.to_thread(self.session.data.logbook_types)
+            types = flatten_types(await asyncio.to_thread(self.session.data.logbook_types))
         except Exception as e:
             self.notify(
                 f"Could not load types: {format_error_message(e, self.session.factory)}",
@@ -112,10 +113,11 @@ class NewDocScreen(DialogScreen):
             )
             return
         choice = await self.app.push_screen_wait(
-            PickerScreen("Logbook type", types, lambda t: t.name or "")
+            PickerScreen(
+                "Logbook type", types, format_type, selectable_fn=lambda node: node.selectable)
         )
         if choice is not None:
-            self.logbook_type = choice
+            self.logbook_type = choice.entity
             self._refresh_labels()
 
     @work
