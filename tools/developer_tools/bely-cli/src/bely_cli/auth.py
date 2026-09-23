@@ -21,10 +21,13 @@ def get_token_file():
 
 
 def get_host():
-    """Return the BELY server URL from env var or settings."""
+    """Return the BELY server URL from env var or settings without trailing slashes."""
     host = os.environ.get("BELY_HOST") or get_setting("host")
     if not host:
         raise ValueError("no host configured. Set BELY_HOST or add 'host' to settings.yaml.")
+    host = host.rstrip("/")
+    if not host:
+        raise ValueError("BELY host must not contain only slashes.")
     return host
 
 
