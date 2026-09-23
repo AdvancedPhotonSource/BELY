@@ -68,8 +68,8 @@ public class AuthenticationRoute extends BaseRoute {
     public Response authenticateUser(@FormParam("username") String username, 
                                      @FormParam("password") String password) throws AuthenticationError {
         LOGGER.debug("Authenticating user: " + username);
-        UserInfo userInfo = userFacade.findByUsername(username); 
-        boolean authenticated = LoginController.validateCredentials(userInfo, password);
+        UserInfo userInfo = userFacade.findByUsername(username);
+        boolean authenticated = userInfo != null && LoginController.validateCredentials(userInfo, password);
         
         if (authenticated) {                       
             UserSessionKeeper usk = UserSessionKeeper.getInstance(); 
