@@ -11,11 +11,48 @@ from typing import NamedTuple, Optional
 # -- list-row formatting (used by both the old curses UI and the new
 #    Textual OptionList rows) --
 
+class TypeNode(NamedTuple):
+    """One flattened hierarchy row wrapping its original EntityType."""
+
+    entity: object
+    depth: int
+    branch: str
+    selectable: bool
+    hierarchy_text: str
+
+
+def flatten_types(types):
+    """Flatten EntityType children depth-first while retaining hierarchy guides."""
+    rows = []
+
+    def walk(items, depth, prefix_lasts, ancestors):
+        for index, entity in enumerate(items or []):
+            is_last = index == len(items) - 1
+            branch = _branch_prefix(prefix_lasts, is_last) if depth else ""
+            children = getattr(entity, "entity_type_children", None) or []
+            name = getattr(entity, "name", None) or ""
+            hierarchy_text = " / ".join(ancestors + [name])
+            rows.append(TypeNode(entity, depth, branch, not children, hierarchy_text))
+            if children:
+                next_prefix = prefix_lasts + [is_last] if depth else []
+                walk(children, depth + 1, next_prefix, ancestors + [name])
+
+    walk(types, 0, [], [])
+    return rows
+
+
+def type_entity(t):
+    return t.entity if isinstance(t, TypeNode) else t
+
+
 def format_type(t):
-    """Display string for a logbook type (EntityType)."""
-    display = getattr(t, "display_name", None) or ""
-    name = getattr(t, "name", None) or ""
-    return f"{name}  ({display})" if display else name
+    """Display string for a logbook type (EntityType or TypeNode)."""
+    node = t if isinstance(t, TypeNode) else None
+    entity = type_entity(t)
+    display = getattr(entity, "display_name", None) or ""
+    name = getattr(entity, "name", None) or ""
+    label = f"{name}  ({display})" if display else name
+    return f"{node.branch}{label}" if node else label
 
 
 def format_doc(d):
@@ -69,10 +106,14 @@ TYPE_COLUMNS = [("Name", 24), ("Display", 24), ("Description", None)]
 
 
 def type_row(t):
-    """DataTable row cells for a logbook type (EntityType)."""
-    name = getattr(t, "name", None) or ""
-    display = getattr(t, "display_name", None) or ""
-    description = getattr(t, "description", None) or ""
+    """DataTable row cells for a logbook type (EntityType or TypeNode)."""
+    node = t if isinstance(t, TypeNode) else None
+    entity = type_entity(t)
+    name = getattr(entity, "name", None) or ""
+    if node:
+        name = node.branch + name
+    display = getattr(entity, "display_name", None) or ""
+    description = getattr(entity, "description", None) or ""
     return (name, display, description)
 
 
@@ -288,6 +329,7 @@ def doc_metadata_rows(doc):
 
 def type_metadata_rows(t):
     """[(label, value)] metadata rows for the logbook-type preview header."""
+    t = type_entity(t)
     rows = [("name", getattr(t, "name", None) or "")]
 
     display_name = getattr(t, "display_name", None)
