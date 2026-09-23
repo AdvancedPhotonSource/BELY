@@ -31,6 +31,7 @@ from textual.screen import Screen
 from textual.widgets import DataTable, Footer, Header, Input, Markdown, Static
 
 from ... import config
+from ...common import format_error_message
 from . import rows_table
 from ..format import (
     DOC_COLUMNS,
@@ -227,7 +228,8 @@ class BrowseScreen(Screen):
         try:
             items = self.data.logbook_types()
         except Exception as e:
-            self.app.call_from_thread(self._fetch_failed, str(e))
+            self.app.call_from_thread(
+                self._fetch_failed, format_error_message(e, self.session.factory))
             return
         self.app.call_from_thread(self._populate, items)
 
@@ -236,7 +238,8 @@ class BrowseScreen(Screen):
         try:
             items = self.data.documents(type_id, self.limit)
         except Exception as e:
-            self.app.call_from_thread(self._fetch_failed, str(e))
+            self.app.call_from_thread(
+                self._fetch_failed, format_error_message(e, self.session.factory))
             return
         self.app.call_from_thread(self._populate, items)
 
@@ -248,7 +251,8 @@ class BrowseScreen(Screen):
                 raise RuntimeError("cannot determine username. Set BELY_USER or 'user' in settings.")
             items = self.data.recent_documents(self.session.factory, username, self.limit)
         except Exception as e:
-            self.app.call_from_thread(self._fetch_failed, str(e))
+            self.app.call_from_thread(
+                self._fetch_failed, format_error_message(e, self.session.factory))
             return
         self.app.call_from_thread(self._populate, items)
 
@@ -257,7 +261,8 @@ class BrowseScreen(Screen):
         try:
             items = self.data.entries(doc_id)
         except Exception as e:
-            self.app.call_from_thread(self._fetch_failed, str(e))
+            self.app.call_from_thread(
+                self._fetch_failed, format_error_message(e, self.session.factory))
             return
         self.app.call_from_thread(self._populate, items)
 
@@ -281,6 +286,7 @@ class BrowseScreen(Screen):
         self.all_items = items
         self._apply_filter("")
         self._update_header()
+        self.refresh_bindings()
         nav.focus()
 
     def _apply_filter(self, query):
@@ -539,7 +545,11 @@ class BrowseScreen(Screen):
 
     def check_action(self, action, parameters):
         levels = self.ACTION_LEVELS.get(action)
-        return True if levels is None else (self.level in levels or None)
+        if levels is not None and self.level not in levels:
+            return None
+        if action == "new_entry" and self._current_doc() is None:
+            return None
+        return True
 
     def action_refresh_level(self):
         if self.level == self.LEVEL_TYPES:
@@ -687,7 +697,10 @@ class BrowseScreen(Screen):
         try:
             await asyncio.to_thread(core.save_entry, api, entry, edited)
         except Exception as e:
-            self.notify(f"Save failed: {e}", severity="error")
+            self.notify(
+                f"Save failed: {format_error_message(e, self.session.factory)}",
+                severity="error",
+            )
             return
 
         self.data.invalidate("entries", doc_id=self.sel_doc.id)
@@ -719,7 +732,8 @@ class BrowseScreen(Screen):
         if api is None:
             return
 
-        saved = await open_composer(self.app, doc, api, entry=entry)
+        saved = await open_composer(
+            self.app, doc, api, entry=entry, factory=self.session.factory)
         if not saved:
             return
         self.sel_doc = doc
