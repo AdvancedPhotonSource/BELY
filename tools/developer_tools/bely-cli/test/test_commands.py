@@ -109,7 +109,11 @@ class CmdAuthTests(unittest.TestCase):
             with redirect_stdout(buf):
                 commands.cmd_auth_verify()
 
-        self.assertEqual(buf.getvalue(), "Authentication token is invalid or expired.\n")
+        self.assertEqual(
+            buf.getvalue(),
+            "Authentication token is invalid or expired. "
+            "Run 'bely-cli auth login' to authenticate again.\n",
+        )
 
 
 class CmdNewDocTests(unittest.TestCase):

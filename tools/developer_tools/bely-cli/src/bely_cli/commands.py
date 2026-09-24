@@ -37,7 +37,10 @@ def cmd_auth_verify(fmt="text"):
         return
 
     authenticated = auth.verify()
-    message = "Authenticated." if authenticated else "Authentication token is invalid or expired."
+    message = (
+        "Authenticated." if authenticated
+        else "Authentication token is invalid or expired. Run 'bely-cli auth login' to authenticate again."
+    )
     print_result({"authenticated": authenticated}, message, fmt)
 
 
