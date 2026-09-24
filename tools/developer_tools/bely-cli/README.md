@@ -95,13 +95,19 @@ lookups (listing types, systems, templates, finding documents) do not.
 
 On success a token is cached at `~/.config/bely/token` (permissions `0600`) and reused on
 later runs. Expired or invalid tokens are discarded and you re-authenticate automatically.
-To invalidate the current token on the server and remove it locally, run:
+Authentication can also be managed explicitly:
 
 ```bash
-bely-cli logout
+bely-cli auth login
+bely-cli auth verify
+bely-cli auth logout
 ```
 
-If no token is cached, the command reports `Not logged in.` and succeeds.
+`login` resolves and prompts for credentials using the rules above. `verify` checks the
+cached token with the server, explains when no token is cached, and removes it if rejected.
+`logout` invalidates the token on
+the server and removes it locally; if no token is cached, it reports `Not logged in.` and
+succeeds.
 
 The token location can be changed with the `token_path` setting; by default it sits beside
 the settings file (see [Configuration & environment](#configuration--environment)).
@@ -123,6 +129,14 @@ bely-cli doc list --format json
 `--format` is given at the end of a command, e.g. `bely-cli entry list -n "..." --format yaml`.
 
 ## Commands
+
+### `auth` — authentication
+
+- `bely-cli auth login` authenticates with configured or prompted credentials and caches the token.
+- `bely-cli auth verify` checks whether the cached token is accepted by the server.
+- `bely-cli auth logout` invalidates the current server session and removes the cached token.
+
+All three commands support the shared `--format` and `--no-prompt` options.
 
 ### `doc` — log documents
 
