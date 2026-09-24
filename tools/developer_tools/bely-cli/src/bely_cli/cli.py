@@ -7,7 +7,9 @@ from .config import VALID_FIELDS
 from .commands import (
     cmd_new_doc,
     cmd_list_docs,
-    cmd_logout,
+    cmd_auth_login,
+    cmd_auth_logout,
+    cmd_auth_verify,
     cmd_show_config,
     cmd_edit_config,
     cmd_set_config,
@@ -57,11 +59,33 @@ def cli():
     pass
 
 
-@cli.command("logout")
+# -- auth --
+
+@cli.group("auth")
+def auth_group():
+    """Authentication commands."""
+    pass
+
+
+@auth_group.command("login")
 @common_options
-def logout(output_format):
+def auth_login(output_format):
+    """Log in and cache an authentication token."""
+    cmd_auth_login(fmt=output_format)
+
+
+@auth_group.command("logout")
+@common_options
+def auth_logout(output_format):
     """Log out and remove the cached authentication token."""
-    cmd_logout(fmt=output_format)
+    cmd_auth_logout(fmt=output_format)
+
+
+@auth_group.command("verify")
+@common_options
+def auth_verify(output_format):
+    """Verify the cached authentication token."""
+    cmd_auth_verify(fmt=output_format)
 
 
 # -- doc --

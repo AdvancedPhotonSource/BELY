@@ -12,11 +12,33 @@ from .core import find_logbook_type, find_systems, find_template  # noqa: F401
 ENV_VARS = core.ENV_VARS
 
 
-def cmd_logout(fmt="text"):
+def cmd_auth_login(fmt="text"):
+    """Authenticate explicitly and cache the resulting token."""
+    username = auth.get_username()
+    auth.login(username, auth.get_password(username))
+    print_result({"authenticated": True, "username": username}, f"Logged in as {username}.", fmt)
+
+
+def cmd_auth_logout(fmt="text"):
     """Invalidate the current token and remove it from the local cache."""
     logged_out = auth.logout()
     message = "Logged out." if logged_out else "Not logged in."
     print_result({"logged_out": logged_out}, message, fmt)
+
+
+def cmd_auth_verify(fmt="text"):
+    """Verify that the cached authentication token is valid."""
+    if auth.load_token() is None:
+        print_result(
+            {"authenticated": False, "reason": "token_not_found"},
+            "No cached authentication token found. Run 'bely-cli auth login' first.",
+            fmt,
+        )
+        return
+
+    authenticated = auth.verify()
+    message = "Authenticated." if authenticated else "Authentication token is invalid or expired."
+    print_result({"authenticated": authenticated}, message, fmt)
 
 
 def cmd_show_config(fmt="text"):

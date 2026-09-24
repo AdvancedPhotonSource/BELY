@@ -119,6 +119,11 @@ def authenticated_factory_from_token():
     return factory
 
 
+def verify():
+    """Return whether the cached token is valid, deleting it if rejected."""
+    return authenticated_factory_from_token() is not None
+
+
 def logout(factory=None):
     """Invalidate and remove the cached token. Return False if no session exists."""
     import belyApi

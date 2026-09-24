@@ -123,6 +123,26 @@ class AuthenticatedFactoryFromTokenTests(AuthTestCase):
         self.assertIsNone(auth.load_token())
 
 
+class VerifyTests(AuthTestCase):
+    def test_valid_cached_token_returns_true(self):
+        self._install_factory(valid_token="good-token")
+        auth.save_token("good-token")
+
+        self.assertTrue(auth.verify())
+
+    def test_missing_cached_token_returns_false(self):
+        self._install_factory(valid_token="good-token")
+
+        self.assertFalse(auth.verify())
+
+    def test_rejected_cached_token_returns_false_and_deletes_token(self):
+        self._install_factory(valid_token="good-token")
+        auth.save_token("stale-token")
+
+        self.assertFalse(auth.verify())
+        self.assertIsNone(auth.load_token())
+
+
 class LogoutTests(AuthTestCase):
     def test_no_cached_token_returns_false(self):
         self._install_factory(valid_token="good-token")
