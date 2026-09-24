@@ -40,30 +40,76 @@ class FakeApi:
         return log_entry
 
 
-class CmdLogoutTests(unittest.TestCase):
-    def test_logs_out_current_session(self):
+class CmdAuthTests(unittest.TestCase):
+    def test_login_uses_resolved_credentials(self):
+        with patch.object(commands.auth, "get_username", return_value="alice"), \
+             patch.object(commands.auth, "get_password", return_value="secret") as get_password, \
+             patch.object(commands.auth, "login") as login:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                commands.cmd_auth_login()
+
+        get_password.assert_called_once_with("alice")
+        login.assert_called_once_with("alice", "secret")
+        self.assertEqual(buf.getvalue(), "Logged in as alice.\n")
+
+    def test_logout_reports_current_session(self):
         with patch.object(commands.auth, "logout", return_value=True):
             buf = io.StringIO()
             with redirect_stdout(buf):
-                commands.cmd_logout()
+                commands.cmd_auth_logout()
 
         self.assertEqual(buf.getvalue(), "Logged out.\n")
 
-    def test_reports_when_not_logged_in(self):
+    def test_logout_reports_when_not_logged_in(self):
         with patch.object(commands.auth, "logout", return_value=False):
             buf = io.StringIO()
             with redirect_stdout(buf):
-                commands.cmd_logout()
+                commands.cmd_auth_logout()
 
         self.assertEqual(buf.getvalue(), "Not logged in.\n")
 
-    def test_structured_output_reports_status(self):
-        with patch.object(commands.auth, "logout", return_value=True):
+    def test_verify_reports_valid_token(self):
+        with patch.object(commands.auth, "load_token", return_value="token"), \
+             patch.object(commands.auth, "verify", return_value=True):
             buf = io.StringIO()
             with redirect_stdout(buf):
-                commands.cmd_logout(fmt="json")
+                commands.cmd_auth_verify(fmt="json")
 
-        self.assertEqual(buf.getvalue(), '{"logged_out": true}\n')
+        self.assertEqual(buf.getvalue(), '{"authenticated": true}\n')
+
+    def test_verify_explains_when_token_is_not_found(self):
+        with patch.object(commands.auth, "load_token", return_value=None), \
+             patch.object(commands.auth, "verify") as verify:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                commands.cmd_auth_verify()
+
+        verify.assert_not_called()
+        self.assertEqual(
+            buf.getvalue(),
+            "No cached authentication token found. Run 'bely-cli auth login' first.\n",
+        )
+
+    def test_verify_structured_output_identifies_missing_token(self):
+        with patch.object(commands.auth, "load_token", return_value=None):
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                commands.cmd_auth_verify(fmt="json")
+
+        self.assertEqual(
+            buf.getvalue(),
+            '{"authenticated": false, "reason": "token_not_found"}\n',
+        )
+
+    def test_verify_reports_invalid_or_expired_token(self):
+        with patch.object(commands.auth, "load_token", return_value="token"), \
+             patch.object(commands.auth, "verify", return_value=False):
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                commands.cmd_auth_verify()
+
+        self.assertEqual(buf.getvalue(), "Authentication token is invalid or expired.\n")
 
 
 class CmdNewDocTests(unittest.TestCase):
