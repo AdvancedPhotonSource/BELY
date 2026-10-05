@@ -553,6 +553,29 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertNotIn(100, screen._collapsed)
             self.assertEqual(screen._current_entry().log_id, 101)
 
+    async def test_shift_a_opens_attachments_for_highlighted_entry(self):
+        api = FakeLogbookApi()
+        data = LogbookData(api)
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None), \
+             patch.object(api, "get_log_entries", wraps=api.get_log_entries) as get_entries:
+            async with app.run_test() as pilot:
+                await self._open_entries(pilot)
+                browse_screen = app.screen
+
+                await pilot.press("A")
+                await pilot.pause()
+
+                self.assertEqual(type(app.screen).__name__, "AttachmentScreen")
+                self.assertEqual(app.screen.doc.id, 10)
+                self.assertEqual(app.screen.entry.log_id, 100)
+                app.screen.on_uploaded()
+                await pilot.pause()
+                self.assertEqual(get_entries.call_count, 2)
+                await pilot.press("escape")
+                await pilot.pause()
+                self.assertIs(app.screen, browse_screen)
+
     async def test_reply_binding_only_available_for_entries_with_selection(self):
         api = FakeLogbookApi()
         app = BelyTuiApp(FakeSession(LogbookData(api)), limit=10, mode="lookup")

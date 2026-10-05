@@ -326,6 +326,7 @@ on — `i` disappears once you drill into entries, and `s` / `y` / `e` / `f` / `
 | `e` | Entries level only: open the highlighted entry in `$EDITOR`; if you change it, offers to save the result back to the server (a mutation, so this is where the app authenticates if it hasn't already). |
 | `p` | Entries level only: reply to the highlighted entry's top-level thread. Attachments are supported. |
 | `t` | Entries level only: collapse/expand the reply thread under the highlighted entry (or its parent, if the highlight is on a reply). Replies start expanded. |
+| `Shift+A` | Entries level only: open the highlighted entry's attachment browser. |
 | `i` | Logbook/document levels only: toggle the side info panel. |
 | `f` | Entries level only: toggle the table to widen the preview pane. |
 | `r` | Refresh the current level, bypassing the in-session cache. Entry selection, preview scroll, filters, and collapsed threads are preserved when possible. |
@@ -333,6 +334,14 @@ on — `i` disappears once you drill into entries, and `s` / `y` / `e` / `f` / `
 
 Replies only nest one level deep. Pressing `p` on either a top-level entry or one of its
 replies targets the top-level thread; `n` still adds a separate top-level entry.
+
+**Attachment browser**
+
+Press `Shift+A` on an entry to list its attachments and preview the highlighted item. Images
+render inline when image support is available; UTF-8 text and Markdown render as text; PDFs
+and other binary formats show their metadata and download path. Press `u` to upload a local
+file (its Markdown reference is appended to the entry), `y` to copy the highlighted
+attachment's Markdown reference, and `Esc` to close the browser.
 
 On selecting an entry the TUI exits and prints its `doc-id` / `log-id`, plus a ready-to-run
 `bely-cli entry get` command so you can fetch it:

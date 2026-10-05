@@ -273,6 +273,25 @@ class RecentDocumentsCachingTests(unittest.TestCase):
         self.assertEqual(self.factory.calls.count(("user", "alice")), 2)
 
 
+class AttachmentInvalidationTests(unittest.TestCase):
+    def test_invalidates_one_entries_attachments_and_bytes(self):
+        api = FakeApi()
+        data = LogbookData(api)
+        a = SimpleNamespace(stored_filename="a.png")
+        b = SimpleNamespace(stored_filename="b.png")
+        data._attachments[(1, 2)] = [a]
+        data._attachments[(1, 3)] = [b]
+        data._image_bytes[("a.png", "scaled")] = b"a"
+        data._image_bytes[("b.png", "scaled")] = b"b"
+
+        data.invalidate_attachments(1, 2)
+
+        self.assertNotIn((1, 2), data._attachments)
+        self.assertIn((1, 3), data._attachments)
+        self.assertNotIn(("a.png", "scaled"), data._image_bytes)
+        self.assertIn(("b.png", "scaled"), data._image_bytes)
+
+
 class AttachmentBytesCachingTests(unittest.TestCase):
     def setUp(self):
         self.download_api = FakeDownloadApi()

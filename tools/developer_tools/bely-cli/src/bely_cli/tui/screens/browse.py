@@ -99,6 +99,7 @@ class BrowseScreen(Screen):
         "new_entry": (LEVEL_DOCS, LEVEL_ENTRIES),
         "new_doc": (LEVEL_TYPES, LEVEL_DOCS),
         "toggle_info": (LEVEL_TYPES, LEVEL_DOCS),
+        "attachments": (LEVEL_ENTRIES,),
     }
 
     BINDINGS = [
@@ -114,6 +115,8 @@ class BrowseScreen(Screen):
         Binding("n", "new_entry", "New entry"),
         Binding("u", "update_entry", "Edit in TUI"),
         Binding("p", "reply", "Reply"),
+        # Printable shifted letters arrive from terminals as the uppercase character.
+        Binding("A", "attachments", "Attachments"),
         Binding("d", "new_doc", "New doc"),
         Binding("r", "refresh_level", "Refresh"),
         Binding("i", "toggle_info", "Info"),
@@ -763,6 +766,22 @@ class BrowseScreen(Screen):
         self.show_level(
             self.LEVEL_ENTRIES, preserve_filter=True, preserve_entry_position=True)
         self.notify("Entry saved.")
+
+    def action_attachments(self):
+        entry = self._current_entry()
+        if entry is None:
+            self.notify("Select an entry first.", severity="warning")
+            return
+        from .attachments import AttachmentScreen
+
+        self.app.push_screen(AttachmentScreen(
+            self.session, self.sel_doc, entry, on_uploaded=self._refresh_uploaded_entry))
+
+    def _refresh_uploaded_entry(self):
+        """Reload the entry so an appended attachment reference appears immediately."""
+        self.data.invalidate("entries", doc_id=self.sel_doc.id)
+        self.show_level(
+            self.LEVEL_ENTRIES, preserve_filter=True, preserve_entry_position=True)
 
     # -- add / update entry (mutating: goes through the auth gate) --
 

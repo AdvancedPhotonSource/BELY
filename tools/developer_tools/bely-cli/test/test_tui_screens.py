@@ -17,6 +17,7 @@ from textual.widgets import Button, Input, OptionList, Select, Static, TextArea
 from bely_cli.tui.app import BelyTuiApp
 from bely_cli.tui.data import LogbookData
 from bely_cli.tui.screens import configscreen
+from bely_cli.tui.screens.attachments import AttachmentScreen, preview_kind
 from bely_cli.tui.screens.compose import ComposeScreen, open_composer
 from bely_cli.tui.screens.confirm import ConfirmScreen
 from bely_cli.tui.screens.configscreen import ConfigScreen
@@ -86,6 +87,64 @@ class FakeSession:
 
     def authenticated_api(self):
         return self.factory.get_logbook_api()
+
+
+class AttachmentPreviewKindTests(unittest.TestCase):
+    def test_classifies_preview_types(self):
+        self.assertEqual(preview_kind("plot.PNG"), "image")
+        self.assertEqual(preview_kind("notes.md"), "text")
+        self.assertEqual(preview_kind("report.pdf"), "metadata")
+        self.assertEqual(preview_kind("archive.bin"), "metadata")
+
+
+class AttachmentScreenTests(unittest.IsolatedAsyncioTestCase):
+    def _attachment(self, name="notes.txt"):
+        return SimpleNamespace(
+            id=7, original_filename=name, stored_filename=f"stored-{name}",
+            download_path=f"/download/{name}", markdown_reference=f"![{name}](/download/{name})",
+        )
+
+    async def test_lists_previews_and_copies_attachment(self):
+        api = FakeLogbookApi()
+        api.get_log_entry_attachments = lambda **kwargs: [self._attachment()]
+        session = FakeSession(api)
+        session.data._download_api = SimpleNamespace(
+            get_attachment_without_preload_content=lambda name: SimpleNamespace(data=b"hello text"))
+        app = BelyTuiApp(session)
+        doc = SimpleNamespace(id=42, name="Doc")
+        entry = SimpleNamespace(log_id=10)
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None):
+            async with app.run_test() as pilot:
+                await app.push_screen(AttachmentScreen(session, doc, entry))
+                await pilot.pause()
+                screen = app.screen
+                self.assertEqual(len(screen.attachments), 1)
+                await pilot.pause()
+                self.assertTrue(screen.query_one("#attachment-text").display)
+                with patch.object(app, "copy_to_clipboard") as copy:
+                    screen.action_copy_reference()
+                    copy.assert_called_once_with("![notes.txt](/download/notes.txt)")
+                await pilot.press("escape")
+
+    async def test_empty_and_error_states(self):
+        for result in ([], RuntimeError("boom")):
+            api = FakeLogbookApi()
+            if isinstance(result, Exception):
+                def fetch(**kwargs):
+                    raise result
+                api.get_log_entry_attachments = fetch
+            else:
+                api.get_log_entry_attachments = lambda **kwargs: result
+            session = FakeSession(api)
+            app = BelyTuiApp(session)
+            with patch("bely_cli.tui.app.config.get_setting", return_value=None):
+                async with app.run_test() as pilot:
+                    await app.push_screen(AttachmentScreen(
+                        session, SimpleNamespace(id=42, name="Doc"), SimpleNamespace(log_id=10)))
+                    await pilot.pause()
+                    text = str(app.screen.query_one("#attachment-meta", Static).content)
+                    self.assertIn("No attachments" if result == [] else "Could not load", text)
+                    await pilot.press("escape")
 
 
 class LoginScreenTests(unittest.IsolatedAsyncioTestCase):
