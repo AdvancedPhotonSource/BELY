@@ -17,6 +17,8 @@ class FakeApi:
         self.doc = SimpleNamespace(id=42, name="My Doc")
         self.existing_entries = existing_entries or []
         self.entry_saved = None
+        self.uploaded = None
+        self.attachments = []
 
     def get_log_document_by_name(self, name):
         return self.doc
@@ -32,6 +34,16 @@ class FakeApi:
         if log_entry.log_id is None:
             log_entry.log_id = 99
         return log_entry
+
+    def upload_attachment(self, log_document_id, log_id, body, append_reference, file_name):
+        self.uploaded = (log_document_id, log_id, body, append_reference, file_name)
+        return SimpleNamespace(
+            id=7, original_filename=file_name, stored_filename=f"stored_{file_name}",
+            download_path=f"/download/{file_name}", markdown_reference=f"![{file_name}](/download/{file_name})",
+        )
+
+    def get_log_entry_attachments(self, log_document_id, log_id):
+        return self.attachments
 
 
 def _patch_auth(api):
@@ -118,6 +130,57 @@ class CmdAddEntryTests(unittest.TestCase):
         self.assertEqual(payload["log_id"], 99)
         self.assertEqual(payload["status"], "added")
         self.assertEqual(payload["doc"], "My Doc")
+
+
+class CmdAttachmentTests(unittest.TestCase):
+    def test_add_attachment_to_existing_entry(self):
+        existing = SimpleNamespace(log_id=10, log_entry="entry", entered_by_username="alice")
+        api = FakeApi(existing_entries=[existing])
+        tmp_path = _write_tmp("attachment")
+        try:
+            patches = _patch_auth(api)
+            for p in patches:
+                p.start()
+            try:
+                buf = io.StringIO()
+                with redirect_stdout(buf):
+                    entry.cmd_add_attachment("My Doc", None, 10, tmp_path, fmt="json")
+            finally:
+                for p in patches:
+                    p.stop()
+        finally:
+            os.unlink(tmp_path)
+
+        payload = json.loads(buf.getvalue())
+        self.assertEqual(payload["attachment"]["id"], 7)
+        self.assertEqual(api.uploaded[:2], (42, 10))
+        self.assertTrue(api.uploaded[3])
+
+    def test_list_attachments_json(self):
+        existing = SimpleNamespace(log_id=10, log_entry="entry", entered_by_username="alice")
+        api = FakeApi(existing_entries=[existing])
+        api.attachments = [SimpleNamespace(
+            id=7, original_filename="plot.png", stored_filename="stored.png",
+            download_path="/download/stored.png", markdown_reference="![plot.png](/download/stored.png)",
+        )]
+        with patch.object(entry.auth, "get_factory") as get_factory:
+            get_factory.return_value.get_logbook_api.return_value = api
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                entry.cmd_list_attachments("My Doc", None, 10, fmt="json")
+
+        payload = json.loads(buf.getvalue())
+        self.assertEqual(payload[0]["id"], 7)
+        self.assertEqual(payload[0]["original_filename"], "plot.png")
+
+    def test_list_attachments_delegates_entry_validation_to_endpoint(self):
+        api = FakeApi()
+        api.get_log_entry_attachments = MagicMock(side_effect=RuntimeError("entry not found"))
+        with patch.object(entry.auth, "get_factory") as get_factory:
+            get_factory.return_value.get_logbook_api.return_value = api
+            with self.assertRaisesRegex(RuntimeError, "entry not found"):
+                entry.cmd_list_attachments("My Doc", None, 10)
+        api.get_log_entry_attachments.assert_called_once_with(log_document_id=42, log_id=10)
 
 
 class CmdUpdateEntryTests(unittest.TestCase):

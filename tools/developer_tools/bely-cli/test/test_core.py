@@ -41,6 +41,7 @@ class FakeLogbookApi:
     def upload_attachment(self, log_document_id, log_id, body, append_reference, file_name):
         self.uploaded = (log_document_id, log_id, body, append_reference, file_name)
         return SimpleNamespace(
+            id=7,
             original_filename=file_name,
             stored_filename=f"stored_{file_name}",
             download_path=f"/download/{file_name}",
@@ -214,9 +215,26 @@ class AttachmentTests(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".png") as f:
             info = core.upload_attachment(api, 42, 99, f.name)
         basename = os.path.basename(f.name)
+        self.assertEqual(info["id"], 7)
         self.assertEqual(info["original_filename"], basename)
         self.assertEqual(api.uploaded[0], 42)
         self.assertEqual(api.uploaded[1], 99)
+
+    def test_entry_attachments_returns_stable_dicts(self):
+        api = FakeLogbookApi()
+        api.get_log_entry_attachments = MagicMock(return_value=[SimpleNamespace(
+            id=8,
+            original_filename="plot.png",
+            stored_filename="attachment.8.png",
+            download_path="/api/Downloads/Attachments/attachment.8.png",
+            markdown_reference="![plot.png](/api/Downloads/Attachments/attachment.8.png)",
+        )])
+
+        items = core.entry_attachments(api, 42, 99)
+
+        api.get_log_entry_attachments.assert_called_once_with(log_document_id=42, log_id=99)
+        self.assertEqual(items[0]["id"], 8)
+        self.assertEqual(items[0]["original_filename"], "plot.png")
 
 
 class FakeDownloadApi:

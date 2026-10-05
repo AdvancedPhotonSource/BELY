@@ -405,6 +405,26 @@ Add a new entry to an existing document. If none of `--file`, `--text`, or
 | `-t, --text TEXT` | Inline text for the entry. |
 | `--add-attachment TEXT` | File to attach to the entry. |
 
+#### `bely-cli entry attachment add`
+
+Upload a file to a specific existing entry. The attachment's Markdown reference is appended
+to the entry. The existing `--add-attachment` options on `entry add` and `entry update`
+remain supported.
+
+```bash
+bely-cli entry attachment add -d 99 --id 42 --file plot.png
+```
+
+#### `bely-cli entry attachment list` / `ls`
+
+List an entry's attachments, including the attachment ID, original and stored filenames, and
+download path. `ls` is an alias for `list`.
+
+```bash
+bely-cli entry attachment list -d 99 --id 42
+bely-cli entry attachment ls -n "Shift Report" --id 42 --format json
+```
+
 #### `bely-cli entry update`
 
 Update an existing entry. With no `--id`, your most recent entry in the document is
@@ -531,8 +551,10 @@ bely-cli entry add -n "Shift Report" -t "Beam restored after RF trip."
 bely-cli entry add -n "Shift Report" -f entry.md
 bely-cli entry add -n "Shift Report"                 # opens $EDITOR
 
-# Attach a file to an entry
+# Attach a file while adding an entry, or to an existing entry
 bely-cli entry add -n "Shift Report" --add-attachment plot.png
+bely-cli entry attachment add -n "Shift Report" --id 42 --file plot.png
+bely-cli entry attachment ls -n "Shift Report" --id 42
 
 # Update your most recent entry, or a specific one
 bely-cli entry update -n "Shift Report" -t "Corrected: trip was on RF2."

@@ -177,6 +177,24 @@ def validate_attachment_path(path):
     return path
 
 
+def attachment_info(att):
+    """Return stable attachment fields for command and TUI consumers."""
+    return {
+        "id": att.id,
+        "original_filename": att.original_filename,
+        "stored_filename": att.stored_filename,
+        "download_path": att.download_path,
+        "markdown_reference": att.markdown_reference,
+    }
+
+
+def entry_attachments(logbook_api, doc_id, log_id):
+    """Return attachment details for one log entry."""
+    attachments = logbook_api.get_log_entry_attachments(
+        log_document_id=doc_id, log_id=log_id)
+    return [attachment_info(att) for att in attachments]
+
+
 def upload_attachment(logbook_api, doc_id, log_id, path):
     """Upload an attachment and return its details as a dict."""
     basename = os.path.basename(path)
@@ -187,12 +205,7 @@ def upload_attachment(logbook_api, doc_id, log_id, path):
         append_reference=True,
         file_name=basename,
     )
-    return {
-        "original_filename": att.original_filename,
-        "stored_filename": att.stored_filename,
-        "download_path": att.download_path,
-        "markdown_reference": att.markdown_reference,
-    }
+    return attachment_info(att)
 
 
 def download_attachment(download_api, stored_filename, scaling=None):

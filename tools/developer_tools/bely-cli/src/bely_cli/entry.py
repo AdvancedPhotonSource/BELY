@@ -140,6 +140,39 @@ def cmd_add_entry(doc_name, doc_id, file, text, add_attachment, fmt="text"):
             print_result(result, "", fmt)
 
 
+def cmd_add_attachment(doc_name, doc_id, entry_id, file, fmt="text"):
+    """Upload an attachment to an existing log entry."""
+    path = core.validate_attachment_path(file)
+    factory = auth.get_factory()
+    doc = core.resolve_doc(factory.get_logbook_api(), doc_name, doc_id)
+
+    with auth.get_authenticated_factory() as auth_factory:
+        logbook_api = auth_factory.get_logbook_api()
+        info = upload_and_print_attachment(logbook_api, doc.id, entry_id, path, fmt)
+
+    if fmt != "text":
+        print_result({"doc": doc.name, "log_id": entry_id, "attachment": info}, "", fmt)
+
+
+def cmd_list_attachments(doc_name, doc_id, entry_id, fmt="text"):
+    """List attachments on an existing log entry."""
+    factory = auth.get_factory()
+    logbook_api = factory.get_logbook_api()
+    doc = core.resolve_doc(logbook_api, doc_name, doc_id)
+    items = core.entry_attachments(logbook_api, doc.id, entry_id)
+
+    if not items and fmt == "text":
+        print(f'No attachments found for entry {entry_id} in document "{doc.name}".')
+        return
+    columns = [
+        ("id", "ID", 8),
+        ("original_filename", "Filename", 30),
+        ("stored_filename", "Stored Filename", 30),
+        ("download_path", "Download Path", 0),
+    ]
+    print_items(items, columns, fmt)
+
+
 def cmd_list_entries(doc_name, doc_id, fmt="text"):
     """List entries in a log document."""
     factory = auth.get_factory()

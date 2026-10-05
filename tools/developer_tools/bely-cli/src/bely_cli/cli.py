@@ -15,8 +15,10 @@ from .commands import (
     cmd_set_config,
 )
 from .entry import (
+    cmd_add_attachment,
     cmd_add_entry,
     cmd_get_entry,
+    cmd_list_attachments,
     cmd_list_entries,
     cmd_update_entry,
 )
@@ -131,6 +133,36 @@ def doc_list(output_format, **kwargs):
 def entry_group():
     """Log entry commands."""
     pass
+
+
+@entry_group.group("attachment")
+def entry_attachment_group():
+    """Log entry attachment commands."""
+    pass
+
+
+@entry_attachment_group.command("add")
+@click.option("--doc-name", "-n", default=None, help="Log document name")
+@click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
+@click.option("--id", "entry_id", required=True, type=int, help="Log entry ID")
+@click.option("--file", "-f", required=True, help="File to attach")
+@common_options
+def entry_attachment_add(output_format, **kwargs):
+    """Upload an attachment to an existing log entry."""
+    cmd_add_attachment(fmt=output_format, **kwargs)
+
+
+@entry_attachment_group.command("list")
+@click.option("--doc-name", "-n", default=None, help="Log document name")
+@click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
+@click.option("--id", "entry_id", required=True, type=int, help="Log entry ID")
+@common_options
+def entry_attachment_list(output_format, **kwargs):
+    """List attachments on a log entry."""
+    cmd_list_attachments(fmt=output_format, **kwargs)
+
+
+entry_attachment_group.add_command(entry_attachment_list, "ls")
 
 
 @entry_group.command("add")
