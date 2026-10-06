@@ -225,12 +225,13 @@ def cmd_delete_entry(doc_name, doc_id, entry_id, yes=False, fmt="text"):
     return result
 
 
-def cmd_list_entries(doc_name, doc_id, fmt="text"):
-    """List entries in a log document."""
+def cmd_list_entries(doc_name, doc_id, replies=False, fmt="text"):
+    """List entries in a log document, optionally including replies."""
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
     doc = core.resolve_doc(logbook_api, doc_name, doc_id)
-    entries = logbook_api.get_log_entries(log_document_id=doc.id)
+    entries = logbook_api.get_log_entries(
+        log_document_id=doc.id, load_replies=replies)
 
     if not entries:
         if fmt == "text":
@@ -239,9 +240,14 @@ def cmd_list_entries(doc_name, doc_id, fmt="text"):
             print_items([], [], fmt)
         return
 
-    items = core.entry_list_items(entries)
-    columns = [("log_id", "Log ID", 10), ("date", "Date", 18),
-               ("author", "Author", 20), ("snippet", "Snippet", 0)]
+    items = core.entry_list_items(entries, include_replies=replies)
+    columns = [("log_id", "Log ID", 10)]
+    if replies:
+        columns.append(("parent_log_id", "Parent ID", 10))
+    columns.extend([
+        ("date", "Date", 18), ("author", "Author", 20),
+        ("snippet", "Snippet", 0),
+    ])
     print_items(items, columns, fmt)
 
 
@@ -251,7 +257,7 @@ def cmd_get_entry(doc_name, doc_id, entry_id, output_dir, fmt="text"):
     logbook_api = factory.get_logbook_api()
     doc = core.resolve_doc(logbook_api, doc_name, doc_id)
     entries = logbook_api.get_log_entries(
-        log_document_id=doc.id, load_replies=bool(entry_id))
+        log_document_id=doc.id, load_replies=entry_id is not None)
 
     if not entries:
         raise ValueError(f'No entries found in document {doc.name}.')

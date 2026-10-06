@@ -247,6 +247,7 @@ def entry_update(output_format, **kwargs):
 @entry_group.command("list")
 @click.option("--doc-name", "-n", default=None, help="Log document name")
 @click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
+@click.option("--replies", is_flag=True, help="Include replies and their parent entry IDs")
 @common_options
 def entry_list(output_format, **kwargs):
     """List entries in a log document."""

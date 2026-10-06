@@ -490,6 +490,11 @@ List the entries in a document (Log ID, date, author, and a snippet of the first
 |--------|-------------|
 | `-n, --doc-name TEXT` | Document name. |
 | `-d, --doc-id INTEGER` | Document ID. |
+| `--replies` | Include replies and a `Parent ID` column. |
+
+```bash
+bely-cli entry ls -d 99 --replies
+```
 
 #### `bely-cli entry delete` / `rm`
 

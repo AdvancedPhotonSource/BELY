@@ -183,6 +183,29 @@ class CmdAttachmentTests(unittest.TestCase):
         api.get_log_entry_attachments.assert_called_once_with(log_document_id=42, log_id=10)
 
 
+class CmdListEntryTests(unittest.TestCase):
+    def test_list_with_replies(self):
+        reply = SimpleNamespace(
+            log_id=11, log_entry="reply", log_replies=None,
+            entered_on_date_time=None, entered_by_username="bob")
+        parent = SimpleNamespace(
+            log_id=10, log_entry="parent", log_replies=[reply],
+            entered_on_date_time=None, entered_by_username="alice")
+        api = FakeApi(existing_entries=[parent])
+        api.get_log_entries = MagicMock(wraps=api.get_log_entries)
+        with patch.object(entry.auth, "get_factory") as get_factory:
+            get_factory.return_value.get_logbook_api.return_value = api
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                entry.cmd_list_entries("My Doc", None, replies=True, fmt="json")
+        payload = json.loads(buf.getvalue())
+        self.assertEqual([item["log_id"] for item in payload], [10, 11])
+        self.assertEqual(payload[0]["parent_log_id"], "")
+        self.assertEqual(payload[1]["parent_log_id"], 10)
+        api.get_log_entries.assert_called_once_with(
+            log_document_id=42, load_replies=True)
+
+
 class CmdGetEntryTests(unittest.TestCase):
     def test_get_finds_nested_reply(self):
         reply = SimpleNamespace(log_id=11, log_entry="reply text", log_replies=None)

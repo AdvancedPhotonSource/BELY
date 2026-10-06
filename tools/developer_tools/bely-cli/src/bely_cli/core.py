@@ -163,20 +163,32 @@ def delete_entry(logbook_api, doc_id, log_id):
     return logbook_api.delete_log_entry(log_document_id=doc_id, log_id=log_id)
 
 
-def entry_list_items(entries):
-    """Row dicts (log_id/date/author/snippet) for cmd_list_entries / the TUI list."""
+def entry_list_items(entries, include_replies=False, parent_log_id=None):
+    """Return display rows for entries, optionally followed by their replies."""
     items = []
-    for e in entries:
-        date = e.entered_on_date_time.strftime("%Y-%m-%d %H:%M") if e.entered_on_date_time else ""
-        snippet = (e.log_entry or "").strip().splitlines()[0] if e.log_entry else ""
+    for entry in entries:
+        date = (
+            entry.entered_on_date_time.strftime("%Y-%m-%d %H:%M")
+            if entry.entered_on_date_time else ""
+        )
+        snippet = (entry.log_entry or "").strip().splitlines()[0] if entry.log_entry else ""
         if len(snippet) > 60:
             snippet = snippet[:57] + "..."
-        items.append({
-            "log_id": e.log_id,
+        item = {
+            "log_id": entry.log_id,
             "date": date,
-            "author": e.entered_by_username or "",
+            "author": entry.entered_by_username or "",
             "snippet": snippet,
-        })
+        }
+        if include_replies:
+            item["parent_log_id"] = parent_log_id or ""
+        items.append(item)
+        if include_replies:
+            items.extend(entry_list_items(
+                getattr(entry, "log_replies", None) or [],
+                include_replies=True,
+                parent_log_id=entry.log_id,
+            ))
     return items
 
 
