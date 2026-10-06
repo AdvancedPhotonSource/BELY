@@ -200,7 +200,10 @@ class CompletionTests(unittest.TestCase):
         for command in commands:
             with self.subTest(command=command.name):
                 options = {parameter.name: parameter for parameter in command.params}
-                self.assertIs(options["entry_id"].shell_complete, completion.complete_entry_ids)
+                self.assertIs(
+                    options["entry_id"]._custom_shell_complete,
+                    completion.complete_entry_ids,
+                )
 
     def test_path_options_expose_file_completion(self):
         command = cli.commands["entry"].commands["add"]

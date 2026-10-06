@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 from bely_cli import commands
 
@@ -214,7 +214,9 @@ class CmdNewDocTests(unittest.TestCase):
             os.unlink(tmp_path)
 
         opts_cls.assert_called_once_with(name="My Doc", logbook_type_id=1)
-        cache_document.assert_called_once_with(api.created, "ops")
+        cache_document.assert_called_once_with(ANY, "ops")
+        cached_doc = cache_document.call_args.args[0]
+        self.assertEqual((cached_doc.id, cached_doc.name), (42, "My Doc"))
         self.assertIs(api.created, opts_cls.return_value)
         self.assertEqual(api.entry_saved.log_entry, "hello\n")
         self.assertEqual(api.entry_saved.log_id, 99)
