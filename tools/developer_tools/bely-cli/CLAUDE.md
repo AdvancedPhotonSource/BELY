@@ -15,13 +15,12 @@ binding, and configuration key — keep it in sync when changing the CLI surface
 uv sync                       # create/refresh .venv from pyproject.toml + uv.lock
 uv run bely-cli -h            # run the CLI from the working tree
 
-uv run python -m unittest                     # full suite (auto-discovers test/)
-uv run python -m unittest test.test_tui       # one module
-uv run python -m unittest test.test_tui.FilterItemsTests.test_case_insensitive_substring
-uv run pytest test/test_entry.py              # pytest also works; unittest is what CI runs
+uv run pytest -n auto test                    # full suite in parallel
+uv run pytest test/test_tui.py                # one module
+uv run pytest test/test_tui.py::FilterItemsTests::test_case_insensitive_substring
 
-./run_test.sh                 # unit tests + a smoke test that bely-cli loads and that
-                              # --format is wired on leaf commands (not the top level).
+./run_test.sh                 # parallel pytest suite + CLI smoke tests; defaults to at most
+                              # 4 workers. Set TEST_JOBS to override the worker count.
                               # Runs through `uv run` by default; set RUNNER="" to
                               # exercise an already-installed bely-cli instead.
 ```

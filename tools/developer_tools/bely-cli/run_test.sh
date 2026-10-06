@@ -8,10 +8,18 @@ cd "$COMPONENT_DIR"
 
 # RUNNER lets a packaging harness drop back to a bare interpreter (RUNNER="")
 # when it wants to exercise an already-installed bely-cli instead of the venv.
-RUNNER="${RUNNER:-uv run}"
+RUNNER="${RUNNER-uv run}"
 
-# Unit tests (run from the project dir so unittest discovers test/).
-$RUNNER python -m unittest
+# Run the suite in parallel while retaining one consolidated pytest report.
+if [[ -z "${TEST_JOBS:-}" ]]; then
+    TEST_JOBS="$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)"
+    (( TEST_JOBS > 4 )) && TEST_JOBS=4
+fi
+if [[ ! "$TEST_JOBS" =~ ^[1-9][0-9]*$ ]]; then
+    echo "TEST_JOBS must be a positive integer" >&2
+    exit 2
+fi
+$RUNNER pytest -n "$TEST_JOBS" test
 
 # Smoke test: the published command loads and --format is wired per-command
 # (appended to a leaf command, not at the top level).

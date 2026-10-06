@@ -28,7 +28,7 @@ Homepage = "https://github.com/AdvancedPhotonSource/BELY"
 bely-cli = "bely_cli.cli:main"
 
 [dependency-groups]
-dev = ["pytest>=7.0.0", "textual-image[textual]>=0.12.0"]
+dev = ["pytest>=7.0.0", "pytest-xdist>=3.0.0", "textual-image[textual]>=0.12.0"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
