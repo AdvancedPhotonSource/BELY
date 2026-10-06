@@ -365,8 +365,11 @@ replies targets the top-level thread; `n` still adds a separate top-level entry.
 
 Press `Shift+A` on an entry to list its attachments and preview the highlighted item. Images
 render inline when image support is available; UTF-8 text and Markdown render as text; PDFs
-and other binary formats show their metadata and download path. Press `u` to upload a local
-file (its Markdown reference is appended to the entry), `y` to copy the highlighted
+and other binary formats show their metadata and download path. Press `u` to choose a local
+file with the filesystem browser and upload it (its Markdown reference is appended to the
+entry). The browser's path field supports shell-like completion with `Tab` or Right Arrow;
+`Ctrl+U` clears the entire field, `Ctrl+Shift+A` selects it, and entering a directory changes the tree root.
+With the tree focused, `/` filters filenames in the displayed directories. Press `y` to copy the highlighted
 attachment's Markdown reference, `x` to delete the highlighted attachment after confirmation,
 and `Esc` to close the browser.
 

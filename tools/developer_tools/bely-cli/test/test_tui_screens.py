@@ -7,17 +7,23 @@ Same hand-rolled FakeApi/FakeSession style as test_tui_app.py/test_tui_data.py
 `self.dismiss(...)`).
 """
 
+import os
+import tempfile
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from textual.app import App
-from textual.widgets import Button, Input, OptionList, Select, Static, TextArea
+from textual.widgets import Button, DirectoryTree, Input, OptionList, Select, Static, TextArea
 
 from bely_cli.tui.app import BelyTuiApp
 from bely_cli.tui.data import LogbookData
 from bely_cli.tui.screens import configscreen
-from bely_cli.tui.screens.attachments import AttachmentScreen, preview_kind
+from bely_cli.tui.screens.attachments import (
+    AttachmentDirectoryTree, AttachmentFileScreen, AttachmentScreen, PathSuggester,
+    preview_kind,
+)
 from bely_cli.tui.screens.compose import ComposeScreen, open_composer
 from bely_cli.tui.screens.confirm import ConfirmScreen, TypeToConfirmScreen
 from bely_cli.tui.screens.configscreen import ConfigScreen
@@ -95,6 +101,76 @@ class AttachmentPreviewKindTests(unittest.TestCase):
         self.assertEqual(preview_kind("notes.md"), "text")
         self.assertEqual(preview_kind("report.pdf"), "metadata")
         self.assertEqual(preview_kind("archive.bin"), "metadata")
+
+
+class PathSuggesterTests(unittest.IsolatedAsyncioTestCase):
+    async def test_completes_directories_before_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "alpine.txt").touch()
+            (root / "alpha").mkdir()
+            suggestion = await PathSuggester().get_suggestion(str(root / "al"))
+        self.assertEqual(suggestion, str(root / "alpha") + os.sep)
+
+
+class AttachmentFileScreenTests(unittest.IsolatedAsyncioTestCase):
+    async def test_uses_directory_tree_and_returns_selected_file(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(AttachmentFileScreen("/tmp")))
+            await pilot.pause()
+            screen = app.screen
+            self.assertEqual(screen.query_one(DirectoryTree).path, Path("/tmp"))
+            self.assertEqual(screen.query_one("#attachment-root", Input).value, "/tmp")
+            screen.on_directory_tree_file_selected(
+                SimpleNamespace(path=Path("/tmp/attachment.txt")))
+            await pilot.pause()
+            self.assertEqual(await task.wait(), "/tmp/attachment.txt")
+
+    async def test_ctrl_u_clears_entire_path_regardless_of_cursor(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(AttachmentFileScreen("/tmp")))
+            await pilot.pause()
+            root = app.screen.query_one("#attachment-root", Input)
+            root.cursor_position = 4
+            await pilot.press("ctrl+u")
+            self.assertEqual(root.value, "")
+            await pilot.press("escape")
+            await task.wait()
+
+    async def test_slash_opens_filename_filter_and_escape_closes_it(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(AttachmentFileScreen("/tmp")))
+            await pilot.pause()
+            tree = app.screen.query_one(AttachmentDirectoryTree)
+            tree.focus()
+            await pilot.press("/")
+            filter_input = app.screen.query_one("#attachment-filter", Input)
+            self.assertTrue(filter_input.display)
+            self.assertIs(app.screen.focused, filter_input)
+            filter_input.value = "report"
+            await pilot.pause()
+            self.assertEqual(tree.filter_text, "report")
+            await pilot.press("escape")
+            self.assertFalse(filter_input.display)
+            self.assertIs(app.screen.focused, tree)
+            await pilot.press("escape")
+            await task.wait()
+
+    async def test_entering_directory_changes_tree_root(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(AttachmentFileScreen("/tmp")))
+            await pilot.pause()
+            root = app.screen.query_one("#attachment-root", Input)
+            root.value = str(Path.home())
+            await pilot.press("enter")
+            await pilot.pause()
+            self.assertEqual(app.screen.query_one(DirectoryTree).path, Path.home().resolve())
+            await pilot.press("escape")
+            await task.wait()
 
 
 class AttachmentScreenTests(unittest.IsolatedAsyncioTestCase):

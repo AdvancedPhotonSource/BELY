@@ -2,13 +2,15 @@
 
 import asyncio
 import os
+from pathlib import Path
 
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import ModalScreen
-from textual.widgets import DataTable, Footer, Input, Markdown, Static
+from textual.suggester import Suggester
+from textual.widgets import DataTable, DirectoryTree, Footer, Input, Markdown, Static
 
 from ... import core
 from ...common import format_error_message
@@ -32,26 +34,163 @@ def preview_kind(filename):
     return "metadata"
 
 
-class AttachmentPathScreen(DialogScreen):
-    """Prompt for a local attachment path."""
+class PathSuggester(Suggester):
+    """Offer shell-like completion for local filesystem paths."""
+
+    def __init__(self):
+        super().__init__(use_cache=False, case_sensitive=True)
+
+    async def get_suggestion(self, value):
+        if not value:
+            return None
+        return await asyncio.to_thread(self._suggest, value)
+
+    @staticmethod
+    def _suggest(value):
+        expanded = Path(value).expanduser()
+        if value.endswith(os.sep):
+            directory, prefix, base = expanded, "", value
+        else:
+            directory, prefix = expanded.parent, expanded.name
+            base = value[:-len(prefix)] if prefix else value
+        try:
+            matches = sorted(
+                (path for path in directory.iterdir() if path.name.startswith(prefix)),
+                key=lambda path: (not path.is_dir(), path.name.casefold()),
+            )
+        except OSError:
+            return None
+        if not matches:
+            return None
+        match = matches[0]
+        return f"{base}{match.name}{os.sep if match.is_dir() else ''}"
+
+
+class PathInput(Input):
+    """Path input where Tab accepts Textual's current suggestion."""
+
+    BINDINGS = [
+        Binding("tab", "complete", "Complete", show=False),
+        Binding("ctrl+u", "clear_path", "Clear path", show=False),
+    ]
+
+    def action_complete(self):
+        self.action_cursor_right()
+
+    def action_clear_path(self):
+        self.value = ""
+
+
+class AttachmentDirectoryTree(DirectoryTree):
+    """Directory tree with a slash-triggered name filter."""
+
+    BINDINGS = [Binding("slash", "filter", "Filter", show=False)]
+
+    def __init__(self, path, **kwargs):
+        super().__init__(path, **kwargs)
+        self.filter_text = ""
+
+    def filter_paths(self, paths):
+        paths = super().filter_paths(paths)
+        if not self.filter_text:
+            return paths
+        query = self.filter_text.casefold()
+        return (
+            path for path in paths
+            if path.is_dir() or query in path.name.casefold()
+        )
+
+    def action_filter(self):
+        self.screen.open_tree_filter()
+
+
+class TreeFilterInput(Input):
+    """Filter input whose Escape returns to the directory tree."""
+
+    BINDINGS = [Binding("escape", "close_filter", "Close filter", show=False)]
+
+    def action_close_filter(self):
+        self.screen.close_tree_filter()
+
+
+class AttachmentFileScreen(DialogScreen):
+    """Select a local attachment with Textual's filesystem browser."""
 
     DEFAULT_CSS = """
-    #attachment-path-dialog { width: 70; }
-    #attachment-path { margin-top: 1; }
+    #attachment-file-dialog { width: 80%; height: 80%; }
+    #attachment-root { margin-top: 1; }
+    #attachment-filter { display: none; margin-top: 1; }
+    #attachment-file-tree { height: 1fr; margin-top: 1; }
     """
 
+    def __init__(self, path=None):
+        super().__init__()
+        self.path = path or os.getcwd()
+
     def compose(self) -> ComposeResult:
-        with Vertical(id="attachment-path-dialog", classes="dialog"):
-            yield Static("Local file to upload")
-            yield Input(placeholder="file path", id="attachment-path")
+        with Vertical(id="attachment-file-dialog", classes="dialog"):
+            yield Static("Select a local file to upload")
+            yield PathInput(
+                value=str(self.path), placeholder="Directory or file path",
+                suggester=PathSuggester(), id="attachment-root",
+            )
+            yield TreeFilterInput(placeholder="Filter filenames", id="attachment-filter")
+            yield AttachmentDirectoryTree(self.path, id="attachment-file-tree")
+            yield Static(
+                "Path: Ctrl+U clear · Ctrl+Shift+A select all · Tab/Right complete · Enter open\n"
+                "Tree: / filter · Enter select/open · Esc cancel",
+                classes="help-text",
+            )
 
     def on_mount(self):
-        self.query_one(Input).focus()
+        root = self.query_one("#attachment-root", Input)
+        root.cursor_position = len(root.value)
+        root.focus()
+
+    def open_tree_filter(self):
+        filter_input = self.query_one("#attachment-filter", Input)
+        filter_input.display = True
+        filter_input.focus()
+
+    def close_tree_filter(self):
+        filter_input = self.query_one("#attachment-filter", Input)
+        filter_input.display = False
+        self.query_one(AttachmentDirectoryTree).focus()
+
+    async def on_input_changed(self, event):
+        if event.input.id != "attachment-filter":
+            return
+        tree = self.query_one(AttachmentDirectoryTree)
+        tree.filter_text = event.value
+        await tree.reload()
 
     def on_input_submitted(self, event):
-        path = event.value.strip()
-        if path:
-            self.dismiss(path)
+        if event.input.id == "attachment-filter":
+            self.close_tree_filter()
+            return
+        if event.input.id != "attachment-root":
+            return
+        path = Path(event.value).expanduser()
+        try:
+            path = path.resolve(strict=True)
+        except (OSError, RuntimeError):
+            self.notify(f"Path does not exist: {event.value}", severity="error")
+            return
+        if path.is_file():
+            self.dismiss(str(path))
+        elif path.is_dir():
+            tree = self.query_one(AttachmentDirectoryTree)
+            tree.path = path
+            event.input.value = str(path)
+            tree.focus()
+        else:
+            self.notify(f"Not a regular file or directory: {path}", severity="error")
+
+    def on_directory_tree_directory_selected(self, event):
+        self.query_one("#attachment-root", Input).value = str(event.path)
+
+    def on_directory_tree_file_selected(self, event):
+        self.dismiss(str(event.path))
 
 
 class AttachmentScreen(ModalScreen):
@@ -257,7 +396,7 @@ class AttachmentScreen(ModalScreen):
 
     @work
     async def _upload(self):
-        path = await self.app.push_screen_wait(AttachmentPathScreen())
+        path = await self.app.push_screen_wait(AttachmentFileScreen())
         if not path:
             return
         try:
