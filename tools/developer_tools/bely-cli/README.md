@@ -369,9 +369,10 @@ and other binary formats show their metadata and download path. Press `u` to cho
 file with the filesystem browser and upload it (its Markdown reference is appended to the
 entry). The browser's path field supports shell-like completion with `Tab` or Right Arrow;
 `Ctrl+U` clears the entire field, `Ctrl+Shift+A` selects it, and entering a directory changes the tree root.
-With the tree focused, `/` filters filenames in the displayed directories. Press `y` to copy the highlighted
-attachment's Markdown reference, `x` to delete the highlighted attachment after confirmation,
-and `Esc` to close the browser.
+With the tree focused, `/` filters filenames in the displayed directories and `p` toggles
+a local-file preview while choosing an upload. Press `y` to copy the highlighted attachment's
+Markdown reference, `x` to delete the highlighted attachment after confirmation, and `Esc`
+to close the browser.
 
 On selecting an entry the TUI exits and prints its `doc-id` / `log-id`, plus a ready-to-run
 `bely-cli entry get` command so you can fetch it:

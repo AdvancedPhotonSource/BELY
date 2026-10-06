@@ -114,18 +114,25 @@ class TreeFilterInput(Input):
 
 
 class AttachmentFileScreen(DialogScreen):
-    """Select a local attachment with Textual's filesystem browser."""
+    """Select and preview a local attachment with Textual's filesystem browser."""
 
     DEFAULT_CSS = """
     #attachment-file-dialog { width: 80%; height: 80%; }
     #attachment-root { margin-top: 1; }
     #attachment-filter { display: none; margin-top: 1; }
-    #attachment-file-tree { height: 1fr; margin-top: 1; }
+    #attachment-file-body { height: 1fr; margin-top: 1; }
+    #attachment-file-tree { width: 55%; }
+    #attachment-file-preview { width: 1fr; border: round $primary-darken-1; padding: 0 1; }
+    #attachment-file-image { width: auto; height: auto; max-width: 100%; max-height: 30; }
     """
+
+    BINDINGS = [Binding("p", "toggle_preview", "Preview")]
 
     def __init__(self, path=None):
         super().__init__()
         self.path = path or os.getcwd()
+        self._preview_open = True
+        self._preview_token = 0
 
     def compose(self) -> ComposeResult:
         with Vertical(id="attachment-file-dialog", classes="dialog"):
@@ -135,10 +142,15 @@ class AttachmentFileScreen(DialogScreen):
                 suggester=PathSuggester(), id="attachment-root",
             )
             yield TreeFilterInput(placeholder="Filter filenames", id="attachment-filter")
-            yield AttachmentDirectoryTree(self.path, id="attachment-file-tree")
+            with Horizontal(id="attachment-file-body"):
+                yield AttachmentDirectoryTree(self.path, id="attachment-file-tree")
+                with VerticalScroll(id="attachment-file-preview"):
+                    yield Static("Highlight a file to preview it.", id="attachment-file-meta")
+                    yield Markdown(id="attachment-file-text")
+                    yield Vertical(id="attachment-file-media")
             yield Static(
                 "Path: Ctrl+U clear · Ctrl+Shift+A select all · Tab/Right complete · Enter open\n"
-                "Tree: / filter · Enter select/open · Esc cancel",
+                "Tree: / filter · p preview · Enter select/open · Esc cancel",
                 classes="help-text",
             )
 
@@ -146,6 +158,14 @@ class AttachmentFileScreen(DialogScreen):
         root = self.query_one("#attachment-root", Input)
         root.cursor_position = len(root.value)
         root.focus()
+        self.query_one("#attachment-file-text", Markdown).display = False
+
+    def action_toggle_preview(self):
+        self._preview_open = not self._preview_open
+        preview = self.query_one("#attachment-file-preview", VerticalScroll)
+        tree = self.query_one(AttachmentDirectoryTree)
+        preview.display = self._preview_open
+        tree.styles.width = "55%" if self._preview_open else "100%"
 
     def open_tree_filter(self):
         filter_input = self.query_one("#attachment-filter", Input)
@@ -185,6 +205,70 @@ class AttachmentFileScreen(DialogScreen):
             tree.focus()
         else:
             self.notify(f"Not a regular file or directory: {path}", severity="error")
+
+    def on_tree_node_highlighted(self, event):
+        if event.control.id != "attachment-file-tree" or event.node.data is None:
+            return
+        self._preview_path(event.node.data.path)
+
+    def _preview_path(self, path):
+        self._preview_token += 1
+        token = self._preview_token
+        path = Path(path)
+        text = self.query_one("#attachment-file-text", Markdown)
+        text.display = False
+        self.query_one("#attachment-file-media", Vertical).remove_children()
+        try:
+            details = path.stat()
+            kind = "directory" if path.is_dir() else preview_kind(path.name)
+            metadata = f"{path}\nType: {kind}\nSize: {details.st_size:,} bytes"
+        except OSError as exc:
+            metadata = f"{path}\nUnavailable: {exc}"
+            kind = "metadata"
+        self.query_one("#attachment-file-meta", Static).update(metadata)
+        if kind == "text":
+            self._load_local_text(path, token)
+        elif kind == "image":
+            self._load_local_image(path, token)
+
+    @work(thread=True, exclusive=True, group="local-file-preview")
+    def _load_local_text(self, path, token):
+        try:
+            content = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError) as exc:
+            self.app.call_from_thread(self._preview_local_failed, token, str(exc))
+            return
+        self.app.call_from_thread(self._show_local_text, token, content)
+
+    async def _show_local_text(self, token, content):
+        if token != self._preview_token:
+            return
+        widget = self.query_one("#attachment-file-text", Markdown)
+        widget.display = True
+        await widget.update(content)
+
+    @work(thread=True, exclusive=True, group="local-file-preview")
+    def _load_local_image(self, path, token):
+        widget_cls = getattr(self.app, "image_widget", None)
+        if widget_cls is None:
+            return
+        try:
+            from .browse import decode_image_bytes
+            image = decode_image_bytes(path.read_bytes())
+        except Exception as exc:
+            self.app.call_from_thread(self._preview_local_failed, token, str(exc))
+            return
+        self.app.call_from_thread(self._show_local_image, token, widget_cls, image)
+
+    async def _show_local_image(self, token, widget_cls, image):
+        if token != self._preview_token:
+            return
+        await self.query_one("#attachment-file-media", Vertical).mount(
+            widget_cls(image, id="attachment-file-image"))
+
+    def _preview_local_failed(self, token, message):
+        if token == self._preview_token:
+            self.notify(f"Preview unavailable: {message}", severity="warning")
 
     def on_directory_tree_directory_selected(self, event):
         self.query_one("#attachment-root", Input).value = str(event.path)

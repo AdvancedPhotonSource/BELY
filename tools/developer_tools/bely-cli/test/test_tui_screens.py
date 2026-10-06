@@ -15,7 +15,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from textual.app import App
-from textual.widgets import Button, DirectoryTree, Input, OptionList, Select, Static, TextArea
+from textual.widgets import Button, DataTable, DirectoryTree, Input, OptionList, Select, Static, TextArea
 
 from bely_cli.tui.app import BelyTuiApp
 from bely_cli.tui.data import LogbookData
@@ -156,6 +156,24 @@ class AttachmentFileScreenTests(unittest.IsolatedAsyncioTestCase):
             await pilot.press("escape")
             self.assertFalse(filter_input.display)
             self.assertIs(app.screen.focused, tree)
+            await pilot.press("escape")
+            await task.wait()
+
+    async def test_preview_toggle_hides_preview_and_expands_tree(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(AttachmentFileScreen("/tmp")))
+            await pilot.pause()
+            screen = app.screen
+            preview = screen.query_one("#attachment-file-preview")
+            tree = screen.query_one(AttachmentDirectoryTree)
+            tree.focus()
+            self.assertTrue(preview.display)
+            await pilot.press("p")
+            self.assertFalse(preview.display)
+            self.assertEqual(str(tree.styles.width), "100w")
+            await pilot.press("p")
+            self.assertTrue(preview.display)
             await pilot.press("escape")
             await task.wait()
 
