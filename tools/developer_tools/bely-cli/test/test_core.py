@@ -144,6 +144,11 @@ class EntryTests(unittest.TestCase):
         entry = core.new_entry_template(api, 42)
         self.assertEqual(entry.log_entry, "")
 
+    def test_new_reply_template_sets_parent(self):
+        api = FakeLogbookApi()
+        reply = core.new_reply_template(api, 42, 10)
+        self.assertEqual(reply.parent_log_id, 10)
+
     def test_save_entry_sets_content_and_saves(self):
         api = FakeLogbookApi()
         entry = SimpleNamespace(log_id=None, log_entry="")

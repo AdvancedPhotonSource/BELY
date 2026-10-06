@@ -23,6 +23,7 @@ from .entry import (
     cmd_get_entry,
     cmd_list_attachments,
     cmd_list_entries,
+    cmd_reply_entry,
     cmd_update_entry,
 )
 from .tui import cmd_tui
@@ -31,6 +32,7 @@ from .shell_completion import (
     complete_document_ids,
     complete_document_names,
     complete_entry_ids,
+    complete_top_level_entry_ids,
     complete_systems,
     complete_templates,
     complete_types,
@@ -267,6 +269,26 @@ def entry_add(output_format, **kwargs):
     if kwargs.get('file') == '-':
         set_no_prompt()
     cmd_add_entry(fmt=output_format, **kwargs)
+
+
+@entry_group.command("reply")
+@doc_name_option
+@doc_id_option
+@click.option(
+    "--id", "entry_id", required=True, type=int,
+    shell_complete=complete_top_level_entry_ids, help="Parent log entry ID",
+)
+@click.option("--file", "-f", "file", default=None, type=click.Path(path_type=str, allow_dash=True),
+              help="Markdown file with reply content")
+@click.option("--text", "-t", default=None, help="Inline reply text")
+@click.option("--add-attachment", default=None, type=click.Path(path_type=str),
+              help="File to attach to the reply")
+@common_options
+def entry_reply(output_format, **kwargs):
+    """Reply to an existing log entry."""
+    if kwargs.get('file') == '-':
+        set_no_prompt()
+    cmd_reply_entry(fmt=output_format, **kwargs)
 
 
 @entry_group.command("update")

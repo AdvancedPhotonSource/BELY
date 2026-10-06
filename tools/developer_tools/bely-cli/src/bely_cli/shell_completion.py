@@ -364,7 +364,7 @@ def complete_document_ids(ctx, param, incomplete):
     return _items("documents", incomplete, value_key="id", description_key="name")
 
 
-def complete_entry_ids(ctx, param, incomplete):
+def _complete_entry_ids(ctx, incomplete, include_replies):
     """Fetch entry IDs for the selected document without caching them."""
     from click.shell_completion import CompletionItem
 
@@ -385,7 +385,8 @@ def complete_entry_ids(ctx, param, incomplete):
     def flatten(items):
         for entry in items or []:
             yield entry
-            yield from flatten(getattr(entry, "log_replies", None))
+            if include_replies:
+                yield from flatten(getattr(entry, "log_replies", None))
 
     results = []
     for entry in flatten(entries):
@@ -396,6 +397,14 @@ def complete_entry_ids(ctx, param, incomplete):
         description = text[0][:60] if text else None
         results.append(CompletionItem(entry_id, help=description))
     return results
+
+
+def complete_entry_ids(ctx, param, incomplete):
+    return _complete_entry_ids(ctx, incomplete, include_replies=True)
+
+
+def complete_top_level_entry_ids(ctx, param, incomplete):
+    return _complete_entry_ids(ctx, incomplete, include_replies=False)
 
 
 def _background_refresh(host):

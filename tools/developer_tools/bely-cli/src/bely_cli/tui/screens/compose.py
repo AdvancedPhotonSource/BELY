@@ -176,15 +176,17 @@ async def open_composer(app, doc, api, *, entry=None, factory=None, reply_to=Non
     """
     if entry is None:
         try:
-            entry = await asyncio.to_thread(core.new_entry_template, api, doc.id)
+            if reply_to is None:
+                entry = await asyncio.to_thread(core.new_entry_template, api, doc.id)
+            else:
+                entry = await asyncio.to_thread(
+                    core.new_reply_template, api, doc.id, reply_to.log_id)
         except Exception as e:
             app.notify(
                 f"Could not load entry template: {format_error_message(e, factory)}",
                 severity="error",
             )
             return None
-        if reply_to is not None:
-            entry.parent_log_id = reply_to.log_id
         is_new = True
     else:
         is_new = False

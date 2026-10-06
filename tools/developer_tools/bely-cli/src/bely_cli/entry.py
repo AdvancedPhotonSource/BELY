@@ -140,6 +140,58 @@ def cmd_add_entry(doc_name, doc_id, file, text, add_attachment, fmt="text"):
             print_result(result, "", fmt)
 
 
+def cmd_reply_entry(doc_name, doc_id, entry_id, file, text, add_attachment, fmt="text"):
+    """Add a reply to an existing top-level log entry."""
+    if file and text:
+        raise ValueError("--file and --text are mutually exclusive.")
+    use_editor = not file and not text and not add_attachment
+
+    if add_attachment:
+        add_attachment = core.validate_attachment_path(add_attachment)
+    content = read_file_or_stdin(file) if file else text
+
+    factory = auth.get_factory()
+    logbook_api = factory.get_logbook_api()
+    doc = core.resolve_doc(logbook_api, doc_name, doc_id)
+    entries = logbook_api.get_log_entries(log_document_id=doc.id, load_replies=True)
+    parent = next((item for item in entries if item.log_id == entry_id), None)
+    if not parent:
+        raise ValueError(
+            f'top-level entry with log_id={entry_id} not found in document "{doc.name}".')
+
+    with auth.get_authenticated_factory() as auth_factory:
+        logbook_api = auth_factory.get_logbook_api()
+        reply = core.new_reply_template(logbook_api, doc.id, entry_id)
+        result = {
+            "doc": doc.name, "parent_log_id": entry_id, "log_id": None,
+            "status": None, "attachment": None,
+        }
+        if use_editor:
+            edited = open_in_editor(reply.log_entry or "")
+            if not edited.strip():
+                result["status"] = "skipped"
+                if fmt == "text":
+                    print("Empty reply, skipped.")
+            else:
+                reply = core.save_entry(logbook_api, reply, edited)
+        else:
+            reply = core.save_entry(logbook_api, reply, content or "")
+
+        if result["status"] is None:
+            result["log_id"] = reply.log_id
+            result["status"] = "added"
+            if fmt == "text":
+                print(
+                    f'Reply added to entry {entry_id} in "{doc.name}", '
+                    f'log_id={reply.log_id}')
+            if add_attachment:
+                result["attachment"] = upload_and_print_attachment(
+                    logbook_api, doc.id, reply.log_id, add_attachment, fmt)
+
+        if fmt != "text":
+            print_result(result, "", fmt)
+
+
 def cmd_add_attachment(doc_name, doc_id, entry_id, file, fmt="text"):
     """Upload an attachment to an existing log entry."""
     path = core.validate_attachment_path(file)

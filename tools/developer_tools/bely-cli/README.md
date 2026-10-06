@@ -501,6 +501,16 @@ Add a new entry to an existing document. If none of `--file`, `--text`, or
 | `-t, --text TEXT` | Inline text for the entry. |
 | `--add-attachment TEXT` | File to attach to the entry. |
 
+#### `bely-cli entry reply`
+
+Reply to a top-level entry. `--id` identifies the parent entry. If neither `--file` nor
+`--text` is given, your `$EDITOR` opens. Attachments are supported.
+
+```bash
+bely-cli entry reply -n "Shift Report" --id 42 --text "RF is stable again."
+bely-cli entry reply -d 99 --id 42 --file reply.md --add-attachment plot.png
+```
+
 #### `bely-cli entry attachment add`
 
 Upload a file to a specific existing entry. The attachment's Markdown reference is appended
@@ -672,6 +682,9 @@ bely-cli doc list --limit 50
 bely-cli entry add -n "Shift Report" -t "Beam restored after RF trip."
 bely-cli entry add -n "Shift Report" -f entry.md
 bely-cli entry add -n "Shift Report"                 # opens $EDITOR
+
+# Reply to an entry
+bely-cli entry reply -n "Shift Report" --id 42 -t "RF is stable again."
 
 # Attach a file while adding an entry, or to an existing entry
 bely-cli entry add -n "Shift Report" --add-attachment plot.png

@@ -185,6 +185,23 @@ class CompletionTests(unittest.TestCase):
         api.get_log_entries.assert_called_once_with(log_document_id=206, load_replies=True)
         cached.assert_not_called()
 
+    def test_top_level_entry_ids_exclude_replies(self):
+        api = api_mock()
+        api.get_log_entries.return_value = [
+            SimpleNamespace(
+                log_id=42, log_entry="Main entry",
+                log_replies=[SimpleNamespace(log_id=43, log_entry="Reply", log_replies=[])],
+            )
+        ]
+        factory = factory_mock()
+        factory.get_logbook_api.return_value = api
+
+        with patch.object(completion.auth, "get_factory", return_value=factory):
+            items = completion.complete_top_level_entry_ids(
+                SimpleNamespace(params={"doc_id": 206}), None, "4")
+
+        self.assertEqual([item.value for item in items], ["42"])
+
     def test_entry_ids_resolve_selected_document_name(self):
         api = api_mock()
         api.get_log_document_by_name.return_value = SimpleNamespace(id=206)
@@ -215,6 +232,13 @@ class CompletionTests(unittest.TestCase):
 
     def test_entry_routes_use_dynamic_entry_id_completion(self):
         entry_commands = cli.commands["entry"].commands
+        reply_options = {
+            parameter.name: parameter for parameter in entry_commands["reply"].params
+        }
+        self.assertIs(
+            reply_options["entry_id"]._custom_shell_complete,
+            completion.complete_top_level_entry_ids,
+        )
         commands = [
             entry_commands["get"],
             entry_commands["update"],

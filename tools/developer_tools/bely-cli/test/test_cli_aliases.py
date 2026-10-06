@@ -56,3 +56,16 @@ class CliAliasTests(unittest.TestCase):
             result = runner.invoke(cli, ["doc", "ls", "--limit", "3", "--format", "json"])
         self.assertEqual(result.exit_code, 0)
         command.assert_called_once_with(fmt="json", limit=3)
+
+    def test_reply_invokes_handler(self):
+        runner = CliRunner()
+        with patch("bely_cli.cli.cmd_reply_entry") as command:
+            result = runner.invoke(cli, [
+                "entry", "reply", "--doc-id", "99", "--id", "42",
+                "--text", "Reply text", "--format", "json",
+            ])
+        self.assertEqual(result.exit_code, 0)
+        command.assert_called_once_with(
+            fmt="json", doc_id=99, doc_name=None, entry_id=42,
+            file=None, text="Reply text", add_attachment=None,
+        )

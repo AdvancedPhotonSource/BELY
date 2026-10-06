@@ -136,6 +136,64 @@ class CmdAddEntryTests(unittest.TestCase):
         self.assertEqual(payload["doc"], "My Doc")
 
 
+class CmdReplyEntryTests(unittest.TestCase):
+    def test_add_reply_with_text(self):
+        parent = SimpleNamespace(log_id=10, log_entry="parent", log_replies=[])
+        api = FakeApi(existing_entries=[parent])
+        api.get_log_entries = method_mock(
+            LogbookApi, "get_log_entries", wraps=api.get_log_entries)
+        patches = _patch_auth(api)
+        for patcher in patches:
+            patcher.start()
+        try:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                entry.cmd_reply_entry(
+                    "My Doc", None, 10, None, "reply text", None, fmt="json")
+        finally:
+            for patcher in patches:
+                patcher.stop()
+
+        payload = json.loads(buf.getvalue())
+        self.assertEqual(payload["parent_log_id"], 10)
+        self.assertEqual(payload["log_id"], 99)
+        self.assertEqual(payload["status"], "added")
+        self.assertEqual(api.entry_saved.parent_log_id, 10)
+        self.assertEqual(api.entry_saved.log_entry, "reply text")
+        api.get_log_entries.assert_called_once_with(
+            log_document_id=42, load_replies=True)
+
+    def test_reply_requires_top_level_parent(self):
+        reply = SimpleNamespace(log_id=11, log_entry="reply", log_replies=[])
+        parent = SimpleNamespace(log_id=10, log_entry="parent", log_replies=[reply])
+        api = FakeApi(existing_entries=[parent])
+        with patch.object(entry.auth, "get_factory") as get_factory, \
+             patch.object(entry.auth, "get_authenticated_factory") as authenticated:
+            get_factory.return_value.get_logbook_api.return_value = api
+            with self.assertRaisesRegex(ValueError, "top-level entry"):
+                entry.cmd_reply_entry(
+                    "My Doc", None, 11, None, "nested reply", None)
+        authenticated.assert_not_called()
+
+    def test_add_reply_with_attachment(self):
+        parent = SimpleNamespace(log_id=10, log_entry="parent", log_replies=[])
+        api = FakeApi(existing_entries=[parent])
+        tmp_path = _write_tmp("attachment")
+        try:
+            patches = _patch_auth(api)
+            for patcher in patches:
+                patcher.start()
+            try:
+                entry.cmd_reply_entry(
+                    "My Doc", None, 10, None, "reply", tmp_path)
+            finally:
+                for patcher in patches:
+                    patcher.stop()
+        finally:
+            os.unlink(tmp_path)
+        self.assertEqual(api.uploaded[:2], (42, 99))
+
+
 class CmdAttachmentTests(unittest.TestCase):
     def test_add_attachment_to_existing_entry(self):
         existing = SimpleNamespace(log_id=10, log_entry="entry", entered_by_username="alice")

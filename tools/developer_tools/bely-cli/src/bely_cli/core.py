@@ -138,6 +138,13 @@ def save_entry(logbook_api, entry, content):
     return logbook_api.add_update_log_entry(log_entry=entry)
 
 
+def new_reply_template(logbook_api, doc_id, parent_log_id):
+    """Return a new entry template configured as a reply."""
+    entry = new_entry_template(logbook_api, doc_id)
+    entry.parent_log_id = parent_log_id
+    return entry
+
+
 def find_entry(entries, log_id):
     """Return the entry or nested reply with this log_id, or None."""
     for entry in entries:
