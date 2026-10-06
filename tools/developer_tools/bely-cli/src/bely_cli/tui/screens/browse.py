@@ -100,6 +100,7 @@ class BrowseScreen(Screen):
         "new_doc": (LEVEL_TYPES, LEVEL_DOCS),
         "toggle_info": (LEVEL_TYPES, LEVEL_DOCS),
         "attachments": (LEVEL_ENTRIES,),
+        "delete": (LEVEL_DOCS, LEVEL_ENTRIES),
     }
 
     BINDINGS = [
@@ -117,6 +118,7 @@ class BrowseScreen(Screen):
         Binding("p", "reply", "Reply"),
         # Printable shifted letters arrive from terminals as the uppercase character.
         Binding("A", "attachments", "Attachments"),
+        Binding("x", "delete", "Delete"),
         Binding("d", "new_doc", "New doc"),
         Binding("r", "refresh_level", "Refresh"),
         Binding("i", "toggle_info", "Info"),
@@ -143,6 +145,7 @@ class BrowseScreen(Screen):
         self._info_open = False
         self._table_columns_for = None
         self._pending_entry_restore = None
+        self._pending_doc_row = None
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -305,6 +308,11 @@ class BrowseScreen(Screen):
         self._apply_filter(query)
         if self.level == self.LEVEL_ENTRIES and self._pending_entry_restore is not None:
             self._restore_entry_position()
+        if self.level == self.LEVEL_DOCS and self._pending_doc_row is not None:
+            row = min(self._pending_doc_row, len(self.shown_items) - 1)
+            self._pending_doc_row = None
+            if row >= 0:
+                nav.move_cursor(row=row)
         self._update_header()
         self.refresh_bindings()
         nav.focus()
@@ -593,6 +601,8 @@ class BrowseScreen(Screen):
             return None
         if action == "reply" and self._current_node() is None:
             return None
+        if action == "delete" and self._current_item() is None:
+            return None
         if action == "new_doc" and self.level == self.LEVEL_TYPES:
             item = self._current_item()
             if item is not None and not item.selectable:
@@ -660,6 +670,69 @@ class BrowseScreen(Screen):
             node = self.shown_items[table.cursor_row]
             return type_entity(node) if node.selectable else None
         return None
+
+    def action_delete(self):
+        if self.level == self.LEVEL_DOCS:
+            doc = self._current_doc()
+            if doc is not None:
+                self._delete_document(doc)
+        elif self.level == self.LEVEL_ENTRIES:
+            entry = self._current_entry()
+            if entry is not None:
+                self._delete_entry(entry)
+
+    @work
+    async def _delete_document(self, doc):
+        from ... import core
+        from .confirm import ConfirmScreen
+
+        confirmed = await self.app.push_screen_wait(ConfirmScreen(
+            f'Delete document "{doc.name}" and all of its entries?',
+            confirm_label="Delete", cancel_label="Cancel", confirm_variant="error"))
+        if not confirmed:
+            return
+        api = await self.app.ensure_auth()
+        if api is None:
+            return
+        try:
+            await asyncio.to_thread(core.delete_document, api, doc.id)
+        except Exception as exc:
+            self.notify(
+                f"Delete failed: {format_error_message(exc, self.session.factory)}",
+                severity="error")
+            return
+        self._pending_doc_row = self._nav().cursor_row or 0
+        if self.source == "recent":
+            self.data.invalidate("recent", username=self.session.username())
+        else:
+            self.data.invalidate("docs", type_id=self.sel_type.id)
+        self.show_level(self.LEVEL_DOCS, preserve_filter=True)
+        self.notify(f'Document "{doc.name}" deleted.')
+
+    @work
+    async def _delete_entry(self, entry):
+        from ... import core
+        from .confirm import ConfirmScreen
+
+        confirmed = await self.app.push_screen_wait(ConfirmScreen(
+            f"Delete entry/reply #{entry.log_id}?",
+            confirm_label="Delete", cancel_label="Cancel", confirm_variant="error"))
+        if not confirmed:
+            return
+        api = await self.app.ensure_auth()
+        if api is None:
+            return
+        try:
+            await asyncio.to_thread(core.delete_entry, api, self.sel_doc.id, entry.log_id)
+        except Exception as exc:
+            self.notify(
+                f"Delete failed: {format_error_message(exc, self.session.factory)}",
+                severity="error")
+            return
+        self.data.invalidate("entries", doc_id=self.sel_doc.id)
+        self.show_level(
+            self.LEVEL_ENTRIES, preserve_filter=True, preserve_entry_position=True)
+        self.notify(f"Entry/reply #{entry.log_id} deleted.")
 
     # -- entry actions --
 

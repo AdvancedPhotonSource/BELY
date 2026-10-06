@@ -352,6 +352,7 @@ on — `i` disappears once you drill into entries, and `s` / `y` / `e` / `f` / `
 | `p` | Entries level only: reply to the highlighted entry's top-level thread. Attachments are supported. |
 | `t` | Entries level only: collapse/expand the reply thread under the highlighted entry (or its parent, if the highlight is on a reply). Replies start expanded. |
 | `Shift+A` | Entries level only: open the highlighted entry's attachment browser. |
+| `x` | Document/entry levels only: delete the highlighted document, entry, or reply after destructive confirmation. |
 | `i` | Logbook/document levels only: toggle the side info panel. |
 | `f` | Entries level only: toggle the table to widen the preview pane. |
 | `r` | Refresh the current level, bypassing the in-session cache. Entry selection, preview scroll, filters, and collapsed threads are preserved when possible. |
@@ -366,7 +367,8 @@ Press `Shift+A` on an entry to list its attachments and preview the highlighted 
 render inline when image support is available; UTF-8 text and Markdown render as text; PDFs
 and other binary formats show their metadata and download path. Press `u` to upload a local
 file (its Markdown reference is appended to the entry), `y` to copy the highlighted
-attachment's Markdown reference, and `Esc` to close the browser.
+attachment's Markdown reference, `x` to delete the highlighted attachment after confirmation,
+and `Esc` to close the browser.
 
 On selecting an entry the TUI exits and prints its `doc-id` / `log-id`, plus a ready-to-run
 `bely-cli entry get` command so you can fetch it:

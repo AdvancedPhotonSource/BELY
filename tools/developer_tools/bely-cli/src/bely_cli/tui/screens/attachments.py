@@ -12,6 +12,7 @@ from textual.widgets import DataTable, Footer, Input, Markdown, Static
 
 from ... import core
 from ...common import format_error_message
+from .confirm import ConfirmScreen
 from .dialog import DialogScreen
 
 
@@ -75,6 +76,7 @@ class AttachmentScreen(ModalScreen):
         Binding("escape", "close", "Close"),
         Binding("u", "upload", "Upload"),
         Binding("y", "copy_reference", "Copy ref"),
+        Binding("x", "delete", "Delete"),
     ]
 
     def __init__(self, session, doc, entry, *, on_uploaded=None):
@@ -109,16 +111,16 @@ class AttachmentScreen(ModalScreen):
         self._load()
 
     @work(thread=True, exclusive=True, group="attachment-list")
-    def _load(self, focus_id=None):
+    def _load(self, focus_id=None, focus_row=None):
         try:
             attachments = self.data.attachments(self.doc.id, self.entry.log_id)
         except Exception as exc:
             self.app.call_from_thread(
                 self._load_failed, format_error_message(exc, self.session.factory))
             return
-        self.app.call_from_thread(self._populate, attachments, focus_id)
+        self.app.call_from_thread(self._populate, attachments, focus_id, focus_row)
 
-    def _populate(self, attachments, focus_id=None):
+    def _populate(self, attachments, focus_id=None, focus_row=None):
         self.attachments = list(attachments)
         table = self.query_one("#attachment-table", DataTable)
         table.clear()
@@ -131,7 +133,7 @@ class AttachmentScreen(ModalScreen):
         if not self.attachments:
             self.query_one("#attachment-meta", Static).update("No attachments.")
             return
-        row = 0
+        row = min(focus_row or 0, len(self.attachments) - 1)
         if focus_id is not None:
             row = next((i for i, att in enumerate(self.attachments) if att.id == focus_id), 0)
         table.move_cursor(row=row)
@@ -219,6 +221,36 @@ class AttachmentScreen(ModalScreen):
         reference = getattr(attachment, "markdown_reference", None) or ""
         self.app.copy_to_clipboard(reference)
         self.notify("Attachment Markdown reference copied.")
+
+    def action_delete(self):
+        attachment = self._current()
+        if attachment is None:
+            self.notify("Select an attachment first.", severity="warning")
+            return
+        self._delete(attachment)
+
+    @work
+    async def _delete(self, attachment):
+        confirmed = await self.app.push_screen_wait(ConfirmScreen(
+            f'Delete attachment "{attachment.original_filename}" (id={attachment.id})?',
+            confirm_label="Delete", cancel_label="Cancel", confirm_variant="error"))
+        if not confirmed:
+            return
+        api = await self.app.ensure_auth()
+        if api is None:
+            return
+        try:
+            await asyncio.to_thread(
+                core.delete_attachment, api, self.doc.id, self.entry.log_id, attachment.id)
+        except Exception as exc:
+            self.notify(
+                f"Delete failed: {format_error_message(exc, self.session.factory)}",
+                severity="error")
+            return
+        row = self.query_one("#attachment-table", DataTable).cursor_row or 0
+        self.data.invalidate_attachments(self.doc.id, self.entry.log_id)
+        self._load(focus_row=row)
+        self.notify(f'Attachment "{attachment.original_filename}" deleted.')
 
     def action_upload(self):
         self._upload()

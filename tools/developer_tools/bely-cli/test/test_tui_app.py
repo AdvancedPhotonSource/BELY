@@ -1,7 +1,7 @@
 import unittest
 from contextlib import nullcontext
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from textual.containers import Vertical
 from textual.widgets import DataTable, Input, Markdown, Static
@@ -575,6 +575,42 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
                 await pilot.press("escape")
                 await pilot.pause()
                 self.assertIs(app.screen, browse_screen)
+
+    async def test_delete_entry_confirms_and_refreshes(self):
+        api = FakeLogbookApi()
+        api.delete_log_entry = MagicMock()
+        data = LogbookData(api)
+        session = FakeSession(data, factory=FakeFactory(api=api))
+        app = BelyTuiApp(session, limit=10, mode="lookup")
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None):
+            async with app.run_test() as pilot:
+                await self._open_entries(pilot)
+                screen = app.screen
+                await pilot.press("x")
+                await pilot.pause()
+                self.assertEqual(type(app.screen).__name__, "ConfirmScreen")
+                api.delete_log_entry.assert_not_called()
+                await pilot.press("left", "enter")
+                await pilot.pause()
+                await pilot.pause()
+                api.delete_log_entry.assert_called_once_with(
+                    log_document_id=10, log_id=100)
+                self.assertIs(app.screen, screen)
+
+    async def test_delete_cancel_does_not_authenticate(self):
+        api = FakeLogbookApi()
+        data = LogbookData(api)
+        session = FakeSession(data, factory=FakeFactory(api=api))
+        app = BelyTuiApp(session, limit=10, mode="lookup")
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None), \
+             patch.object(app, "ensure_auth") as ensure_auth:
+            async with app.run_test() as pilot:
+                await self._open_entries(pilot)
+                await pilot.press("x")
+                await pilot.pause()
+                await pilot.press("enter")
+                await pilot.pause()
+                ensure_auth.assert_not_called()
 
     async def test_reply_binding_only_available_for_entries_with_selection(self):
         api = FakeLogbookApi()

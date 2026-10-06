@@ -9,7 +9,7 @@ Same hand-rolled FakeApi/FakeSession style as test_tui_app.py/test_tui_data.py
 
 import unittest
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from textual.app import App
 from textual.widgets import Button, Input, OptionList, Select, Static, TextArea
@@ -125,6 +125,30 @@ class AttachmentScreenTests(unittest.IsolatedAsyncioTestCase):
                     screen.action_copy_reference()
                     copy.assert_called_once_with("![notes.txt](/download/notes.txt)")
                 await pilot.press("escape")
+
+    async def test_delete_confirms_then_refreshes(self):
+        attachment = self._attachment()
+        api = FakeLogbookApi()
+        attachments = [attachment]
+        api.get_log_entry_attachments = lambda **kwargs: list(attachments)
+        api.delete_attachment = MagicMock(side_effect=lambda **kwargs: attachments.clear())
+        session = FakeSession(api)
+        app = BelyTuiApp(session)
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None):
+            async with app.run_test() as pilot:
+                await app.push_screen(AttachmentScreen(
+                    session, SimpleNamespace(id=42, name="Doc"),
+                    SimpleNamespace(log_id=10)))
+                await pilot.pause()
+                await pilot.press("x")
+                await pilot.pause()
+                self.assertEqual(type(app.screen).__name__, "ConfirmScreen")
+                await pilot.press("left", "enter")
+                await pilot.pause()
+                await pilot.pause()
+                api.delete_attachment.assert_called_once_with(
+                    log_document_id=42, log_id=10, attachment_id=7)
+                self.assertEqual(app.screen.attachments, [])
 
     async def test_empty_and_error_states(self):
         for result in ([], RuntimeError("boom")):
