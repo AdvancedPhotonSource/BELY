@@ -112,7 +112,9 @@ live for that document and are not cached.
 
 Dynamic values are stored per BELY host under `~/.config/bely/completion-cache/` (or beside
 the settings file selected by `BELY_SETTINGS_FILE`). The cache includes up to 100 recent
-documents per logbook type and expires after 24 hours. Pressing Tab never waits for the
+documents per logbook type. Its lifetime is controlled by `completion_cache_ttl`, defaulting
+to `24h`; accepted values are non-negative seconds or numbers suffixed with `s`, `m`, `h`, or
+`d` (for example `30m` or `2d`). With caching enabled, pressing Tab never waits for the
 server or prompts: stale values are returned immediately while one quiet background refresh
 starts. Creating or deleting a document through `bely-cli` also updates an existing cache
 for the current host immediately (without changing its refresh age); if no cache exists,
@@ -127,6 +129,17 @@ bely-cli shell cache status
 bely-cli shell cache clear         # current configured host
 bely-cli shell cache clear --all-hosts
 ```
+
+Change the lifetime with the regular configuration command:
+
+```bash
+bely-cli config set completion_cache_ttl 12h
+bely-cli config set completion_cache_ttl 0   # disable caching; always fetch live
+```
+
+A value of `0` removes cached data on explicit refresh and makes each dynamic completion
+query the current BELY instance directly. This may make Tab completion slower or unavailable
+while offline. Entry-ID completion is always live regardless of this setting.
 
 ## Authentication
 

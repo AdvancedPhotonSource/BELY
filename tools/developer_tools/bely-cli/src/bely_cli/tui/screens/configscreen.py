@@ -50,7 +50,10 @@ class ConfigScreen(DialogScreen):
     ENV_FOR_FIELD = {"host": "BELY_HOST", "user": "BELY_USER", "editor": "EDITOR"}
 
     FIELD_CHOICES = {"images": IMAGE_MODES}  # enum fields get a Select instead of an Input
-    FIELD_DEFAULTS = {"images": "auto"}
+    FIELD_DEFAULTS = {
+        "images": "auto",
+        "completion_cache_ttl": config.DEFAULT_COMPLETION_CACHE_TTL,
+    }
     FIELD_LABELS = {
         "host": "Host",
         "user": "User",
@@ -58,6 +61,7 @@ class ConfigScreen(DialogScreen):
         "token_path": "Token path",
         "theme": "Theme",
         "images": "Images",
+        "completion_cache_ttl": "Completion cache TTL",
     }
 
     def compose(self) -> ComposeResult:
@@ -127,7 +131,8 @@ class ConfigScreen(DialogScreen):
                 select.value = settings.get(field) or self.FIELD_DEFAULTS[field]
                 continue
             box = self.query_one(f"#config-{field}", Input)
-            box.value = str(settings.get(field, "") or "")
+            value = settings.get(field, self.FIELD_DEFAULTS.get(field, ""))
+            box.value = str(value if value is not None else "")
             env_var = self.ENV_FOR_FIELD.get(field)
             label = f"{self.FIELD_LABELS[field]}:"
             if env_var and env_var in env:
@@ -156,7 +161,8 @@ class ConfigScreen(DialogScreen):
                 continue
             value = self.query_one(f"#config-{field}", Input).value.strip()
             current = config.get_setting(field)
-            if value and value != (current or ""):
+            effective_current = current if current is not None else self.FIELD_DEFAULTS.get(field, "")
+            if value and value != str(effective_current):
                 await asyncio.to_thread(config.set_setting, field, value)
                 changed.append(field)
 

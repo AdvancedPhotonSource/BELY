@@ -19,13 +19,18 @@ class CacheTests(unittest.TestCase):
             completion.write_cache("https://two", {"types": []}, now=200)
             self.assertNotEqual(completion.cache_path("https://one"), completion.cache_path("https://two"))
             self.assertEqual(completion.load_cache("https://one"), first)
-            self.assertTrue(completion.cache_is_fresh(first, now=100 + completion.CACHE_TTL_SECONDS - 1))
-            self.assertFalse(completion.cache_is_fresh(first, now=100 + completion.CACHE_TTL_SECONDS))
+            self.assertTrue(completion.cache_is_fresh(
+                first, now=100 + completion.CACHE_TTL_SECONDS - 1,
+                ttl=completion.CACHE_TTL_SECONDS))
+            self.assertFalse(completion.cache_is_fresh(
+                first, now=100 + completion.CACHE_TTL_SECONDS,
+                ttl=completion.CACHE_TTL_SECONDS))
             self.assertFalse(any(name.endswith(".tmp") for name in os.listdir(completion.cache_dir())))
 
     def test_created_and_deleted_documents_update_existing_host_cache(self):
         with tempfile.TemporaryDirectory() as directory, \
              patch.object(completion.config, "CONFIG_DIR", directory), \
+             patch.object(completion.config, "get_completion_cache_ttl", return_value=86400), \
              patch.object(completion.auth, "get_host", return_value="https://one"):
             completion.write_cache("https://one", {
                 "types": [], "systems": [], "templates": [],
@@ -47,7 +52,8 @@ class CacheTests(unittest.TestCase):
 
     def test_mutations_do_not_create_a_cache_or_affect_another_host(self):
         with tempfile.TemporaryDirectory() as directory, \
-             patch.object(completion.config, "CONFIG_DIR", directory):
+             patch.object(completion.config, "CONFIG_DIR", directory), \
+             patch.object(completion.config, "get_completion_cache_ttl", return_value=86400):
             completion.write_cache("https://one", {"documents": [{"id": 1}]})
             with patch.object(completion.auth, "get_host", return_value="https://two"):
                 self.assertFalse(completion.add_cached_document(SimpleNamespace(id=2, name="New")))
@@ -65,10 +71,29 @@ class CacheTests(unittest.TestCase):
     def test_stale_cache_starts_refresh_and_returns_values(self):
         stale = {"refreshed_at": 0, "types": [{"name": "ops"}]}
         with patch.object(completion.auth, "get_host", return_value="host"), \
+             patch.object(completion.config, "get_completion_cache_ttl", return_value=3600), \
              patch.object(completion, "load_cache", return_value=stale), \
              patch.object(completion, "start_background_refresh") as refresh:
             self.assertEqual(completion.cached_values_for_completion(), stale)
         refresh.assert_called_once_with("host")
+
+    def test_zero_ttl_fetches_live_without_reading_or_writing_cache(self):
+        values = {"types": [{"name": "live"}]}
+        with patch.object(completion.auth, "get_host", return_value="host"), \
+             patch.object(completion.config, "get_completion_cache_ttl", return_value=0), \
+             patch.object(completion, "fetch_completion_values", return_value=values) as fetch, \
+             patch.object(completion, "load_cache") as load, \
+             patch.object(completion, "start_background_refresh") as refresh:
+            self.assertEqual(completion.cached_values_for_completion(), values)
+        fetch.assert_called_once_with()
+        load.assert_not_called()
+        refresh.assert_not_called()
+
+    def test_zero_ttl_live_failure_returns_no_dynamic_values(self):
+        with patch.object(completion.auth, "get_host", return_value="host"), \
+             patch.object(completion.config, "get_completion_cache_ttl", return_value=0), \
+             patch.object(completion, "fetch_completion_values", side_effect=RuntimeError("offline")):
+            self.assertEqual(completion.cached_values_for_completion(), {})
 
     def test_completion_never_fetches_or_prompts(self):
         with patch.object(completion.auth, "get_host", side_effect=ValueError("missing")), \

@@ -10,7 +10,7 @@ import time
 
 from . import auth, config
 
-CACHE_TTL_SECONDS = 24 * 60 * 60
+CACHE_TTL_SECONDS = 24 * 60 * 60  # Backward-compatible default for callers/tests.
 CACHE_DIR_NAME = "completion-cache"
 BLOCK_START = "# >>> bely-cli completion >>>"
 BLOCK_END = "# <<< bely-cli completion <<<"
@@ -45,12 +45,15 @@ def load_cache(host):
     return data
 
 
-def cache_is_fresh(data, now=None):
+def cache_is_fresh(data, now=None, ttl=None):
     if not data:
         return False
     now = time.time() if now is None else now
+    ttl = config.get_completion_cache_ttl() if ttl is None else ttl
+    if ttl <= 0:
+        return False
     try:
-        return now - float(data["refreshed_at"]) < CACHE_TTL_SECONDS
+        return now - float(data["refreshed_at"]) < ttl
     except (KeyError, TypeError, ValueError):
         return False
 
@@ -88,6 +91,8 @@ def write_cache(host, values, now=None):
 def add_cached_document(document, logbook_type=""):
     """Add a newly created document to an existing current-host cache."""
     try:
+        if config.get_completion_cache_ttl() <= 0:
+            return False
         host = auth.get_host()
         data = load_cache(host)
         if data is None:
@@ -114,6 +119,8 @@ def add_cached_document(document, logbook_type=""):
 def remove_cached_document(document_id):
     """Remove a deleted document from the current-host cache."""
     try:
+        if config.get_completion_cache_ttl() <= 0:
+            return False
         host = auth.get_host()
         data = load_cache(host)
         if data is None:
@@ -193,9 +200,13 @@ def fetch_completion_values(factory=None):
 
 
 def refresh_cache(host=None, factory=None):
-    """Synchronously fetch and store completion values."""
+    """Synchronously fetch completion values, storing them when caching is enabled."""
     host = host or auth.get_host()
-    return write_cache(host, fetch_completion_values(factory))
+    values = fetch_completion_values(factory)
+    if config.get_completion_cache_ttl() <= 0:
+        clear_cache(host)
+        return values
+    return write_cache(host, values)
 
 
 def acquire_refresh_lock(host):
@@ -246,13 +257,16 @@ def start_background_refresh(host):
 
 
 def cached_values_for_completion():
-    """Return cached values without network access, refreshing stale data asynchronously."""
+    """Return completion values according to the configured cache lifetime."""
     try:
         host = auth.get_host()
-    except (OSError, ValueError):
+        ttl = config.get_completion_cache_ttl()
+        if ttl <= 0:
+            return fetch_completion_values()
+    except Exception:
         return {}
     data = load_cache(host)
-    if not cache_is_fresh(data):
+    if not cache_is_fresh(data, ttl=ttl):
         start_background_refresh(host)
     return data or {}
 

@@ -413,6 +413,13 @@ def shell_cache_clear(all_hosts):
 def shell_cache_status():
     """Show completion cache location and freshness."""
     host = shell_completion.auth.get_host()
+    ttl = shell_completion.config.get_completion_cache_ttl()
+    if ttl <= 0:
+        click.echo(
+            f"Host: {host}\nStatus: disabled (live completion)\n"
+            f"Path: {shell_completion.cache_path(host)}"
+        )
+        return
     data = shell_completion.load_cache(host)
     if data is None:
         click.echo(f"No completion cache for {host}.\nPath: {shell_completion.cache_path(host)}")
@@ -421,7 +428,8 @@ def shell_cache_status():
     refreshed = __import__("datetime").datetime.fromtimestamp(data["refreshed_at"]).astimezone()
     click.echo(
         f"Host: {host}\nPath: {shell_completion.cache_path(host)}\n"
-        f"Status: {state}\nRefreshed: {refreshed.isoformat(timespec='seconds')}\n"
+        f"Status: {state}\nTTL: {shell_completion.config.get_setting('completion_cache_ttl') or shell_completion.config.DEFAULT_COMPLETION_CACHE_TTL}\n"
+        f"Refreshed: {refreshed.isoformat(timespec='seconds')}\n"
         f"Types: {len(data.get('types', []))}\nSystems: {len(data.get('systems', []))}\n"
         f"Templates: {len(data.get('templates', []))}\nDocuments: {len(data.get('documents', []))}"
     )

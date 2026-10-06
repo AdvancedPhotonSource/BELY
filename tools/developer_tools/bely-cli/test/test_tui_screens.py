@@ -941,6 +941,9 @@ class ConfigScreenTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(labels["token_path"], "Token path:")
                 self.assertEqual(labels["theme"], "Theme:")
                 self.assertEqual(labels["images"], "Images:")
+                self.assertEqual(labels["completion_cache_ttl"], "Completion cache TTL:")
+                self.assertEqual(
+                    screen.query_one("#config-completion_cache_ttl", Input).value, "24h")
                 self.assertIn("User:", labels["user"])
                 self.assertIn("overridden by BELY_USER", labels["user"])
                 self.assertEqual(screen.query_one("#config-user", Input).placeholder, "")

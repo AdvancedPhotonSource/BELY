@@ -1,9 +1,15 @@
 import os
+import re
 import yaml
 
 DEFAULT_CONFIG_DIR = os.path.expanduser("~/.config/bely")
 
-VALID_FIELDS = ("host", "user", "editor", "token_path", "theme", "images")
+VALID_FIELDS = (
+    "host", "user", "editor", "token_path", "theme", "images",
+    "completion_cache_ttl",
+)
+DEFAULT_COMPLETION_CACHE_TTL = "24h"
+_DURATION_UNITS = {"s": 1, "m": 60, "h": 60 * 60, "d": 24 * 60 * 60}
 
 
 def expand_path(path):
@@ -66,12 +72,37 @@ def get_setting(key):
     return load_settings().get(key)
 
 
+def parse_duration(value):
+    """Parse seconds or a duration with an s/m/h/d suffix."""
+    if isinstance(value, bool):
+        raise ValueError("duration must be 0 or a non-negative number with s, m, h, or d")
+    text = str(value).strip().lower()
+    match = re.fullmatch(r"(\d+(?:\.\d+)?)\s*([smhd]?)", text)
+    if not match:
+        raise ValueError("duration must be 0 or a non-negative number with s, m, h, or d")
+    amount = float(match.group(1))
+    unit = match.group(2) or "s"
+    return amount * _DURATION_UNITS[unit]
+
+
+def get_completion_cache_ttl():
+    """Return the configured shell-completion cache lifetime in seconds."""
+    value = get_setting("completion_cache_ttl")
+    return parse_duration(DEFAULT_COMPLETION_CACHE_TTL if value is None else value)
+
+
+def validate_setting(key, value):
+    if key == "completion_cache_ttl":
+        parse_duration(value)
+
+
 def set_setting(key, value):
     """Update a single setting and save.
 
     Operates on the base settings file only (not merged override values), so
     overridden keys are never baked back into the base file.
     """
+    validate_setting(key, value)
     data = _read_yaml(SETTINGS_FILE)
     data[key] = value
     save_settings(data)
