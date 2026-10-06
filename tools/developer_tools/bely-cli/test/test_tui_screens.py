@@ -228,11 +228,12 @@ class AttachmentScreenTests(unittest.IsolatedAsyncioTestCase):
         api.delete_attachment = MagicMock(side_effect=lambda **kwargs: attachments.clear())
         session = FakeSession(api)
         app = BelyTuiApp(session)
+        changed = MagicMock()
         with patch("bely_cli.tui.app.config.get_setting", return_value=None):
             async with app.run_test() as pilot:
                 await app.push_screen(AttachmentScreen(
                     session, SimpleNamespace(id=42, name="Doc"),
-                    SimpleNamespace(log_id=10)))
+                    SimpleNamespace(log_id=10), on_changed=changed))
                 await pilot.pause()
                 await pilot.press("x")
                 await pilot.pause()
@@ -242,6 +243,7 @@ class AttachmentScreenTests(unittest.IsolatedAsyncioTestCase):
                 await pilot.pause()
                 api.delete_attachment.assert_called_once_with(
                     log_document_id=42, log_id=10, attachment_id=7)
+                changed.assert_called_once_with()
                 self.assertEqual(app.screen.attachments, [])
 
     async def test_empty_and_error_states(self):

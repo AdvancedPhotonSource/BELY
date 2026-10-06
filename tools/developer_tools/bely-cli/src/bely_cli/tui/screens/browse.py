@@ -863,10 +863,10 @@ class BrowseScreen(Screen):
         from .attachments import AttachmentScreen
 
         self.app.push_screen(AttachmentScreen(
-            self.session, self.sel_doc, entry, on_uploaded=self._refresh_uploaded_entry))
+            self.session, self.sel_doc, entry, on_changed=self._refresh_attachment_entry))
 
-    def _refresh_uploaded_entry(self):
-        """Reload the entry so an appended attachment reference appears immediately."""
+    def _refresh_attachment_entry(self):
+        """Reload the entry after its attachment references change."""
         self.data.invalidate("entries", doc_id=self.sel_doc.id)
         self.show_level(
             self.LEVEL_ENTRIES, preserve_filter=True, preserve_entry_position=True)

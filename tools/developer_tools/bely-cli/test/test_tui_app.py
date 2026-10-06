@@ -569,7 +569,7 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(type(app.screen).__name__, "AttachmentScreen")
                 self.assertEqual(app.screen.doc.id, 10)
                 self.assertEqual(app.screen.entry.log_id, 100)
-                app.screen.on_uploaded()
+                app.screen.on_changed()
                 await pilot.pause()
                 self.assertEqual(get_entries.call_count, 2)
                 await pilot.press("escape")

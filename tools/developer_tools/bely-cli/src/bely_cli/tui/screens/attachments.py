@@ -302,13 +302,13 @@ class AttachmentScreen(ModalScreen):
         Binding("x", "delete", "Delete"),
     ]
 
-    def __init__(self, session, doc, entry, *, on_uploaded=None):
+    def __init__(self, session, doc, entry, *, on_changed=None):
         super().__init__()
         self.session = session
         self.data = session.data
         self.doc = doc
         self.entry = entry
-        self.on_uploaded = on_uploaded
+        self.on_changed = on_changed
         self.attachments = []
         self._preview_token = 0
 
@@ -472,6 +472,8 @@ class AttachmentScreen(ModalScreen):
             return
         row = self.query_one("#attachment-table", DataTable).cursor_row or 0
         self.data.invalidate_attachments(self.doc.id, self.entry.log_id)
+        if self.on_changed is not None:
+            self.on_changed()
         self._load(focus_row=row)
         self.notify(f'Attachment "{attachment.original_filename}" deleted.')
 
@@ -501,8 +503,8 @@ class AttachmentScreen(ModalScreen):
             )
             return
         self.data.invalidate_attachments(self.doc.id, self.entry.log_id)
-        if self.on_uploaded is not None:
-            self.on_uploaded()
+        if self.on_changed is not None:
+            self.on_changed()
         self._load(focus_id=info["id"])
         self.notify(f'Attachment "{info["original_filename"]}" uploaded.')
 
