@@ -130,6 +130,20 @@ bely-cli doc list --format json
 
 ## Commands
 
+Descriptive command names are canonical. These shorter aliases are also available:
+
+| Alias | Canonical command |
+|-------|-------------------|
+| `doc ls` | `doc list` |
+| `doc add` | `doc new` |
+| `entry ls` | `entry list` |
+| `entry show` | `entry get` |
+| `entry edit` | `entry update` |
+| `entry attachment ls` | `entry attachment list` |
+| `config ls` | `config show` |
+
+Aliases accept the same arguments and produce the same output as their canonical commands.
+
 ### `auth` — authentication
 
 - `bely-cli auth login` authenticates with configured or prompted credentials and caches the token.

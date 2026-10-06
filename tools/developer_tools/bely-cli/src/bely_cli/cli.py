@@ -28,6 +28,24 @@ from .tui import cmd_tui
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
+class AliasHelpGroup(click.Group):
+    """Display aliases together instead of as duplicate help rows."""
+
+    def format_commands(self, ctx, formatter):
+        grouped = {}
+        for name in self.list_commands(ctx):
+            command = self.get_command(ctx, name)
+            if command is not None and not command.hidden:
+                grouped.setdefault(id(command), (command, []))[1].append(name)
+        rows = []
+        for command, names in grouped.values():
+            label = ", ".join(sorted(names))
+            rows.append((label, command.get_short_help_str()))
+        if rows:
+            with formatter.section("Commands"):
+                formatter.write_dl(rows)
+
+
 def format_option(f):
     """Per-command --format option, appended to each leaf command."""
     return click.option(
@@ -63,7 +81,7 @@ def cli():
 
 # -- auth --
 
-@cli.group("auth")
+@cli.group("auth", cls=AliasHelpGroup)
 def auth_group():
     """Authentication commands."""
     pass
@@ -92,7 +110,7 @@ def auth_verify(output_format):
 
 # -- doc --
 
-@cli.group("doc")
+@cli.group("doc", cls=AliasHelpGroup)
 def doc_group():
     """Log document commands."""
     pass
@@ -127,15 +145,19 @@ def doc_list(output_format, **kwargs):
     cmd_list_docs(fmt=output_format, **kwargs)
 
 
+doc_group.add_command(doc_list, "ls")
+doc_group.add_command(doc_new, "add")
+
+
 # -- entry --
 
-@cli.group("entry")
+@cli.group("entry", cls=AliasHelpGroup)
 def entry_group():
     """Log entry commands."""
     pass
 
 
-@entry_group.group("attachment")
+@entry_group.group("attachment", cls=AliasHelpGroup)
 def entry_attachment_group():
     """Log entry attachment commands."""
     pass
@@ -215,12 +237,17 @@ def entry_get(output_format, **kwargs):
     cmd_get_entry(fmt=output_format, **kwargs)
 
 
+entry_group.add_command(entry_list, "ls")
+entry_group.add_command(entry_get, "show")
+entry_group.add_command(entry_update, "edit")
+
+
 # -- tui --
 
 # Bare `bely-cli tui` launches the full interactive app, so the group itself
 # is a leaf invocation when no subcommand is given -- the one place
 # --format/--no-prompt sit on a group rather than a leaf command.
-@cli.group("tui", invoke_without_command=True)
+@cli.group("tui", cls=AliasHelpGroup, invoke_without_command=True)
 @click.option("--limit", default=100, type=int,
               help="Recent documents to load per logbook (default 100)")
 @common_options
@@ -243,7 +270,7 @@ def tui_lookup(output_format, **kwargs):
 
 # -- config --
 
-@cli.group("config")
+@cli.group("config", cls=AliasHelpGroup)
 def config_group():
     """Configuration commands."""
     pass
@@ -254,6 +281,9 @@ def config_group():
 def config_show(output_format):
     """Show current configuration."""
     cmd_show_config(fmt=output_format)
+
+
+config_group.add_command(config_show, "ls")
 
 
 @config_group.command("edit")
