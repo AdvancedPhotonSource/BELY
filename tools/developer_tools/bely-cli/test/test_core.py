@@ -201,6 +201,20 @@ class EntryTests(unittest.TestCase):
         self.assertTrue(snippet.endswith("..."))
 
 
+class DeleteTests(unittest.TestCase):
+    def test_delete_wrappers_pass_generated_api_arguments(self):
+        api = MagicMock()
+
+        core.delete_document(api, 42)
+        core.delete_entry(api, 42, 10)
+        core.delete_attachment(api, 42, 10, 7)
+
+        api.delete_log_document.assert_called_once_with(log_document_id=42)
+        api.delete_log_entry.assert_called_once_with(log_document_id=42, log_id=10)
+        api.delete_attachment.assert_called_once_with(
+            log_document_id=42, log_id=10, attachment_id=7)
+
+
 class AttachmentTests(unittest.TestCase):
     def test_validate_attachment_path_missing_raises(self):
         with self.assertRaises(ValueError):

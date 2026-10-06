@@ -23,6 +23,12 @@ $RUNNER bely-cli auth verify -h | grep -q -- --format
 $RUNNER bely-cli entry attachment add -h | grep -q -- --format
 $RUNNER bely-cli entry attachment list -h | grep -q -- --format
 $RUNNER bely-cli entry attachment ls -h | grep -q -- --format
+$RUNNER bely-cli doc delete -h | grep -q -- --force
+$RUNNER bely-cli doc rm -h | grep -q -- --yes
+$RUNNER bely-cli entry delete -h | grep -q -- --yes
+$RUNNER bely-cli entry rm -h | grep -q -- --id
+$RUNNER bely-cli entry attachment delete -h | grep -q -- --attachment-id
+$RUNNER bely-cli entry attachment rm -h | grep -q -- --yes
 $RUNNER bely-cli tui lookup -h | grep -q -- --format
 # Bare `tui` is the one group that carries --limit/--format itself (see CLAUDE.md).
 $RUNNER bely-cli tui -h | grep -q -- --limit

@@ -26,7 +26,7 @@ class FakeApi:
     def get_log_entry_template(self, log_document_id):
         return SimpleNamespace(log_id=None, log_entry="")
 
-    def get_log_entries(self, log_document_id):
+    def get_log_entries(self, log_document_id, load_replies=None):
         return self.existing_entries
 
     def add_update_log_entry(self, log_entry):
@@ -181,6 +181,83 @@ class CmdAttachmentTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "entry not found"):
                 entry.cmd_list_attachments("My Doc", None, 10)
         api.get_log_entry_attachments.assert_called_once_with(log_document_id=42, log_id=10)
+
+
+class CmdGetEntryTests(unittest.TestCase):
+    def test_get_finds_nested_reply(self):
+        reply = SimpleNamespace(log_id=11, log_entry="reply text", log_replies=None)
+        parent = SimpleNamespace(log_id=10, log_entry="parent", log_replies=[reply])
+        api = FakeApi(existing_entries=[parent])
+        with patch.object(entry.auth, "get_factory") as get_factory, \
+             tempfile.TemporaryDirectory() as output_dir:
+            get_factory.return_value.get_logbook_api.return_value = api
+            api.get_log_entries = MagicMock(wraps=api.get_log_entries)
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                entry.cmd_get_entry(
+                    "My Doc", None, 11, output_dir=output_dir, fmt="json")
+            payload = json.loads(buf.getvalue())
+            with open(payload["path"]) as output:
+                self.assertEqual(output.read(), "reply text")
+        api.get_log_entries.assert_called_once_with(
+            log_document_id=42, load_replies=True)
+
+
+class CmdDeleteTests(unittest.TestCase):
+    def test_delete_reply(self):
+        reply = SimpleNamespace(log_id=11, log_replies=None)
+        parent = SimpleNamespace(log_id=10, log_replies=[reply])
+        api = FakeApi(existing_entries=[parent])
+        api.delete_log_entry = MagicMock()
+        api.get_log_entries = MagicMock(wraps=api.get_log_entries)
+        patches = _patch_auth(api)
+        for patcher in patches:
+            patcher.start()
+        try:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                entry.cmd_delete_entry("My Doc", None, 11, yes=True, fmt="json")
+        finally:
+            for patcher in patches:
+                patcher.stop()
+        self.assertEqual(json.loads(buf.getvalue())["status"], "deleted")
+        api.delete_log_entry.assert_called_once_with(log_document_id=42, log_id=11)
+        api.get_log_entries.assert_called_once_with(
+            log_document_id=42, load_replies=True)
+
+    def test_delete_attachment_by_numeric_id(self):
+        api = FakeApi()
+        api.attachments = [SimpleNamespace(id=7)]
+        api.delete_attachment = MagicMock()
+        patches = _patch_auth(api)
+        for patcher in patches:
+            patcher.start()
+        try:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                entry.cmd_delete_attachment("My Doc", None, 10, 7, yes=True, fmt="json")
+        finally:
+            for patcher in patches:
+                patcher.stop()
+        payload = json.loads(buf.getvalue())
+        self.assertEqual(payload["attachment_id"], 7)
+        self.assertEqual(payload["status"], "deleted")
+        api.delete_attachment.assert_called_once_with(
+            log_document_id=42, log_id=10, attachment_id=7)
+
+    def test_missing_entry_and_attachment_fail(self):
+        api = FakeApi()
+        patches = _patch_auth(api)
+        for patcher in patches:
+            patcher.start()
+        try:
+            with self.assertRaisesRegex(ValueError, "entry with log_id=99 not found"):
+                entry.cmd_delete_entry("My Doc", None, 99, yes=True)
+            with self.assertRaisesRegex(ValueError, "attachment id=99 not found"):
+                entry.cmd_delete_attachment("My Doc", None, 10, 99, yes=True)
+        finally:
+            for patcher in patches:
+                patcher.stop()
 
 
 class CmdUpdateEntryTests(unittest.TestCase):

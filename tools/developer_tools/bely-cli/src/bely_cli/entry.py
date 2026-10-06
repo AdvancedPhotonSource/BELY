@@ -1,6 +1,6 @@
 from . import auth
 from . import core
-from .common import is_no_prompt, read_file_or_stdin, write_entry_to_file, open_in_editor, print_items, print_result
+from .common import confirm_delete, is_no_prompt, read_file_or_stdin, write_entry_to_file, open_in_editor, print_items, print_result
 
 # Re-exported for backward compatibility: resolve_doc used to live here.
 from .core import resolve_doc  # noqa: F401
@@ -154,6 +154,33 @@ def cmd_add_attachment(doc_name, doc_id, entry_id, file, fmt="text"):
         print_result({"doc": doc.name, "log_id": entry_id, "attachment": info}, "", fmt)
 
 
+def cmd_delete_attachment(doc_name, doc_id, entry_id, attachment_id, yes=False, fmt="text"):
+    """Delete an entry attachment by numeric ID after confirmation."""
+    factory = auth.get_factory()
+    logbook_api = factory.get_logbook_api()
+    doc = core.resolve_doc(logbook_api, doc_name, doc_id)
+    attachments = logbook_api.get_log_entry_attachments(
+        log_document_id=doc.id, log_id=entry_id)
+    if not any(att.id == attachment_id for att in attachments):
+        raise ValueError(
+            f'attachment id={attachment_id} not found on entry {entry_id} '
+            f'in document "{doc.name}".')
+    result = {
+        "doc_id": doc.id, "doc": doc.name, "log_id": entry_id,
+        "attachment_id": attachment_id, "status": "cancelled",
+    }
+    if not confirm_delete(
+            f'Delete attachment {attachment_id} from entry {entry_id}?', yes):
+        print_result(result, "Deletion cancelled.", fmt)
+        return result
+    with auth.get_authenticated_factory() as auth_factory:
+        core.delete_attachment(
+            auth_factory.get_logbook_api(), doc.id, entry_id, attachment_id)
+    result["status"] = "deleted"
+    print_result(result, f'Attachment {attachment_id} deleted from entry {entry_id}.', fmt)
+    return result
+
+
 def cmd_list_attachments(doc_name, doc_id, entry_id, fmt="text"):
     """List attachments on an existing log entry."""
     factory = auth.get_factory()
@@ -171,6 +198,31 @@ def cmd_list_attachments(doc_name, doc_id, entry_id, fmt="text"):
         ("download_path", "Download Path", 0),
     ]
     print_items(items, columns, fmt)
+
+
+def cmd_delete_entry(doc_name, doc_id, entry_id, yes=False, fmt="text"):
+    """Delete a log entry or reply after confirmation."""
+    factory = auth.get_factory()
+    logbook_api = factory.get_logbook_api()
+    doc = core.resolve_doc(logbook_api, doc_name, doc_id)
+    entries = logbook_api.get_log_entries(
+        log_document_id=doc.id, load_replies=True)
+    if not core.find_entry(entries, entry_id):
+        raise ValueError(
+            f'entry with log_id={entry_id} not found in document "{doc.name}".')
+    result = {
+        "doc_id": doc.id, "doc": doc.name, "log_id": entry_id,
+        "status": "cancelled",
+    }
+    if not confirm_delete(
+            f'Delete entry/reply {entry_id} from document "{doc.name}"?', yes):
+        print_result(result, "Deletion cancelled.", fmt)
+        return result
+    with auth.get_authenticated_factory() as auth_factory:
+        core.delete_entry(auth_factory.get_logbook_api(), doc.id, entry_id)
+    result["status"] = "deleted"
+    print_result(result, f'Entry/reply {entry_id} deleted from "{doc.name}".', fmt)
+    return result
 
 
 def cmd_list_entries(doc_name, doc_id, fmt="text"):
@@ -198,7 +250,8 @@ def cmd_get_entry(doc_name, doc_id, entry_id, output_dir, fmt="text"):
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
     doc = core.resolve_doc(logbook_api, doc_name, doc_id)
-    entries = logbook_api.get_log_entries(log_document_id=doc.id)
+    entries = logbook_api.get_log_entries(
+        log_document_id=doc.id, load_replies=bool(entry_id))
 
     if not entries:
         raise ValueError(f'No entries found in document {doc.name}.')

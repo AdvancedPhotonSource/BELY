@@ -3,7 +3,7 @@ import os
 from . import auth
 from . import config
 from . import core
-from .common import find_logdoc, is_no_prompt, read_file_or_stdin, write_entry_to_file, open_in_editor, print_items, print_result
+from .common import confirm_delete, find_logdoc, is_no_prompt, read_file_or_stdin, write_entry_to_file, open_in_editor, print_items, print_result
 
 # Re-exported for backward compatibility: these used to live here and tests /
 # callers may still import them from this module.
@@ -185,6 +185,26 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
 
     if fmt != "text":
         print_result(result, "", fmt)
+
+
+def cmd_delete_doc(doc_name, doc_id, yes=False, force=False, fmt="text"):
+    """Delete a log document after validation and confirmation."""
+    factory = auth.get_factory()
+    logbook_api = factory.get_logbook_api()
+    doc = core.resolve_doc(logbook_api, doc_name, doc_id)
+    entries = logbook_api.get_log_entries(log_document_id=doc.id)
+    if entries and not force:
+        raise ValueError(
+            f'document "{doc.name}" contains {len(entries)} entries; use --force to delete it')
+    result = {"doc_id": doc.id, "doc": doc.name, "status": "cancelled"}
+    if not confirm_delete(f'Delete document "{doc.name}" (id={doc.id})?', yes):
+        print_result(result, "Deletion cancelled.", fmt)
+        return result
+    with auth.get_authenticated_factory() as auth_factory:
+        core.delete_document(auth_factory.get_logbook_api(), doc.id)
+    result["status"] = "deleted"
+    print_result(result, f'Document "{doc.name}" (id={doc.id}) deleted.', fmt)
+    return result
 
 
 def cmd_list_docs(limit, fmt="text"):

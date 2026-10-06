@@ -177,6 +177,17 @@ List recent log documents you created, newest first.
 |--------|-------------|
 | `--limit INTEGER` | Maximum documents to return (default: 20). |
 
+#### `bely-cli doc delete` / `rm`
+
+Delete a document selected by `--doc-name` or `--doc-id`. Confirmation is required unless
+`--yes` is supplied. A document containing entries requires `--force`; `--force` does not
+skip confirmation.
+
+```bash
+bely-cli doc delete --doc-id 99
+bely-cli doc rm --doc-name "Disposable Log" --force --yes
+```
+
 ### `tui` — interactive terminal UIs
 
 #### `bely-cli tui`
@@ -448,6 +459,14 @@ bely-cli entry attachment list -d 99 --id 42
 bely-cli entry attachment ls -n "Shift Report" --id 42 --format json
 ```
 
+#### `bely-cli entry attachment delete` / `rm`
+
+Delete an attachment using its numeric ID from `attachment list`:
+
+```bash
+bely-cli entry attachment delete -d 99 --id 42 --attachment-id 7
+```
+
 #### `bely-cli entry update`
 
 Update an existing entry. With no `--id`, your most recent entry in the document is
@@ -471,6 +490,19 @@ List the entries in a document (Log ID, date, author, and a snippet of the first
 |--------|-------------|
 | `-n, --doc-name TEXT` | Document name. |
 | `-d, --doc-id INTEGER` | Document ID. |
+
+#### `bely-cli entry delete` / `rm`
+
+Delete a top-level entry or reply by log ID, with confirmation by default:
+
+```bash
+bely-cli entry delete -d 99 --id 42
+bely-cli entry rm -n "Shift Report" --id 42 --yes
+```
+
+All delete commands support structured JSON/YAML output. Declining confirmation returns
+`status: cancelled`; successful deletion returns `status: deleted`. In `--no-prompt` mode,
+`--yes` is required.
 
 #### `bely-cli entry get`
 

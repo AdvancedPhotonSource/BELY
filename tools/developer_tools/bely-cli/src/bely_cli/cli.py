@@ -6,6 +6,7 @@ from .common import FORMATS, format_error_message, set_no_prompt
 from .config import VALID_FIELDS
 from .commands import (
     cmd_new_doc,
+    cmd_delete_doc,
     cmd_list_docs,
     cmd_auth_login,
     cmd_auth_logout,
@@ -17,6 +18,8 @@ from .commands import (
 from .entry import (
     cmd_add_attachment,
     cmd_add_entry,
+    cmd_delete_attachment,
+    cmd_delete_entry,
     cmd_get_entry,
     cmd_list_attachments,
     cmd_list_entries,
@@ -145,8 +148,20 @@ def doc_list(output_format, **kwargs):
     cmd_list_docs(fmt=output_format, **kwargs)
 
 
+@doc_group.command("delete")
+@click.option("--doc-name", "-n", default=None, help="Log document name")
+@click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
+@click.option("--yes", is_flag=True, help="Delete without confirmation")
+@click.option("--force", is_flag=True, help="Allow deletion when the document contains entries")
+@common_options
+def doc_delete(output_format, **kwargs):
+    """Delete a log document."""
+    cmd_delete_doc(fmt=output_format, **kwargs)
+
+
 doc_group.add_command(doc_list, "ls")
 doc_group.add_command(doc_new, "add")
+doc_group.add_command(doc_delete, "rm")
 
 
 # -- entry --
@@ -184,7 +199,20 @@ def entry_attachment_list(output_format, **kwargs):
     cmd_list_attachments(fmt=output_format, **kwargs)
 
 
+@entry_attachment_group.command("delete")
+@click.option("--doc-name", "-n", default=None, help="Log document name")
+@click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
+@click.option("--id", "entry_id", required=True, type=int, help="Log entry ID")
+@click.option("--attachment-id", required=True, type=int, help="Numeric attachment ID")
+@click.option("--yes", is_flag=True, help="Delete without confirmation")
+@common_options
+def entry_attachment_delete(output_format, **kwargs):
+    """Delete an attachment from a log entry."""
+    cmd_delete_attachment(fmt=output_format, **kwargs)
+
+
 entry_attachment_group.add_command(entry_attachment_list, "ls")
+entry_attachment_group.add_command(entry_attachment_delete, "rm")
 
 
 @entry_group.command("add")
@@ -237,9 +265,21 @@ def entry_get(output_format, **kwargs):
     cmd_get_entry(fmt=output_format, **kwargs)
 
 
+@entry_group.command("delete")
+@click.option("--doc-name", "-n", default=None, help="Log document name")
+@click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
+@click.option("--id", "entry_id", required=True, type=int, help="Log entry or reply ID")
+@click.option("--yes", is_flag=True, help="Delete without confirmation")
+@common_options
+def entry_delete(output_format, **kwargs):
+    """Delete a log entry or reply."""
+    cmd_delete_entry(fmt=output_format, **kwargs)
+
+
 entry_group.add_command(entry_list, "ls")
 entry_group.add_command(entry_get, "show")
 entry_group.add_command(entry_update, "edit")
+entry_group.add_command(entry_delete, "rm")
 
 
 # -- tui --

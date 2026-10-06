@@ -88,6 +88,11 @@ def create_document(logbook_api, name, logbook_type_id, system_id_list=None,
     return logbook_api.create_logbook_document(log_document_options=doc_opts)
 
 
+def delete_document(logbook_api, doc_id):
+    """Delete a top-level log document."""
+    return logbook_api.delete_log_document(log_document_id=doc_id)
+
+
 def recent_documents(factory, username, limit):
     """Return the user's most recently modified log documents, newest first.
 
@@ -134,10 +139,13 @@ def save_entry(logbook_api, entry, content):
 
 
 def find_entry(entries, log_id):
-    """Return the entry with this log_id, or None."""
-    for e in entries:
-        if e.log_id == log_id:
-            return e
+    """Return the entry or nested reply with this log_id, or None."""
+    for entry in entries:
+        if entry.log_id == log_id:
+            return entry
+        reply = find_entry(getattr(entry, "log_replies", None) or [], log_id)
+        if reply is not None:
+            return reply
     return None
 
 
@@ -148,6 +156,11 @@ def last_entry_by_user(entries, username):
         if e.entered_by_username and e.entered_by_username.lower() == username.lower()
     ]
     return user_entries[-1] if user_entries else None
+
+
+def delete_entry(logbook_api, doc_id, log_id):
+    """Delete a log entry or reply."""
+    return logbook_api.delete_log_entry(log_document_id=doc_id, log_id=log_id)
 
 
 def entry_list_items(entries):
@@ -206,6 +219,12 @@ def upload_attachment(logbook_api, doc_id, log_id, path):
         file_name=basename,
     )
     return attachment_info(att)
+
+
+def delete_attachment(logbook_api, doc_id, log_id, attachment_id):
+    """Delete an attachment by its numeric ID."""
+    return logbook_api.delete_attachment(
+        log_document_id=doc_id, log_id=log_id, attachment_id=attachment_id)
 
 
 def download_attachment(download_api, stored_filename, scaling=None):
