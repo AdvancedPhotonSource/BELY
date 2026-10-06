@@ -3,12 +3,13 @@ import os
 import tempfile
 import unittest
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from click.testing import CliRunner
 
 from bely_cli.cli import cli
 from bely_cli import shell_completion as completion
+from test.api_helpers import api_mock, factory_mock
 
 
 class CacheTests(unittest.TestCase):
@@ -112,7 +113,7 @@ class CacheTests(unittest.TestCase):
 
 class FetchTests(unittest.TestCase):
     def test_fetches_100_per_type_and_deduplicates_documents(self):
-        api = MagicMock()
+        api = api_mock()
         api.get_logbook_types.return_value = [
             SimpleNamespace(id=1, name="ops", display_name="Ops", description="Operations"),
             SimpleNamespace(id=2, name="all", display_name="All", description=""),
@@ -121,7 +122,7 @@ class FetchTests(unittest.TestCase):
         api.get_logbook_templates.return_value = [SimpleNamespace(name="Shift", description="")]
         doc = SimpleNamespace(id=7, name="Shift Log", logbook_type="Ops")
         api.get_log_documents.side_effect = [[doc], [doc]]
-        factory = MagicMock()
+        factory = factory_mock()
         factory.get_logbook_api.return_value = api
 
         values = completion.fetch_completion_values(factory)
@@ -163,7 +164,7 @@ class CompletionTests(unittest.TestCase):
         self.assertIn("ls", result.output)
 
     def test_entry_ids_are_fetched_for_selected_document_without_cache(self):
-        api = MagicMock()
+        api = api_mock()
         api.get_log_entries.return_value = [
             SimpleNamespace(
                 log_id=42,
@@ -171,7 +172,7 @@ class CompletionTests(unittest.TestCase):
                 log_replies=[SimpleNamespace(log_id=43, log_entry="Reply", log_replies=[])],
             )
         ]
-        factory = MagicMock()
+        factory = factory_mock()
         factory.get_logbook_api.return_value = api
         ctx = SimpleNamespace(params={"doc_id": 206})
 
@@ -185,12 +186,12 @@ class CompletionTests(unittest.TestCase):
         cached.assert_not_called()
 
     def test_entry_ids_resolve_selected_document_name(self):
-        api = MagicMock()
+        api = api_mock()
         api.get_log_document_by_name.return_value = SimpleNamespace(id=206)
         api.get_log_entries.return_value = [
             SimpleNamespace(log_id=42, log_entry="Entry", log_replies=[]),
         ]
-        factory = MagicMock()
+        factory = factory_mock()
         factory.get_logbook_api.return_value = api
 
         with patch.object(completion.auth, "get_factory", return_value=factory):

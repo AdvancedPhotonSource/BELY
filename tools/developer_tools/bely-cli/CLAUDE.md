@@ -227,8 +227,9 @@ share a single code path instead of branching between a `DataTable` and an `Opti
 
 ### Testing style
 
-No network, no live server, no responses library: tests hand-roll `FakeApi` classes
-returning `SimpleNamespace` stand-ins for API models, and patch
+No network, no live server, no responses library: API mocks use `api_mock()` and
+hand-written API fakes use `@api_fake(...)` from `test/api_helpers.py`, keeping doubles
+constrained to the generated client contract. Factory mocks use `factory_mock()`. Tests patch
 `auth.get_factory` / `auth.get_authenticated_factory` on the *command module*
 (`patch.object(entry.auth, ...)`). Text output is asserted by capturing `redirect_stdout`.
 The Textual app is tested with `unittest.IsolatedAsyncioTestCase` + `app.run_test()`

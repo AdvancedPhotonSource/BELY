@@ -1,9 +1,17 @@
 import unittest
 from types import SimpleNamespace
 
+from BelyApiFactory import BelyApiFactory
+from belyApi.api.downloads_api import DownloadsApi
+from belyApi.api.logbook_api import LogbookApi
+from belyApi.api.search_api import SearchApi
+from belyApi.api.users_api import UsersApi
+
 from bely_cli.tui.data import LogbookData
+from test.api_helpers import api_fake
 
 
+@api_fake(LogbookApi)
 class FakeApi:
     def __init__(self):
         self.calls = []
@@ -49,6 +57,7 @@ class FakeApi:
         return [SimpleNamespace(id=1, name="tmpl-a")]
 
 
+@api_fake(DownloadsApi)
 class FakeDownloadApi:
     def __init__(self):
         self.calls = []
@@ -70,6 +79,7 @@ class FakeSearchResults:
         self.document_results = docs
 
 
+@api_fake(UsersApi)
 class FakeUsersApi:
     def __init__(self, calls):
         self._calls = calls
@@ -79,6 +89,7 @@ class FakeUsersApi:
         return SimpleNamespace(id=99)
 
 
+@api_fake(SearchApi)
 class FakeSearchApi:
     def __init__(self, calls, docs):
         self._calls = calls
@@ -89,6 +100,7 @@ class FakeSearchApi:
         return FakeSearchResults(self._docs)
 
 
+@api_fake(BelyApiFactory)
 class FakeFactory:
     """Minimal factory for recent_documents(): only users/search apis are used."""
 

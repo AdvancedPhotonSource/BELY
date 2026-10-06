@@ -6,13 +6,17 @@ from contextlib import redirect_stdout
 from types import SimpleNamespace
 from unittest.mock import ANY, MagicMock, patch
 
+from belyApi.api.logbook_api import LogbookApi
+
 from bely_cli import commands
+from test.api_helpers import api_fake, api_mock, factory_mock
 
 
 class _NF(Exception):
     """Stand-in for belyApi.exceptions.NotFoundException."""
 
 
+@api_fake(LogbookApi)
 class FakeApi:
     def __init__(self):
         self.created = None
@@ -118,11 +122,11 @@ class CmdAuthTests(unittest.TestCase):
 
 class CmdDeleteDocTests(unittest.TestCase):
     def setUp(self):
-        self.api = MagicMock()
+        self.api = api_mock()
         self.api.get_log_document_by_name.return_value = SimpleNamespace(id=42, name="My Doc")
-        self.factory = MagicMock()
+        self.factory = factory_mock()
         self.factory.get_logbook_api.return_value = self.api
-        self.auth_factory = MagicMock()
+        self.auth_factory = factory_mock()
         self.auth_factory.get_logbook_api.return_value = self.api
         self.auth_ctx = MagicMock()
         self.auth_ctx.__enter__.return_value = self.auth_factory
@@ -178,10 +182,10 @@ class CmdNewDocTests(unittest.TestCase):
     def test_creates_doc_and_first_entry_from_file(self):
         api = FakeApi()
 
-        factory = MagicMock()
+        factory = factory_mock()
         factory.get_logbook_api.return_value = api
 
-        auth_factory = MagicMock()
+        auth_factory = factory_mock()
         auth_factory.get_logbook_api.return_value = api
         auth_ctx = MagicMock()
         auth_ctx.__enter__.return_value = auth_factory

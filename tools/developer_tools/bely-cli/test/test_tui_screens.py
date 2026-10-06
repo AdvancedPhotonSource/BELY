@@ -17,6 +17,9 @@ from unittest.mock import MagicMock, patch
 from textual.app import App
 from textual.widgets import Button, DataTable, DirectoryTree, Input, OptionList, Select, Static, TextArea
 
+from BelyApiFactory import BelyApiFactory
+from belyApi.api.logbook_api import LogbookApi
+
 from bely_cli.tui.app import BelyTuiApp
 from bely_cli.tui.data import LogbookData
 from bely_cli.tui.screens import configscreen
@@ -30,12 +33,14 @@ from bely_cli.tui.screens.configscreen import ConfigScreen
 from bely_cli.tui.screens.login import LoginScreen
 from bely_cli.tui.screens.newdoc import NewDocScreen
 from bely_cli.tui.screens.picker import PickerScreen
+from test.api_helpers import api_fake, method_mock
 
 
 class _NF(Exception):
     """Stand-in for belyApi.exceptions.NotFoundException."""
 
 
+@api_fake(LogbookApi)
 class FakeLogbookApi:
     def __init__(self, existing_doc=None):
         self.created = None
@@ -70,6 +75,7 @@ class FakeLogbookApi:
         return log_entry
 
 
+@api_fake(BelyApiFactory)
 class FakeFactory:
     def __init__(self, api):
         self._api = api
@@ -225,7 +231,8 @@ class AttachmentScreenTests(unittest.IsolatedAsyncioTestCase):
         api = FakeLogbookApi()
         attachments = [attachment]
         api.get_log_entry_attachments = lambda **kwargs: list(attachments)
-        api.delete_attachment = MagicMock(side_effect=lambda **kwargs: attachments.clear())
+        api.delete_attachment = method_mock(
+            LogbookApi, "delete_attachment", side_effect=lambda **kwargs: attachments.clear())
         session = FakeSession(api)
         app = BelyTuiApp(session)
         changed = MagicMock()

@@ -7,9 +7,13 @@ from contextlib import redirect_stdout
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+from belyApi.api.logbook_api import LogbookApi
+
 from bely_cli import entry
+from test.api_helpers import api_fake, factory_mock, method_mock
 
 
+@api_fake(LogbookApi)
 class FakeApi:
     """Minimal fake exposing only the methods entry.py touches."""
 
@@ -48,10 +52,10 @@ class FakeApi:
 
 def _patch_auth(api):
     """Patch entry.auth.get_factory and get_authenticated_factory to yield `api`."""
-    factory = MagicMock()
+    factory = factory_mock()
     factory.get_logbook_api.return_value = api
 
-    auth_factory = MagicMock()
+    auth_factory = factory_mock()
     auth_factory.get_logbook_api.return_value = api
     auth_ctx = MagicMock()
     auth_ctx.__enter__.return_value = auth_factory
@@ -175,7 +179,8 @@ class CmdAttachmentTests(unittest.TestCase):
 
     def test_list_attachments_delegates_entry_validation_to_endpoint(self):
         api = FakeApi()
-        api.get_log_entry_attachments = MagicMock(side_effect=RuntimeError("entry not found"))
+        api.get_log_entry_attachments = method_mock(
+            LogbookApi, "get_log_entry_attachments", side_effect=RuntimeError("entry not found"))
         with patch.object(entry.auth, "get_factory") as get_factory:
             get_factory.return_value.get_logbook_api.return_value = api
             with self.assertRaisesRegex(RuntimeError, "entry not found"):
@@ -192,7 +197,8 @@ class CmdListEntryTests(unittest.TestCase):
             log_id=10, log_entry="parent", log_replies=[reply],
             entered_on_date_time=None, entered_by_username="alice")
         api = FakeApi(existing_entries=[parent])
-        api.get_log_entries = MagicMock(wraps=api.get_log_entries)
+        api.get_log_entries = method_mock(
+            LogbookApi, "get_log_entries", wraps=api.get_log_entries)
         with patch.object(entry.auth, "get_factory") as get_factory:
             get_factory.return_value.get_logbook_api.return_value = api
             buf = io.StringIO()
@@ -214,7 +220,8 @@ class CmdGetEntryTests(unittest.TestCase):
         with patch.object(entry.auth, "get_factory") as get_factory, \
              tempfile.TemporaryDirectory() as output_dir:
             get_factory.return_value.get_logbook_api.return_value = api
-            api.get_log_entries = MagicMock(wraps=api.get_log_entries)
+            api.get_log_entries = method_mock(
+                LogbookApi, "get_log_entries", wraps=api.get_log_entries)
             buf = io.StringIO()
             with redirect_stdout(buf):
                 entry.cmd_get_entry(
@@ -231,8 +238,9 @@ class CmdDeleteTests(unittest.TestCase):
         reply = SimpleNamespace(log_id=11, log_replies=None)
         parent = SimpleNamespace(log_id=10, log_replies=[reply])
         api = FakeApi(existing_entries=[parent])
-        api.delete_log_entry = MagicMock()
-        api.get_log_entries = MagicMock(wraps=api.get_log_entries)
+        api.delete_log_entry = method_mock(LogbookApi, "delete_log_entry")
+        api.get_log_entries = method_mock(
+            LogbookApi, "get_log_entries", wraps=api.get_log_entries)
         patches = _patch_auth(api)
         for patcher in patches:
             patcher.start()
@@ -251,7 +259,7 @@ class CmdDeleteTests(unittest.TestCase):
     def test_delete_attachment_by_numeric_id(self):
         api = FakeApi()
         api.attachments = [SimpleNamespace(id=7)]
-        api.delete_attachment = MagicMock()
+        api.delete_attachment = method_mock(LogbookApi, "delete_attachment")
         patches = _patch_auth(api)
         for patcher in patches:
             patcher.start()

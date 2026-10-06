@@ -1,15 +1,22 @@
 import unittest
 from contextlib import nullcontext
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from textual.containers import Vertical
 from textual.widgets import DataTable, Input, Markdown, Static
+
+from belyApi.api.downloads_api import DownloadsApi
+from belyApi.api.logbook_api import LogbookApi
+from belyApi.api.search_api import SearchApi
+from belyApi.api.users_api import UsersApi
 
 from bely_cli.tui.app import BelyTuiApp
 from bely_cli.tui.data import LogbookData
 from bely_cli.tui.screens import browse
 from bely_cli.tui.screens.browse import BrowseScreen
+from test.api_helpers import api_fake, method_mock
+from BelyApiFactory import BelyApiFactory
 
 
 class FakeSession:
@@ -40,6 +47,7 @@ class FakeSession:
         return True
 
 
+@api_fake(LogbookApi)
 class FakeLogbookApi:
     def get_logbook_type_hierarchy(self):
         return [SimpleNamespace(id=1, name="ops", display_name="Ops")]
@@ -68,6 +76,7 @@ class FakeLogbookApi:
         return log_entry
 
 
+@api_fake(LogbookApi)
 class FakeLogbookApiWithReplies(FakeLogbookApi):
     """One entry with two direct replies."""
 
@@ -91,6 +100,7 @@ class FakeLogbookApiWithReplies(FakeLogbookApi):
         )]
 
 
+@api_fake(LogbookApi)
 class FakeLogbookApiWithImage(FakeLogbookApi):
     """Entry body is a single image-only paragraph (as the server appends after upload)."""
 
@@ -103,6 +113,7 @@ class FakeLogbookApiWithImage(FakeLogbookApi):
         )]
 
 
+@api_fake(DownloadsApi)
 class FakeDownloadApi:
     def get_attachment1_without_preload_content(self, attachment_name, scaling):
         return SimpleNamespace(data=b"fake-scaled-bytes")
@@ -119,6 +130,7 @@ class FakeImageWidget(Static):
         self.image = image
 
 
+@api_fake(UsersApi)
 class FakeUsersApi:
     def __init__(self, calls):
         self._calls = calls
@@ -133,6 +145,7 @@ class FakeSearchResults:
         self.document_results = docs
 
 
+@api_fake(SearchApi)
 class FakeSearchApi:
     def __init__(self, calls, docs):
         self._calls = calls
@@ -143,6 +156,7 @@ class FakeSearchApi:
         return FakeSearchResults(self._docs)
 
 
+@api_fake(BelyApiFactory)
 class FakeFactory:
     """Combined stand-in for the bits of BelyApiFactory the n/u and recent-docs
     flows touch: get_logbook_api() for ensure_auth(), get_users_api()/
@@ -578,7 +592,7 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_delete_populated_document_requires_typed_confirmation(self):
         api = FakeLogbookApi()
-        api.delete_log_document = MagicMock()
+        api.delete_log_document = method_mock(LogbookApi, "delete_log_document")
         data = LogbookData(api)
         session = FakeSession(data, factory=FakeFactory(api=api))
         app = BelyTuiApp(session, limit=10, mode="lookup")
@@ -604,7 +618,7 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_delete_entry_confirms_and_refreshes(self):
         api = FakeLogbookApi()
-        api.delete_log_entry = MagicMock()
+        api.delete_log_entry = method_mock(LogbookApi, "delete_log_entry")
         data = LogbookData(api)
         session = FakeSession(data, factory=FakeFactory(api=api))
         app = BelyTuiApp(session, limit=10, mode="lookup")
@@ -883,6 +897,7 @@ class ImagePreviewTests(unittest.IsolatedAsyncioTestCase):
         """Arrowing away mid-fetch must not land an image in the wrong entry's preview."""
         import threading
 
+        @api_fake(LogbookApi)
         class TwoEntryApi(FakeLogbookApiWithImage):
             def get_log_entries(self, log_document_id, load_replies, load_reactions):
                 return super().get_log_entries(log_document_id, load_replies, load_reactions) + [

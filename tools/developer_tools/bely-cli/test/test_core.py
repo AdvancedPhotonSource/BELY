@@ -2,11 +2,16 @@ import os
 import tempfile
 import unittest
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
+from belyApi.api.downloads_api import DownloadsApi
+from belyApi.api.logbook_api import LogbookApi
 
 from bely_cli import core
+from test.api_helpers import api_fake, api_mock, factory_mock, method_mock
 
 
+@api_fake(LogbookApi)
 class FakeLogbookApi:
     def __init__(self):
         self.types = [SimpleNamespace(id=1, name="ops", display_name="Ops")]
@@ -91,7 +96,7 @@ class ResolveDocTests(unittest.TestCase):
         self.assertEqual(doc.name, "id=7")
 
     def test_by_name_not_found_raises(self):
-        api = MagicMock()
+        api = api_mock()
         with patch("bely_cli.common.find_logdoc", return_value=None):
             with self.assertRaises(ValueError):
                 core.resolve_doc(api, "missing", None)
@@ -203,7 +208,7 @@ class EntryTests(unittest.TestCase):
 
 class DeleteTests(unittest.TestCase):
     def test_delete_wrappers_pass_generated_api_arguments(self):
-        api = MagicMock()
+        api = api_mock()
 
         core.delete_document(api, 42)
         core.delete_entry(api, 42, 10)
@@ -236,7 +241,8 @@ class AttachmentTests(unittest.TestCase):
 
     def test_entry_attachments_returns_stable_dicts(self):
         api = FakeLogbookApi()
-        api.get_log_entry_attachments = MagicMock(return_value=[SimpleNamespace(
+        api.get_log_entry_attachments = method_mock(
+            LogbookApi, "get_log_entry_attachments", return_value=[SimpleNamespace(
             id=8,
             original_filename="plot.png",
             stored_filename="attachment.8.png",
@@ -251,6 +257,7 @@ class AttachmentTests(unittest.TestCase):
         self.assertEqual(items[0]["original_filename"], "plot.png")
 
 
+@api_fake(DownloadsApi)
 class FakeDownloadApi:
     def __init__(self):
         self.calls = []
@@ -290,7 +297,7 @@ class RecentDocumentsTests(unittest.TestCase):
             SimpleNamespace(object_id=3, object_name="Mid", logbook_type="ops",
                              last_modified_on=dt.datetime(2026, 3, 1)),
         ]
-        factory = MagicMock()
+        factory = factory_mock()
         factory.get_users_api.return_value.get_user_by_username.return_value = SimpleNamespace(id=7)
         factory.get_search_api.return_value.search_logbook.return_value = SimpleNamespace(document_results=docs)
 
@@ -301,7 +308,7 @@ class RecentDocumentsTests(unittest.TestCase):
         self.assertEqual(result[0].more_info.last_modified_on_date_time, dt.datetime(2026, 6, 1))
 
     def test_user_lookup_failure_wrapped_as_runtime_error(self):
-        factory = MagicMock()
+        factory = factory_mock()
         factory.get_users_api.return_value.get_user_by_username.side_effect = Exception("boom")
         with self.assertRaises(RuntimeError):
             core.recent_documents(factory, "alice", limit=10)
