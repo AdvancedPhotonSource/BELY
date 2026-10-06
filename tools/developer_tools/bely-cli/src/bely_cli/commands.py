@@ -140,6 +140,8 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
         )
         result["id"] = doc.id
         result["name"] = doc.name
+        from .shell_completion import add_cached_document
+        add_cached_document(doc, type_)
         if fmt == "text":
             print(f'New document "{doc.name}" created, id={doc.id}')
 
@@ -202,6 +204,8 @@ def cmd_delete_doc(doc_name, doc_id, yes=False, force=False, fmt="text"):
         return result
     with auth.get_authenticated_factory() as auth_factory:
         core.delete_document(auth_factory.get_logbook_api(), doc.id)
+    from .shell_completion import remove_cached_document
+    remove_cached_document(doc.id)
     result["status"] = "deleted"
     print_result(result, f'Document "{doc.name}" (id={doc.id}) deleted.', fmt)
     return result

@@ -85,6 +85,49 @@ bely-cli config set host https://tinkerbox.aps.anl.gov:8181/bely
 > examples in this README use `bely-cli` directly, so set the host (or export `BELY_HOST`)
 > as shown above.
 
+## Shell completion
+
+`bely-cli` supports command, alias, option, and value completion in Bash and Zsh. Initialize
+completion for the shell detected from `$SHELL`:
+
+```bash
+bely-cli shell init
+```
+
+The command previews the marked block and target (`~/.bashrc` or `~/.zshrc`) and asks before
+editing it. Re-running it safely replaces the existing marked block. Override detection or
+print the setup for manual installation with:
+
+```bash
+bely-cli shell init --shell bash
+bely-cli shell init --shell zsh --print
+```
+
+Restart the shell or source the changed rc file afterward. Completion covers the Click
+command tree and aliases, native filesystem paths, logbook types, templates, comma-separated
+systems, and document names and IDs. For commands that target a specific entry—including
+`entry get` / `show`, `update`, `delete`, and `entry attachment` operations—`--id` completes
+entry and reply IDs after `--doc-id` or `--doc-name` has been supplied. These IDs are fetched
+live for that document and are not cached.
+
+Dynamic values are stored per BELY host under `~/.config/bely/completion-cache/` (or beside
+the settings file selected by `BELY_SETTINGS_FILE`). The cache includes up to 100 recent
+documents per logbook type and expires after 24 hours. Pressing Tab never waits for the
+server or prompts: stale values are returned immediately while one quiet background refresh
+starts. Creating or deleting a document through `bely-cli` also updates an existing cache
+for the current host immediately (without changing its refresh age); if no cache exists,
+normal refresh behavior applies. If refresh fails, stale values remain available; with no
+host, network, or cache, static and filesystem completion still work.
+
+Manage the cache explicitly with:
+
+```bash
+bely-cli shell cache refresh       # synchronous update
+bely-cli shell cache status
+bely-cli shell cache clear         # current configured host
+bely-cli shell cache clear --all-hosts
+```
+
 ## Authentication
 
 Mutating operations (creating documents, adding/updating entries) require authentication;

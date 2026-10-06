@@ -131,12 +131,14 @@ class CmdDeleteDocTests(unittest.TestCase):
     def test_delete_yes_returns_structured_result(self):
         self.api.get_log_entries.return_value = []
         with patch.object(commands.auth, "get_factory", return_value=self.factory), \
-             patch.object(commands.auth, "get_authenticated_factory", return_value=self.auth_ctx):
+             patch.object(commands.auth, "get_authenticated_factory", return_value=self.auth_ctx), \
+             patch("bely_cli.shell_completion.remove_cached_document") as remove_cached:
             buf = io.StringIO()
             with redirect_stdout(buf):
                 commands.cmd_delete_doc("My Doc", None, yes=True, fmt="json")
         self.assertEqual(__import__("json").loads(buf.getvalue())["status"], "deleted")
         self.api.delete_log_document.assert_called_once_with(log_document_id=42)
+        remove_cached.assert_called_once_with(42)
 
     def test_decline_is_cancelled_without_authentication(self):
         self.api.get_log_entries.return_value = []
@@ -193,7 +195,8 @@ class CmdNewDocTests(unittest.TestCase):
             with patch.object(commands.auth, "get_factory", return_value=factory), \
                  patch.object(commands.auth, "get_authenticated_factory", return_value=auth_ctx), \
                  patch("belyApi.LogDocumentOptions") as opts_cls, \
-                 patch("belyApi.exceptions.NotFoundException", _NF):
+                 patch("belyApi.exceptions.NotFoundException", _NF), \
+                 patch("bely_cli.shell_completion.add_cached_document") as cache_document:
                 buf = io.StringIO()
                 with redirect_stdout(buf):
                     commands.cmd_new_doc(
@@ -211,6 +214,7 @@ class CmdNewDocTests(unittest.TestCase):
             os.unlink(tmp_path)
 
         opts_cls.assert_called_once_with(name="My Doc", logbook_type_id=1)
+        cache_document.assert_called_once_with(api.created, "ops")
         self.assertIs(api.created, opts_cls.return_value)
         self.assertEqual(api.entry_saved.log_entry, "hello\n")
         self.assertEqual(api.entry_saved.log_id, 99)
