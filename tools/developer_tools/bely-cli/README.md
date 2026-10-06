@@ -352,7 +352,7 @@ on — `i` disappears once you drill into entries, and `s` / `y` / `e` / `f` / `
 | `p` | Entries level only: reply to the highlighted entry's top-level thread. Attachments are supported. |
 | `t` | Entries level only: collapse/expand the reply thread under the highlighted entry (or its parent, if the highlight is on a reply). Replies start expanded. |
 | `Shift+A` | Entries level only: open the highlighted entry's attachment browser. |
-| `x` | Document/entry levels only: delete the highlighted document, entry, or reply after destructive confirmation. |
+| `x` | Document/entry levels only: delete the highlighted document, entry, or reply after destructive confirmation. Documents containing entries require a second confirmation by typing the document name exactly. |
 | `i` | Logbook/document levels only: toggle the side info panel. |
 | `f` | Entries level only: toggle the table to widen the preview pane. |
 | `r` | Refresh the current level, bypassing the in-session cache. Entry selection, preview scroll, filters, and collapsed threads are preserved when possible. |

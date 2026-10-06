@@ -19,7 +19,7 @@ from bely_cli.tui.data import LogbookData
 from bely_cli.tui.screens import configscreen
 from bely_cli.tui.screens.attachments import AttachmentScreen, preview_kind
 from bely_cli.tui.screens.compose import ComposeScreen, open_composer
-from bely_cli.tui.screens.confirm import ConfirmScreen
+from bely_cli.tui.screens.confirm import ConfirmScreen, TypeToConfirmScreen
 from bely_cli.tui.screens.configscreen import ConfigScreen
 from bely_cli.tui.screens.login import LoginScreen
 from bely_cli.tui.screens.newdoc import NewDocScreen
@@ -1029,6 +1029,22 @@ class ConfigScreenTests(unittest.IsolatedAsyncioTestCase):
                 await pilot.pause()
 
         self.assertEqual(saved, [("images", "unicode")])
+
+
+class TypeToConfirmScreenTests(unittest.IsolatedAsyncioTestCase):
+    async def test_exact_phrase_is_required(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(TypeToConfirmScreen("Danger")))
+            await pilot.pause()
+            button = app.screen.query_one("#type-confirm-confirm", Button)
+            self.assertTrue(button.disabled)
+            await pilot.press("d", "e", "l")
+            self.assertTrue(button.disabled)
+            await pilot.press("e", "t", "e")
+            self.assertFalse(button.disabled)
+            await pilot.press("enter")
+            self.assertTrue(await task.wait())
 
 
 class ConfirmScreenTests(unittest.IsolatedAsyncioTestCase):

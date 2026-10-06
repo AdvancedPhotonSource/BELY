@@ -684,13 +684,28 @@ class BrowseScreen(Screen):
     @work
     async def _delete_document(self, doc):
         from ... import core
-        from .confirm import ConfirmScreen
+        from .confirm import ConfirmScreen, TypeToConfirmScreen
 
         confirmed = await self.app.push_screen_wait(ConfirmScreen(
-            f'Delete document "{doc.name}" and all of its entries?',
+            f'Delete document "{doc.name}"?',
             confirm_label="Delete", cancel_label="Cancel", confirm_variant="error"))
         if not confirmed:
             return
+        try:
+            entries = await asyncio.to_thread(self.data.entries, doc.id)
+        except Exception as exc:
+            self.notify(
+                f"Could not inspect document entries: {format_error_message(exc, self.session.factory)}",
+                severity="error")
+            return
+        if entries:
+            confirmed = await self.app.push_screen_wait(TypeToConfirmScreen(
+                f'Document "{doc.name}" contains {len(entries)} top-level '
+                f'entry/entries and their replies. Type "{doc.name}" to remove everything.',
+                phrase=doc.name,
+            ))
+            if not confirmed:
+                return
         api = await self.app.ensure_auth()
         if api is None:
             return

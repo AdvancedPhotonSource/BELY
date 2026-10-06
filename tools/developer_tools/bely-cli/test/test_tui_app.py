@@ -576,6 +576,32 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
                 await pilot.pause()
                 self.assertIs(app.screen, browse_screen)
 
+    async def test_delete_populated_document_requires_typed_confirmation(self):
+        api = FakeLogbookApi()
+        api.delete_log_document = MagicMock()
+        data = LogbookData(api)
+        session = FakeSession(data, factory=FakeFactory(api=api))
+        app = BelyTuiApp(session, limit=10, mode="lookup")
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None), \
+             patch.object(app, "ensure_auth", wraps=app.ensure_auth) as ensure_auth:
+            async with app.run_test() as pilot:
+                await pilot.pause()
+                await pilot.press("enter")  # type -> documents
+                await pilot.pause()
+                await pilot.press("x")
+                await pilot.pause()
+                await pilot.press("left", "enter")
+                await pilot.pause()
+                self.assertEqual(type(app.screen).__name__, "TypeToConfirmScreen")
+                ensure_auth.assert_not_called()
+                api.delete_log_document.assert_not_called()
+                app.screen.query_one("#type-confirm-input", Input).value = "Shift Report"
+                await pilot.press("enter")
+                await pilot.pause()
+                await pilot.pause()
+                ensure_auth.assert_called_once_with()
+                api.delete_log_document.assert_called_once_with(log_document_id=10)
+
     async def test_delete_entry_confirms_and_refreshes(self):
         api = FakeLogbookApi()
         api.delete_log_entry = MagicMock()
