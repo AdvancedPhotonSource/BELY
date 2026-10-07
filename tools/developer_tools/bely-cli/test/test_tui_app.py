@@ -77,6 +77,17 @@ class FakeLogbookApi:
 
 
 @api_fake(LogbookApi)
+class FakeLogbookApiWithManyEntries(FakeLogbookApi):
+    def get_log_entries(self, log_document_id, load_replies, load_reactions):
+        body = "\n\n".join(f"Paragraph {line}" for line in range(40))
+        return [SimpleNamespace(
+            log_id=100 + index, entered_by_username="alice", entered_on_date_time=None,
+            last_modified_by_username=None, last_modified_on_date_time=None,
+            log_replies=None, log_reactions=None, log_entry=body,
+        ) for index in range(30)]
+
+
+@api_fake(LogbookApi)
 class FakeLogbookApiWithReplies(FakeLogbookApi):
     """One entry with two direct replies."""
 
@@ -185,6 +196,58 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
         await pilot.press("enter")  # docs -> entries
         await pilot.pause()
         await pilot.pause()
+
+    async def test_refresh_preserves_entry_selection_and_preview_scroll(self):
+        data = LogbookData(FakeLogbookApiWithManyEntries())
+        app = BelyTuiApp(FakeSession(data), limit=50, mode="lookup")
+        async with app.run_test(size=(100, 20)) as pilot:
+            await self._open_entries(pilot)
+            screen = app.screen
+            table = screen.query_one("#nav-table", DataTable)
+            preview = screen.query_one("#preview")
+            table.move_cursor(row=20)
+            await pilot.pause()
+            await pilot.pause()
+            preview.scroll_to(y=8, animate=False)
+            await pilot.pause()
+            preview_scroll_y = preview.scroll_y
+            body_markdown = screen.query_one("#body-md")
+
+            await pilot.press("r")
+            await pilot.pause()
+            await pilot.pause()
+            await pilot.pause()
+
+            self.assertEqual(table.cursor_row, 20)
+            self.assertEqual(screen._current_entry().log_id, 120)
+            self.assertIs(screen.query_one("#body-md"), body_markdown)
+            self.assertEqual(preview.scroll_y, preview_scroll_y)
+
+    async def test_switching_entry_clears_refresh_state_and_scroll(self):
+        data = LogbookData(ManyEntriesApi())
+        app = BelyTuiApp(FakeSession(data), limit=50, mode="lookup")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            await pilot.press("enter")
+            await pilot.pause()
+            await pilot.press("enter")
+            await pilot.pause()
+            screen = app.screen
+            table = screen.query_one("#nav-table", DataTable)
+            preview = screen.query_one("#preview")
+            preview.scroll_to(y=8, animate=False, force=True, immediate=True)
+            screen._pending_entry_restore = (100, "old", 0, 8)
+            screen._restoring_entry_preview = True
+            screen._restoring_entry_id = 100
+
+            table.move_cursor(row=1)
+            await pilot.pause()
+
+            self.assertEqual(screen._current_entry().log_id, 101)
+            self.assertIsNone(screen._pending_entry_restore)
+            self.assertFalse(screen._restoring_entry_preview)
+            self.assertIsNone(screen._restoring_entry_id)
+            self.assertEqual(preview.scroll_y, 0)
 
     async def test_browse_populates_list_and_drives_preview(self):
         data = LogbookData(FakeLogbookApi())

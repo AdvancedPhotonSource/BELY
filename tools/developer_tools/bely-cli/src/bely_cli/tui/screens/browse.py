@@ -141,10 +141,13 @@ class BrowseScreen(Screen):
         self._collapsed = set()
         self._entry_key = None
         self._render_token = 0
+        self._load_generation = 0
         self._nav_hidden = False
         self._info_open = False
         self._table_columns_for = None
         self._pending_entry_restore = None
+        self._restoring_entry_preview = False
+        self._restoring_entry_id = None
         self._pending_doc_row = None
 
     def compose(self) -> ComposeResult:
@@ -204,13 +207,26 @@ class BrowseScreen(Screen):
     # -- level loading --
 
     def show_level(self, level, *, preserve_filter=False, preserve_entry_position=False):
-        if preserve_entry_position and self.level == self.LEVEL_ENTRIES:
-            node = self._current_node()
-            row = self._nav().cursor_row or 0
-            scroll_y = self.query_one("#preview", VerticalScroll).scroll_y
-            self._pending_entry_restore = (
-                getattr(node.entry, "log_id", None) if node else None, row, scroll_y)
+        restoring_entry = preserve_entry_position and self.level == self.LEVEL_ENTRIES
+        if self.level == self.LEVEL_ENTRIES and level != self.LEVEL_ENTRIES:
+            self._reset_entry_preview_state()
+        if restoring_entry:
+            self._restoring_entry_preview = True
+            # A prior refresh may still be loading. Keep its original snapshot
+            # rather than replacing it with the table's temporary row-zero state.
+            if self._pending_entry_restore is None:
+                node = self._current_node()
+                row = self._nav().cursor_row or 0
+                scroll_y = self.query_one("#preview", VerticalScroll).scroll_y
+                self._pending_entry_restore = (
+                    getattr(node.entry, "log_id", None) if node else None,
+                    getattr(node.entry, "log_entry", None) if node else None,
+                    row, scroll_y,
+                )
+                self._restoring_entry_id = self._pending_entry_restore[0]
         self.level = level
+        self._load_generation += 1
+        generation = self._load_generation
         # "f" full-screen and the reply tree only apply at the entries level; reset when leaving.
         if level != self.LEVEL_ENTRIES:
             self._nav_hidden = False
@@ -230,41 +246,42 @@ class BrowseScreen(Screen):
             filt.value = ""
             filt.display = False
         nav.set_loading(True)
-        self.query_one("#body-md", Markdown).display = False
-        self.query_one("#body-blocks", Vertical).display = False
-        self.query_one("#meta", Static).update("")
+        if not restoring_entry:
+            self.query_one("#body-md", Markdown).display = False
+            self.query_one("#body-blocks", Vertical).display = False
+            self.query_one("#meta", Static).update("")
         if level == self.LEVEL_TYPES:
-            self._load_types()
+            self._load_types(generation)
         elif level == self.LEVEL_DOCS:
             if self.source == "recent":
-                self._load_recent_docs()
+                self._load_recent_docs(generation)
             else:
-                self._load_docs(self.sel_type.id)
+                self._load_docs(self.sel_type.id, generation)
         else:
-            self._load_entries(self.sel_doc.id)
+            self._load_entries(self.sel_doc.id, generation)
 
     @work(thread=True, exclusive=True, group="fetch")
-    def _load_types(self):
+    def _load_types(self, generation):
         try:
             items = flatten_types(self.data.logbook_types())
         except Exception as e:
             self.app.call_from_thread(
-                self._fetch_failed, format_error_message(e, self.session.factory))
+                self._fetch_failed, format_error_message(e, self.session.factory), generation)
             return
-        self.app.call_from_thread(self._populate, items)
+        self.app.call_from_thread(self._populate, items, generation)
 
     @work(thread=True, exclusive=True, group="fetch")
-    def _load_docs(self, type_id):
+    def _load_docs(self, type_id, generation):
         try:
             items = self.data.documents(type_id, self.limit)
         except Exception as e:
             self.app.call_from_thread(
-                self._fetch_failed, format_error_message(e, self.session.factory))
+                self._fetch_failed, format_error_message(e, self.session.factory), generation)
             return
-        self.app.call_from_thread(self._populate, items)
+        self.app.call_from_thread(self._populate, items, generation)
 
     @work(thread=True, exclusive=True, group="fetch")
-    def _load_recent_docs(self):
+    def _load_recent_docs(self, generation):
         try:
             username = self.session.username()
             if not username:
@@ -272,21 +289,26 @@ class BrowseScreen(Screen):
             items = self.data.recent_documents(self.session.factory, username, self.limit)
         except Exception as e:
             self.app.call_from_thread(
-                self._fetch_failed, format_error_message(e, self.session.factory))
+                self._fetch_failed, format_error_message(e, self.session.factory), generation)
             return
-        self.app.call_from_thread(self._populate, items)
+        self.app.call_from_thread(self._populate, items, generation)
 
     @work(thread=True, exclusive=True, group="fetch")
-    def _load_entries(self, doc_id):
+    def _load_entries(self, doc_id, generation):
         try:
             items = self.data.entries(doc_id)
         except Exception as e:
             self.app.call_from_thread(
-                self._fetch_failed, format_error_message(e, self.session.factory))
+                self._fetch_failed, format_error_message(e, self.session.factory), generation)
             return
-        self.app.call_from_thread(self._populate, items)
+        self.app.call_from_thread(self._populate, items, generation)
 
-    def _fetch_failed(self, message):
+    def _fetch_failed(self, message, generation=None):
+        if generation is not None and generation != self._load_generation:
+            return
+        self._pending_entry_restore = None
+        self._restoring_entry_preview = False
+        self._restoring_entry_id = None
         self._nav().set_loading(False)
         self.notify(f"Fetch failed: {message}", severity="error", timeout=6)
         if self.level == self.LEVEL_DOCS:
@@ -297,7 +319,9 @@ class BrowseScreen(Screen):
         self.refresh_bindings()
         self._update_header()
 
-    def _populate(self, items):
+    def _populate(self, items, generation=None):
+        if generation is not None and generation != self._load_generation:
+            return
         nav = self._nav()
         nav.set_loading(False)
         if self.level == self.LEVEL_ENTRIES:
@@ -318,7 +342,7 @@ class BrowseScreen(Screen):
         nav.focus()
 
     def _restore_entry_position(self):
-        log_id, prior_row, scroll_y = self._pending_entry_restore
+        log_id, prior_content, prior_row, scroll_y = self._pending_entry_restore
         self._pending_entry_restore = None
         row = next(
             (index for index, node in enumerate(self.shown_items)
@@ -326,15 +350,42 @@ class BrowseScreen(Screen):
             min(prior_row, len(self.shown_items) - 1) if self.shown_items else None,
         )
         if row is None:
+            self._restoring_entry_preview = False
+            self._restoring_entry_id = None
             return
         self._nav().move_cursor(row=row)
+        item = self.shown_items[row]
+        if item.entry.log_id == log_id and item.entry.log_entry == prior_content:
+            # Keep the body widget tree intact so its viewport cannot reset,
+            # while still refreshing metadata and attachments.
+            self._entry_key = (self.sel_doc.id, item.entry.log_id)
+            self._render_meta(item)
+            self._load_attachments(item)
+            self.call_after_refresh(self._finish_entry_restore)
+            return
         self.run_worker(
-            partial(self._show_preview, self.shown_items[row]), exclusive=True, group="preview")
-        self.call_after_refresh(self._restore_preview_scroll, scroll_y)
+            self._show_preview_and_restore_scroll(item, scroll_y),
+            exclusive=True, group="preview")
 
-    def _restore_preview_scroll(self, scroll_y):
-        preview = self.query_one("#preview", VerticalScroll)
-        preview.scroll_to(y=min(scroll_y, preview.max_scroll_y), animate=False)
+    def _finish_entry_restore(self):
+        self._restoring_entry_preview = False
+        self._restoring_entry_id = None
+
+    async def _show_preview_and_restore_scroll(self, item, scroll_y):
+        try:
+            await self._show_preview(item)
+            preview = self.query_one("#preview", VerticalScroll)
+            # Markdown.update() schedules its child layout. Wait for that layout
+            # before restoring the viewport, then repaint at the restored offset.
+            await preview.wait_for_refresh()
+            preview.scroll_to(
+                y=min(scroll_y, preview.max_scroll_y), animate=False,
+                force=True, immediate=True)
+            await preview.wait_for_refresh()
+            preview.refresh()
+        finally:
+            self._restoring_entry_preview = False
+            self._restoring_entry_id = None
 
     def _apply_filter(self, query):
         row_fn = self.LEVEL_ROW_FN[self.level]
@@ -350,10 +401,18 @@ class BrowseScreen(Screen):
         if self.shown_items:
             for it in self.shown_items:
                 table.add_row(*row_fn(it))
-            # DataTable.clear() leaves the cursor at (0, 0); if it was
-            # already there, RowHighlighted won't fire, so drive the
-            # initial preview explicitly instead of relying on it.
-            self.run_worker(partial(self._show_preview, self.shown_items[0]), exclusive=True, group="preview")
+            # During entry restoration the selected row drives the preview;
+            # rendering row zero first would reset the existing viewport.
+            restoring_entry = (
+                self.level == self.LEVEL_ENTRIES
+                and self._pending_entry_restore is not None
+            )
+            if not restoring_entry:
+                # DataTable.clear() leaves the cursor at (0, 0); if it was
+                # already there, RowHighlighted won't fire.
+                self.run_worker(
+                    partial(self._show_preview, self.shown_items[0]),
+                    exclusive=True, group="preview")
         else:
             self.query_one("#meta", Static).update("(no matches)")
             self.query_one("#body-md", Markdown).display = False
@@ -389,10 +448,38 @@ class BrowseScreen(Screen):
     async def on_data_table_row_highlighted(self, event):
         if event.data_table.id != "nav-table":
             return
+        # Clearing and rebuilding the table during refresh queues a highlight
+        # for row zero. Ignore it once the cursor has already been restored.
+        if event.cursor_row != self._nav().cursor_row:
+            return
         if event.cursor_row >= len(self.shown_items):
             return
         item = self.shown_items[event.cursor_row]
+        if self._restoring_entry_preview:
+            if self.level != self.LEVEL_ENTRIES:
+                return
+            if item.entry.log_id == self._restoring_entry_id:
+                return
+            # A real selection change supersedes refresh restoration.
+            self._reset_entry_preview_state()
+        if self.level == self.LEVEL_ENTRIES:
+            key = (self.sel_doc.id, item.entry.log_id)
+            if key != self._entry_key:
+                self._reset_entry_preview_state()
         await self._show_preview(item)
+
+    def _reset_entry_preview_state(self):
+        """Discard refresh state and start a newly selected entry at the top."""
+        self._pending_entry_restore = None
+        self._restoring_entry_preview = False
+        self._restoring_entry_id = None
+        self._entry_key = None
+        self._render_token += 1
+        self.app.workers.cancel_group(self, "preview")
+        self.app.workers.cancel_group(self, "images")
+        self.app.workers.cancel_group(self, "attachments")
+        preview = self.query_one("#preview", VerticalScroll)
+        preview.scroll_to(x=0, y=0, animate=False, force=True, immediate=True)
 
     def _render_meta(self, item):
         """Sync metadata render for the current level (types/docs have no async work)."""
@@ -427,7 +514,9 @@ class BrowseScreen(Screen):
                 self._maybe_hint_images_unavailable()
             body_blocks.display = False
             body_md.display = True
-            await body_md.update(entry.log_entry or "")
+            content = entry.log_entry or ""
+            if body_md.source != content:
+                await body_md.update(content)
             return
 
         body_md.display = False
@@ -610,6 +699,10 @@ class BrowseScreen(Screen):
         return True
 
     def action_refresh_level(self):
+        # Do not start another entry refresh while its preview state is being
+        # restored; repeated refreshes would otherwise race over one snapshot.
+        if self.level == self.LEVEL_ENTRIES and self._restoring_entry_preview:
+            return
         if self.level == self.LEVEL_TYPES:
             self.data.invalidate("types")
         elif self.level == self.LEVEL_DOCS:
@@ -913,8 +1006,10 @@ class BrowseScreen(Screen):
         if reply_to is not None:
             self._collapsed.discard(reply_to.log_id)
             saved_id = getattr(saved, "log_id", None) or reply_to.log_id
-            preview = self.query_one("#preview", VerticalScroll)
-            self._pending_entry_restore = (saved_id, self._nav().cursor_row or 0, preview.scroll_y)
+            self._pending_entry_restore = (
+                saved_id, None, self._nav().cursor_row or 0, 0)
+            self._restoring_entry_preview = True
+            self._restoring_entry_id = saved_id
         if self.level == self.LEVEL_ENTRIES:
             self.show_level(
                 self.LEVEL_ENTRIES,
