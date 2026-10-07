@@ -36,7 +36,7 @@ requires-dist = [
 
 [[package]]
 name = "bely-cli"
-version = "2026.10.0.dev0"
+version = "2026.10.0.dev1"
 source = { editable = "." }
 dependencies = [
     { name = "bely-api" },
