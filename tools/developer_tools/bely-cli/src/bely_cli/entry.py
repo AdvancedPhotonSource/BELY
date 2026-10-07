@@ -304,8 +304,37 @@ def cmd_list_entries(doc_name, doc_id, replies=False, fmt="text"):
     print_items(items, columns, fmt)
 
 
-def cmd_get_entry(doc_name, doc_id, entry_id, output_dir, fmt="text"):
-    """Write the markdown of a log entry to a file (latest by default)."""
+def _entry_summary(entry, doc):
+    return {
+        "log_id": entry.log_id,
+        "document_id": doc.id,
+        "document": doc.name,
+        "parent_log_id": getattr(entry, "parent_log_id", None),
+        "created_by": getattr(entry, "entered_by_username", None) or "",
+        "created": getattr(entry, "entered_on_date_time", None),
+        "modified_by": getattr(entry, "last_modified_by_username", None) or "",
+        "modified": getattr(entry, "last_modified_on_date_time", None),
+    }
+
+
+def _print_entry_summary(summary):
+    labels = {
+        "log_id": "Entry ID", "document_id": "Document ID",
+        "document": "Document", "parent_log_id": "Parent entry ID",
+        "created_by": "Created by", "created": "Created",
+        "modified_by": "Modified by", "modified": "Modified",
+        "path": "File",
+    }
+    for key, value in summary.items():
+        if value not in (None, ""):
+            print(f"{labels[key]}: {value}")
+
+
+def cmd_get_entry(doc_name, doc_id, entry_id, output_dir, stdout=False, fmt="text"):
+    """Show a log entry or write its markdown to a file."""
+    if stdout and output_dir:
+        raise ValueError("--stdout and --output are mutually exclusive.")
+
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
     doc = core.resolve_doc(logbook_api, doc_name, doc_id)
@@ -322,11 +351,21 @@ def cmd_get_entry(doc_name, doc_id, entry_id, output_dir, fmt="text"):
     else:
         entry = entries[-1]
 
+    summary = _entry_summary(entry, doc)
+    if stdout:
+        if fmt == "text":
+            _print_entry_summary(summary)
+            print()
+            print(entry.log_entry or "")
+        else:
+            summary["content"] = entry.log_entry or ""
+            print_result(summary, "", fmt)
+        return
+
     name_for_file = doc_name if doc_name else str(doc.id)
-    out_path = write_entry_to_file(entry, name_for_file, output_dir, fmt)
-    if fmt != "text":
-        print_result(
-            {"log_id": entry.log_id, "path": out_path, "doc": doc.name},
-            "",
-            fmt,
-        )
+    out_path = write_entry_to_file(entry, name_for_file, output_dir, fmt, quiet=True)
+    summary["path"] = out_path
+    if fmt == "text":
+        _print_entry_summary(summary)
+    else:
+        print_result(summary, "", fmt)

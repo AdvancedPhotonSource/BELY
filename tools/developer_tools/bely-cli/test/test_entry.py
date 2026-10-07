@@ -271,6 +271,10 @@ class CmdListEntryTests(unittest.TestCase):
 
 
 class CmdGetEntryTests(unittest.TestCase):
+    def test_stdout_and_output_are_mutually_exclusive(self):
+        with self.assertRaisesRegex(ValueError, "mutually exclusive"):
+            entry.cmd_get_entry("My Doc", None, 10, ".", stdout=True)
+
     def test_get_finds_nested_reply(self):
         reply = SimpleNamespace(log_id=11, log_entry="reply text", log_replies=None)
         parent = SimpleNamespace(log_id=10, log_entry="parent", log_replies=[reply])
@@ -287,8 +291,29 @@ class CmdGetEntryTests(unittest.TestCase):
             payload = json.loads(buf.getvalue())
             with open(payload["path"]) as output:
                 self.assertEqual(output.read(), "reply text")
+            self.assertEqual(payload["log_id"], 11)
+            self.assertEqual(payload["document"], "My Doc")
         api.get_log_entries.assert_called_once_with(
             log_document_id=42, load_replies=True)
+
+    def test_get_stdout_prints_metadata_and_content(self):
+        item = SimpleNamespace(
+            log_id=10, log_entry="entry text", log_replies=None,
+            parent_log_id=None, entered_by_username="alice",
+            entered_on_date_time="created", last_modified_by_username="bob",
+            last_modified_on_date_time="modified")
+        api = FakeApi(existing_entries=[item])
+        with patch.object(entry.auth, "get_factory") as get_factory:
+            get_factory.return_value.get_logbook_api.return_value = api
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                entry.cmd_get_entry(
+                    "My Doc", None, 10, output_dir=None, stdout=True)
+        output = buf.getvalue()
+        self.assertIn("Entry ID: 10", output)
+        self.assertIn("Created by: alice", output)
+        self.assertIn("Modified: modified", output)
+        self.assertTrue(output.endswith("entry text\n"))
 
 
 class CmdDeleteTests(unittest.TestCase):

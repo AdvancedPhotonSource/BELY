@@ -595,7 +595,10 @@ All delete commands support structured JSON/YAML output. Declining confirmation 
 
 #### `bely-cli entry get`
 
-Write the markdown of an entry to a file named `<doc_name>_entry_<log_id>.md`.
+Write the markdown of an entry to a file named `<doc_name>_entry_<log_id>.md`. The default
+output also reports its document and entry IDs, creator and creation time, modifier and
+modification time, and parent entry ID when it is a reply. Use `--stdout` to print that
+metadata followed by the entry markdown instead of writing a file.
 
 | Option | Description |
 |--------|-------------|
@@ -603,6 +606,11 @@ Write the markdown of an entry to a file named `<doc_name>_entry_<log_id>.md`.
 | `-d, --doc-id INTEGER` | Document ID. |
 | `--id INTEGER` | Specific entry ID (default: latest). |
 | `-o, --output TEXT` | Directory to write the file into (default: cwd). |
+| `--stdout` | Print metadata and entry markdown to standard output instead of writing a file. |
+
+```bash
+bely-cli entry show -d 99 --id 42 --stdout
+```
 
 ### `config` — local configuration
 

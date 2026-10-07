@@ -339,9 +339,12 @@ def entry_list(output_format, **kwargs):
 @click.option("--output", "-o", "output_dir", default=None,
               type=click.Path(path_type=str, file_okay=False),
               help="Directory to write <doc_name>_entry_<log_id>.md into (default: cwd)")
+@click.option("--stdout", "show_stdout", is_flag=True,
+              help="Print the entry and its metadata instead of writing a file")
 @common_options
 def entry_get(output_format, **kwargs):
-    """Write the markdown of a log entry to a file (latest by default)."""
+    """Show a log entry or write its markdown to a file."""
+    kwargs["stdout"] = kwargs.pop("show_stdout")
     cmd_get_entry(fmt=output_format, **kwargs)
 
 
