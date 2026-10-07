@@ -407,6 +407,34 @@ def complete_top_level_entry_ids(ctx, param, incomplete):
     return _complete_entry_ids(ctx, incomplete, include_replies=False)
 
 
+def complete_attachment_ids(ctx, param, incomplete):
+    """Fetch attachment IDs for the selected entry without caching them."""
+    from click.shell_completion import CompletionItem
+
+    doc_id = ctx.params.get("doc_id")
+    doc_name = ctx.params.get("doc_name")
+    entry_id = ctx.params.get("entry_id")
+    if (doc_id is None and not doc_name) or entry_id is None:
+        return []
+    try:
+        logbook_api = auth.get_factory().get_logbook_api()
+        if doc_id is None:
+            document = logbook_api.get_log_document_by_name(name=doc_name)
+            doc_id = document.id
+        attachments = logbook_api.get_log_entry_attachments(
+            log_document_id=doc_id, log_id=entry_id)
+    except Exception:
+        return []
+
+    results = []
+    for attachment in attachments or []:
+        attachment_id = str(getattr(attachment, "id", ""))
+        if attachment_id.startswith(incomplete):
+            description = getattr(attachment, "original_filename", None)
+            results.append(CompletionItem(attachment_id, help=description))
+    return results
+
+
 def _background_refresh(host):
     try:
         refresh_cache(host)

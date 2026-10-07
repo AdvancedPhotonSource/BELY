@@ -202,6 +202,56 @@ class CompletionTests(unittest.TestCase):
 
         self.assertEqual([item.value for item in items], ["42"])
 
+    def test_attachment_ids_are_fetched_live(self):
+        api = api_mock()
+        api.get_log_entry_attachments.return_value = [
+            SimpleNamespace(id=7, original_filename="plot.png"),
+            SimpleNamespace(id=12, original_filename="notes.txt"),
+        ]
+        factory = factory_mock()
+        factory.get_logbook_api.return_value = api
+        ctx = SimpleNamespace(params={"doc_id": 206, "entry_id": 42})
+
+        with patch.object(completion.auth, "get_factory", return_value=factory), \
+             patch.object(completion, "cached_values_for_completion") as cached:
+            items = completion.complete_attachment_ids(ctx, None, "7")
+
+        self.assertEqual([item.value for item in items], ["7"])
+        self.assertEqual(items[0].help, "plot.png")
+        api.get_log_entry_attachments.assert_called_once_with(
+            log_document_id=206, log_id=42)
+        cached.assert_not_called()
+
+    def test_attachment_ids_resolve_selected_document_name(self):
+        api = api_mock()
+        api.get_log_document_by_name.return_value = SimpleNamespace(id=206)
+        api.get_log_entry_attachments.return_value = [
+            SimpleNamespace(id=7, original_filename="plot.png")]
+        factory = factory_mock()
+        factory.get_logbook_api.return_value = api
+        ctx = SimpleNamespace(params={"doc_name": "New doc", "entry_id": 42})
+
+        with patch.object(completion.auth, "get_factory", return_value=factory):
+            items = completion.complete_attachment_ids(ctx, None, "")
+
+        self.assertEqual([item.value for item in items], ["7"])
+        api.get_log_document_by_name.assert_called_once_with(name="New doc")
+
+    def test_attachment_ids_require_document_and_entry(self):
+        with patch.object(completion.auth, "get_factory") as factory:
+            self.assertEqual(
+                completion.complete_attachment_ids(
+                    SimpleNamespace(params={"doc_id": 206}), None, ""), [])
+            self.assertEqual(
+                completion.complete_attachment_ids(
+                    SimpleNamespace(params={"entry_id": 42}), None, ""), [])
+        factory.assert_not_called()
+
+    def test_attachment_id_completion_failure_is_silent(self):
+        ctx = SimpleNamespace(params={"doc_id": 206, "entry_id": 42})
+        with patch.object(completion.auth, "get_factory", side_effect=RuntimeError("offline")):
+            self.assertEqual(completion.complete_attachment_ids(ctx, None, ""), [])
+
     def test_entry_ids_resolve_selected_document_name(self):
         api = api_mock()
         api.get_log_document_by_name.return_value = SimpleNamespace(id=206)
@@ -232,6 +282,14 @@ class CompletionTests(unittest.TestCase):
 
     def test_entry_routes_use_dynamic_entry_id_completion(self):
         entry_commands = cli.commands["entry"].commands
+        attachment_delete_options = {
+            parameter.name: parameter
+            for parameter in entry_commands["attachment"].commands["delete"].params
+        }
+        self.assertIs(
+            attachment_delete_options["attachment_id"]._custom_shell_complete,
+            completion.complete_attachment_ids,
+        )
         reply_options = {
             parameter.name: parameter for parameter in entry_commands["reply"].params
         }

@@ -107,8 +107,9 @@ Restart the shell or source the changed rc file afterward. Completion covers the
 command tree and aliases, native filesystem paths, logbook types, templates, comma-separated
 systems, and document names and IDs. For commands that target a specific entry—including
 `entry get` / `show`, `update`, `delete`, and `entry attachment` operations—`--id` completes
-entry and reply IDs after `--doc-id` or `--doc-name` has been supplied. These IDs are fetched
-live for that document and are not cached.
+entry and reply IDs after `--doc-id` or `--doc-name` has been supplied. For attachment deletion,
+`--attachment-id` completes attachment IDs after the document and entry have been supplied.
+Entry and attachment IDs are fetched live and are not cached.
 
 Dynamic values are stored per BELY host under `~/.config/bely/completion-cache/` (or beside
 the settings file selected by `BELY_SETTINGS_FILE`). The cache includes up to 100 recent

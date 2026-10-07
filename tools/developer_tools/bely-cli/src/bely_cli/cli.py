@@ -29,6 +29,7 @@ from .entry import (
 from .tui import cmd_tui
 from . import shell_completion
 from .shell_completion import (
+    complete_attachment_ids,
     complete_document_ids,
     complete_document_names,
     complete_entry_ids,
@@ -243,7 +244,10 @@ def entry_attachment_list(output_format, **kwargs):
 @doc_name_option
 @doc_id_option
 @entry_id_option()
-@click.option("--attachment-id", required=True, type=int, help="Numeric attachment ID")
+@click.option(
+    "--attachment-id", required=True, type=int,
+    shell_complete=complete_attachment_ids, help="Numeric attachment ID",
+)
 @click.option("--yes", is_flag=True, help="Delete without confirmation")
 @common_options
 def entry_attachment_delete(output_format, **kwargs):
