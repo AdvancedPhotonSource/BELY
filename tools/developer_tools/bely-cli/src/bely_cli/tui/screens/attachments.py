@@ -15,7 +15,7 @@ from textual.widgets import DataTable, DirectoryTree, Footer, Input, Markdown, S
 from ... import core
 from ...common import format_error_message
 from .confirm import ConfirmScreen
-from .dialog import DialogScreen
+from .dialog import DialogScreen, LoadingScreen
 
 
 _IMAGE_EXTENSIONS = {".bmp", ".gif", ".jpeg", ".jpg", ".png", ".webp"}
@@ -493,6 +493,7 @@ class AttachmentScreen(ModalScreen):
         api = await self.app.ensure_auth()
         if api is None:
             return
+        await self.app.push_screen(LoadingScreen("Uploading attachment…"))
         try:
             info = await asyncio.to_thread(
                 core.upload_attachment, api, self.doc.id, self.entry.log_id, path)
@@ -502,6 +503,8 @@ class AttachmentScreen(ModalScreen):
                 severity="error",
             )
             return
+        finally:
+            self.app.pop_screen()
         self.data.invalidate_attachments(self.doc.id, self.entry.log_id)
         if self.on_changed is not None:
             self.on_changed()

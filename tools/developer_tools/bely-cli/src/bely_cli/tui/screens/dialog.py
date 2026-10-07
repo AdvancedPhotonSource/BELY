@@ -1,9 +1,9 @@
 """DialogScreen: shared modal base -- a bordered panel, Esc to cancel, arrows between fields/buttons."""
 
 from textual.binding import Binding
-from textual.containers import Horizontal
+from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
-from textual.widgets import Button
+from textual.widgets import Button, LoadingIndicator, Static
 
 SAVE_HINT = "^S"
 CANCEL_HINT = "Esc"
@@ -12,6 +12,33 @@ CANCEL_HINT = "Esc"
 def hinted_label(label, hint=None):
     """Button label with its shortcut dimmed on a second line, blank if none, so row buttons stay level."""
     return f"{label}\n[dim]{hint or ' '}[/dim]"
+
+
+class LoadingScreen(ModalScreen):
+    """Reusable modal overlay for an operation in progress."""
+
+    DEFAULT_CSS = """
+    LoadingScreen { align: center middle; }
+    #loading-dialog {
+        width: 44;
+        height: 8;
+        border: thick $primary;
+        background: $surface;
+        padding: 1 2;
+        align: center middle;
+    }
+    #loading-message { width: 1fr; height: 1; text-align: center; }
+    #loading-indicator { width: 1fr; height: 1; }
+    """
+
+    def __init__(self, message="Loading…"):
+        super().__init__()
+        self.message = message
+
+    def compose(self):
+        with Vertical(id="loading-dialog"):
+            yield Static(self.message, id="loading-message")
+            yield LoadingIndicator(id="loading-indicator")
 
 
 class DialogButtons(Horizontal):

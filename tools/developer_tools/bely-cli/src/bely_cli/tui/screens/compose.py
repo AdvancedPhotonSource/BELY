@@ -20,7 +20,7 @@ from textual.widgets import Button, Input, Static, TextArea
 
 from ... import core
 from ...common import editor_changed, format_error_message
-from .dialog import CANCEL_HINT, SAVE_HINT, DialogButtons, DialogScreen, hinted_label
+from .dialog import CANCEL_HINT, SAVE_HINT, DialogButtons, DialogScreen, LoadingScreen, hinted_label
 
 
 class ComposeScreen(DialogScreen):
@@ -153,8 +153,13 @@ class ComposeScreen(DialogScreen):
         try:
             saved_entry = await asyncio.to_thread(core.save_entry, self.api, self.entry, text)
             if attach_path:
-                await asyncio.to_thread(
-                    core.upload_attachment, self.api, self.doc.id, saved_entry.log_id, attach_path)
+                await self.app.push_screen(LoadingScreen("Uploading attachment…"))
+                try:
+                    await asyncio.to_thread(
+                        core.upload_attachment, self.api, self.doc.id,
+                        saved_entry.log_id, attach_path)
+                finally:
+                    self.app.pop_screen()
         except Exception as e:
             self.notify(
                 f"Save failed: {format_error_message(e, self.factory)}", severity="error")

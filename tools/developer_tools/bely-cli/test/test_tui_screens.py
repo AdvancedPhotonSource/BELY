@@ -29,6 +29,7 @@ from bely_cli.tui.screens.attachments import (
 )
 from bely_cli.tui.screens.compose import ComposeScreen, open_composer
 from bely_cli.tui.screens.confirm import ConfirmScreen, TypeToConfirmScreen
+from bely_cli.tui.screens.dialog import LoadingScreen
 from bely_cli.tui.screens.configscreen import ConfigScreen
 from bely_cli.tui.screens.login import LoginScreen
 from bely_cli.tui.screens.newdoc import NewDocScreen
@@ -472,6 +473,16 @@ class PickerScreenTests(unittest.IsolatedAsyncioTestCase):
 
 
 class ComposeScreenTests(unittest.IsolatedAsyncioTestCase):
+    async def test_loading_screen_shows_operation_message(self):
+        app = App()
+        async with app.run_test() as pilot:
+            await app.push_screen(LoadingScreen("Uploading attachment…"))
+            await pilot.pause()
+            self.assertIn(
+                "Uploading attachment",
+                str(app.screen.query_one("#loading-message", Static).render()),
+            )
+
     async def test_reply_loads_blank_template_sets_parent_and_titles_composer(self):
         api = FakeLogbookApi()
         doc = SimpleNamespace(id=1, name="Doc")
