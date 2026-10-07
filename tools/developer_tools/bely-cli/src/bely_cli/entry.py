@@ -22,7 +22,7 @@ def upload_and_print_attachment(logbook_api, doc_id, log_id, path, fmt="text"):
 
 
 def cmd_update_entry(doc_name, doc_id, entry_id, file, text, add_attachment, fmt="text"):
-    """Update an existing log entry."""
+    """Update an existing log entry or reply."""
     if file and text:
         raise ValueError("--file and --text are mutually exclusive.")
 
@@ -43,7 +43,8 @@ def cmd_update_entry(doc_name, doc_id, entry_id, file, text, add_attachment, fmt
     # Authenticate and find/update entry
     with auth.get_authenticated_factory() as auth_factory:
         logbook_api = auth_factory.get_logbook_api()
-        entries = logbook_api.get_log_entries(log_document_id=doc.id)
+        entries = logbook_api.get_log_entries(
+            log_document_id=doc.id, load_replies=entry_id is not None)
 
         if entry_id:
             entry = core.find_entry(entries, entry_id)

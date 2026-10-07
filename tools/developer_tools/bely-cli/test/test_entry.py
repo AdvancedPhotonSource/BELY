@@ -350,6 +350,32 @@ class CmdDeleteTests(unittest.TestCase):
 
 
 class CmdUpdateEntryTests(unittest.TestCase):
+    def test_update_reply_by_id(self):
+        reply = SimpleNamespace(
+            log_id=11, log_entry="old reply", log_replies=None,
+            entered_by_username="bob")
+        parent = SimpleNamespace(
+            log_id=10, log_entry="parent", log_replies=[reply],
+            entered_by_username="alice")
+        api = FakeApi(existing_entries=[parent])
+        api.get_log_entries = method_mock(
+            LogbookApi, "get_log_entries", wraps=api.get_log_entries)
+        patches = _patch_auth(api)
+        for patcher in patches:
+            patcher.start()
+        try:
+            entry.cmd_update_entry(
+                doc_name="My Doc", doc_id=None, entry_id=11,
+                file=None, text="updated reply", add_attachment=None)
+        finally:
+            for patcher in patches:
+                patcher.stop()
+
+        self.assertIs(api.entry_saved, reply)
+        self.assertEqual(reply.log_entry, "updated reply")
+        api.get_log_entries.assert_called_once_with(
+            log_document_id=42, load_replies=True)
+
     def test_update_entry_with_file_and_name(self):
         existing = SimpleNamespace(
             log_id=10,

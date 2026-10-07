@@ -306,7 +306,7 @@ def entry_reply(output_format, **kwargs):
               help="File to attach to the entry")
 @common_options
 def entry_update(output_format, **kwargs):
-    """Update an existing log entry."""
+    """Update an existing log entry or reply."""
     if kwargs.get('file') == '-':
         set_no_prompt()
     cmd_update_entry(fmt=output_format, **kwargs)

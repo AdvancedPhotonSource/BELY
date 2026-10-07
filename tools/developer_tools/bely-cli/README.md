@@ -542,9 +542,9 @@ bely-cli entry attachment delete -d 99 --id 42 --attachment-id 7
 
 #### `bely-cli entry update`
 
-Update an existing entry. With no `--id`, your most recent entry in the document is
-updated. If none of `--file`, `--text`, or `--add-attachment` is given, your `$EDITOR`
-opens. `--file` and `--text` are mutually exclusive.
+Update an existing entry or reply. With no `--id`, your most recent top-level entry in the
+document is updated. If none of `--file`, `--text`, or `--add-attachment` is given, your
+`$EDITOR` opens. `--file` and `--text` are mutually exclusive.
 
 | Option | Description |
 |--------|-------------|
