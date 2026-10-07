@@ -224,7 +224,7 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(preview.scroll_y, preview_scroll_y)
 
     async def test_switching_entry_clears_refresh_state_and_scroll(self):
-        data = LogbookData(ManyEntriesApi())
+        data = LogbookData(FakeLogbookApiWithManyEntries())
         app = BelyTuiApp(FakeSession(data), limit=50, mode="lookup")
         async with app.run_test() as pilot:
             await pilot.pause()
