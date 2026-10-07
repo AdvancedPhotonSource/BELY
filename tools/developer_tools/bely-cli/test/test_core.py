@@ -112,6 +112,45 @@ class FakeOptions:
         self.logbook_type_id = logbook_type_id
 
 
+class GetDocumentTests(unittest.TestCase):
+    def test_get_document_by_name(self):
+        factory = factory_mock()
+        doc = SimpleNamespace(id=42, name="My Doc")
+        factory.get_logbook_api.return_value.get_log_document_by_name.return_value = doc
+        self.assertIs(core.get_document(factory, "My Doc", None), doc)
+
+    def test_get_document_by_id_uses_search_then_fetches_full_document(self):
+        factory = factory_mock()
+        result = SimpleNamespace(object_id=42, object_name="My Doc")
+        factory.get_search_api.return_value.search_logbook.return_value = SimpleNamespace(
+            document_results=[result])
+        doc = SimpleNamespace(id=42, name="My Doc")
+        factory.get_logbook_api.return_value.get_log_document_by_name.return_value = doc
+
+        self.assertIs(core.get_document(factory, None, 42), doc)
+        factory.get_search_api.return_value.search_logbook.assert_called_once_with(
+            search_text="*")
+
+    def test_document_summary(self):
+        info = SimpleNamespace(
+            owner_username="alice", owner_user_group_name="operators",
+            is_group_writeable=True, created_by_username="alice",
+            created_on_date_time="created", last_modified_by_username="bob",
+            last_modified_on_date_time="modified")
+        doc = SimpleNamespace(
+            id=42, name="My Doc", description="Shift log",
+            domain=SimpleNamespace(name="logbook"),
+            entity_type_list=[SimpleNamespace(name="ops")],
+            item_type_list=[SimpleNamespace(name="SR")], more_info=info,
+            log_lockout_hours=8)
+        summary = core.document_summary(doc)
+        self.assertEqual(summary["logbook_types"], ["ops"])
+        self.assertEqual(summary["systems"], ["SR"])
+        self.assertEqual(summary["owner"], "alice")
+        self.assertEqual(summary["owner_group"], "operators")
+        self.assertIs(summary["group_writeable"], True)
+
+
 class CreateDocumentTests(unittest.TestCase):
     def test_builds_options_and_creates(self):
         api = FakeLogbookApi()

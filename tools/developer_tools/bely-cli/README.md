@@ -207,7 +207,7 @@ Aliases accept the same arguments and produce the same output as their canonical
 - `bely-cli auth verify` checks whether the cached token is accepted by the server.
 - `bely-cli auth logout` invalidates the current server session and removes the cached token.
 
-All three commands support the shared `--format` and `--no-prompt` options.
+All commands support the shared `--format` and `--no-prompt` options.
 
 ### `doc` — log documents
 
@@ -233,6 +233,17 @@ List recent log documents you created, newest first.
 | Option | Description |
 |--------|-------------|
 | `--limit INTEGER` | Maximum documents to return (default: 20). |
+
+#### `bely-cli doc show`
+
+Show document metadata, including its logbook types, systems, owner and owner group,
+group-writeable status, description, and creation/modification details. Select the document
+by name or ID.
+
+```bash
+bely-cli doc show --doc-name "Shift Report"
+bely-cli doc show --doc-id 99 --format json
+```
 
 #### `bely-cli doc delete` / `rm`
 

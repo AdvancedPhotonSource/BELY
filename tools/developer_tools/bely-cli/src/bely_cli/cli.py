@@ -7,6 +7,7 @@ from .config import VALID_FIELDS
 from .commands import (
     cmd_new_doc,
     cmd_delete_doc,
+    cmd_show_doc,
     cmd_list_docs,
     cmd_auth_login,
     cmd_auth_logout,
@@ -186,6 +187,15 @@ def doc_new(output_format, **kwargs):
 def doc_list(output_format, **kwargs):
     """List recent log documents created by you."""
     cmd_list_docs(fmt=output_format, **kwargs)
+
+
+@doc_group.command("show")
+@doc_name_option
+@doc_id_option
+@common_options
+def doc_show(output_format, **kwargs):
+    """Show summary information for a log document."""
+    cmd_show_doc(fmt=output_format, **kwargs)
 
 
 @doc_group.command("delete")

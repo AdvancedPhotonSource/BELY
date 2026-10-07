@@ -73,6 +73,60 @@ def resolve_doc(logbook_api, doc_name, doc_id):
     return doc
 
 
+def get_document(factory, doc_name, doc_id):
+    """Fetch a complete document by name or ID."""
+    if doc_name and doc_id:
+        raise ValueError("--doc-name and --doc-id are mutually exclusive.")
+    if not doc_name and not doc_id:
+        raise ValueError("--doc-name or --doc-id is required.")
+
+    logbook_api = factory.get_logbook_api()
+    if doc_name:
+        from .common import find_logdoc
+        doc = find_logdoc(logbook_api, doc_name)
+        if not doc:
+            raise ValueError(f'log document "{doc_name}" not found.')
+        return doc
+
+    results = factory.get_search_api().search_logbook(search_text="*")
+    match = next(
+        (item for item in (results.document_results or []) if item.object_id == doc_id),
+        None,
+    )
+    if not match or not match.object_name:
+        raise ValueError(f"log document id={doc_id} not found.")
+    doc = logbook_api.get_log_document_by_name(name=match.object_name)
+    if doc.id != doc_id:
+        raise ValueError(f"log document id={doc_id} not found.")
+    return doc
+
+
+def _names(items):
+    return [item.name for item in (items or []) if getattr(item, "name", None)]
+
+
+def document_summary(doc):
+    """Return stable summary fields for a log document."""
+    more_info = getattr(doc, "more_info", None)
+    domain = getattr(doc, "domain", None)
+    return {
+        "id": doc.id,
+        "name": doc.name or "",
+        "description": getattr(doc, "description", None) or "",
+        "logbook": getattr(domain, "name", None) or "",
+        "logbook_types": _names(getattr(doc, "entity_type_list", None)),
+        "systems": _names(getattr(doc, "item_type_list", None)),
+        "owner": getattr(more_info, "owner_username", None) or "",
+        "owner_group": getattr(more_info, "owner_user_group_name", None) or "",
+        "group_writeable": getattr(more_info, "is_group_writeable", None),
+        "created_by": getattr(more_info, "created_by_username", None) or "",
+        "created": getattr(more_info, "created_on_date_time", None),
+        "modified_by": getattr(more_info, "last_modified_by_username", None) or "",
+        "modified": getattr(more_info, "last_modified_on_date_time", None),
+        "lockout_hours": getattr(doc, "log_lockout_hours", None),
+    }
+
+
 def create_document(logbook_api, name, logbook_type_id, system_id_list=None,
                      template_id=None, skip_default_template=False):
     """Create a new log document and return it."""

@@ -120,6 +120,23 @@ class CmdAuthTests(unittest.TestCase):
         )
 
 
+class CmdShowDocTests(unittest.TestCase):
+    def test_show_doc_json(self):
+        doc = SimpleNamespace(
+            id=42, name="My Doc", description="Shift log", domain=None,
+            entity_type_list=[SimpleNamespace(name="ops")], item_type_list=[],
+            more_info=None, log_lockout_hours=None)
+        with patch.object(commands.auth, "get_factory") as get_factory, \
+             patch.object(commands.core, "get_document", return_value=doc):
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                commands.cmd_show_doc("My Doc", None, fmt="json")
+        payload = __import__("json").loads(buf.getvalue())
+        self.assertEqual(payload["id"], 42)
+        self.assertEqual(payload["logbook_types"], ["ops"])
+        get_factory.assert_called_once_with()
+
+
 class CmdDeleteDocTests(unittest.TestCase):
     def setUp(self):
         self.api = api_mock()

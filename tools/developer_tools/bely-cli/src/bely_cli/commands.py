@@ -189,6 +189,31 @@ def cmd_new_doc(type_, name, file, template, systems, no_template,
         print_result(result, "", fmt)
 
 
+def cmd_show_doc(doc_name, doc_id, fmt="text"):
+    """Show summary information for a log document."""
+    doc = core.get_document(auth.get_factory(), doc_name, doc_id)
+    summary = core.document_summary(doc)
+    if fmt != "text":
+        print_result(summary, "", fmt)
+        return
+
+    labels = {
+        "id": "ID", "name": "Name", "description": "Description",
+        "logbook": "Logbook", "logbook_types": "Logbook types",
+        "systems": "Systems", "owner": "Owner", "owner_group": "Owner group",
+        "group_writeable": "Group writeable",
+        "created_by": "Created by",
+        "created": "Created", "modified_by": "Modified by",
+        "modified": "Modified", "lockout_hours": "Lockout hours",
+    }
+    for key, value in summary.items():
+        if value in (None, "", []):
+            continue
+        if isinstance(value, list):
+            value = ", ".join(value)
+        print(f"{labels[key]}: {value}")
+
+
 def cmd_delete_doc(doc_name, doc_id, yes=False, force=False, fmt="text"):
     """Delete a log document after validation and confirmation."""
     factory = auth.get_factory()
