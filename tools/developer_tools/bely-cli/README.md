@@ -85,6 +85,63 @@ bely-cli config set host https://tinkerbox.aps.anl.gov:8181/bely
 > examples in this README use `bely-cli` directly, so set the host (or export `BELY_HOST`)
 > as shown above.
 
+## Shell completion
+
+`bely-cli` supports command, alias, option, and value completion in Bash and Zsh. Initialize
+completion for the shell detected from `$SHELL`:
+
+```bash
+bely-cli shell init
+```
+
+The command previews the marked block and target (`~/.bashrc` or `~/.zshrc`) and asks before
+editing it. Re-running it safely replaces the existing marked block. Override detection or
+print the setup for manual installation with:
+
+```bash
+bely-cli shell init --shell bash
+bely-cli shell init --shell zsh --print
+```
+
+Restart the shell or source the changed rc file afterward. Completion covers the Click
+command tree and aliases, native filesystem paths, logbook types, templates, comma-separated
+systems, and document names and IDs. For commands that target a specific entry—including
+`entry get` / `show`, `update`, `delete`, and `entry attachment` operations—`--id` completes
+entry and reply IDs after `--doc-id` or `--doc-name` has been supplied. For attachment deletion,
+`--attachment-id` completes attachment IDs after the document and entry have been supplied.
+Entry and attachment IDs are fetched live and are not cached.
+
+Dynamic values are stored per BELY host under `~/.config/bely/completion-cache/` (or beside
+the settings file selected by `BELY_SETTINGS_FILE`). The cache includes up to 100 recent
+documents per logbook type. Its lifetime is controlled by `completion_cache_ttl`, defaulting
+to `24h`; accepted values are non-negative seconds or numbers suffixed with `s`, `m`, `h`, or
+`d` (for example `30m` or `2d`). With caching enabled, pressing Tab never waits for the
+server or prompts: stale values are returned immediately while one quiet background refresh
+starts. Creating or deleting a document through `bely-cli` also updates an existing cache
+for the current host immediately (without changing its refresh age); if no cache exists,
+normal refresh behavior applies. If refresh fails, stale values remain available; with no
+host, network, or cache, static and filesystem completion still work.
+
+Manage the cache explicitly with:
+
+```bash
+bely-cli shell cache refresh       # synchronous update
+bely-cli shell cache status
+bely-cli shell cache clear         # current configured host
+bely-cli shell cache clear --all-hosts
+```
+
+Change the lifetime with the regular configuration command:
+
+```bash
+bely-cli config set completion_cache_ttl 12h
+bely-cli config set completion_cache_ttl 0   # disable caching; always fetch live
+```
+
+A value of `0` removes cached data on explicit refresh and makes each dynamic completion
+query the current BELY instance directly. This may make Tab completion slower or unavailable
+while offline. Entry-ID completion is always live regardless of this setting.
+
 ## Authentication
 
 Mutating operations (creating documents, adding/updating entries) require authentication;
@@ -130,13 +187,27 @@ bely-cli doc list --format json
 
 ## Commands
 
+Descriptive command names are canonical. These shorter aliases are also available:
+
+| Alias | Canonical command |
+|-------|-------------------|
+| `doc ls` | `doc list` |
+| `doc add` | `doc new` |
+| `entry ls` | `entry list` |
+| `entry show` | `entry get` |
+| `entry edit` | `entry update` |
+| `entry attachment ls` | `entry attachment list` |
+| `config ls` | `config show` |
+
+Aliases accept the same arguments and produce the same output as their canonical commands.
+
 ### `auth` — authentication
 
 - `bely-cli auth login` authenticates with configured or prompted credentials and caches the token.
 - `bely-cli auth verify` checks whether the cached token is accepted by the server.
 - `bely-cli auth logout` invalidates the current server session and removes the cached token.
 
-All three commands support the shared `--format` and `--no-prompt` options.
+All commands support the shared `--format` and `--no-prompt` options.
 
 ### `doc` — log documents
 
@@ -162,6 +233,28 @@ List recent log documents you created, newest first.
 | Option | Description |
 |--------|-------------|
 | `--limit INTEGER` | Maximum documents to return (default: 20). |
+
+#### `bely-cli doc show`
+
+Show document metadata, including its logbook types, systems, owner and owner group,
+group-writeable status, description, and creation/modification details. Select the document
+by name or ID.
+
+```bash
+bely-cli doc show --doc-name "Shift Report"
+bely-cli doc show --doc-id 99 --format json
+```
+
+#### `bely-cli doc delete` / `rm`
+
+Delete a document selected by `--doc-name` or `--doc-id`. Confirmation is required unless
+`--yes` is supplied. A document containing entries requires `--force`; `--force` does not
+skip confirmation.
+
+```bash
+bely-cli doc delete --doc-id 99
+bely-cli doc rm --doc-name "Disposable Log" --force --yes
+```
 
 ### `tui` — interactive terminal UIs
 
@@ -326,6 +419,8 @@ on — `i` disappears once you drill into entries, and `s` / `y` / `e` / `f` / `
 | `e` | Entries level only: open the highlighted entry in `$EDITOR`; if you change it, offers to save the result back to the server (a mutation, so this is where the app authenticates if it hasn't already). |
 | `p` | Entries level only: reply to the highlighted entry's top-level thread. Attachments are supported. |
 | `t` | Entries level only: collapse/expand the reply thread under the highlighted entry (or its parent, if the highlight is on a reply). Replies start expanded. |
+| `Shift+A` | Entries level only: open the highlighted entry's attachment browser. |
+| `x` | Document/entry levels only: delete the highlighted document, entry, or reply after destructive confirmation. Documents containing entries require a second confirmation by typing the document name exactly. |
 | `i` | Logbook/document levels only: toggle the side info panel. |
 | `f` | Entries level only: toggle the table to widen the preview pane. |
 | `r` | Refresh the current level, bypassing the in-session cache. Entry selection, preview scroll, filters, and collapsed threads are preserved when possible. |
@@ -333,6 +428,19 @@ on — `i` disappears once you drill into entries, and `s` / `y` / `e` / `f` / `
 
 Replies only nest one level deep. Pressing `p` on either a top-level entry or one of its
 replies targets the top-level thread; `n` still adds a separate top-level entry.
+
+**Attachment browser**
+
+Press `Shift+A` on an entry to list its attachments and preview the highlighted item. Images
+render inline when image support is available; UTF-8 text and Markdown render as text; PDFs
+and other binary formats show their metadata and download path. Press `u` to choose a local
+file with the filesystem browser and upload it (its Markdown reference is appended to the
+entry). The browser's path field supports shell-like completion with `Tab` or Right Arrow;
+`Ctrl+U` clears the entire field, `Ctrl+Shift+A` selects it, and entering a directory changes the tree root.
+With the tree focused, `/` filters filenames in the displayed directories and `p` toggles
+a local-file preview while choosing an upload. Press `y` to copy the highlighted attachment's
+Markdown reference, `x` to delete the highlighted attachment after confirmation, and `Esc`
+to close the browser.
 
 On selecting an entry the TUI exits and prints its `doc-id` / `log-id`, plus a ready-to-run
 `bely-cli entry get` command so you can fetch it:
@@ -405,11 +513,49 @@ Add a new entry to an existing document. If none of `--file`, `--text`, or
 | `-t, --text TEXT` | Inline text for the entry. |
 | `--add-attachment TEXT` | File to attach to the entry. |
 
+#### `bely-cli entry reply`
+
+Reply to a top-level entry. `--id` identifies the parent entry. If neither `--file` nor
+`--text` is given, your `$EDITOR` opens. Attachments are supported.
+
+```bash
+bely-cli entry reply -n "Shift Report" --id 42 --text "RF is stable again."
+bely-cli entry reply -d 99 --id 42 --file reply.md --add-attachment plot.png
+```
+
+#### `bely-cli entry attachment add`
+
+Upload a file to a specific existing entry. The attachment's Markdown reference is appended
+to the entry. The existing `--add-attachment` options on `entry add` and `entry update`
+remain supported.
+
+```bash
+bely-cli entry attachment add -d 99 --id 42 --file plot.png
+```
+
+#### `bely-cli entry attachment list` / `ls`
+
+List an entry's attachments, including the attachment ID, original and stored filenames, and
+download path. `ls` is an alias for `list`.
+
+```bash
+bely-cli entry attachment list -d 99 --id 42
+bely-cli entry attachment ls -n "Shift Report" --id 42 --format json
+```
+
+#### `bely-cli entry attachment delete` / `rm`
+
+Delete an attachment using its numeric ID from `attachment list`:
+
+```bash
+bely-cli entry attachment delete -d 99 --id 42 --attachment-id 7
+```
+
 #### `bely-cli entry update`
 
-Update an existing entry. With no `--id`, your most recent entry in the document is
-updated. If none of `--file`, `--text`, or `--add-attachment` is given, your `$EDITOR`
-opens. `--file` and `--text` are mutually exclusive.
+Update an existing entry or reply. With no `--id`, your most recent top-level entry in the
+document is updated. If none of `--file`, `--text`, or `--add-attachment` is given, your
+`$EDITOR` opens. `--file` and `--text` are mutually exclusive.
 
 | Option | Description |
 |--------|-------------|
@@ -428,10 +574,31 @@ List the entries in a document (Log ID, date, author, and a snippet of the first
 |--------|-------------|
 | `-n, --doc-name TEXT` | Document name. |
 | `-d, --doc-id INTEGER` | Document ID. |
+| `--replies` | Include replies and a `Parent ID` column. |
+
+```bash
+bely-cli entry ls -d 99 --replies
+```
+
+#### `bely-cli entry delete` / `rm`
+
+Delete a top-level entry or reply by log ID, with confirmation by default:
+
+```bash
+bely-cli entry delete -d 99 --id 42
+bely-cli entry rm -n "Shift Report" --id 42 --yes
+```
+
+All delete commands support structured JSON/YAML output. Declining confirmation returns
+`status: cancelled`; successful deletion returns `status: deleted`. In `--no-prompt` mode,
+`--yes` is required.
 
 #### `bely-cli entry get`
 
-Write the markdown of an entry to a file named `<doc_name>_entry_<log_id>.md`.
+Write the markdown of an entry to a file named `<doc_name>_entry_<log_id>.md`. The default
+output also reports its document and entry IDs, creator and creation time, modifier and
+modification time, and parent entry ID when it is a reply. Use `--stdout` to print that
+metadata followed by the entry markdown instead of writing a file.
 
 | Option | Description |
 |--------|-------------|
@@ -439,6 +606,11 @@ Write the markdown of an entry to a file named `<doc_name>_entry_<log_id>.md`.
 | `-d, --doc-id INTEGER` | Document ID. |
 | `--id INTEGER` | Specific entry ID (default: latest). |
 | `-o, --output TEXT` | Directory to write the file into (default: cwd). |
+| `--stdout` | Print metadata and entry markdown to standard output instead of writing a file. |
+
+```bash
+bely-cli entry show -d 99 --id 42 --stdout
+```
 
 ### `config` — local configuration
 
@@ -531,8 +703,13 @@ bely-cli entry add -n "Shift Report" -t "Beam restored after RF trip."
 bely-cli entry add -n "Shift Report" -f entry.md
 bely-cli entry add -n "Shift Report"                 # opens $EDITOR
 
-# Attach a file to an entry
+# Reply to an entry
+bely-cli entry reply -n "Shift Report" --id 42 -t "RF is stable again."
+
+# Attach a file while adding an entry, or to an existing entry
 bely-cli entry add -n "Shift Report" --add-attachment plot.png
+bely-cli entry attachment add -n "Shift Report" --id 42 --file plot.png
+bely-cli entry attachment ls -n "Shift Report" --id 42
 
 # Update your most recent entry, or a specific one
 bely-cli entry update -n "Shift Report" -t "Corrected: trip was on RF2."

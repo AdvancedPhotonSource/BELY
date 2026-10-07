@@ -6,6 +6,8 @@ from .common import FORMATS, format_error_message, set_no_prompt
 from .config import VALID_FIELDS
 from .commands import (
     cmd_new_doc,
+    cmd_delete_doc,
+    cmd_show_doc,
     cmd_list_docs,
     cmd_auth_login,
     cmd_auth_logout,
@@ -15,15 +17,49 @@ from .commands import (
     cmd_set_config,
 )
 from .entry import (
+    cmd_add_attachment,
     cmd_add_entry,
+    cmd_delete_attachment,
+    cmd_delete_entry,
     cmd_get_entry,
+    cmd_list_attachments,
     cmd_list_entries,
+    cmd_reply_entry,
     cmd_update_entry,
 )
 from .tui import cmd_tui
+from . import shell_completion
+from .shell_completion import (
+    complete_attachment_ids,
+    complete_document_ids,
+    complete_document_names,
+    complete_entry_ids,
+    complete_top_level_entry_ids,
+    complete_systems,
+    complete_templates,
+    complete_types,
+)
 
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+
+
+class AliasHelpGroup(click.Group):
+    """Display aliases together instead of as duplicate help rows."""
+
+    def format_commands(self, ctx, formatter):
+        grouped = {}
+        for name in self.list_commands(ctx):
+            command = self.get_command(ctx, name)
+            if command is not None and not command.hidden:
+                grouped.setdefault(id(command), (command, []))[1].append(name)
+        rows = []
+        for command, names in grouped.values():
+            label = ", ".join(sorted(names))
+            rows.append((label, command.get_short_help_str()))
+        if rows:
+            with formatter.section("Commands"):
+                formatter.write_dl(rows)
 
 
 def format_option(f):
@@ -48,6 +84,29 @@ def no_prompt_option(f):
     )(f)
 
 
+def doc_name_option(f):
+    return click.option(
+        "--doc-name", "-n", default=None, shell_complete=complete_document_names,
+        help="Log document name",
+    )(f)
+
+
+def doc_id_option(f):
+    return click.option(
+        "--doc-id", "-d", default=None, type=int, shell_complete=complete_document_ids,
+        help="Log document ID",
+    )(f)
+
+
+def entry_id_option(required=True, help="Log entry ID"):
+    def decorator(f):
+        return click.option(
+            "--id", "entry_id", required=required, default=None, type=int,
+            shell_complete=complete_entry_ids, help=help,
+        )(f)
+    return decorator
+
+
 def common_options(f):
     """Options shared by all leaf commands (--format and --no-prompt)."""
     return format_option(no_prompt_option(f))
@@ -61,7 +120,7 @@ def cli():
 
 # -- auth --
 
-@cli.group("auth")
+@cli.group("auth", cls=AliasHelpGroup)
 def auth_group():
     """Authentication commands."""
     pass
@@ -90,20 +149,25 @@ def auth_verify(output_format):
 
 # -- doc --
 
-@cli.group("doc")
+@cli.group("doc", cls=AliasHelpGroup)
 def doc_group():
     """Log document commands."""
     pass
 
 
 @doc_group.command("new")
-@click.option("--type", "type_", default=None, help="Logbook type (e.g. ops, controls)")
+@click.option("--type", "type_", default=None, shell_complete=complete_types,
+              help="Logbook type (e.g. ops, controls)")
 @click.option("--name", "-n", default=None, help="Name for the new document")
-@click.option("--file", "-f", "file", default=None, help="Markdown file for the first log entry")
-@click.option("--template", default=None, help="Template name to use")
-@click.option("--systems", default=None, help="Comma-separated system list (e.g. SR,software)")
+@click.option("--file", "-f", "file", default=None, type=click.Path(path_type=str, allow_dash=True),
+              help="Markdown file for the first log entry")
+@click.option("--template", default=None, shell_complete=complete_templates,
+              help="Template name to use")
+@click.option("--systems", default=None, shell_complete=complete_systems,
+              help="Comma-separated system list (e.g. SR,software)")
 @click.option("--no-template", is_flag=True, help="Skip template selection")
 @click.option("--output", "-o", "output_dir", default=None,
+              type=click.Path(path_type=str, file_okay=False),
               help="Directory to write template-generated entry into (default: cwd)")
 @click.option("--list-options", "list_options",
               type=click.Choice(["system", "type", "template"]),
@@ -125,20 +189,94 @@ def doc_list(output_format, **kwargs):
     cmd_list_docs(fmt=output_format, **kwargs)
 
 
+@doc_group.command("show")
+@doc_name_option
+@doc_id_option
+@common_options
+def doc_show(output_format, **kwargs):
+    """Show summary information for a log document."""
+    cmd_show_doc(fmt=output_format, **kwargs)
+
+
+@doc_group.command("delete")
+@doc_name_option
+@doc_id_option
+@click.option("--yes", is_flag=True, help="Delete without confirmation")
+@click.option("--force", is_flag=True, help="Allow deletion when the document contains entries")
+@common_options
+def doc_delete(output_format, **kwargs):
+    """Delete a log document."""
+    cmd_delete_doc(fmt=output_format, **kwargs)
+
+
+doc_group.add_command(doc_list, "ls")
+doc_group.add_command(doc_new, "add")
+doc_group.add_command(doc_delete, "rm")
+
+
 # -- entry --
 
-@cli.group("entry")
+@cli.group("entry", cls=AliasHelpGroup)
 def entry_group():
     """Log entry commands."""
     pass
 
 
+@entry_group.group("attachment", cls=AliasHelpGroup)
+def entry_attachment_group():
+    """Log entry attachment commands."""
+    pass
+
+
+@entry_attachment_group.command("add")
+@doc_name_option
+@doc_id_option
+@entry_id_option()
+@click.option("--file", "-f", required=True, type=click.Path(path_type=str),
+              help="File to attach")
+@common_options
+def entry_attachment_add(output_format, **kwargs):
+    """Upload an attachment to an existing log entry."""
+    cmd_add_attachment(fmt=output_format, **kwargs)
+
+
+@entry_attachment_group.command("list")
+@doc_name_option
+@doc_id_option
+@entry_id_option()
+@common_options
+def entry_attachment_list(output_format, **kwargs):
+    """List attachments on a log entry."""
+    cmd_list_attachments(fmt=output_format, **kwargs)
+
+
+@entry_attachment_group.command("delete")
+@doc_name_option
+@doc_id_option
+@entry_id_option()
+@click.option(
+    "--attachment-id", required=True, type=int,
+    shell_complete=complete_attachment_ids, help="Numeric attachment ID",
+)
+@click.option("--yes", is_flag=True, help="Delete without confirmation")
+@common_options
+def entry_attachment_delete(output_format, **kwargs):
+    """Delete an attachment from a log entry."""
+    cmd_delete_attachment(fmt=output_format, **kwargs)
+
+
+entry_attachment_group.add_command(entry_attachment_list, "ls")
+entry_attachment_group.add_command(entry_attachment_delete, "rm")
+
+
 @entry_group.command("add")
-@click.option("--doc-name", "-n", default=None, help="Log document name")
-@click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
-@click.option("--file", "-f", "file", default=None, help="Markdown file with entry content")
+@doc_name_option
+@doc_id_option
+@click.option("--file", "-f", "file", default=None, type=click.Path(path_type=str, allow_dash=True),
+              help="Markdown file with entry content")
 @click.option("--text", "-t", default=None, help="Inline text for the entry")
-@click.option("--add-attachment", default=None, help="File to attach to the entry")
+@click.option("--add-attachment", default=None, type=click.Path(path_type=str),
+              help="File to attach to the entry")
 @common_options
 def entry_add(output_format, **kwargs):
     """Add a new log entry to an existing document."""
@@ -147,24 +285,47 @@ def entry_add(output_format, **kwargs):
     cmd_add_entry(fmt=output_format, **kwargs)
 
 
+@entry_group.command("reply")
+@doc_name_option
+@doc_id_option
+@click.option(
+    "--id", "entry_id", required=True, type=int,
+    shell_complete=complete_top_level_entry_ids, help="Parent log entry ID",
+)
+@click.option("--file", "-f", "file", default=None, type=click.Path(path_type=str, allow_dash=True),
+              help="Markdown file with reply content")
+@click.option("--text", "-t", default=None, help="Inline reply text")
+@click.option("--add-attachment", default=None, type=click.Path(path_type=str),
+              help="File to attach to the reply")
+@common_options
+def entry_reply(output_format, **kwargs):
+    """Reply to an existing log entry."""
+    if kwargs.get('file') == '-':
+        set_no_prompt()
+    cmd_reply_entry(fmt=output_format, **kwargs)
+
+
 @entry_group.command("update")
-@click.option("--doc-name", "-n", default=None, help="Log document name")
-@click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
-@click.option("--id", "entry_id", default=None, type=int, help="Specific log entry ID to update")
-@click.option("--file", "-f", "file", default=None, help="Markdown file with updated content")
+@doc_name_option
+@doc_id_option
+@entry_id_option(required=False, help="Specific log entry ID to update")
+@click.option("--file", "-f", "file", default=None, type=click.Path(path_type=str, allow_dash=True),
+              help="Markdown file with updated content")
 @click.option("--text", "-t", default=None, help="Inline text for the entry")
-@click.option("--add-attachment", default=None, help="File to attach to the entry")
+@click.option("--add-attachment", default=None, type=click.Path(path_type=str),
+              help="File to attach to the entry")
 @common_options
 def entry_update(output_format, **kwargs):
-    """Update an existing log entry."""
+    """Update an existing log entry or reply."""
     if kwargs.get('file') == '-':
         set_no_prompt()
     cmd_update_entry(fmt=output_format, **kwargs)
 
 
 @entry_group.command("list")
-@click.option("--doc-name", "-n", default=None, help="Log document name")
-@click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
+@doc_name_option
+@doc_id_option
+@click.option("--replies", is_flag=True, help="Include replies and their parent entry IDs")
 @common_options
 def entry_list(output_format, **kwargs):
     """List entries in a log document."""
@@ -172,15 +333,36 @@ def entry_list(output_format, **kwargs):
 
 
 @entry_group.command("get")
-@click.option("--doc-name", "-n", default=None, help="Log document name")
-@click.option("--doc-id", "-d", default=None, type=int, help="Log document ID")
-@click.option("--id", "entry_id", default=None, type=int, help="Specific log entry ID (default: latest)")
+@doc_name_option
+@doc_id_option
+@entry_id_option(required=False, help="Specific log entry ID (default: latest)")
 @click.option("--output", "-o", "output_dir", default=None,
+              type=click.Path(path_type=str, file_okay=False),
               help="Directory to write <doc_name>_entry_<log_id>.md into (default: cwd)")
+@click.option("--stdout", "show_stdout", is_flag=True,
+              help="Print the entry and its metadata instead of writing a file")
 @common_options
 def entry_get(output_format, **kwargs):
-    """Write the markdown of a log entry to a file (latest by default)."""
+    """Show a log entry or write its markdown to a file."""
+    kwargs["stdout"] = kwargs.pop("show_stdout")
     cmd_get_entry(fmt=output_format, **kwargs)
+
+
+@entry_group.command("delete")
+@doc_name_option
+@doc_id_option
+@entry_id_option(help="Log entry or reply ID")
+@click.option("--yes", is_flag=True, help="Delete without confirmation")
+@common_options
+def entry_delete(output_format, **kwargs):
+    """Delete a log entry or reply."""
+    cmd_delete_entry(fmt=output_format, **kwargs)
+
+
+entry_group.add_command(entry_list, "ls")
+entry_group.add_command(entry_get, "show")
+entry_group.add_command(entry_update, "edit")
+entry_group.add_command(entry_delete, "rm")
 
 
 # -- tui --
@@ -188,7 +370,7 @@ def entry_get(output_format, **kwargs):
 # Bare `bely-cli tui` launches the full interactive app, so the group itself
 # is a leaf invocation when no subcommand is given -- the one place
 # --format/--no-prompt sit on a group rather than a leaf command.
-@cli.group("tui", invoke_without_command=True)
+@cli.group("tui", cls=AliasHelpGroup, invoke_without_command=True)
 @click.option("--limit", default=100, type=int,
               help="Recent documents to load per logbook (default 100)")
 @common_options
@@ -209,9 +391,92 @@ def tui_lookup(output_format, **kwargs):
     cmd_tui(fmt=output_format, mode="lookup", **kwargs)
 
 
+# -- shell --
+
+@cli.group("shell")
+def shell_group():
+    """Shell completion setup and cache management."""
+    pass
+
+
+@shell_group.command("init")
+@click.option("--shell", "shell_name", type=click.Choice(["bash", "zsh"]), default=None,
+              help="Shell to configure (default: detect from $SHELL)")
+@click.option("--print", "print_only", is_flag=True,
+              help="Print setup without editing the shell rc file")
+@click.option("--yes", is_flag=True, help="Install without confirmation")
+def shell_init(shell_name, print_only, yes):
+    """Install completion in .bashrc or .zshrc."""
+    shell_name = shell_completion.detect_shell(shell_name)
+    block = shell_completion.completion_block(shell_name)
+    target = shell_completion.rc_path(shell_name)
+    click.echo(f"Shell: {shell_name}\nTarget: {target}\n\n{block}", nl=False)
+    if print_only:
+        return
+    if not yes and not click.confirm("Add this completion setup?", default=False):
+        click.echo("No changes made.")
+        return
+    shell_completion.install_completion(shell_name, target)
+    click.echo(f"Updated {target}. Restart the shell or source that file to activate completion.")
+
+
+@shell_group.group("cache")
+def shell_cache_group():
+    """Manage cached dynamic completion values."""
+    pass
+
+
+@shell_cache_group.command("refresh")
+def shell_cache_refresh():
+    """Refresh completion values from the configured BELY server."""
+    data = shell_completion.refresh_cache()
+    click.echo(
+        "Completion cache refreshed: "
+        f"{len(data.get('types', []))} types, "
+        f"{len(data.get('systems', []))} systems, "
+        f"{len(data.get('templates', []))} templates, "
+        f"{len(data.get('documents', []))} documents."
+    )
+
+
+@shell_cache_group.command("clear")
+@click.option("--all-hosts", is_flag=True, help="Clear caches for every configured host")
+def shell_cache_clear(all_hosts):
+    """Clear cached dynamic completion values."""
+    host = None if all_hosts else shell_completion.auth.get_host()
+    shell_completion.clear_cache(host)
+    click.echo("Completion cache cleared.")
+
+
+@shell_cache_group.command("status")
+def shell_cache_status():
+    """Show completion cache location and freshness."""
+    host = shell_completion.auth.get_host()
+    ttl = shell_completion.config.get_completion_cache_ttl()
+    if ttl <= 0:
+        click.echo(
+            f"Host: {host}\nStatus: disabled (live completion)\n"
+            f"Path: {shell_completion.cache_path(host)}"
+        )
+        return
+    data = shell_completion.load_cache(host)
+    if data is None:
+        click.echo(f"No completion cache for {host}.\nPath: {shell_completion.cache_path(host)}")
+        return
+    state = "fresh" if shell_completion.cache_is_fresh(data) else "stale"
+    refreshed = __import__("datetime").datetime.fromtimestamp(data["refreshed_at"]).astimezone()
+    click.echo(
+        f"Host: {host}\nPath: {shell_completion.cache_path(host)}\n"
+        f"Status: {state}\nTTL: {shell_completion.config.get_setting('completion_cache_ttl') or shell_completion.config.DEFAULT_COMPLETION_CACHE_TTL}\n"
+        f"Refreshed: {refreshed.isoformat(timespec='seconds')}\n"
+        f"Types: {len(data.get('types', []))}\nSystems: {len(data.get('systems', []))}\n"
+        f"Templates: {len(data.get('templates', []))}\nDocuments: {len(data.get('documents', []))}"
+    )
+
+
 # -- config --
 
-@cli.group("config")
+@cli.group("config", cls=AliasHelpGroup)
 def config_group():
     """Configuration commands."""
     pass
@@ -222,6 +487,9 @@ def config_group():
 def config_show(output_format):
     """Show current configuration."""
     cmd_show_config(fmt=output_format)
+
+
+config_group.add_command(config_show, "ls")
 
 
 @config_group.command("edit")

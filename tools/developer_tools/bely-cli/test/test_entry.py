@@ -7,9 +7,13 @@ from contextlib import redirect_stdout
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+from belyApi.api.logbook_api import LogbookApi
+
 from bely_cli import entry
+from test.api_helpers import api_fake, factory_mock, method_mock
 
 
+@api_fake(LogbookApi)
 class FakeApi:
     """Minimal fake exposing only the methods entry.py touches."""
 
@@ -17,6 +21,8 @@ class FakeApi:
         self.doc = SimpleNamespace(id=42, name="My Doc")
         self.existing_entries = existing_entries or []
         self.entry_saved = None
+        self.uploaded = None
+        self.attachments = []
 
     def get_log_document_by_name(self, name):
         return self.doc
@@ -24,7 +30,7 @@ class FakeApi:
     def get_log_entry_template(self, log_document_id):
         return SimpleNamespace(log_id=None, log_entry="")
 
-    def get_log_entries(self, log_document_id):
+    def get_log_entries(self, log_document_id, load_replies=None):
         return self.existing_entries
 
     def add_update_log_entry(self, log_entry):
@@ -33,13 +39,23 @@ class FakeApi:
             log_entry.log_id = 99
         return log_entry
 
+    def upload_attachment(self, log_document_id, log_id, body, append_reference, file_name):
+        self.uploaded = (log_document_id, log_id, body, append_reference, file_name)
+        return SimpleNamespace(
+            id=7, original_filename=file_name, stored_filename=f"stored_{file_name}",
+            download_path=f"/download/{file_name}", markdown_reference=f"![{file_name}](/download/{file_name})",
+        )
+
+    def get_log_entry_attachments(self, log_document_id, log_id):
+        return self.attachments
+
 
 def _patch_auth(api):
     """Patch entry.auth.get_factory and get_authenticated_factory to yield `api`."""
-    factory = MagicMock()
+    factory = factory_mock()
     factory.get_logbook_api.return_value = api
 
-    auth_factory = MagicMock()
+    auth_factory = factory_mock()
     auth_factory.get_logbook_api.return_value = api
     auth_ctx = MagicMock()
     auth_ctx.__enter__.return_value = auth_factory
@@ -120,7 +136,271 @@ class CmdAddEntryTests(unittest.TestCase):
         self.assertEqual(payload["doc"], "My Doc")
 
 
+class CmdReplyEntryTests(unittest.TestCase):
+    def test_add_reply_with_text(self):
+        parent = SimpleNamespace(log_id=10, log_entry="parent", log_replies=[])
+        api = FakeApi(existing_entries=[parent])
+        api.get_log_entries = method_mock(
+            LogbookApi, "get_log_entries", wraps=api.get_log_entries)
+        patches = _patch_auth(api)
+        for patcher in patches:
+            patcher.start()
+        try:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                entry.cmd_reply_entry(
+                    "My Doc", None, 10, None, "reply text", None, fmt="json")
+        finally:
+            for patcher in patches:
+                patcher.stop()
+
+        payload = json.loads(buf.getvalue())
+        self.assertEqual(payload["parent_log_id"], 10)
+        self.assertEqual(payload["log_id"], 99)
+        self.assertEqual(payload["status"], "added")
+        self.assertEqual(api.entry_saved.parent_log_id, 10)
+        self.assertEqual(api.entry_saved.log_entry, "reply text")
+        api.get_log_entries.assert_called_once_with(
+            log_document_id=42, load_replies=True)
+
+    def test_reply_requires_top_level_parent(self):
+        reply = SimpleNamespace(log_id=11, log_entry="reply", log_replies=[])
+        parent = SimpleNamespace(log_id=10, log_entry="parent", log_replies=[reply])
+        api = FakeApi(existing_entries=[parent])
+        with patch.object(entry.auth, "get_factory") as get_factory, \
+             patch.object(entry.auth, "get_authenticated_factory") as authenticated:
+            get_factory.return_value.get_logbook_api.return_value = api
+            with self.assertRaisesRegex(ValueError, "top-level entry"):
+                entry.cmd_reply_entry(
+                    "My Doc", None, 11, None, "nested reply", None)
+        authenticated.assert_not_called()
+
+    def test_add_reply_with_attachment(self):
+        parent = SimpleNamespace(log_id=10, log_entry="parent", log_replies=[])
+        api = FakeApi(existing_entries=[parent])
+        tmp_path = _write_tmp("attachment")
+        try:
+            patches = _patch_auth(api)
+            for patcher in patches:
+                patcher.start()
+            try:
+                entry.cmd_reply_entry(
+                    "My Doc", None, 10, None, "reply", tmp_path)
+            finally:
+                for patcher in patches:
+                    patcher.stop()
+        finally:
+            os.unlink(tmp_path)
+        self.assertEqual(api.uploaded[:2], (42, 99))
+
+
+class CmdAttachmentTests(unittest.TestCase):
+    def test_add_attachment_to_existing_entry(self):
+        existing = SimpleNamespace(log_id=10, log_entry="entry", entered_by_username="alice")
+        api = FakeApi(existing_entries=[existing])
+        tmp_path = _write_tmp("attachment")
+        try:
+            patches = _patch_auth(api)
+            for p in patches:
+                p.start()
+            try:
+                buf = io.StringIO()
+                with redirect_stdout(buf):
+                    entry.cmd_add_attachment("My Doc", None, 10, tmp_path, fmt="json")
+            finally:
+                for p in patches:
+                    p.stop()
+        finally:
+            os.unlink(tmp_path)
+
+        payload = json.loads(buf.getvalue())
+        self.assertEqual(payload["attachment"]["id"], 7)
+        self.assertEqual(api.uploaded[:2], (42, 10))
+        self.assertTrue(api.uploaded[3])
+
+    def test_list_attachments_json(self):
+        existing = SimpleNamespace(log_id=10, log_entry="entry", entered_by_username="alice")
+        api = FakeApi(existing_entries=[existing])
+        api.attachments = [SimpleNamespace(
+            id=7, original_filename="plot.png", stored_filename="stored.png",
+            download_path="/download/stored.png", markdown_reference="![plot.png](/download/stored.png)",
+        )]
+        with patch.object(entry.auth, "get_factory") as get_factory:
+            get_factory.return_value.get_logbook_api.return_value = api
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                entry.cmd_list_attachments("My Doc", None, 10, fmt="json")
+
+        payload = json.loads(buf.getvalue())
+        self.assertEqual(payload[0]["id"], 7)
+        self.assertEqual(payload[0]["original_filename"], "plot.png")
+
+    def test_list_attachments_delegates_entry_validation_to_endpoint(self):
+        api = FakeApi()
+        api.get_log_entry_attachments = method_mock(
+            LogbookApi, "get_log_entry_attachments", side_effect=RuntimeError("entry not found"))
+        with patch.object(entry.auth, "get_factory") as get_factory:
+            get_factory.return_value.get_logbook_api.return_value = api
+            with self.assertRaisesRegex(RuntimeError, "entry not found"):
+                entry.cmd_list_attachments("My Doc", None, 10)
+        api.get_log_entry_attachments.assert_called_once_with(log_document_id=42, log_id=10)
+
+
+class CmdListEntryTests(unittest.TestCase):
+    def test_list_with_replies(self):
+        reply = SimpleNamespace(
+            log_id=11, log_entry="reply", log_replies=None,
+            entered_on_date_time=None, entered_by_username="bob")
+        parent = SimpleNamespace(
+            log_id=10, log_entry="parent", log_replies=[reply],
+            entered_on_date_time=None, entered_by_username="alice")
+        api = FakeApi(existing_entries=[parent])
+        api.get_log_entries = method_mock(
+            LogbookApi, "get_log_entries", wraps=api.get_log_entries)
+        with patch.object(entry.auth, "get_factory") as get_factory:
+            get_factory.return_value.get_logbook_api.return_value = api
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                entry.cmd_list_entries("My Doc", None, replies=True, fmt="json")
+        payload = json.loads(buf.getvalue())
+        self.assertEqual([item["log_id"] for item in payload], [10, 11])
+        self.assertEqual(payload[0]["parent_log_id"], "")
+        self.assertEqual(payload[1]["parent_log_id"], 10)
+        api.get_log_entries.assert_called_once_with(
+            log_document_id=42, load_replies=True)
+
+
+class CmdGetEntryTests(unittest.TestCase):
+    def test_stdout_and_output_are_mutually_exclusive(self):
+        with self.assertRaisesRegex(ValueError, "mutually exclusive"):
+            entry.cmd_get_entry("My Doc", None, 10, ".", stdout=True)
+
+    def test_get_finds_nested_reply(self):
+        reply = SimpleNamespace(log_id=11, log_entry="reply text", log_replies=None)
+        parent = SimpleNamespace(log_id=10, log_entry="parent", log_replies=[reply])
+        api = FakeApi(existing_entries=[parent])
+        with patch.object(entry.auth, "get_factory") as get_factory, \
+             tempfile.TemporaryDirectory() as output_dir:
+            get_factory.return_value.get_logbook_api.return_value = api
+            api.get_log_entries = method_mock(
+                LogbookApi, "get_log_entries", wraps=api.get_log_entries)
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                entry.cmd_get_entry(
+                    "My Doc", None, 11, output_dir=output_dir, fmt="json")
+            payload = json.loads(buf.getvalue())
+            with open(payload["path"]) as output:
+                self.assertEqual(output.read(), "reply text")
+            self.assertEqual(payload["log_id"], 11)
+            self.assertEqual(payload["document"], "My Doc")
+        api.get_log_entries.assert_called_once_with(
+            log_document_id=42, load_replies=True)
+
+    def test_get_stdout_prints_metadata_and_content(self):
+        item = SimpleNamespace(
+            log_id=10, log_entry="entry text", log_replies=None,
+            parent_log_id=None, entered_by_username="alice",
+            entered_on_date_time="created", last_modified_by_username="bob",
+            last_modified_on_date_time="modified")
+        api = FakeApi(existing_entries=[item])
+        with patch.object(entry.auth, "get_factory") as get_factory:
+            get_factory.return_value.get_logbook_api.return_value = api
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                entry.cmd_get_entry(
+                    "My Doc", None, 10, output_dir=None, stdout=True)
+        output = buf.getvalue()
+        self.assertIn("Entry ID: 10", output)
+        self.assertIn("Created by: alice", output)
+        self.assertIn("Modified: modified", output)
+        self.assertTrue(output.endswith("entry text\n"))
+
+
+class CmdDeleteTests(unittest.TestCase):
+    def test_delete_reply(self):
+        reply = SimpleNamespace(log_id=11, log_replies=None)
+        parent = SimpleNamespace(log_id=10, log_replies=[reply])
+        api = FakeApi(existing_entries=[parent])
+        api.delete_log_entry = method_mock(LogbookApi, "delete_log_entry")
+        api.get_log_entries = method_mock(
+            LogbookApi, "get_log_entries", wraps=api.get_log_entries)
+        patches = _patch_auth(api)
+        for patcher in patches:
+            patcher.start()
+        try:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                entry.cmd_delete_entry("My Doc", None, 11, yes=True, fmt="json")
+        finally:
+            for patcher in patches:
+                patcher.stop()
+        self.assertEqual(json.loads(buf.getvalue())["status"], "deleted")
+        api.delete_log_entry.assert_called_once_with(log_document_id=42, log_id=11)
+        api.get_log_entries.assert_called_once_with(
+            log_document_id=42, load_replies=True)
+
+    def test_delete_attachment_by_numeric_id(self):
+        api = FakeApi()
+        api.attachments = [SimpleNamespace(id=7)]
+        api.delete_attachment = method_mock(LogbookApi, "delete_attachment")
+        patches = _patch_auth(api)
+        for patcher in patches:
+            patcher.start()
+        try:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                entry.cmd_delete_attachment("My Doc", None, 10, 7, yes=True, fmt="json")
+        finally:
+            for patcher in patches:
+                patcher.stop()
+        payload = json.loads(buf.getvalue())
+        self.assertEqual(payload["attachment_id"], 7)
+        self.assertEqual(payload["status"], "deleted")
+        api.delete_attachment.assert_called_once_with(
+            log_document_id=42, log_id=10, attachment_id=7)
+
+    def test_missing_entry_and_attachment_fail(self):
+        api = FakeApi()
+        patches = _patch_auth(api)
+        for patcher in patches:
+            patcher.start()
+        try:
+            with self.assertRaisesRegex(ValueError, "entry with log_id=99 not found"):
+                entry.cmd_delete_entry("My Doc", None, 99, yes=True)
+            with self.assertRaisesRegex(ValueError, "attachment id=99 not found"):
+                entry.cmd_delete_attachment("My Doc", None, 10, 99, yes=True)
+        finally:
+            for patcher in patches:
+                patcher.stop()
+
+
 class CmdUpdateEntryTests(unittest.TestCase):
+    def test_update_reply_by_id(self):
+        reply = SimpleNamespace(
+            log_id=11, log_entry="old reply", log_replies=None,
+            entered_by_username="bob")
+        parent = SimpleNamespace(
+            log_id=10, log_entry="parent", log_replies=[reply],
+            entered_by_username="alice")
+        api = FakeApi(existing_entries=[parent])
+        api.get_log_entries = method_mock(
+            LogbookApi, "get_log_entries", wraps=api.get_log_entries)
+        patches = _patch_auth(api)
+        for patcher in patches:
+            patcher.start()
+        try:
+            entry.cmd_update_entry(
+                doc_name="My Doc", doc_id=None, entry_id=11,
+                file=None, text="updated reply", add_attachment=None)
+        finally:
+            for patcher in patches:
+                patcher.stop()
+
+        self.assertIs(api.entry_saved, reply)
+        self.assertEqual(reply.log_entry, "updated reply")
+        api.get_log_entries.assert_called_once_with(
+            log_document_id=42, load_replies=True)
+
     def test_update_entry_with_file_and_name(self):
         existing = SimpleNamespace(
             log_id=10,

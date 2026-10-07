@@ -83,6 +83,15 @@ class LogbookData:
             self._attachments[key] = attachments
         return attachments
 
+    def invalidate_attachments(self, doc_id, log_id):
+        """Drop one entry's attachment list and downloaded content."""
+        attachments = self._attachments.pop((doc_id, log_id), None) or []
+        stored_names = {
+            getattr(attachment, "stored_filename", None) for attachment in attachments
+        }
+        for key in [key for key in self._image_bytes if key[0] in stored_names]:
+            del self._image_bytes[key]
+
     def attachment_bytes(self, stored_filename, scaling="scaled"):
         """Raw image bytes, preferring a server-scaled variant; falls back to the original on failure."""
         key = (stored_filename, scaling)

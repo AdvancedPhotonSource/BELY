@@ -1,9 +1,17 @@
 import unittest
 from types import SimpleNamespace
 
+from BelyApiFactory import BelyApiFactory
+from belyApi.api.downloads_api import DownloadsApi
+from belyApi.api.logbook_api import LogbookApi
+from belyApi.api.search_api import SearchApi
+from belyApi.api.users_api import UsersApi
+
 from bely_cli.tui.data import LogbookData
+from test.api_helpers import api_fake
 
 
+@api_fake(LogbookApi)
 class FakeApi:
     def __init__(self):
         self.calls = []
@@ -49,6 +57,7 @@ class FakeApi:
         return [SimpleNamespace(id=1, name="tmpl-a")]
 
 
+@api_fake(DownloadsApi)
 class FakeDownloadApi:
     def __init__(self):
         self.calls = []
@@ -70,6 +79,7 @@ class FakeSearchResults:
         self.document_results = docs
 
 
+@api_fake(UsersApi)
 class FakeUsersApi:
     def __init__(self, calls):
         self._calls = calls
@@ -79,6 +89,7 @@ class FakeUsersApi:
         return SimpleNamespace(id=99)
 
 
+@api_fake(SearchApi)
 class FakeSearchApi:
     def __init__(self, calls, docs):
         self._calls = calls
@@ -89,6 +100,7 @@ class FakeSearchApi:
         return FakeSearchResults(self._docs)
 
 
+@api_fake(BelyApiFactory)
 class FakeFactory:
     """Minimal factory for recent_documents(): only users/search apis are used."""
 
@@ -271,6 +283,25 @@ class RecentDocumentsCachingTests(unittest.TestCase):
         self.data.clear()
         self.data.recent_documents(self.factory, "alice", 10)
         self.assertEqual(self.factory.calls.count(("user", "alice")), 2)
+
+
+class AttachmentInvalidationTests(unittest.TestCase):
+    def test_invalidates_one_entries_attachments_and_bytes(self):
+        api = FakeApi()
+        data = LogbookData(api)
+        a = SimpleNamespace(stored_filename="a.png")
+        b = SimpleNamespace(stored_filename="b.png")
+        data._attachments[(1, 2)] = [a]
+        data._attachments[(1, 3)] = [b]
+        data._image_bytes[("a.png", "scaled")] = b"a"
+        data._image_bytes[("b.png", "scaled")] = b"b"
+
+        data.invalidate_attachments(1, 2)
+
+        self.assertNotIn((1, 2), data._attachments)
+        self.assertIn((1, 3), data._attachments)
+        self.assertNotIn(("a.png", "scaled"), data._image_bytes)
+        self.assertIn(("b.png", "scaled"), data._image_bytes)
 
 
 class AttachmentBytesCachingTests(unittest.TestCase):

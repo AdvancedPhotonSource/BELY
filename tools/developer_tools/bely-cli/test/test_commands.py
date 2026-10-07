@@ -4,15 +4,19 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
+
+from belyApi.api.logbook_api import LogbookApi
 
 from bely_cli import commands
+from test.api_helpers import api_fake, api_mock, factory_mock
 
 
 class _NF(Exception):
     """Stand-in for belyApi.exceptions.NotFoundException."""
 
 
+@api_fake(LogbookApi)
 class FakeApi:
     def __init__(self):
         self.created = None
@@ -116,14 +120,89 @@ class CmdAuthTests(unittest.TestCase):
         )
 
 
+class CmdShowDocTests(unittest.TestCase):
+    def test_show_doc_json(self):
+        doc = SimpleNamespace(
+            id=42, name="My Doc", description="Shift log", domain=None,
+            entity_type_list=[SimpleNamespace(name="ops")], item_type_list=[],
+            more_info=None, log_lockout_hours=None)
+        with patch.object(commands.auth, "get_factory") as get_factory, \
+             patch.object(commands.core, "get_document", return_value=doc):
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                commands.cmd_show_doc("My Doc", None, fmt="json")
+        payload = __import__("json").loads(buf.getvalue())
+        self.assertEqual(payload["id"], 42)
+        self.assertEqual(payload["logbook_types"], ["ops"])
+        get_factory.assert_called_once_with()
+
+
+class CmdDeleteDocTests(unittest.TestCase):
+    def setUp(self):
+        self.api = api_mock()
+        self.api.get_log_document_by_name.return_value = SimpleNamespace(id=42, name="My Doc")
+        self.factory = factory_mock()
+        self.factory.get_logbook_api.return_value = self.api
+        self.auth_factory = factory_mock()
+        self.auth_factory.get_logbook_api.return_value = self.api
+        self.auth_ctx = MagicMock()
+        self.auth_ctx.__enter__.return_value = self.auth_factory
+        self.auth_ctx.__exit__.return_value = False
+
+    def test_delete_yes_returns_structured_result(self):
+        self.api.get_log_entries.return_value = []
+        with patch.object(commands.auth, "get_factory", return_value=self.factory), \
+             patch.object(commands.auth, "get_authenticated_factory", return_value=self.auth_ctx), \
+             patch("bely_cli.shell_completion.remove_cached_document") as remove_cached:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                commands.cmd_delete_doc("My Doc", None, yes=True, fmt="json")
+        self.assertEqual(__import__("json").loads(buf.getvalue())["status"], "deleted")
+        self.api.delete_log_document.assert_called_once_with(log_document_id=42)
+        remove_cached.assert_called_once_with(42)
+
+    def test_decline_is_cancelled_without_authentication(self):
+        self.api.get_log_entries.return_value = []
+        with patch.object(commands.auth, "get_factory", return_value=self.factory), \
+             patch.object(commands.auth, "get_authenticated_factory") as authenticated, \
+             patch("builtins.input", return_value="n"):
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                commands.cmd_delete_doc("My Doc", None, fmt="json")
+        self.assertEqual(__import__("json").loads(buf.getvalue())["status"], "cancelled")
+        authenticated.assert_not_called()
+
+    def test_nonempty_requires_force(self):
+        self.api.get_log_entries.return_value = [SimpleNamespace(log_id=1)]
+        with patch.object(commands.auth, "get_factory", return_value=self.factory):
+            with self.assertRaisesRegex(ValueError, "--force"):
+                commands.cmd_delete_doc("My Doc", None, yes=True)
+
+    def test_force_does_not_imply_yes(self):
+        self.api.get_log_entries.return_value = [SimpleNamespace(log_id=1)]
+        with patch.object(commands.auth, "get_factory", return_value=self.factory), \
+             patch.object(commands.auth, "get_authenticated_factory") as authenticated, \
+             patch("builtins.input", return_value="n"):
+            commands.cmd_delete_doc("My Doc", None, force=True)
+        authenticated.assert_not_called()
+
+    def test_no_prompt_requires_yes(self):
+        self.api.get_log_entries.return_value = []
+        with patch.object(commands.auth, "get_factory", return_value=self.factory), \
+             patch.object(commands, "is_no_prompt", return_value=True), \
+             patch("bely_cli.common.is_no_prompt", return_value=True):
+            with self.assertRaisesRegex(ValueError, "--yes"):
+                commands.cmd_delete_doc("My Doc", None)
+
+
 class CmdNewDocTests(unittest.TestCase):
     def test_creates_doc_and_first_entry_from_file(self):
         api = FakeApi()
 
-        factory = MagicMock()
+        factory = factory_mock()
         factory.get_logbook_api.return_value = api
 
-        auth_factory = MagicMock()
+        auth_factory = factory_mock()
         auth_factory.get_logbook_api.return_value = api
         auth_ctx = MagicMock()
         auth_ctx.__enter__.return_value = auth_factory
@@ -137,7 +216,8 @@ class CmdNewDocTests(unittest.TestCase):
             with patch.object(commands.auth, "get_factory", return_value=factory), \
                  patch.object(commands.auth, "get_authenticated_factory", return_value=auth_ctx), \
                  patch("belyApi.LogDocumentOptions") as opts_cls, \
-                 patch("belyApi.exceptions.NotFoundException", _NF):
+                 patch("belyApi.exceptions.NotFoundException", _NF), \
+                 patch("bely_cli.shell_completion.add_cached_document") as cache_document:
                 buf = io.StringIO()
                 with redirect_stdout(buf):
                     commands.cmd_new_doc(
@@ -155,6 +235,9 @@ class CmdNewDocTests(unittest.TestCase):
             os.unlink(tmp_path)
 
         opts_cls.assert_called_once_with(name="My Doc", logbook_type_id=1)
+        cache_document.assert_called_once_with(ANY, "ops")
+        cached_doc = cache_document.call_args.args[0]
+        self.assertEqual((cached_doc.id, cached_doc.name), (42, "My Doc"))
         self.assertIs(api.created, opts_cls.return_value)
         self.assertEqual(api.entry_saved.log_entry, "hello\n")
         self.assertEqual(api.entry_saved.log_id, 99)

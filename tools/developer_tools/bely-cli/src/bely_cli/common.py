@@ -25,6 +25,15 @@ def is_no_prompt():
     return _no_prompt
 
 
+def confirm_delete(prompt, yes=False):
+    """Confirm a destructive operation, respecting non-interactive mode."""
+    if yes:
+        return True
+    if is_no_prompt():
+        raise ValueError("--yes is required with --no-prompt for deletion")
+    return input(f"{prompt} [y/N] ").strip().lower() in ("y", "yes")
+
+
 def format_error_message(error, factory=None):
     """Return a concise server message for API errors, or the normal exception text."""
     try:

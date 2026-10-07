@@ -3,19 +3,24 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+from BelyApiFactory import BelyApiFactory
+from belyApi.api_client import ApiClient
+
 from bely_cli import auth
+from test.api_helpers import api_fake
 
 
 class _Unauthorized(Exception):
     """Stand-in for belyApi.exceptions.UnauthorizedException."""
 
 
+@api_fake(ApiClient)
 class FakeApiClient:
     def __init__(self):
         self.default_headers = {}
 
-    def set_default_header(self, key, value):
-        self.default_headers[key] = value
+    def set_default_header(self, header_name, header_value):
+        self.default_headers[header_name] = header_value
 
 
 def _fake_factory_class(valid_token=None, login_ok=True, login_token="new-token"):
@@ -25,6 +30,7 @@ def _fake_factory_class(valid_token=None, login_ok=True, login_token="new-token"
     `login_ok`/`login_token` control what `authenticate_user()` does.
     """
 
+    @api_fake(BelyApiFactory)
     class FakeFactory:
         HEADER_TOKEN_KEY = "token"
 

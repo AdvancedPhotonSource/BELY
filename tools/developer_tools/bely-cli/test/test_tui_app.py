@@ -6,10 +6,17 @@ from unittest.mock import patch
 from textual.containers import Vertical
 from textual.widgets import DataTable, Input, Markdown, Static
 
+from belyApi.api.downloads_api import DownloadsApi
+from belyApi.api.logbook_api import LogbookApi
+from belyApi.api.search_api import SearchApi
+from belyApi.api.users_api import UsersApi
+
 from bely_cli.tui.app import BelyTuiApp
 from bely_cli.tui.data import LogbookData
 from bely_cli.tui.screens import browse
 from bely_cli.tui.screens.browse import BrowseScreen
+from test.api_helpers import api_fake, method_mock
+from BelyApiFactory import BelyApiFactory
 
 
 class FakeSession:
@@ -40,6 +47,7 @@ class FakeSession:
         return True
 
 
+@api_fake(LogbookApi)
 class FakeLogbookApi:
     def get_logbook_type_hierarchy(self):
         return [SimpleNamespace(id=1, name="ops", display_name="Ops")]
@@ -68,6 +76,18 @@ class FakeLogbookApi:
         return log_entry
 
 
+@api_fake(LogbookApi)
+class FakeLogbookApiWithManyEntries(FakeLogbookApi):
+    def get_log_entries(self, log_document_id, load_replies, load_reactions):
+        body = "\n\n".join(f"Paragraph {line}" for line in range(40))
+        return [SimpleNamespace(
+            log_id=100 + index, entered_by_username="alice", entered_on_date_time=None,
+            last_modified_by_username=None, last_modified_on_date_time=None,
+            log_replies=None, log_reactions=None, log_entry=body,
+        ) for index in range(30)]
+
+
+@api_fake(LogbookApi)
 class FakeLogbookApiWithReplies(FakeLogbookApi):
     """One entry with two direct replies."""
 
@@ -91,6 +111,7 @@ class FakeLogbookApiWithReplies(FakeLogbookApi):
         )]
 
 
+@api_fake(LogbookApi)
 class FakeLogbookApiWithImage(FakeLogbookApi):
     """Entry body is a single image-only paragraph (as the server appends after upload)."""
 
@@ -103,6 +124,7 @@ class FakeLogbookApiWithImage(FakeLogbookApi):
         )]
 
 
+@api_fake(DownloadsApi)
 class FakeDownloadApi:
     def get_attachment1_without_preload_content(self, attachment_name, scaling):
         return SimpleNamespace(data=b"fake-scaled-bytes")
@@ -119,6 +141,7 @@ class FakeImageWidget(Static):
         self.image = image
 
 
+@api_fake(UsersApi)
 class FakeUsersApi:
     def __init__(self, calls):
         self._calls = calls
@@ -133,6 +156,7 @@ class FakeSearchResults:
         self.document_results = docs
 
 
+@api_fake(SearchApi)
 class FakeSearchApi:
     def __init__(self, calls, docs):
         self._calls = calls
@@ -143,6 +167,7 @@ class FakeSearchApi:
         return FakeSearchResults(self._docs)
 
 
+@api_fake(BelyApiFactory)
 class FakeFactory:
     """Combined stand-in for the bits of BelyApiFactory the n/u and recent-docs
     flows touch: get_logbook_api() for ensure_auth(), get_users_api()/
@@ -171,6 +196,58 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
         await pilot.press("enter")  # docs -> entries
         await pilot.pause()
         await pilot.pause()
+
+    async def test_refresh_preserves_entry_selection_and_preview_scroll(self):
+        data = LogbookData(FakeLogbookApiWithManyEntries())
+        app = BelyTuiApp(FakeSession(data), limit=50, mode="lookup")
+        async with app.run_test(size=(100, 20)) as pilot:
+            await self._open_entries(pilot)
+            screen = app.screen
+            table = screen.query_one("#nav-table", DataTable)
+            preview = screen.query_one("#preview")
+            table.move_cursor(row=20)
+            await pilot.pause()
+            await pilot.pause()
+            preview.scroll_to(y=8, animate=False)
+            await pilot.pause()
+            preview_scroll_y = preview.scroll_y
+            body_markdown = screen.query_one("#body-md")
+
+            await pilot.press("r")
+            await pilot.pause()
+            await pilot.pause()
+            await pilot.pause()
+
+            self.assertEqual(table.cursor_row, 20)
+            self.assertEqual(screen._current_entry().log_id, 120)
+            self.assertIs(screen.query_one("#body-md"), body_markdown)
+            self.assertEqual(preview.scroll_y, preview_scroll_y)
+
+    async def test_switching_entry_clears_refresh_state_and_scroll(self):
+        data = LogbookData(FakeLogbookApiWithManyEntries())
+        app = BelyTuiApp(FakeSession(data), limit=50, mode="lookup")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            await pilot.press("enter")
+            await pilot.pause()
+            await pilot.press("enter")
+            await pilot.pause()
+            screen = app.screen
+            table = screen.query_one("#nav-table", DataTable)
+            preview = screen.query_one("#preview")
+            preview.scroll_to(y=8, animate=False, force=True, immediate=True)
+            screen._pending_entry_restore = (100, "old", 0, 8)
+            screen._restoring_entry_preview = True
+            screen._restoring_entry_id = 100
+
+            table.move_cursor(row=1)
+            await pilot.pause()
+
+            self.assertEqual(screen._current_entry().log_id, 101)
+            self.assertIsNone(screen._pending_entry_restore)
+            self.assertFalse(screen._restoring_entry_preview)
+            self.assertIsNone(screen._restoring_entry_id)
+            self.assertEqual(preview.scroll_y, 0)
 
     async def test_browse_populates_list_and_drives_preview(self):
         data = LogbookData(FakeLogbookApi())
@@ -553,6 +630,91 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertNotIn(100, screen._collapsed)
             self.assertEqual(screen._current_entry().log_id, 101)
 
+    async def test_shift_a_opens_attachments_for_highlighted_entry(self):
+        api = FakeLogbookApi()
+        data = LogbookData(api)
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None), \
+             patch.object(api, "get_log_entries", wraps=api.get_log_entries) as get_entries:
+            async with app.run_test() as pilot:
+                await self._open_entries(pilot)
+                browse_screen = app.screen
+
+                await pilot.press("A")
+                await pilot.pause()
+
+                self.assertEqual(type(app.screen).__name__, "AttachmentScreen")
+                self.assertEqual(app.screen.doc.id, 10)
+                self.assertEqual(app.screen.entry.log_id, 100)
+                app.screen.on_changed()
+                await pilot.pause()
+                self.assertEqual(get_entries.call_count, 2)
+                await pilot.press("escape")
+                await pilot.pause()
+                self.assertIs(app.screen, browse_screen)
+
+    async def test_delete_populated_document_requires_typed_confirmation(self):
+        api = FakeLogbookApi()
+        api.delete_log_document = method_mock(LogbookApi, "delete_log_document")
+        data = LogbookData(api)
+        session = FakeSession(data, factory=FakeFactory(api=api))
+        app = BelyTuiApp(session, limit=10, mode="lookup")
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None), \
+             patch.object(app, "ensure_auth", wraps=app.ensure_auth) as ensure_auth:
+            async with app.run_test() as pilot:
+                await pilot.pause()
+                await pilot.press("enter")  # type -> documents
+                await pilot.pause()
+                await pilot.press("x")
+                await pilot.pause()
+                await pilot.press("left", "enter")
+                await pilot.pause()
+                self.assertEqual(type(app.screen).__name__, "TypeToConfirmScreen")
+                ensure_auth.assert_not_called()
+                api.delete_log_document.assert_not_called()
+                app.screen.query_one("#type-confirm-input", Input).value = "Shift Report"
+                await pilot.press("enter")
+                await pilot.pause()
+                await pilot.pause()
+                ensure_auth.assert_called_once_with()
+                api.delete_log_document.assert_called_once_with(log_document_id=10)
+
+    async def test_delete_entry_confirms_and_refreshes(self):
+        api = FakeLogbookApi()
+        api.delete_log_entry = method_mock(LogbookApi, "delete_log_entry")
+        data = LogbookData(api)
+        session = FakeSession(data, factory=FakeFactory(api=api))
+        app = BelyTuiApp(session, limit=10, mode="lookup")
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None):
+            async with app.run_test() as pilot:
+                await self._open_entries(pilot)
+                screen = app.screen
+                await pilot.press("x")
+                await pilot.pause()
+                self.assertEqual(type(app.screen).__name__, "ConfirmScreen")
+                api.delete_log_entry.assert_not_called()
+                await pilot.press("left", "enter")
+                await pilot.pause()
+                await pilot.pause()
+                api.delete_log_entry.assert_called_once_with(
+                    log_document_id=10, log_id=100)
+                self.assertIs(app.screen, screen)
+
+    async def test_delete_cancel_does_not_authenticate(self):
+        api = FakeLogbookApi()
+        data = LogbookData(api)
+        session = FakeSession(data, factory=FakeFactory(api=api))
+        app = BelyTuiApp(session, limit=10, mode="lookup")
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None), \
+             patch.object(app, "ensure_auth") as ensure_auth:
+            async with app.run_test() as pilot:
+                await self._open_entries(pilot)
+                await pilot.press("x")
+                await pilot.pause()
+                await pilot.press("enter")
+                await pilot.pause()
+                ensure_auth.assert_not_called()
+
     async def test_reply_binding_only_available_for_entries_with_selection(self):
         api = FakeLogbookApi()
         app = BelyTuiApp(FakeSession(LogbookData(api)), limit=10, mode="lookup")
@@ -798,6 +960,7 @@ class ImagePreviewTests(unittest.IsolatedAsyncioTestCase):
         """Arrowing away mid-fetch must not land an image in the wrong entry's preview."""
         import threading
 
+        @api_fake(LogbookApi)
         class TwoEntryApi(FakeLogbookApiWithImage):
             def get_log_entries(self, log_document_id, load_replies, load_reactions):
                 return super().get_log_entries(log_document_id, load_replies, load_reactions) + [

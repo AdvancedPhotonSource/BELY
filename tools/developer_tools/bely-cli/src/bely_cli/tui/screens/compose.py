@@ -20,7 +20,7 @@ from textual.widgets import Button, Input, Static, TextArea
 
 from ... import core
 from ...common import editor_changed, format_error_message
-from .dialog import CANCEL_HINT, SAVE_HINT, DialogButtons, DialogScreen, hinted_label
+from .dialog import CANCEL_HINT, SAVE_HINT, DialogButtons, DialogScreen, LoadingScreen, hinted_label
 
 
 class ComposeScreen(DialogScreen):
@@ -153,8 +153,13 @@ class ComposeScreen(DialogScreen):
         try:
             saved_entry = await asyncio.to_thread(core.save_entry, self.api, self.entry, text)
             if attach_path:
-                await asyncio.to_thread(
-                    core.upload_attachment, self.api, self.doc.id, saved_entry.log_id, attach_path)
+                await self.app.push_screen(LoadingScreen("Uploading attachment…"))
+                try:
+                    await asyncio.to_thread(
+                        core.upload_attachment, self.api, self.doc.id,
+                        saved_entry.log_id, attach_path)
+                finally:
+                    self.app.pop_screen()
         except Exception as e:
             self.notify(
                 f"Save failed: {format_error_message(e, self.factory)}", severity="error")
@@ -176,15 +181,17 @@ async def open_composer(app, doc, api, *, entry=None, factory=None, reply_to=Non
     """
     if entry is None:
         try:
-            entry = await asyncio.to_thread(core.new_entry_template, api, doc.id)
+            if reply_to is None:
+                entry = await asyncio.to_thread(core.new_entry_template, api, doc.id)
+            else:
+                entry = await asyncio.to_thread(
+                    core.new_reply_template, api, doc.id, reply_to.log_id)
         except Exception as e:
             app.notify(
                 f"Could not load entry template: {format_error_message(e, factory)}",
                 severity="error",
             )
             return None
-        if reply_to is not None:
-            entry.parent_log_id = reply_to.log_id
         is_new = True
     else:
         is_new = False

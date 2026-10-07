@@ -15,13 +15,12 @@ binding, and configuration key — keep it in sync when changing the CLI surface
 uv sync                       # create/refresh .venv from pyproject.toml + uv.lock
 uv run bely-cli -h            # run the CLI from the working tree
 
-uv run python -m unittest                     # full suite (auto-discovers test/)
-uv run python -m unittest test.test_tui       # one module
-uv run python -m unittest test.test_tui.FilterItemsTests.test_case_insensitive_substring
-uv run pytest test/test_entry.py              # pytest also works; unittest is what CI runs
+uv run pytest -n auto test                    # full suite in parallel
+uv run pytest test/test_tui.py                # one module
+uv run pytest test/test_tui.py::FilterItemsTests::test_case_insensitive_substring
 
-./run_test.sh                 # unit tests + a smoke test that bely-cli loads and that
-                              # --format is wired on leaf commands (not the top level).
+./run_test.sh                 # parallel pytest suite + CLI smoke tests; defaults to at most
+                              # 4 workers. Set TEST_JOBS to override the worker count.
                               # Runs through `uv run` by default; set RUNNER="" to
                               # exercise an already-installed bely-cli instead.
 ```
@@ -228,8 +227,9 @@ share a single code path instead of branching between a `DataTable` and an `Opti
 
 ### Testing style
 
-No network, no live server, no responses library: tests hand-roll `FakeApi` classes
-returning `SimpleNamespace` stand-ins for API models, and patch
+No network, no live server, no responses library: API mocks use `api_mock()` and
+hand-written API fakes use `@api_fake(...)` from `test/api_helpers.py`, keeping doubles
+constrained to the generated client contract. Factory mocks use `factory_mock()`. Tests patch
 `auth.get_factory` / `auth.get_authenticated_factory` on the *command module*
 (`patch.object(entry.auth, ...)`). Text output is asserted by capturing `redirect_stdout`.
 The Textual app is tested with `unittest.IsolatedAsyncioTestCase` + `app.run_test()`

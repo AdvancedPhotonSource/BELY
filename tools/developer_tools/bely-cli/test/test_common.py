@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 
 from bely_cli import common
+from test.api_helpers import factory_mock
 
 
 class FormatErrorMessageTests(unittest.TestCase):
@@ -12,7 +13,7 @@ class FormatErrorMessageTests(unittest.TestCase):
         import belyApi
 
         error = belyApi.exceptions.ApiException(status=400, body="long response")
-        factory = unittest.mock.Mock()
+        factory = factory_mock()
         factory.parse_api_exception.return_value.message = "short message"
         self.assertEqual(common.format_error_message(error, factory), "short message")
         factory.parse_api_exception.assert_called_once_with(error)
@@ -21,7 +22,7 @@ class FormatErrorMessageTests(unittest.TestCase):
         import belyApi
 
         error = belyApi.exceptions.ApiException(status=400, body="response")
-        factory = unittest.mock.Mock()
+        factory = factory_mock()
         factory.parse_api_exception.side_effect = ValueError("bad response")
         self.assertEqual(common.format_error_message(error, factory), str(error))
 

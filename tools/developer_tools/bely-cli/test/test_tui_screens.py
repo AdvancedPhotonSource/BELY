@@ -7,28 +7,41 @@ Same hand-rolled FakeApi/FakeSession style as test_tui_app.py/test_tui_data.py
 `self.dismiss(...)`).
 """
 
+import os
+import tempfile
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from textual.app import App
-from textual.widgets import Button, Input, OptionList, Select, Static, TextArea
+from textual.widgets import Button, DataTable, DirectoryTree, Input, OptionList, Select, Static, TextArea
+
+from BelyApiFactory import BelyApiFactory
+from belyApi.api.logbook_api import LogbookApi
 
 from bely_cli.tui.app import BelyTuiApp
 from bely_cli.tui.data import LogbookData
 from bely_cli.tui.screens import configscreen
+from bely_cli.tui.screens.attachments import (
+    AttachmentDirectoryTree, AttachmentFileScreen, AttachmentScreen, PathSuggester,
+    preview_kind,
+)
 from bely_cli.tui.screens.compose import ComposeScreen, open_composer
-from bely_cli.tui.screens.confirm import ConfirmScreen
+from bely_cli.tui.screens.confirm import ConfirmScreen, TypeToConfirmScreen
+from bely_cli.tui.screens.dialog import LoadingScreen
 from bely_cli.tui.screens.configscreen import ConfigScreen
 from bely_cli.tui.screens.login import LoginScreen
 from bely_cli.tui.screens.newdoc import NewDocScreen
 from bely_cli.tui.screens.picker import PickerScreen
+from test.api_helpers import api_fake, method_mock
 
 
 class _NF(Exception):
     """Stand-in for belyApi.exceptions.NotFoundException."""
 
 
+@api_fake(LogbookApi)
 class FakeLogbookApi:
     def __init__(self, existing_doc=None):
         self.created = None
@@ -63,6 +76,7 @@ class FakeLogbookApi:
         return log_entry
 
 
+@api_fake(BelyApiFactory)
 class FakeFactory:
     def __init__(self, api):
         self._api = api
@@ -86,6 +100,179 @@ class FakeSession:
 
     def authenticated_api(self):
         return self.factory.get_logbook_api()
+
+
+class AttachmentPreviewKindTests(unittest.TestCase):
+    def test_classifies_preview_types(self):
+        self.assertEqual(preview_kind("plot.PNG"), "image")
+        self.assertEqual(preview_kind("notes.md"), "text")
+        self.assertEqual(preview_kind("report.pdf"), "metadata")
+        self.assertEqual(preview_kind("archive.bin"), "metadata")
+
+
+class PathSuggesterTests(unittest.IsolatedAsyncioTestCase):
+    async def test_completes_directories_before_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "alpine.txt").touch()
+            (root / "alpha").mkdir()
+            suggestion = await PathSuggester().get_suggestion(str(root / "al"))
+        self.assertEqual(suggestion, str(root / "alpha") + os.sep)
+
+
+class AttachmentFileScreenTests(unittest.IsolatedAsyncioTestCase):
+    async def test_uses_directory_tree_and_returns_selected_file(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(AttachmentFileScreen("/tmp")))
+            await pilot.pause()
+            screen = app.screen
+            self.assertEqual(screen.query_one(DirectoryTree).path, Path("/tmp"))
+            self.assertEqual(screen.query_one("#attachment-root", Input).value, "/tmp")
+            screen.on_directory_tree_file_selected(
+                SimpleNamespace(path=Path("/tmp/attachment.txt")))
+            await pilot.pause()
+            self.assertEqual(await task.wait(), "/tmp/attachment.txt")
+
+    async def test_ctrl_u_clears_entire_path_regardless_of_cursor(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(AttachmentFileScreen("/tmp")))
+            await pilot.pause()
+            root = app.screen.query_one("#attachment-root", Input)
+            root.cursor_position = 4
+            await pilot.press("ctrl+u")
+            self.assertEqual(root.value, "")
+            await pilot.press("escape")
+            await task.wait()
+
+    async def test_slash_opens_filename_filter_and_escape_closes_it(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(AttachmentFileScreen("/tmp")))
+            await pilot.pause()
+            tree = app.screen.query_one(AttachmentDirectoryTree)
+            tree.focus()
+            await pilot.press("/")
+            filter_input = app.screen.query_one("#attachment-filter", Input)
+            self.assertTrue(filter_input.display)
+            self.assertIs(app.screen.focused, filter_input)
+            filter_input.value = "report"
+            await pilot.pause()
+            self.assertEqual(tree.filter_text, "report")
+            await pilot.press("escape")
+            self.assertFalse(filter_input.display)
+            self.assertIs(app.screen.focused, tree)
+            await pilot.press("escape")
+            await task.wait()
+
+    async def test_preview_toggle_hides_preview_and_expands_tree(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(AttachmentFileScreen("/tmp")))
+            await pilot.pause()
+            screen = app.screen
+            preview = screen.query_one("#attachment-file-preview")
+            tree = screen.query_one(AttachmentDirectoryTree)
+            tree.focus()
+            self.assertTrue(preview.display)
+            await pilot.press("p")
+            self.assertFalse(preview.display)
+            self.assertEqual(str(tree.styles.width), "100w")
+            await pilot.press("p")
+            self.assertTrue(preview.display)
+            await pilot.press("escape")
+            await task.wait()
+
+    async def test_entering_directory_changes_tree_root(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(AttachmentFileScreen("/tmp")))
+            await pilot.pause()
+            root = app.screen.query_one("#attachment-root", Input)
+            root.value = str(Path.home())
+            await pilot.press("enter")
+            await pilot.pause()
+            self.assertEqual(app.screen.query_one(DirectoryTree).path, Path.home().resolve())
+            await pilot.press("escape")
+            await task.wait()
+
+
+class AttachmentScreenTests(unittest.IsolatedAsyncioTestCase):
+    def _attachment(self, name="notes.txt"):
+        return SimpleNamespace(
+            id=7, original_filename=name, stored_filename=f"stored-{name}",
+            download_path=f"/download/{name}", markdown_reference=f"![{name}](/download/{name})",
+        )
+
+    async def test_lists_previews_and_copies_attachment(self):
+        api = FakeLogbookApi()
+        api.get_log_entry_attachments = lambda **kwargs: [self._attachment()]
+        session = FakeSession(api)
+        session.data._download_api = SimpleNamespace(
+            get_attachment_without_preload_content=lambda name: SimpleNamespace(data=b"hello text"))
+        app = BelyTuiApp(session)
+        doc = SimpleNamespace(id=42, name="Doc")
+        entry = SimpleNamespace(log_id=10)
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None):
+            async with app.run_test() as pilot:
+                await app.push_screen(AttachmentScreen(session, doc, entry))
+                await pilot.pause()
+                screen = app.screen
+                self.assertEqual(len(screen.attachments), 1)
+                await pilot.pause()
+                self.assertTrue(screen.query_one("#attachment-text").display)
+                with patch.object(app, "copy_to_clipboard") as copy:
+                    screen.action_copy_reference()
+                    copy.assert_called_once_with("![notes.txt](/download/notes.txt)")
+                await pilot.press("escape")
+
+    async def test_delete_confirms_then_refreshes(self):
+        attachment = self._attachment()
+        api = FakeLogbookApi()
+        attachments = [attachment]
+        api.get_log_entry_attachments = lambda **kwargs: list(attachments)
+        api.delete_attachment = method_mock(
+            LogbookApi, "delete_attachment", side_effect=lambda **kwargs: attachments.clear())
+        session = FakeSession(api)
+        app = BelyTuiApp(session)
+        changed = MagicMock()
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None):
+            async with app.run_test() as pilot:
+                await app.push_screen(AttachmentScreen(
+                    session, SimpleNamespace(id=42, name="Doc"),
+                    SimpleNamespace(log_id=10), on_changed=changed))
+                await pilot.pause()
+                await pilot.press("x")
+                await pilot.pause()
+                self.assertEqual(type(app.screen).__name__, "ConfirmScreen")
+                await pilot.press("left", "enter")
+                await pilot.pause()
+                await pilot.pause()
+                api.delete_attachment.assert_called_once_with(
+                    log_document_id=42, log_id=10, attachment_id=7)
+                changed.assert_called_once_with()
+                self.assertEqual(app.screen.attachments, [])
+
+    async def test_empty_and_error_states(self):
+        for result in ([], RuntimeError("boom")):
+            api = FakeLogbookApi()
+            if isinstance(result, Exception):
+                def fetch(**kwargs):
+                    raise result
+                api.get_log_entry_attachments = fetch
+            else:
+                api.get_log_entry_attachments = lambda **kwargs: result
+            session = FakeSession(api)
+            app = BelyTuiApp(session)
+            with patch("bely_cli.tui.app.config.get_setting", return_value=None):
+                async with app.run_test() as pilot:
+                    await app.push_screen(AttachmentScreen(
+                        session, SimpleNamespace(id=42, name="Doc"), SimpleNamespace(log_id=10)))
+                    await pilot.pause()
+                    text = str(app.screen.query_one("#attachment-meta", Static).content)
+                    self.assertIn("No attachments" if result == [] else "Could not load", text)
+                    await pilot.press("escape")
 
 
 class LoginScreenTests(unittest.IsolatedAsyncioTestCase):
@@ -286,6 +473,16 @@ class PickerScreenTests(unittest.IsolatedAsyncioTestCase):
 
 
 class ComposeScreenTests(unittest.IsolatedAsyncioTestCase):
+    async def test_loading_screen_shows_operation_message(self):
+        app = App()
+        async with app.run_test() as pilot:
+            await app.push_screen(LoadingScreen("Uploading attachment…"))
+            await pilot.pause()
+            self.assertIn(
+                "Uploading attachment",
+                str(app.screen.query_one("#loading-message", Static).render()),
+            )
+
     async def test_reply_loads_blank_template_sets_parent_and_titles_composer(self):
         api = FakeLogbookApi()
         doc = SimpleNamespace(id=1, name="Doc")
@@ -762,6 +959,9 @@ class ConfigScreenTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(labels["token_path"], "Token path:")
                 self.assertEqual(labels["theme"], "Theme:")
                 self.assertEqual(labels["images"], "Images:")
+                self.assertEqual(labels["completion_cache_ttl"], "Completion cache TTL:")
+                self.assertEqual(
+                    screen.query_one("#config-completion_cache_ttl", Input).value, "24h")
                 self.assertIn("User:", labels["user"])
                 self.assertIn("overridden by BELY_USER", labels["user"])
                 self.assertEqual(screen.query_one("#config-user", Input).placeholder, "")
@@ -946,6 +1146,22 @@ class ConfigScreenTests(unittest.IsolatedAsyncioTestCase):
                 await pilot.pause()
 
         self.assertEqual(saved, [("images", "unicode")])
+
+
+class TypeToConfirmScreenTests(unittest.IsolatedAsyncioTestCase):
+    async def test_exact_phrase_is_required(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(TypeToConfirmScreen("Danger")))
+            await pilot.pause()
+            button = app.screen.query_one("#type-confirm-confirm", Button)
+            self.assertTrue(button.disabled)
+            await pilot.press("d", "e", "l")
+            self.assertTrue(button.disabled)
+            await pilot.press("e", "t", "e")
+            self.assertFalse(button.disabled)
+            await pilot.press("enter")
+            self.assertTrue(await task.wait())
 
 
 class ConfirmScreenTests(unittest.IsolatedAsyncioTestCase):

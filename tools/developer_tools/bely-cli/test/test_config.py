@@ -26,6 +26,30 @@ class GetEditorTests(unittest.TestCase):
             self.assertEqual(config.get_editor(), "vi")
 
 
+class CompletionCacheTtlTests(unittest.TestCase):
+    def test_default_is_24_hours(self):
+        with patch.object(config, "get_setting", return_value=None):
+            self.assertEqual(config.get_completion_cache_ttl(), 24 * 60 * 60)
+
+    def test_parses_seconds_and_units(self):
+        expected = {"0": 0, "30s": 30, "15m": 900, "12h": 43200, "2d": 172800}
+        for value, seconds in expected.items():
+            with self.subTest(value=value):
+                self.assertEqual(config.parse_duration(value), seconds)
+
+    def test_rejects_invalid_duration(self):
+        for value in ("-1", "tomorrow", "1w", ""):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                config.parse_duration(value)
+
+    def test_set_validates_completion_ttl_before_writing(self):
+        with patch.object(config, "_read_yaml", return_value={}), \
+             patch.object(config, "save_settings") as save:
+            with self.assertRaises(ValueError):
+                config.set_setting("completion_cache_ttl", "never")
+        save.assert_not_called()
+
+
 class GetTokenFileTests(unittest.TestCase):
     def test_default_is_sibling_of_settings(self):
         with patch.object(auth, "get_setting", return_value=None):

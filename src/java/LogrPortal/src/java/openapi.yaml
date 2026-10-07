@@ -4,7 +4,7 @@ prettyPrint: true
 cacheTTL: 0
 openAPI:
   info:
-    version: '2024.5'
+    version: '2026.10.0.dev0'
     title: BELY API
     description: 'The API that provides access to BELY data.'
     contact:

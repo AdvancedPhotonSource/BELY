@@ -1,6 +1,6 @@
 from . import auth
 from . import core
-from .common import is_no_prompt, read_file_or_stdin, write_entry_to_file, open_in_editor, print_items, print_result
+from .common import confirm_delete, is_no_prompt, read_file_or_stdin, write_entry_to_file, open_in_editor, print_items, print_result
 
 # Re-exported for backward compatibility: resolve_doc used to live here.
 from .core import resolve_doc  # noqa: F401
@@ -22,7 +22,7 @@ def upload_and_print_attachment(logbook_api, doc_id, log_id, path, fmt="text"):
 
 
 def cmd_update_entry(doc_name, doc_id, entry_id, file, text, add_attachment, fmt="text"):
-    """Update an existing log entry."""
+    """Update an existing log entry or reply."""
     if file and text:
         raise ValueError("--file and --text are mutually exclusive.")
 
@@ -43,7 +43,8 @@ def cmd_update_entry(doc_name, doc_id, entry_id, file, text, add_attachment, fmt
     # Authenticate and find/update entry
     with auth.get_authenticated_factory() as auth_factory:
         logbook_api = auth_factory.get_logbook_api()
-        entries = logbook_api.get_log_entries(log_document_id=doc.id)
+        entries = logbook_api.get_log_entries(
+            log_document_id=doc.id, load_replies=entry_id is not None)
 
         if entry_id:
             entry = core.find_entry(entries, entry_id)
@@ -140,12 +141,150 @@ def cmd_add_entry(doc_name, doc_id, file, text, add_attachment, fmt="text"):
             print_result(result, "", fmt)
 
 
-def cmd_list_entries(doc_name, doc_id, fmt="text"):
-    """List entries in a log document."""
+def cmd_reply_entry(doc_name, doc_id, entry_id, file, text, add_attachment, fmt="text"):
+    """Add a reply to an existing top-level log entry."""
+    if file and text:
+        raise ValueError("--file and --text are mutually exclusive.")
+    use_editor = not file and not text and not add_attachment
+
+    if add_attachment:
+        add_attachment = core.validate_attachment_path(add_attachment)
+    content = read_file_or_stdin(file) if file else text
+
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
     doc = core.resolve_doc(logbook_api, doc_name, doc_id)
-    entries = logbook_api.get_log_entries(log_document_id=doc.id)
+    entries = logbook_api.get_log_entries(log_document_id=doc.id, load_replies=True)
+    parent = next((item for item in entries if item.log_id == entry_id), None)
+    if not parent:
+        raise ValueError(
+            f'top-level entry with log_id={entry_id} not found in document "{doc.name}".')
+
+    with auth.get_authenticated_factory() as auth_factory:
+        logbook_api = auth_factory.get_logbook_api()
+        reply = core.new_reply_template(logbook_api, doc.id, entry_id)
+        result = {
+            "doc": doc.name, "parent_log_id": entry_id, "log_id": None,
+            "status": None, "attachment": None,
+        }
+        if use_editor:
+            edited = open_in_editor(reply.log_entry or "")
+            if not edited.strip():
+                result["status"] = "skipped"
+                if fmt == "text":
+                    print("Empty reply, skipped.")
+            else:
+                reply = core.save_entry(logbook_api, reply, edited)
+        else:
+            reply = core.save_entry(logbook_api, reply, content or "")
+
+        if result["status"] is None:
+            result["log_id"] = reply.log_id
+            result["status"] = "added"
+            if fmt == "text":
+                print(
+                    f'Reply added to entry {entry_id} in "{doc.name}", '
+                    f'log_id={reply.log_id}')
+            if add_attachment:
+                result["attachment"] = upload_and_print_attachment(
+                    logbook_api, doc.id, reply.log_id, add_attachment, fmt)
+
+        if fmt != "text":
+            print_result(result, "", fmt)
+
+
+def cmd_add_attachment(doc_name, doc_id, entry_id, file, fmt="text"):
+    """Upload an attachment to an existing log entry."""
+    path = core.validate_attachment_path(file)
+    factory = auth.get_factory()
+    doc = core.resolve_doc(factory.get_logbook_api(), doc_name, doc_id)
+
+    with auth.get_authenticated_factory() as auth_factory:
+        logbook_api = auth_factory.get_logbook_api()
+        info = upload_and_print_attachment(logbook_api, doc.id, entry_id, path, fmt)
+
+    if fmt != "text":
+        print_result({"doc": doc.name, "log_id": entry_id, "attachment": info}, "", fmt)
+
+
+def cmd_delete_attachment(doc_name, doc_id, entry_id, attachment_id, yes=False, fmt="text"):
+    """Delete an entry attachment by numeric ID after confirmation."""
+    factory = auth.get_factory()
+    logbook_api = factory.get_logbook_api()
+    doc = core.resolve_doc(logbook_api, doc_name, doc_id)
+    attachments = logbook_api.get_log_entry_attachments(
+        log_document_id=doc.id, log_id=entry_id)
+    if not any(att.id == attachment_id for att in attachments):
+        raise ValueError(
+            f'attachment id={attachment_id} not found on entry {entry_id} '
+            f'in document "{doc.name}".')
+    result = {
+        "doc_id": doc.id, "doc": doc.name, "log_id": entry_id,
+        "attachment_id": attachment_id, "status": "cancelled",
+    }
+    if not confirm_delete(
+            f'Delete attachment {attachment_id} from entry {entry_id}?', yes):
+        print_result(result, "Deletion cancelled.", fmt)
+        return result
+    with auth.get_authenticated_factory() as auth_factory:
+        core.delete_attachment(
+            auth_factory.get_logbook_api(), doc.id, entry_id, attachment_id)
+    result["status"] = "deleted"
+    print_result(result, f'Attachment {attachment_id} deleted from entry {entry_id}.', fmt)
+    return result
+
+
+def cmd_list_attachments(doc_name, doc_id, entry_id, fmt="text"):
+    """List attachments on an existing log entry."""
+    factory = auth.get_factory()
+    logbook_api = factory.get_logbook_api()
+    doc = core.resolve_doc(logbook_api, doc_name, doc_id)
+    items = core.entry_attachments(logbook_api, doc.id, entry_id)
+
+    if not items and fmt == "text":
+        print(f'No attachments found for entry {entry_id} in document "{doc.name}".')
+        return
+    columns = [
+        ("id", "ID", 8),
+        ("original_filename", "Filename", 30),
+        ("stored_filename", "Stored Filename", 30),
+        ("download_path", "Download Path", 0),
+    ]
+    print_items(items, columns, fmt)
+
+
+def cmd_delete_entry(doc_name, doc_id, entry_id, yes=False, fmt="text"):
+    """Delete a log entry or reply after confirmation."""
+    factory = auth.get_factory()
+    logbook_api = factory.get_logbook_api()
+    doc = core.resolve_doc(logbook_api, doc_name, doc_id)
+    entries = logbook_api.get_log_entries(
+        log_document_id=doc.id, load_replies=True)
+    if not core.find_entry(entries, entry_id):
+        raise ValueError(
+            f'entry with log_id={entry_id} not found in document "{doc.name}".')
+    result = {
+        "doc_id": doc.id, "doc": doc.name, "log_id": entry_id,
+        "status": "cancelled",
+    }
+    if not confirm_delete(
+            f'Delete entry/reply {entry_id} from document "{doc.name}"?', yes):
+        print_result(result, "Deletion cancelled.", fmt)
+        return result
+    with auth.get_authenticated_factory() as auth_factory:
+        core.delete_entry(auth_factory.get_logbook_api(), doc.id, entry_id)
+    result["status"] = "deleted"
+    print_result(result, f'Entry/reply {entry_id} deleted from "{doc.name}".', fmt)
+    return result
+
+
+def cmd_list_entries(doc_name, doc_id, replies=False, fmt="text"):
+    """List entries in a log document, optionally including replies."""
+    factory = auth.get_factory()
+    logbook_api = factory.get_logbook_api()
+    doc = core.resolve_doc(logbook_api, doc_name, doc_id)
+    entries = logbook_api.get_log_entries(
+        log_document_id=doc.id, load_replies=replies)
 
     if not entries:
         if fmt == "text":
@@ -154,18 +293,53 @@ def cmd_list_entries(doc_name, doc_id, fmt="text"):
             print_items([], [], fmt)
         return
 
-    items = core.entry_list_items(entries)
-    columns = [("log_id", "Log ID", 10), ("date", "Date", 18),
-               ("author", "Author", 20), ("snippet", "Snippet", 0)]
+    items = core.entry_list_items(entries, include_replies=replies)
+    columns = [("log_id", "Log ID", 10)]
+    if replies:
+        columns.append(("parent_log_id", "Parent ID", 10))
+    columns.extend([
+        ("date", "Date", 18), ("author", "Author", 20),
+        ("snippet", "Snippet", 0),
+    ])
     print_items(items, columns, fmt)
 
 
-def cmd_get_entry(doc_name, doc_id, entry_id, output_dir, fmt="text"):
-    """Write the markdown of a log entry to a file (latest by default)."""
+def _entry_summary(entry, doc):
+    return {
+        "log_id": entry.log_id,
+        "document_id": doc.id,
+        "document": doc.name,
+        "parent_log_id": getattr(entry, "parent_log_id", None),
+        "created_by": getattr(entry, "entered_by_username", None) or "",
+        "created": getattr(entry, "entered_on_date_time", None),
+        "modified_by": getattr(entry, "last_modified_by_username", None) or "",
+        "modified": getattr(entry, "last_modified_on_date_time", None),
+    }
+
+
+def _print_entry_summary(summary):
+    labels = {
+        "log_id": "Entry ID", "document_id": "Document ID",
+        "document": "Document", "parent_log_id": "Parent entry ID",
+        "created_by": "Created by", "created": "Created",
+        "modified_by": "Modified by", "modified": "Modified",
+        "path": "File",
+    }
+    for key, value in summary.items():
+        if value not in (None, ""):
+            print(f"{labels[key]}: {value}")
+
+
+def cmd_get_entry(doc_name, doc_id, entry_id, output_dir, stdout=False, fmt="text"):
+    """Show a log entry or write its markdown to a file."""
+    if stdout and output_dir:
+        raise ValueError("--stdout and --output are mutually exclusive.")
+
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
     doc = core.resolve_doc(logbook_api, doc_name, doc_id)
-    entries = logbook_api.get_log_entries(log_document_id=doc.id)
+    entries = logbook_api.get_log_entries(
+        log_document_id=doc.id, load_replies=entry_id is not None)
 
     if not entries:
         raise ValueError(f'No entries found in document {doc.name}.')
@@ -177,11 +351,21 @@ def cmd_get_entry(doc_name, doc_id, entry_id, output_dir, fmt="text"):
     else:
         entry = entries[-1]
 
+    summary = _entry_summary(entry, doc)
+    if stdout:
+        if fmt == "text":
+            _print_entry_summary(summary)
+            print()
+            print(entry.log_entry or "")
+        else:
+            summary["content"] = entry.log_entry or ""
+            print_result(summary, "", fmt)
+        return
+
     name_for_file = doc_name if doc_name else str(doc.id)
-    out_path = write_entry_to_file(entry, name_for_file, output_dir, fmt)
-    if fmt != "text":
-        print_result(
-            {"log_id": entry.log_id, "path": out_path, "doc": doc.name},
-            "",
-            fmt,
-        )
+    out_path = write_entry_to_file(entry, name_for_file, output_dir, fmt, quiet=True)
+    summary["path"] = out_path
+    if fmt == "text":
+        _print_entry_summary(summary)
+    else:
+        print_result(summary, "", fmt)
