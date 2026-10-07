@@ -149,6 +149,14 @@ class GetDocumentTests(unittest.TestCase):
         self.assertEqual(summary["owner"], "alice")
         self.assertEqual(summary["owner_group"], "operators")
         self.assertIs(summary["group_writeable"], True)
+        self.assertEqual(summary["lockout_hours"], 8)
+
+    def test_document_summary_omits_zero_lockout_hours(self):
+        doc = SimpleNamespace(
+            id=42, name="My Doc", description=None, domain=None,
+            entity_type_list=[], item_type_list=[], more_info=None,
+            log_lockout_hours=0)
+        self.assertNotIn("lockout_hours", core.document_summary(doc))
 
 
 class CreateDocumentTests(unittest.TestCase):

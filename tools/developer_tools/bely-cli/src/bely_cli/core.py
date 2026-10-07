@@ -106,10 +106,10 @@ def _names(items):
 
 
 def document_summary(doc):
-    """Return stable summary fields for a log document."""
+    """Return summary fields for a log document."""
     more_info = getattr(doc, "more_info", None)
     domain = getattr(doc, "domain", None)
-    return {
+    summary = {
         "id": doc.id,
         "name": doc.name or "",
         "description": getattr(doc, "description", None) or "",
@@ -123,8 +123,11 @@ def document_summary(doc):
         "created": getattr(more_info, "created_on_date_time", None),
         "modified_by": getattr(more_info, "last_modified_by_username", None) or "",
         "modified": getattr(more_info, "last_modified_on_date_time", None),
-        "lockout_hours": getattr(doc, "log_lockout_hours", None),
     }
+    lockout_hours = getattr(doc, "log_lockout_hours", None)
+    if lockout_hours:
+        summary["lockout_hours"] = lockout_hours
+    return summary
 
 
 def create_document(logbook_api, name, logbook_type_id, system_id_list=None,
