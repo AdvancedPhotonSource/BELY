@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="bely-mqtt-framework",
-    version="2026.3.dev0",
+    version="2026.10.0",
     description="Pluggable Python framework for handling BELY MQTT events",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
