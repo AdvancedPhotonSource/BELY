@@ -69,8 +69,7 @@ class EmailNotificationWrapper:
                 # Fall back to regular Apprise if not an email notification
                 apobj = apprise.Apprise()
                 apobj.add(self.apprise_url)
-                result = apobj.notify(body=body, title=title)
-                return bool(result)
+                return bool(apobj.notify(body=body, title=title))
 
             # If we have headers, inject them into the email instance
             if headers:
@@ -86,8 +85,7 @@ class EmailNotificationWrapper:
                     setattr(email_instance, "headers", {})  # type: ignore[attr-defined]
 
             # Send the notification using the email instance
-            result = email_instance.send(body=body, title=title)
-            return bool(result)
+            return bool(email_instance.send(body=body, title=title))
 
         except Exception as e:
             print(f"Error sending email with headers: {e}")
