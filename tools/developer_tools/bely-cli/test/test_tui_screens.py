@@ -34,6 +34,9 @@ from bely_cli.tui.screens.configscreen import ConfigScreen
 from bely_cli.tui.screens.login import LoginScreen
 from bely_cli.tui.screens.newdoc import NewDocScreen
 from bely_cli.tui.screens.picker import PickerScreen
+from bely_cli.tui.screens.shortcuts import (
+    ALL_SHORTCUTS, CATEGORY_ORDER, ShortcutScreen, format_shortcuts, shortcuts_for,
+)
 from test.api_helpers import api_fake, method_mock
 
 
@@ -100,6 +103,72 @@ class FakeSession:
 
     def authenticated_api(self):
         return self.factory.get_logbook_api()
+
+
+class ShortcutScreenTests(unittest.IsolatedAsyncioTestCase):
+    def test_catalog_covers_categories_and_orders_them_logically(self):
+        self.assertEqual(
+            {shortcut.category for shortcut in ALL_SHORTCUTS}, set(CATEGORY_ORDER))
+        rendered = format_shortcuts(ALL_SHORTCUTS)
+        positions = [rendered.index(category) for category in CATEGORY_ORDER]
+        self.assertEqual(positions, sorted(positions))
+
+    def test_relevance_and_search_of_full_catalog(self):
+        type_keys = {shortcut.key for shortcut in shortcuts_for("types")}
+        self.assertIn("d", type_keys)
+        self.assertNotIn("t", type_keys)
+        self.assertNotIn("Ctrl+S", type_keys)
+
+        entry_keys = {shortcut.key for shortcut in shortcuts_for("entries")}
+        self.assertIn("p", entry_keys)
+        self.assertNotIn("t", entry_keys)
+        entry_reply_keys = {
+            shortcut.key for shortcut in shortcuts_for("entries", has_replies=True)}
+        self.assertIn("t", entry_reply_keys)
+
+        matches = shortcuts_for("types", query="ctrl+s")
+        self.assertTrue(matches)
+        self.assertTrue(all("ctrl+s" in shortcut.key.casefold() for shortcut in matches))
+        reply_matches = shortcuts_for("types", query="repl")
+        self.assertEqual(
+            {shortcut.action for shortcut in reply_matches},
+            {"Toggle replies", "Add a reply"},
+        )
+
+    async def test_modal_filters_and_closes_with_question_mark(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(
+                app.push_screen_wait(ShortcutScreen("types", has_replies=False)))
+            await pilot.pause()
+            screen = app.screen
+            listing = screen.query_one("#shortcut-list", Static)
+            self.assertNotIn("Toggle replies", str(listing.render()))
+
+            filter_input = screen.query_one("#shortcut-filter", Input)
+            filter_input.value = "ctrl+s"
+            await pilot.pause()
+            self.assertIn("Submit or save", str(listing.render()))
+            filter_input.value = "repl"
+            await pilot.pause()
+            self.assertIn("Toggle replies", str(listing.render()))
+            self.assertIn("Add a reply", str(listing.render()))
+            filter_input.value = "not-a-shortcut"
+            await pilot.pause()
+            self.assertIn("No shortcuts match that key.", str(listing.render()))
+
+            filter_input.value = ""
+            await pilot.pause()
+            await pilot.press("?")
+            self.assertIsNone(await task.wait())
+
+    async def test_modal_closes_with_escape(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(ShortcutScreen("entries")))
+            await pilot.pause()
+            await pilot.press("escape")
+            self.assertIsNone(await task.wait())
 
 
 class AttachmentPreviewKindTests(unittest.TestCase):

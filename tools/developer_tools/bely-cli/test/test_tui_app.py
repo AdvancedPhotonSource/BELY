@@ -433,6 +433,31 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
                 else:
                     self.assertTrue(screen.check_action(action, ()))
 
+    async def test_question_mark_opens_relevant_shortcut_modal(self):
+        data = LogbookData(FakeLogbookApi())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            browse_screen = app.screen
+            await pilot.press("?")
+            await pilot.pause()
+            self.assertEqual(type(app.screen).__name__, "ShortcutScreen")
+            self.assertEqual(app.screen.context, "types")
+            self.assertFalse(app.screen.has_replies)
+            await pilot.press("?")
+            await pilot.pause()
+            self.assertIs(app.screen, browse_screen)
+
+    async def test_entry_shortcut_modal_knows_document_has_replies(self):
+        data = LogbookData(FakeLogbookApiWithReplies())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await self._open_entries(pilot)
+            await pilot.press("?")
+            await pilot.pause()
+            self.assertEqual(app.screen.context, "entries")
+            self.assertTrue(app.screen.has_replies)
+
     async def test_escape_at_landing_screen_does_not_quit(self):
         # BrowseScreen is the landing screen in mode="app" too; only `q` quits.
         data = LogbookData(FakeLogbookApi())

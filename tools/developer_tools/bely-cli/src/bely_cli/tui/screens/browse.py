@@ -107,6 +107,7 @@ class BrowseScreen(Screen):
         Binding("escape", "back", "Back"),
         Binding("backspace", "back", "Back", show=False),
         Binding("q", "quit_app", "Quit"),
+        Binding("question_mark", "show_shortcuts", "Shortcuts"),
         Binding("slash", "focus_filter", "Filter"),
         Binding("f", "toggle_full", "Full"),
         Binding("t", "toggle_replies", "Toggle replies"),
@@ -669,6 +670,16 @@ class BrowseScreen(Screen):
     def action_quit_app(self):
         self.app.exit(None)
 
+    def action_show_shortcuts(self):
+        from .shortcuts import ShortcutScreen
+
+        context = {
+            self.LEVEL_TYPES: "types",
+            self.LEVEL_DOCS: "docs",
+            self.LEVEL_ENTRIES: "entries",
+        }[self.level]
+        self.app.push_screen(ShortcutScreen(context, has_replies=self._has_replies()))
+
     def action_focus_filter(self):
         filt = self.query_one("#filter", Input)
         filt.display = True
@@ -688,8 +699,7 @@ class BrowseScreen(Screen):
             return None
         if action == "new_entry" and self._current_doc() is None:
             return None
-        if action == "toggle_replies" and not any(
-                getattr(entry, "log_replies", None) for entry in self.entry_tree):
+        if action == "toggle_replies" and not self._has_replies():
             return None
         if action == "reply" and self._current_node() is None:
             return None
@@ -700,6 +710,9 @@ class BrowseScreen(Screen):
             if item is not None and not item.selectable:
                 return None
         return True
+
+    def _has_replies(self):
+        return any(getattr(entry, "log_replies", None) for entry in self.entry_tree)
 
     def action_refresh_level(self):
         # Do not start another entry refresh while its preview state is being
