@@ -428,7 +428,10 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
 
             self.assertIsNone(screen.check_action("toggle_info", ()))
             for action in entry_only_actions:
-                self.assertTrue(screen.check_action(action, ()))
+                if action == "toggle_replies":
+                    self.assertIsNone(screen.check_action(action, ()))
+                else:
+                    self.assertTrue(screen.check_action(action, ()))
 
     async def test_escape_at_landing_screen_does_not_quit(self):
         # BrowseScreen is the landing screen in mode="app" too; only `q` quits.
