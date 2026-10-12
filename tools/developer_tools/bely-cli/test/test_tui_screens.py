@@ -184,6 +184,45 @@ class AttachmentFileScreenTests(unittest.IsolatedAsyncioTestCase):
             await pilot.press("escape")
             await task.wait()
 
+    async def test_replacing_local_image_waits_for_existing_widget_removal(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(AttachmentFileScreen("/tmp")))
+            await pilot.pause()
+            screen = app.screen
+            media = screen.query_one("#attachment-file-media")
+            await media.mount(Static("first", id="attachment-file-image"))
+
+            media.remove_children()
+            await screen._show_local_image(
+                screen._preview_token, Static, "replacement")
+
+            self.assertEqual(len(media.children), 1)
+            self.assertEqual(media.children[0].id, "attachment-file-image")
+            await pilot.press("escape")
+            await task.wait()
+
+    async def test_stale_local_image_is_not_mounted_after_removal(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(AttachmentFileScreen("/tmp")))
+            await pilot.pause()
+            screen = app.screen
+            media = screen.query_one("#attachment-file-media")
+            removal = media.remove_children()
+
+            async def remove_and_change_token():
+                await removal
+                screen._preview_token += 1
+
+            with patch.object(media, "remove_children", return_value=remove_and_change_token()):
+                await screen._show_local_image(
+                    screen._preview_token, Static, "stale")
+
+            self.assertEqual(len(media.children), 0)
+            await pilot.press("escape")
+            await task.wait()
+
     async def test_entering_directory_changes_tree_root(self):
         app = App()
         async with app.run_test() as pilot:
@@ -226,6 +265,27 @@ class AttachmentScreenTests(unittest.IsolatedAsyncioTestCase):
                     screen.action_copy_reference()
                     copy.assert_called_once_with("![notes.txt](/download/notes.txt)")
                 await pilot.press("escape")
+
+    async def test_replacing_image_waits_for_existing_widget_removal(self):
+        api = FakeLogbookApi()
+        api.get_log_entry_attachments = lambda **kwargs: []
+        session = FakeSession(api)
+        app = BelyTuiApp(session)
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None):
+            async with app.run_test() as pilot:
+                await app.push_screen(AttachmentScreen(
+                    session, SimpleNamespace(id=42, name="Doc"), SimpleNamespace(log_id=10)))
+                await pilot.pause()
+                screen = app.screen
+                media = screen.query_one("#attachment-media")
+                await media.mount(Static("first", id="attachment-image"))
+
+                media.remove_children()
+                await screen._show_image(
+                    screen._preview_token, Static, "replacement")
+
+                self.assertEqual(len(media.children), 1)
+                self.assertEqual(media.children[0].id, "attachment-image")
 
     async def test_delete_confirms_then_refreshes(self):
         attachment = self._attachment()

@@ -263,8 +263,11 @@ class AttachmentFileScreen(DialogScreen):
     async def _show_local_image(self, token, widget_cls, image):
         if token != self._preview_token:
             return
-        await self.query_one("#attachment-file-media", Vertical).mount(
-            widget_cls(image, id="attachment-file-image"))
+        media = self.query_one("#attachment-file-media", Vertical)
+        await media.remove_children()
+        if token != self._preview_token:
+            return
+        await media.mount(widget_cls(image, id="attachment-file-image"))
 
     def _preview_local_failed(self, token, message):
         if token == self._preview_token:
@@ -429,8 +432,11 @@ class AttachmentScreen(ModalScreen):
     async def _show_image(self, token, widget_cls, image):
         if token != self._preview_token:
             return
-        await self.query_one("#attachment-media", Vertical).mount(
-            widget_cls(image, id="attachment-image"))
+        media = self.query_one("#attachment-media", Vertical)
+        await media.remove_children()
+        if token != self._preview_token:
+            return
+        await media.mount(widget_cls(image, id="attachment-image"))
 
     def _preview_failed(self, token, message):
         if token == self._preview_token:
