@@ -150,6 +150,7 @@ class BrowseScreen(Screen):
         self._restoring_entry_preview = False
         self._restoring_entry_id = None
         self._pending_doc_row = None
+        self._entry_refresh_pending = False
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -174,6 +175,11 @@ class BrowseScreen(Screen):
 
     def on_screen_resume(self):
         self._update_auth_status()
+        if self._entry_refresh_pending and self.level == self.LEVEL_ENTRIES:
+            self._entry_refresh_pending = False
+            entry = self._current_entry()
+            if entry is not None:
+                self._reload_entry(entry.log_id)
 
     # -- nav widget --
 
@@ -959,9 +965,7 @@ class BrowseScreen(Screen):
             )
             return
 
-        self.data.invalidate("entries", doc_id=self.sel_doc.id)
-        self.show_level(
-            self.LEVEL_ENTRIES, preserve_filter=True, preserve_entry_position=True)
+        self._reload_entry(entry.log_id)
         self.notify("Entry saved.")
 
     def action_attachments(self):
@@ -975,8 +979,21 @@ class BrowseScreen(Screen):
             self.session, self.sel_doc, entry, on_changed=self._refresh_attachment_entry))
 
     def _refresh_attachment_entry(self):
-        """Reload the entry after its attachment references change."""
+        """Reload the entry once the attachment modal closes."""
         self.data.invalidate("entries", doc_id=self.sel_doc.id)
+        self._entry_refresh_pending = True
+
+    def _reload_entry(self, log_id):
+        """Fetch and rerender one mutated entry while preserving its position."""
+        self.data.invalidate("entries", doc_id=self.sel_doc.id)
+        self._pending_entry_restore = (
+            log_id,
+            None,
+            self._nav().cursor_row or 0,
+            self.query_one("#preview", VerticalScroll).scroll_y,
+        )
+        self._restoring_entry_preview = True
+        self._restoring_entry_id = log_id
         self.show_level(
             self.LEVEL_ENTRIES, preserve_filter=True, preserve_entry_position=True)
 
@@ -1019,6 +1036,9 @@ class BrowseScreen(Screen):
             return
         self.sel_doc = doc
         self.data.invalidate("entries", doc_id=doc.id)
+        if entry is not None:
+            self._reload_entry(saved.log_id)
+            return
         if reply_to is not None:
             self._collapsed.discard(reply_to.log_id)
             saved_id = getattr(saved, "log_id", None) or reply_to.log_id

@@ -59,6 +59,9 @@ class FakeLogbookApi:
         )]
 
     def get_log_entries(self, log_document_id, load_replies, load_reactions):
+        saved_entry = getattr(self, "saved_entry", None)
+        if saved_entry is not None:
+            return [saved_entry]
         return [SimpleNamespace(
             log_id=100, entered_by_username="alice", entered_on_date_time=None,
             last_modified_by_username=None, last_modified_on_date_time=None,
@@ -72,7 +75,8 @@ class FakeLogbookApi:
         return SimpleNamespace(log_id=None, log_entry="")
 
     def add_update_log_entry(self, log_entry):
-        log_entry.log_id = 101
+        log_entry.log_id = log_entry.log_id or 101
+        self.saved_entry = log_entry
         return log_entry
 
 
@@ -676,10 +680,12 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(app.screen.entry.log_id, 100)
                 app.screen.on_changed()
                 await pilot.pause()
-                self.assertEqual(get_entries.call_count, 2)
+                self.assertEqual(get_entries.call_count, 1)
                 await pilot.press("escape")
                 await pilot.pause()
+                await pilot.pause()
                 self.assertIs(app.screen, browse_screen)
+                self.assertEqual(get_entries.call_count, 2)
 
     async def test_delete_populated_document_requires_typed_confirmation(self):
         api = FakeLogbookApi()
@@ -854,6 +860,35 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(type(app.screen).__name__, "BrowseScreen")
             saved_entry = save_call.call_args.kwargs["log_entry"]
             self.assertIn("edited in $EDITOR", saved_entry.log_entry)
+            self.assertIn("edited in $EDITOR", screen._current_entry().log_entry)
+            self.assertIn(
+                "edited in $EDITOR",
+                screen.query_one("#body-md", Markdown).source,
+            )
+
+    async def test_tui_edit_refreshes_entry_content_and_preview(self):
+        api = FakeLogbookApi()
+        data = LogbookData(api)
+        session = FakeSession(data, factory=FakeFactory(api=api))
+        app = BelyTuiApp(session, limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await self._open_entries(pilot)
+            screen = app.screen
+            await pilot.press("u")
+            await pilot.pause()
+            await pilot.pause()
+
+            from textual.widgets import Button, TextArea
+
+            app.screen.query_one("#compose-area", TextArea).text = "updated in TUI"
+            app.screen.query_one("#compose-save", Button).press()
+            await pilot.pause()
+            await pilot.pause()
+            await pilot.pause()
+
+            self.assertIs(app.screen, screen)
+            self.assertEqual(screen._current_entry().log_entry, "updated in TUI")
+            self.assertEqual(screen.query_one("#body-md", Markdown).source, "updated in TUI")
 
 
 class ThemePersistenceTests(unittest.IsolatedAsyncioTestCase):
