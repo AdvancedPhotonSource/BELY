@@ -724,7 +724,21 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertIsNone(screen.check_action("reply", ()))
             await self._open_entries(pilot)
             self.assertTrue(screen.check_action("reply", ()))
+            self.assertIsNone(screen.check_action("toggle_replies", ()))
             self.assertTrue(screen.check_action("refresh_level", ()))
+
+    async def test_toggle_replies_binding_available_when_document_has_replies(self):
+        api = FakeLogbookApiWithReplies()
+        app = BelyTuiApp(FakeSession(LogbookData(api)), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await self._open_entries(pilot)
+            self.assertTrue(app.screen.check_action("toggle_replies", ()))
+            self.assertTrue(app.screen.check_action("reply", ()))
+
+    def test_reply_binding_labels_distinguish_adding_from_toggling(self):
+        bindings = {binding.key: binding.description for binding in BrowseScreen.BINDINGS}
+        self.assertEqual(bindings["t"], "Toggle replies")
+        self.assertEqual(bindings["p"], "Add reply")
 
     async def test_update_entry_key_opens_compose_prefilled_and_cancel_returns(self):
         api = FakeLogbookApi()

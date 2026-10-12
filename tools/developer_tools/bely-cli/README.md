@@ -417,8 +417,8 @@ on — `i` disappears once you drill into entries, and `s` / `y` / `e` / `f` / `
 | `s` | Entries level only: save the highlighted entry's markdown to a file in the current directory. |
 | `y` | Entries level only: copy a `bely-cli entry get` reference for the highlighted entry to the clipboard. |
 | `e` | Entries level only: open the highlighted entry in `$EDITOR`; if you change it, offers to save the result back to the server (a mutation, so this is where the app authenticates if it hasn't already). |
-| `p` | Entries level only: reply to the highlighted entry's top-level thread. Attachments are supported. |
-| `t` | Entries level only: collapse/expand the reply thread under the highlighted entry (or its parent, if the highlight is on a reply). Replies start expanded. |
+| `p` | Entries level only: add a reply to the highlighted entry's top-level thread. Attachments are supported. |
+| `t` | Entries level only, when the document has replies: toggle (collapse/expand) the reply thread under the highlighted entry, or its parent if the highlight is on a reply. Replies start expanded. |
 | `Shift+A` | Entries level only: open the highlighted entry's attachment browser. |
 | `x` | Document/entry levels only: delete the highlighted document, entry, or reply after destructive confirmation. Documents containing entries require a second confirmation by typing the document name exactly. |
 | `i` | Logbook/document levels only: toggle the side info panel. |

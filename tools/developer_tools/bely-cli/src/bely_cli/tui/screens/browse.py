@@ -109,13 +109,13 @@ class BrowseScreen(Screen):
         Binding("q", "quit_app", "Quit"),
         Binding("slash", "focus_filter", "Filter"),
         Binding("f", "toggle_full", "Full"),
-        Binding("t", "toggle_replies", "Replies"),
+        Binding("t", "toggle_replies", "Toggle replies"),
         Binding("s", "save_entry", "Save"),
         Binding("y", "copy_reference", "Copy ref"),
         Binding("e", "open_editor", "Edit in editor"),
         Binding("n", "new_entry", "New entry"),
         Binding("u", "update_entry", "Edit in TUI"),
-        Binding("p", "reply", "Reply"),
+        Binding("p", "reply", "Add reply"),
         # Printable shifted letters arrive from terminals as the uppercase character.
         Binding("A", "attachments", "Attachments"),
         Binding("x", "delete", "Delete"),
@@ -687,6 +687,9 @@ class BrowseScreen(Screen):
         if levels is not None and self.level not in levels:
             return None
         if action == "new_entry" and self._current_doc() is None:
+            return None
+        if action == "toggle_replies" and not any(
+                getattr(entry, "log_replies", None) for entry in self.entry_tree):
             return None
         if action == "reply" and self._current_node() is None:
             return None
