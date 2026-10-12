@@ -142,20 +142,25 @@ class ShortcutScreenTests(unittest.IsolatedAsyncioTestCase):
                 app.push_screen_wait(ShortcutScreen("types", has_replies=False)))
             await pilot.pause()
             screen = app.screen
-            listing = screen.query_one("#shortcut-list", Static)
-            self.assertNotIn("Toggle replies", str(listing.render()))
+            def listing_text():
+                return "\n".join(
+                    str(widget.render())
+                    for widget in screen.query(".shortcut-rows, .shortcut-empty")
+                )
+
+            self.assertNotIn("Toggle replies", listing_text())
 
             filter_input = screen.query_one("#shortcut-filter", Input)
             filter_input.value = "ctrl+s"
             await pilot.pause()
-            self.assertIn("Submit or save", str(listing.render()))
+            self.assertIn("Submit or save", listing_text())
             filter_input.value = "repl"
             await pilot.pause()
-            self.assertIn("Toggle replies", str(listing.render()))
-            self.assertIn("Add a reply", str(listing.render()))
+            self.assertIn("Toggle replies", listing_text())
+            self.assertIn("Add a reply", listing_text())
             filter_input.value = "not-a-shortcut"
             await pilot.pause()
-            self.assertIn("No shortcuts match that key.", str(listing.render()))
+            self.assertIn("No shortcuts match that key.", listing_text())
 
             filter_input.value = ""
             await pilot.pause()

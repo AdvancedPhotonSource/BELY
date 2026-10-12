@@ -6,7 +6,7 @@ from textual import events
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical, VerticalScroll
-from textual.widgets import Input, Static
+from textual.widgets import Input, Label, Static
 
 from .dialog import DialogScreen
 
@@ -79,13 +79,19 @@ def shortcuts_for(context, *, has_replies=False, query=""):
     return [shortcut for shortcut in ALL_SHORTCUTS if contexts.intersection(shortcut.contexts)]
 
 
+def grouped_shortcuts(shortcuts):
+    """Return non-empty shortcut categories in display order."""
+    return [
+        (category, [shortcut for shortcut in shortcuts if shortcut.category == category])
+        for category in CATEGORY_ORDER
+        if any(shortcut.category == category for shortcut in shortcuts)
+    ]
+
+
 def format_shortcuts(shortcuts):
     """Format shortcut rows under stable logical category headings."""
     lines = []
-    for category in CATEGORY_ORDER:
-        rows = [shortcut for shortcut in shortcuts if shortcut.category == category]
-        if not rows:
-            continue
+    for category, rows in grouped_shortcuts(shortcuts):
         if lines:
             lines.append("")
         lines.append(category)
@@ -113,6 +119,24 @@ class ShortcutScreen(DialogScreen):
     #shortcut-filter { margin: 1 0; }
     #shortcut-scroll { height: 1fr; }
     #shortcut-list { height: auto; }
+    .shortcut-section-header {
+        width: 100%;
+        height: 1;
+        margin: 1 0 0 0;
+        padding: 0 1;
+        background: $primary;
+        color: $text;
+        text-style: bold;
+    }
+    .shortcut-rows {
+        height: auto;
+        padding: 0 1;
+    }
+    .shortcut-empty {
+        height: auto;
+        padding: 1;
+        color: $text-muted;
+    }
     """
 
     BINDINGS = [
@@ -130,17 +154,37 @@ class ShortcutScreen(DialogScreen):
             yield ShortcutFilterInput(
                 placeholder="Search keys and actions", id="shortcut-filter")
             with VerticalScroll(id="shortcut-scroll"):
-                yield Static(id="shortcut-list")
+                yield Vertical(id="shortcut-list")
 
-    def on_mount(self):
-        self._show("")
+    async def on_mount(self):
+        await self._show("")
         self.query_one("#shortcut-filter", Input).focus()
 
-    def on_input_changed(self, event):
+    async def on_input_changed(self, event):
         if event.input.id == "shortcut-filter":
-            self._show(event.value)
+            await self._show(event.value)
 
-    def _show(self, query):
-        rows = shortcuts_for(
+    async def _show(self, query):
+        shortcuts = shortcuts_for(
             self.context, has_replies=self.has_replies, query=query.strip())
-        self.query_one("#shortcut-list", Static).update(format_shortcuts(rows))
+        listing = self.query_one("#shortcut-list", Vertical)
+        await listing.remove_children()
+        groups = grouped_shortcuts(shortcuts)
+        if not groups:
+            await listing.mount(
+                Static("No shortcuts match that key.", classes="shortcut-empty"))
+            return
+        widgets = []
+        for category, rows in groups:
+            width = max(len(shortcut.key) for shortcut in rows)
+            widgets.extend((
+                Label(category, classes="shortcut-section-header"),
+                Static(
+                    "\n".join(
+                        f"[b]{shortcut.key:<{width}}[/b]  {shortcut.action}"
+                        for shortcut in rows
+                    ),
+                    classes="shortcut-rows",
+                ),
+            ))
+        await listing.mount_all(widgets)
