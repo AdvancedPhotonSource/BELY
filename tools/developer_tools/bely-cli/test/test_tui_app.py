@@ -59,6 +59,9 @@ class FakeLogbookApi:
         )]
 
     def get_log_entries(self, log_document_id, load_replies, load_reactions):
+        saved_entry = getattr(self, "saved_entry", None)
+        if saved_entry is not None:
+            return [saved_entry]
         return [SimpleNamespace(
             log_id=100, entered_by_username="alice", entered_on_date_time=None,
             last_modified_by_username=None, last_modified_on_date_time=None,
@@ -72,7 +75,8 @@ class FakeLogbookApi:
         return SimpleNamespace(log_id=None, log_entry="")
 
     def add_update_log_entry(self, log_entry):
-        log_entry.log_id = 101
+        log_entry.log_id = log_entry.log_id or 101
+        self.saved_entry = log_entry
         return log_entry
 
 
@@ -428,7 +432,35 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
 
             self.assertIsNone(screen.check_action("toggle_info", ()))
             for action in entry_only_actions:
-                self.assertTrue(screen.check_action(action, ()))
+                if action == "toggle_replies":
+                    self.assertIsNone(screen.check_action(action, ()))
+                else:
+                    self.assertTrue(screen.check_action(action, ()))
+
+    async def test_question_mark_opens_relevant_shortcut_modal(self):
+        data = LogbookData(FakeLogbookApi())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            browse_screen = app.screen
+            await pilot.press("?")
+            await pilot.pause()
+            self.assertEqual(type(app.screen).__name__, "ShortcutScreen")
+            self.assertEqual(app.screen.context, "types")
+            self.assertFalse(app.screen.has_replies)
+            await pilot.press("?")
+            await pilot.pause()
+            self.assertIs(app.screen, browse_screen)
+
+    async def test_entry_shortcut_modal_knows_document_has_replies(self):
+        data = LogbookData(FakeLogbookApiWithReplies())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await self._open_entries(pilot)
+            await pilot.press("?")
+            await pilot.pause()
+            self.assertEqual(app.screen.context, "entries")
+            self.assertTrue(app.screen.has_replies)
 
     async def test_escape_at_landing_screen_does_not_quit(self):
         # BrowseScreen is the landing screen in mode="app" too; only `q` quits.
@@ -648,10 +680,12 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(app.screen.entry.log_id, 100)
                 app.screen.on_changed()
                 await pilot.pause()
-                self.assertEqual(get_entries.call_count, 2)
+                self.assertEqual(get_entries.call_count, 1)
                 await pilot.press("escape")
                 await pilot.pause()
+                await pilot.pause()
                 self.assertIs(app.screen, browse_screen)
+                self.assertEqual(get_entries.call_count, 2)
 
     async def test_delete_populated_document_requires_typed_confirmation(self):
         api = FakeLogbookApi()
@@ -724,7 +758,21 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertIsNone(screen.check_action("reply", ()))
             await self._open_entries(pilot)
             self.assertTrue(screen.check_action("reply", ()))
+            self.assertIsNone(screen.check_action("toggle_replies", ()))
             self.assertTrue(screen.check_action("refresh_level", ()))
+
+    async def test_toggle_replies_binding_available_when_document_has_replies(self):
+        api = FakeLogbookApiWithReplies()
+        app = BelyTuiApp(FakeSession(LogbookData(api)), limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await self._open_entries(pilot)
+            self.assertTrue(app.screen.check_action("toggle_replies", ()))
+            self.assertTrue(app.screen.check_action("reply", ()))
+
+    def test_reply_binding_labels_distinguish_adding_from_toggling(self):
+        bindings = {binding.key: binding.description for binding in BrowseScreen.BINDINGS}
+        self.assertEqual(bindings["t"], "Toggle replies")
+        self.assertEqual(bindings["p"], "Add reply")
 
     async def test_update_entry_key_opens_compose_prefilled_and_cancel_returns(self):
         api = FakeLogbookApi()
@@ -812,6 +860,35 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(type(app.screen).__name__, "BrowseScreen")
             saved_entry = save_call.call_args.kwargs["log_entry"]
             self.assertIn("edited in $EDITOR", saved_entry.log_entry)
+            self.assertIn("edited in $EDITOR", screen._current_entry().log_entry)
+            self.assertIn(
+                "edited in $EDITOR",
+                screen.query_one("#body-md", Markdown).source,
+            )
+
+    async def test_tui_edit_refreshes_entry_content_and_preview(self):
+        api = FakeLogbookApi()
+        data = LogbookData(api)
+        session = FakeSession(data, factory=FakeFactory(api=api))
+        app = BelyTuiApp(session, limit=10, mode="lookup")
+        async with app.run_test() as pilot:
+            await self._open_entries(pilot)
+            screen = app.screen
+            await pilot.press("u")
+            await pilot.pause()
+            await pilot.pause()
+
+            from textual.widgets import Button, TextArea
+
+            app.screen.query_one("#compose-area", TextArea).text = "updated in TUI"
+            app.screen.query_one("#compose-save", Button).press()
+            await pilot.pause()
+            await pilot.pause()
+            await pilot.pause()
+
+            self.assertIs(app.screen, screen)
+            self.assertEqual(screen._current_entry().log_entry, "updated in TUI")
+            self.assertEqual(screen.query_one("#body-md", Markdown).source, "updated in TUI")
 
 
 class ThemePersistenceTests(unittest.IsolatedAsyncioTestCase):

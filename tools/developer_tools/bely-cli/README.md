@@ -404,11 +404,18 @@ you highlight each entry) — and, for a reply, which entry it's a reply to.
 
 Keys:
 
-The footer at the bottom of the screen only ever shows the keys that apply to the level you're
-on — `i` disappears once you drill into entries, and `s` / `y` / `e` / `f` / `t` only appear there.
+Press `?` to open a categorized keyboard-shortcut reference. With its search box empty it
+shows the shortcuts relevant to the current browse level; type a key name such as `ctrl+s`
+or an action such as `reply` to search the complete TUI shortcut catalog. Search matches
+shortcut notation and action text. Press `Esc` or `?` to close it.
+
+The footer at the bottom of the screen only ever shows the keys that apply to the level and
+data you're viewing — `i` disappears once you drill into entries, and `s` / `y` / `e` / `f`
+only appear there. `t` appears at the entries level only when the document has replies.
 
 | Key | Action |
 |-----|--------|
+| `?` | Open the searchable, categorized keyboard-shortcut reference. |
 | `Up` / `Down`, `PgUp` / `PgDn` | Move the highlight; the preview/info panel follows. |
 | `/` | Reveal and focus the filter box; incrementally filters the current table (case-insensitive substring, matched against the entry text — not the reply tree's glyphs or reply count). |
 | `Enter` | In the filter box, return focus to the table. Elsewhere, drill into the highlighted row, or select the entry at the entries level. |
@@ -417,8 +424,8 @@ on — `i` disappears once you drill into entries, and `s` / `y` / `e` / `f` / `
 | `s` | Entries level only: save the highlighted entry's markdown to a file in the current directory. |
 | `y` | Entries level only: copy a `bely-cli entry get` reference for the highlighted entry to the clipboard. |
 | `e` | Entries level only: open the highlighted entry in `$EDITOR`; if you change it, offers to save the result back to the server (a mutation, so this is where the app authenticates if it hasn't already). |
-| `p` | Entries level only: reply to the highlighted entry's top-level thread. Attachments are supported. |
-| `t` | Entries level only: collapse/expand the reply thread under the highlighted entry (or its parent, if the highlight is on a reply). Replies start expanded. |
+| `p` | Entries level only: add a reply to the highlighted entry's top-level thread. Attachments are supported. |
+| `t` | Entries level only, when the document has replies: toggle (collapse/expand) the reply thread under the highlighted entry, or its parent if the highlight is on a reply. Replies start expanded. |
 | `Shift+A` | Entries level only: open the highlighted entry's attachment browser. |
 | `x` | Document/entry levels only: delete the highlighted document, entry, or reply after destructive confirmation. Documents containing entries require a second confirmation by typing the document name exactly. |
 | `i` | Logbook/document levels only: toggle the side info panel. |
