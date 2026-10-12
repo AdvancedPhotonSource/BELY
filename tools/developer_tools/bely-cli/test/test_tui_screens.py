@@ -34,6 +34,9 @@ from bely_cli.tui.screens.configscreen import ConfigScreen
 from bely_cli.tui.screens.login import LoginScreen
 from bely_cli.tui.screens.newdoc import NewDocScreen
 from bely_cli.tui.screens.picker import PickerScreen
+from bely_cli.tui.screens.shortcuts import (
+    ALL_SHORTCUTS, CATEGORY_ORDER, ShortcutScreen, format_shortcuts, shortcuts_for,
+)
 from test.api_helpers import api_fake, method_mock
 
 
@@ -100,6 +103,77 @@ class FakeSession:
 
     def authenticated_api(self):
         return self.factory.get_logbook_api()
+
+
+class ShortcutScreenTests(unittest.IsolatedAsyncioTestCase):
+    def test_catalog_covers_categories_and_orders_them_logically(self):
+        self.assertEqual(
+            {shortcut.category for shortcut in ALL_SHORTCUTS}, set(CATEGORY_ORDER))
+        rendered = format_shortcuts(ALL_SHORTCUTS)
+        positions = [rendered.index(category) for category in CATEGORY_ORDER]
+        self.assertEqual(positions, sorted(positions))
+
+    def test_relevance_and_search_of_full_catalog(self):
+        type_keys = {shortcut.key for shortcut in shortcuts_for("types")}
+        self.assertIn("d", type_keys)
+        self.assertNotIn("t", type_keys)
+        self.assertNotIn("Ctrl+S", type_keys)
+
+        entry_keys = {shortcut.key for shortcut in shortcuts_for("entries")}
+        self.assertIn("p", entry_keys)
+        self.assertNotIn("t", entry_keys)
+        entry_reply_keys = {
+            shortcut.key for shortcut in shortcuts_for("entries", has_replies=True)}
+        self.assertIn("t", entry_reply_keys)
+
+        matches = shortcuts_for("types", query="ctrl+s")
+        self.assertTrue(matches)
+        self.assertTrue(all("ctrl+s" in shortcut.key.casefold() for shortcut in matches))
+        reply_matches = shortcuts_for("types", query="repl")
+        self.assertEqual(
+            {shortcut.action for shortcut in reply_matches},
+            {"Toggle replies", "Add a reply"},
+        )
+
+    async def test_modal_filters_and_closes_with_question_mark(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(
+                app.push_screen_wait(ShortcutScreen("types", has_replies=False)))
+            await pilot.pause()
+            screen = app.screen
+            def listing_text():
+                return "\n".join(
+                    str(widget.render())
+                    for widget in screen.query(".shortcut-rows, .shortcut-empty")
+                )
+
+            self.assertNotIn("Toggle replies", listing_text())
+
+            filter_input = screen.query_one("#shortcut-filter", Input)
+            filter_input.value = "ctrl+s"
+            await pilot.pause()
+            self.assertIn("Submit or save", listing_text())
+            filter_input.value = "repl"
+            await pilot.pause()
+            self.assertIn("Toggle replies", listing_text())
+            self.assertIn("Add a reply", listing_text())
+            filter_input.value = "not-a-shortcut"
+            await pilot.pause()
+            self.assertIn("No shortcuts match that key.", listing_text())
+
+            filter_input.value = ""
+            await pilot.pause()
+            await pilot.press("?")
+            self.assertIsNone(await task.wait())
+
+    async def test_modal_closes_with_escape(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(ShortcutScreen("entries")))
+            await pilot.pause()
+            await pilot.press("escape")
+            self.assertIsNone(await task.wait())
 
 
 class AttachmentPreviewKindTests(unittest.TestCase):
@@ -184,6 +258,45 @@ class AttachmentFileScreenTests(unittest.IsolatedAsyncioTestCase):
             await pilot.press("escape")
             await task.wait()
 
+    async def test_replacing_local_image_waits_for_existing_widget_removal(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(AttachmentFileScreen("/tmp")))
+            await pilot.pause()
+            screen = app.screen
+            media = screen.query_one("#attachment-file-media")
+            await media.mount(Static("first", id="attachment-file-image"))
+
+            media.remove_children()
+            await screen._show_local_image(
+                screen._preview_token, Static, "replacement")
+
+            self.assertEqual(len(media.children), 1)
+            self.assertEqual(media.children[0].id, "attachment-file-image")
+            await pilot.press("escape")
+            await task.wait()
+
+    async def test_stale_local_image_is_not_mounted_after_removal(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(AttachmentFileScreen("/tmp")))
+            await pilot.pause()
+            screen = app.screen
+            media = screen.query_one("#attachment-file-media")
+            removal = media.remove_children()
+
+            async def remove_and_change_token():
+                await removal
+                screen._preview_token += 1
+
+            with patch.object(media, "remove_children", return_value=remove_and_change_token()):
+                await screen._show_local_image(
+                    screen._preview_token, Static, "stale")
+
+            self.assertEqual(len(media.children), 0)
+            await pilot.press("escape")
+            await task.wait()
+
     async def test_entering_directory_changes_tree_root(self):
         app = App()
         async with app.run_test() as pilot:
@@ -226,6 +339,27 @@ class AttachmentScreenTests(unittest.IsolatedAsyncioTestCase):
                     screen.action_copy_reference()
                     copy.assert_called_once_with("![notes.txt](/download/notes.txt)")
                 await pilot.press("escape")
+
+    async def test_replacing_image_waits_for_existing_widget_removal(self):
+        api = FakeLogbookApi()
+        api.get_log_entry_attachments = lambda **kwargs: []
+        session = FakeSession(api)
+        app = BelyTuiApp(session)
+        with patch("bely_cli.tui.app.config.get_setting", return_value=None):
+            async with app.run_test() as pilot:
+                await app.push_screen(AttachmentScreen(
+                    session, SimpleNamespace(id=42, name="Doc"), SimpleNamespace(log_id=10)))
+                await pilot.pause()
+                screen = app.screen
+                media = screen.query_one("#attachment-media")
+                await media.mount(Static("first", id="attachment-image"))
+
+                media.remove_children()
+                await screen._show_image(
+                    screen._preview_token, Static, "replacement")
+
+                self.assertEqual(len(media.children), 1)
+                self.assertEqual(media.children[0].id, "attachment-image")
 
     async def test_delete_confirms_then_refreshes(self):
         attachment = self._attachment()
