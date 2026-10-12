@@ -6,7 +6,7 @@ package:
   version: "{{ version }}"
 
 source:
-  path: ./src
+  path: ..
 
 build:
   number: 0
@@ -15,17 +15,18 @@ build:
     - bely-cli = bely_cli.cli:main
 
 requirements:
-  build:
+  host:
     - pip
-    - python>3.10
+    - python >3.10
     - setuptools
   run:
-    - python>3.10
+    - python >3.10
     - click
     - pyyaml
-    - bely-api
-    - textual
+    - bely-api==2026.10.0
+    - textual >=8.2.8
     - rich
+    - textual-image >=0.12.0
 
 test:
   imports:
@@ -34,9 +35,10 @@ test:
     - test
   requires:
     - python
-    - textual-image  # optional at runtime (tui image rendering); here so tests exercise the real widget
+    - pytest
+    - pytest-xdist
   commands:
-    - python -m unittest discover -s test -v
+    - python -m pytest -n auto test
     - bely-cli -h
 
 about:
