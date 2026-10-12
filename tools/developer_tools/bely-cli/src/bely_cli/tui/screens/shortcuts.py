@@ -99,7 +99,7 @@ class ShortcutFilterInput(Input):
     """Search field where `?` closes help instead of entering the character."""
 
     def on_key(self, event: events.Key):
-        if event.key == "question_mark":
+        if event.key in {"question_mark", "?"} or event.character == "?":
             event.prevent_default()
             event.stop()
             self.screen.dismiss(None)
