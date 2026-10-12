@@ -20,7 +20,7 @@ source $CONDA_DIR/etc/profile.d/conda.sh || exit 1
 # Clean and Build
 rm -rf ./build
 
-# Build API
+# Build CLI
 conda build conda-recipe --output-folder ./build || exit 1
 
 # Install build into a new env
