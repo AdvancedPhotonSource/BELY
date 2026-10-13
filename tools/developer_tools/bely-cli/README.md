@@ -207,7 +207,7 @@ Aliases accept the same arguments and produce the same output as their canonical
 - `bely-cli auth verify` checks whether the cached token is accepted by the server.
 - `bely-cli auth logout` invalidates the current server session and removes the cached token.
 
-All commands support the shared `--format` and `--no-prompt` options.
+Commands that produce output support `--format`. Commands that may request missing input or credentials support `--no-prompt`; delete commands use `--force` instead.
 
 ### `doc` — log documents
 
@@ -248,12 +248,11 @@ bely-cli doc show --doc-id 99 --format json
 #### `bely-cli doc delete` / `rm`
 
 Delete a document selected by `--doc-name` or `--doc-id`. Confirmation is required unless
-`--yes` is supplied. A document containing entries requires `--force`; `--force` does not
-skip confirmation.
+`--force` is supplied. Deleting a document that contains entries also requires `--force`.
 
 ```bash
 bely-cli doc delete --doc-id 99
-bely-cli doc rm --doc-name "Disposable Log" --force --yes
+bely-cli doc rm --doc-name "Disposable Log" --force
 ```
 
 ### `tui` — interactive terminal UIs
@@ -276,7 +275,7 @@ bely-cli tui --limit 50
 
 Browsing needs no authentication. `Enter` on an entry just keeps it in the preview
 instead of exiting, and `Esc` at the logbook list does nothing (there's nothing above it to
-pop back to) — press `q` to quit. A few keys are available once you've drilled in:
+pop back to) — press `ctrl+q` to quit. Pressing `q` alone shows a reminder instead of exiting. A few keys are available once you've drilled in:
 
 | Key | Level | Action |
 |-----|-------|--------|
@@ -419,7 +418,7 @@ only appear there. `t` appears at the entries level only when the document has r
 | `Up` / `Down`, `PgUp` / `PgDn` | Move the highlight; the preview/info panel follows. |
 | `/` | Reveal and focus the filter box; incrementally filters the current table (case-insensitive substring, matched against the entry text — not the reply tree's glyphs or reply count). |
 | `Enter` | In the filter box, return focus to the table. Elsewhere, drill into the highlighted row, or select the entry at the entries level. |
-| `Esc` / `Backspace` | Go back one level (from the table); does nothing at the logbook list — press `q` to quit. In the filter box, `Esc` returns focus to the table. |
+| `Esc` / `Backspace` | Go back one level (from the table); does nothing at the logbook list — press `ctrl+q` to quit. In the filter box, `Esc` returns focus to the table. |
 | `d` | Logbook/document levels only: create a new document (see `bely-cli tui`'s "New document" above) — a mutation, so this is where the app authenticates if it hasn't already. |
 | `s` | Entries level only: save the highlighted entry's markdown to a file in the current directory. |
 | `y` | Entries level only: copy a `bely-cli entry get` reference for the highlighted entry to the clipboard. |
@@ -431,7 +430,7 @@ only appear there. `t` appears at the entries level only when the document has r
 | `i` | Logbook/document levels only: toggle the side info panel. |
 | `f` | Entries level only: toggle the table to widen the preview pane. |
 | `r` | Refresh the current level, bypassing the in-session cache. Entry selection, preview scroll, filters, and collapsed threads are preserved when possible. |
-| `q` | Quit without selecting. |
+| `ctrl+q` | Quit without selecting. Pressing `q` alone shows a reminder. |
 
 Replies only nest one level deep. Pressing `p` on either a top-level entry or one of its
 replies targets the top-level thread; `n` still adds a separate top-level entry.
@@ -552,10 +551,10 @@ bely-cli entry attachment ls -n "Shift Report" --id 42 --format json
 
 #### `bely-cli entry attachment delete` / `rm`
 
-Delete an attachment using its numeric ID from `attachment list`:
+Delete an attachment using its numeric ID from `attachment list`. Use `--force` to skip confirmation:
 
 ```bash
-bely-cli entry attachment delete -d 99 --id 42 --attachment-id 7
+bely-cli entry attachment delete -d 99 --id 42 --attachment-id 7 --force
 ```
 
 #### `bely-cli entry update`
@@ -593,12 +592,11 @@ Delete a top-level entry or reply by log ID, with confirmation by default:
 
 ```bash
 bely-cli entry delete -d 99 --id 42
-bely-cli entry rm -n "Shift Report" --id 42 --yes
+bely-cli entry rm -n "Shift Report" --id 42 --force
 ```
 
 All delete commands support structured JSON/YAML output. Declining confirmation returns
-`status: cancelled`; successful deletion returns `status: deleted`. In `--no-prompt` mode,
-`--yes` is required.
+`status: cancelled`; successful deletion returns `status: deleted`. Use `--force` to skip confirmation.
 
 #### `bely-cli entry get`
 

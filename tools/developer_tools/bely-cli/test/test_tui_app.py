@@ -463,7 +463,7 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(app.screen.has_replies)
 
     async def test_escape_at_landing_screen_does_not_quit(self):
-        # BrowseScreen is the landing screen in mode="app" too; only `q` quits.
+        # BrowseScreen is the landing screen in mode="app" too; only `ctrl+q` quits.
         data = LogbookData(FakeLogbookApi())
         app = BelyTuiApp(FakeSession(data), limit=10, mode="app")
         async with app.run_test() as pilot:
@@ -477,7 +477,7 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(len(app._notifications), 1)
 
     async def test_escape_at_lookup_landing_screen_does_not_quit(self):
-        # tui lookup's landing screen behaves the same as tui's -- q is the only quit key.
+        # tui lookup's landing screen behaves the same as tui's -- ctrl+q is the only quit key.
         data = LogbookData(FakeLogbookApi())
         app = BelyTuiApp(FakeSession(data), limit=10, mode="lookup")
         async with app.run_test() as pilot:
@@ -489,12 +489,24 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertIs(app.screen, landing)
             self.assertTrue(app.is_running)
 
-    async def test_q_quits_the_app(self):
+    async def test_q_shows_quit_hint_without_quitting(self):
         data = LogbookData(FakeLogbookApi())
         app = BelyTuiApp(FakeSession(data), limit=10, mode="app")
         async with app.run_test() as pilot:
             await pilot.pause()
             await pilot.press("q")
+            await pilot.pause()
+            self.assertTrue(app.is_running)
+            self.assertEqual(len(app._notifications), 1)
+            self.assertEqual(
+                next(iter(app._notifications)).message, "Press Ctrl+Q to quit.")
+
+    async def test_ctrl_q_quits_the_app(self):
+        data = LogbookData(FakeLogbookApi())
+        app = BelyTuiApp(FakeSession(data), limit=10, mode="app")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            await pilot.press("ctrl+q")
             await pilot.pause()
         self.assertIsNone(app.return_value)
 

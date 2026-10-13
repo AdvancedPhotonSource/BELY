@@ -102,14 +102,11 @@ Conventions that hold across all command modules:
   Text output is printed inline as work happens; structured output is accumulated into a
   `result` dict and emitted once at the end via `print_result`/`print_items`. Guard
   human-readable prints with `if fmt == "text"`.
-- **`--format` and `--no-prompt` are per-leaf-command**, applied by the `common_options`
-  decorator in `cli.py` — never hoisted to the group level. `run_test.sh` asserts this.
-  The one exception is `tui_group`: it's declared with `@cli.group("tui",
-  invoke_without_command=True)` and carries `common_options` plus `--limit` itself, because
-  bare `bely-cli tui` (no subcommand) *is* a leaf invocation — `ctx.invoked_subcommand is
-  None` is what triggers `cmd_tui(mode="app", ...)`. `tui lookup` is a normal leaf
-  subcommand underneath it. `run_test.sh` checks both: `--format` on `tui lookup -h` and
-  `--limit` on the bare `tui -h`.
+- **`--format` is per format-capable leaf command**, applied by `common_options` in
+  `cli.py`; `prompting_options` additionally supplies `--no-prompt` only to commands that
+  can request input or credentials. Delete commands use `--force` instead. The one group
+  exception is `tui_group`: it is declared with `invoke_without_command=True` and carries
+  `common_options` plus `--limit`, because bare `bely-cli tui` is itself a leaf invocation.
 - **Non-interactive mode** is a module-level flag in `common.py`
   (`set_no_prompt()` / `is_no_prompt()`), set by `--no-prompt` or automatically when
   `--file=-`. Any code path that would prompt must check `is_no_prompt()` first and raise
@@ -182,7 +179,7 @@ Split so that most of it needs no terminal to test:
   behavior, and `source` picks drilling in from logbook types vs. starting at the document
   level with `core.recent_documents(...)`. Its `_exit_top()` pops back to whatever pushed
   this browse (e.g. a command-palette-pushed "My documents" browse), or -- when `root=True`
-  (the landing screen `app.py` pushes on mount) -- does nothing but notify, since `q` is the
+  (the landing screen `app.py` pushes on mount) -- does nothing but notify, since `ctrl+q` is the
   only quit key and an accidental escape shouldn't drop the user into an empty terminal.
 - `app.py` — `BelyTuiApp`, the shared CSS, `ensure_auth()` (see below), and
   `get_system_commands()`. Pushes `BrowseScreen` directly on mount for both modes;

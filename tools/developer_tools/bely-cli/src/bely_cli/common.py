@@ -25,12 +25,10 @@ def is_no_prompt():
     return _no_prompt
 
 
-def confirm_delete(prompt, yes=False):
-    """Confirm a destructive operation, respecting non-interactive mode."""
-    if yes:
+def confirm_delete(prompt, force=False):
+    """Confirm a destructive operation unless forced."""
+    if force:
         return True
-    if is_no_prompt():
-        raise ValueError("--yes is required with --no-prompt for deletion")
     return input(f"{prompt} [y/N] ").strip().lower() in ("y", "yes")
 
 

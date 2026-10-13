@@ -10,7 +10,7 @@ directly on mount, there is no separate landing/home screen:
     with the current user's recently modified documents
     (core.recent_documents) instead of drilling in from logbook types.
 
-Escape at the top level pops back to whatever pushed this screen, or (when `root=True`) does nothing -- `q` quits instead.
+Escape at the top level pops back to whatever pushed this screen, or (when `root=True`) does nothing -- `ctrl+q` quits instead.
 
 All three levels (types/docs/entries) render as one #nav-table DataTable, so
 navigation, filtering, and the info/full-width toggles share a single code
@@ -106,7 +106,8 @@ class BrowseScreen(Screen):
     BINDINGS = [
         Binding("escape", "back", "Back"),
         Binding("backspace", "back", "Back", show=False),
-        Binding("q", "quit_app", "Quit"),
+        Binding("ctrl+q", "quit_app", "Quit"),
+        Binding("q", "quit_hint", "", show=False),
         Binding("question_mark", "show_shortcuts", "Shortcuts"),
         Binding("slash", "focus_filter", "Filter"),
         Binding("f", "toggle_full", "Full"),
@@ -671,7 +672,10 @@ class BrowseScreen(Screen):
         if not self.root:
             self.app.pop_screen()
             return
-        self.notify("Press q to quit.")
+        self.notify("Press Ctrl+Q to quit.")
+
+    def action_quit_hint(self):
+        self.notify("Press Ctrl+Q to quit.")
 
     def action_quit_app(self):
         self.app.exit(None)
@@ -803,7 +807,8 @@ class BrowseScreen(Screen):
 
         confirmed = await self.app.push_screen_wait(ConfirmScreen(
             f'Delete document "{doc.name}"?',
-            confirm_label="Delete", cancel_label="Cancel", confirm_variant="error"))
+            confirm_label="Delete", cancel_label="Cancel", confirm_variant="error",
+            confirm_shortcut="y"))
         if not confirmed:
             return
         try:
@@ -846,7 +851,8 @@ class BrowseScreen(Screen):
 
         confirmed = await self.app.push_screen_wait(ConfirmScreen(
             f"Delete entry/reply #{entry.log_id}?",
-            confirm_label="Delete", cancel_label="Cancel", confirm_variant="error"))
+            confirm_label="Delete", cancel_label="Cancel", confirm_variant="error",
+            confirm_shortcut="y"))
         if not confirmed:
             return
         api = await self.app.ensure_auth()
@@ -945,6 +951,7 @@ class BrowseScreen(Screen):
                 f"Save changes to entry #{entry.log_id}?",
                 confirm_label="Save",
                 cancel_label="Discard",
+                confirm_shortcut="ctrl+s",
             )
         )
         if not save:

@@ -207,7 +207,7 @@ def cmd_add_attachment(doc_name, doc_id, entry_id, file, fmt="text"):
         print_result({"doc": doc.name, "log_id": entry_id, "attachment": info}, "", fmt)
 
 
-def cmd_delete_attachment(doc_name, doc_id, entry_id, attachment_id, yes=False, fmt="text"):
+def cmd_delete_attachment(doc_name, doc_id, entry_id, attachment_id, force=False, fmt="text"):
     """Delete an entry attachment by numeric ID after confirmation."""
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
@@ -223,7 +223,7 @@ def cmd_delete_attachment(doc_name, doc_id, entry_id, attachment_id, yes=False, 
         "attachment_id": attachment_id, "status": "cancelled",
     }
     if not confirm_delete(
-            f'Delete attachment {attachment_id} from entry {entry_id}?', yes):
+            f'Delete attachment {attachment_id} from entry {entry_id}?', force):
         print_result(result, "Deletion cancelled.", fmt)
         return result
     with auth.get_authenticated_factory() as auth_factory:
@@ -253,7 +253,7 @@ def cmd_list_attachments(doc_name, doc_id, entry_id, fmt="text"):
     print_items(items, columns, fmt)
 
 
-def cmd_delete_entry(doc_name, doc_id, entry_id, yes=False, fmt="text"):
+def cmd_delete_entry(doc_name, doc_id, entry_id, force=False, fmt="text"):
     """Delete a log entry or reply after confirmation."""
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
@@ -268,7 +268,7 @@ def cmd_delete_entry(doc_name, doc_id, entry_id, yes=False, fmt="text"):
         "status": "cancelled",
     }
     if not confirm_delete(
-            f'Delete entry/reply {entry_id} from document "{doc.name}"?', yes):
+            f'Delete entry/reply {entry_id} from document "{doc.name}"?', force):
         print_result(result, "Deletion cancelled.", fmt)
         return result
     with auth.get_authenticated_factory() as auth_factory:
