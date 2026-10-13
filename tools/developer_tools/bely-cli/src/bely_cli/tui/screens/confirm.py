@@ -7,10 +7,11 @@ PickerScreen (a filterable list) for a plain confirmation.
 """
 
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Vertical
 from textual.widgets import Button, Input, Static
 
-from .dialog import CANCEL_HINT, DialogButtons, DialogScreen, hinted_label
+from .dialog import CANCEL_HINT, SAVE_HINT, DialogButtons, DialogScreen, hinted_label
 
 
 class ConfirmScreen(DialogScreen):
@@ -20,22 +21,35 @@ class ConfirmScreen(DialogScreen):
     }
     """
 
+    BINDINGS = [
+        *DialogScreen.BINDINGS,
+        Binding("y", "semantic_confirm('y')", "Confirm", show=False),
+        Binding("n", "semantic_cancel", "Cancel", show=False),
+        Binding("ctrl+s", "semantic_confirm('ctrl+s')", "Save", show=False),
+    ]
     BUTTON_ROWS = [["confirm-confirm", "confirm-cancel"]]
 
     def __init__(self, message, *, confirm_label="Yes", cancel_label="No",
-                 confirm_variant="primary"):
+                 confirm_variant="primary", confirm_shortcut=None):
         super().__init__()
         self.message = message
         self.confirm_label = confirm_label
         self.cancel_label = cancel_label
         self.confirm_variant = confirm_variant
+        self.confirm_shortcut = confirm_shortcut
 
     def compose(self) -> ComposeResult:
         with Vertical(id="confirm-dialog", classes="dialog"):
             yield Static(self.message, id="confirm-message")
             with DialogButtons():
-                yield Button(hinted_label(self.confirm_label), variant=self.confirm_variant, id="confirm-confirm")
-                yield Button(hinted_label(self.cancel_label, CANCEL_HINT), id="confirm-cancel")
+                confirm_hint = SAVE_HINT if self.confirm_shortcut == "ctrl+s" else (
+                    "Y" if self.confirm_shortcut == "y" else None)
+                cancel_hint = "N" if self.confirm_shortcut == "y" else CANCEL_HINT
+                yield Button(
+                    hinted_label(self.confirm_label, confirm_hint),
+                    variant=self.confirm_variant, id="confirm-confirm")
+                yield Button(
+                    hinted_label(self.cancel_label, cancel_hint), id="confirm-cancel")
 
     def on_mount(self):
         # Destructive confirmations default focus to "cancel" rather than the risky action.
@@ -46,6 +60,14 @@ class ConfirmScreen(DialogScreen):
         if event.button.id == "confirm-confirm":
             self.dismiss(True)
         elif event.button.id == "confirm-cancel":
+            self.dismiss(False)
+
+    def action_semantic_confirm(self, shortcut):
+        if shortcut == self.confirm_shortcut:
+            self.dismiss(True)
+
+    def action_semantic_cancel(self):
+        if self.confirm_shortcut == "y":
             self.dismiss(False)
 
     def action_cancel(self):

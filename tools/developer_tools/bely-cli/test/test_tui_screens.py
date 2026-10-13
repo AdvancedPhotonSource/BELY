@@ -1333,6 +1333,38 @@ class ConfirmScreenTests(unittest.IsolatedAsyncioTestCase):
             result = await task.wait()
         self.assertFalse(result)
 
+    async def test_yes_shortcut_confirms_without_moving_focus(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(
+                ConfirmScreen("Delete it?", confirm_variant="error", confirm_shortcut="y")))
+            await pilot.pause()
+            self.assertIs(app.screen.focused, app.screen.query_one("#confirm-cancel", Button))
+            await pilot.press("y")
+            self.assertTrue(await task.wait())
+
+    async def test_no_shortcut_cancels_without_moving_focus(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(
+                ConfirmScreen("Delete it?", confirm_shortcut="y")))
+            await pilot.pause()
+            self.assertIs(app.screen.focused, app.screen.query_one("#confirm-confirm", Button))
+            await pilot.press("n")
+            self.assertFalse(await task.wait())
+
+    async def test_ctrl_s_confirms_save_semantics(self):
+        app = App()
+        async with app.run_test() as pilot:
+            task = app.run_worker(app.push_screen_wait(
+                ConfirmScreen("Save it?", confirm_label="Save", confirm_shortcut="ctrl+s")))
+            await pilot.pause()
+            await pilot.press("y")
+            await pilot.pause()
+            self.assertFalse(task.is_finished)
+            await pilot.press("ctrl+s")
+            self.assertTrue(await task.wait())
+
     async def test_default_focus_is_confirm(self):
         app = App()
         async with app.run_test() as pilot:

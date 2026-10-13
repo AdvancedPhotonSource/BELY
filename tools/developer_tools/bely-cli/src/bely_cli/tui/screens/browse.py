@@ -803,7 +803,8 @@ class BrowseScreen(Screen):
 
         confirmed = await self.app.push_screen_wait(ConfirmScreen(
             f'Delete document "{doc.name}"?',
-            confirm_label="Delete", cancel_label="Cancel", confirm_variant="error"))
+            confirm_label="Delete", cancel_label="Cancel", confirm_variant="error",
+            confirm_shortcut="y"))
         if not confirmed:
             return
         try:
@@ -846,7 +847,8 @@ class BrowseScreen(Screen):
 
         confirmed = await self.app.push_screen_wait(ConfirmScreen(
             f"Delete entry/reply #{entry.log_id}?",
-            confirm_label="Delete", cancel_label="Cancel", confirm_variant="error"))
+            confirm_label="Delete", cancel_label="Cancel", confirm_variant="error",
+            confirm_shortcut="y"))
         if not confirmed:
             return
         api = await self.app.ensure_auth()
@@ -945,6 +947,7 @@ class BrowseScreen(Screen):
                 f"Save changes to entry #{entry.log_id}?",
                 confirm_label="Save",
                 cancel_label="Discard",
+                confirm_shortcut="ctrl+s",
             )
         )
         if not save:
