@@ -1,7 +1,7 @@
 """CLI alias registration and help behavior."""
 
 import unittest
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 from click.testing import CliRunner
 
@@ -86,7 +86,7 @@ class CliAliasTests(unittest.TestCase):
                 "entry", "delete", "--doc-id", "99", "--id", "42", "--force",
             ])
         self.assertEqual(result.exit_code, 0)
-        non_interactive.assert_called_once_with()
+        self.assertEqual(non_interactive.call_args_list, [call(False), call()])
         command.assert_called_once_with(
             fmt="text", doc_id=99, doc_name=None, entry_id=42, force=True)
 

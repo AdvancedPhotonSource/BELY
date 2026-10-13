@@ -498,7 +498,8 @@ class TuiAppSmokeTests(unittest.IsolatedAsyncioTestCase):
             await pilot.pause()
             self.assertTrue(app.is_running)
             self.assertEqual(len(app._notifications), 1)
-            self.assertEqual(app._notifications[0].message, "Press Ctrl+Q to quit.")
+            self.assertEqual(
+                next(iter(app._notifications)).message, "Press Ctrl+Q to quit.")
 
     async def test_ctrl_q_quits_the_app(self):
         data = LogbookData(FakeLogbookApi())
