@@ -15,12 +15,12 @@ import asyncio
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical
-from textual.widgets import Button, Input, Static, TextArea
+from textual.containers import Vertical
+from textual.widgets import Button, Static, TextArea
 
 from ... import core
 from ...common import editor_changed, format_error_message
-from .dialog import CANCEL_HINT, SAVE_HINT, DialogButtons, DialogScreen, LoadingScreen, hinted_label
+from .dialog import CANCEL_HINT, SAVE_HINT, DialogButtons, DialogScreen, hinted_label
 
 
 class ComposeScreen(DialogScreen):
@@ -39,7 +39,6 @@ class ComposeScreen(DialogScreen):
 
     BINDINGS = [Binding("ctrl+s", "submit", "Save", show=False)]
 
-    # Save first: right after the attachment field in tab order, since it's used most.
     BUTTON_ROWS = [["compose-save", "compose-editor", "compose-cancel"]]
 
     def __init__(self, doc, entry, api, *, is_new, factory=None, reply_to=None):
@@ -62,9 +61,6 @@ class ComposeScreen(DialogScreen):
         with Vertical(id="compose-dialog", classes="dialog"):
             yield Static(title, id="compose-title")
             yield TextArea(self._initial_text, language="markdown", id="compose-area")
-            with Horizontal(id="compose-attach-row"):
-                yield Static("Attachment:", id="compose-attach-label")
-                yield Input(placeholder="optional file path", id="compose-attach")
             with DialogButtons():
                 yield Button(hinted_label("Save", SAVE_HINT), variant="primary", id="compose-save")
                 yield Button(hinted_label("Edit in $EDITOR"), id="compose-editor")
@@ -91,8 +87,7 @@ class ComposeScreen(DialogScreen):
 
     def _is_dirty(self):
         area = self.query_one("#compose-area", TextArea)
-        attach_path = self.query_one("#compose-attach", Input).value.strip()
-        return editor_changed(self._initial_text, area.text) or bool(attach_path)
+        return editor_changed(self._initial_text, area.text)
 
     # -- cancel, with a dirty-buffer confirmation --
 
@@ -137,29 +132,13 @@ class ComposeScreen(DialogScreen):
             self.dismiss(None)
             return
 
-        attach_path = self.query_one("#compose-attach", Input).value.strip()
-        if attach_path:
-            try:
-                attach_path = core.validate_attachment_path(attach_path)
-            except ValueError as e:
-                self.notify(str(e), severity="error")
-                return
-
-        if not self.is_new and not editor_changed(self._initial_text, text) and not attach_path:
+        if not self.is_new and not editor_changed(self._initial_text, text):
             self.notify("No changes made.")
             self.dismiss(None)
             return
 
         try:
             saved_entry = await asyncio.to_thread(core.save_entry, self.api, self.entry, text)
-            if attach_path:
-                await self.app.push_screen(LoadingScreen("Uploading attachment…"))
-                try:
-                    await asyncio.to_thread(
-                        core.upload_attachment, self.api, self.doc.id,
-                        saved_entry.log_id, attach_path)
-                finally:
-                    self.app.pop_screen()
         except Exception as e:
             self.notify(
                 f"Save failed: {format_error_message(e, self.factory)}", severity="error")
