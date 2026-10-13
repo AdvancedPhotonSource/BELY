@@ -102,14 +102,11 @@ Conventions that hold across all command modules:
   Text output is printed inline as work happens; structured output is accumulated into a
   `result` dict and emitted once at the end via `print_result`/`print_items`. Guard
   human-readable prints with `if fmt == "text"`.
-- **`--format` and `--no-prompt` are per-leaf-command**, applied by the `common_options`
-  decorator in `cli.py` — never hoisted to the group level. `run_test.sh` asserts this.
-  The one exception is `tui_group`: it's declared with `@cli.group("tui",
-  invoke_without_command=True)` and carries `common_options` plus `--limit` itself, because
-  bare `bely-cli tui` (no subcommand) *is* a leaf invocation — `ctx.invoked_subcommand is
-  None` is what triggers `cmd_tui(mode="app", ...)`. `tui lookup` is a normal leaf
-  subcommand underneath it. `run_test.sh` checks both: `--format` on `tui lookup -h` and
-  `--limit` on the bare `tui -h`.
+- **`--format` is per format-capable leaf command**, applied by `common_options` in
+  `cli.py`; `prompting_options` additionally supplies `--no-prompt` only to commands that
+  can request input or credentials. Delete commands use `--force` instead. The one group
+  exception is `tui_group`: it is declared with `invoke_without_command=True` and carries
+  `common_options` plus `--limit`, because bare `bely-cli tui` is itself a leaf invocation.
 - **Non-interactive mode** is a module-level flag in `common.py`
   (`set_no_prompt()` / `is_no_prompt()`), set by `--no-prompt` or automatically when
   `--file=-`. Any code path that would prompt must check `is_no_prompt()` first and raise

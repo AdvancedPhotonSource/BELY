@@ -214,7 +214,7 @@ def cmd_show_doc(doc_name, doc_id, fmt="text"):
         print(f"{labels[key]}: {value}")
 
 
-def cmd_delete_doc(doc_name, doc_id, yes=False, force=False, fmt="text"):
+def cmd_delete_doc(doc_name, doc_id, force=False, fmt="text"):
     """Delete a log document after validation and confirmation."""
     factory = auth.get_factory()
     logbook_api = factory.get_logbook_api()
@@ -224,7 +224,7 @@ def cmd_delete_doc(doc_name, doc_id, yes=False, force=False, fmt="text"):
         raise ValueError(
             f'document "{doc.name}" contains {len(entries)} entries; use --force to delete it')
     result = {"doc_id": doc.id, "doc": doc.name, "status": "cancelled"}
-    if not confirm_delete(f'Delete document "{doc.name}" (id={doc.id})?', yes):
+    if not confirm_delete(f'Delete document "{doc.name}" (id={doc.id})?', force):
         print_result(result, "Deletion cancelled.", fmt)
         return result
     with auth.get_authenticated_factory() as auth_factory:

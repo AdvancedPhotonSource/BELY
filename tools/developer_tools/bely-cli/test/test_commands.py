@@ -149,14 +149,14 @@ class CmdDeleteDocTests(unittest.TestCase):
         self.auth_ctx.__enter__.return_value = self.auth_factory
         self.auth_ctx.__exit__.return_value = False
 
-    def test_delete_yes_returns_structured_result(self):
+    def test_force_returns_structured_result(self):
         self.api.get_log_entries.return_value = []
         with patch.object(commands.auth, "get_factory", return_value=self.factory), \
              patch.object(commands.auth, "get_authenticated_factory", return_value=self.auth_ctx), \
              patch("bely_cli.shell_completion.remove_cached_document") as remove_cached:
             buf = io.StringIO()
             with redirect_stdout(buf):
-                commands.cmd_delete_doc("My Doc", None, yes=True, fmt="json")
+                commands.cmd_delete_doc("My Doc", None, force=True, fmt="json")
         self.assertEqual(__import__("json").loads(buf.getvalue())["status"], "deleted")
         self.api.delete_log_document.assert_called_once_with(log_document_id=42)
         remove_cached.assert_called_once_with(42)
@@ -176,23 +176,17 @@ class CmdDeleteDocTests(unittest.TestCase):
         self.api.get_log_entries.return_value = [SimpleNamespace(log_id=1)]
         with patch.object(commands.auth, "get_factory", return_value=self.factory):
             with self.assertRaisesRegex(ValueError, "--force"):
-                commands.cmd_delete_doc("My Doc", None, yes=True)
+                commands.cmd_delete_doc("My Doc", None)
 
-    def test_force_does_not_imply_yes(self):
+    def test_force_deletes_nonempty_document_without_prompt(self):
         self.api.get_log_entries.return_value = [SimpleNamespace(log_id=1)]
         with patch.object(commands.auth, "get_factory", return_value=self.factory), \
-             patch.object(commands.auth, "get_authenticated_factory") as authenticated, \
-             patch("builtins.input", return_value="n"):
+             patch.object(commands.auth, "get_authenticated_factory", return_value=self.auth_ctx), \
+             patch("builtins.input") as prompt, \
+             patch("bely_cli.shell_completion.remove_cached_document"):
             commands.cmd_delete_doc("My Doc", None, force=True)
-        authenticated.assert_not_called()
-
-    def test_no_prompt_requires_yes(self):
-        self.api.get_log_entries.return_value = []
-        with patch.object(commands.auth, "get_factory", return_value=self.factory), \
-             patch.object(commands, "is_no_prompt", return_value=True), \
-             patch("bely_cli.common.is_no_prompt", return_value=True):
-            with self.assertRaisesRegex(ValueError, "--yes"):
-                commands.cmd_delete_doc("My Doc", None)
+        prompt.assert_not_called()
+        self.api.delete_log_document.assert_called_once_with(log_document_id=42)
 
 
 class CmdNewDocTests(unittest.TestCase):

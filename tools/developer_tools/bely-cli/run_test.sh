@@ -32,11 +32,17 @@ $RUNNER bely-cli entry attachment add -h | grep -q -- --format
 $RUNNER bely-cli entry attachment list -h | grep -q -- --format
 $RUNNER bely-cli entry attachment ls -h | grep -q -- --format
 $RUNNER bely-cli doc delete -h | grep -q -- --force
-$RUNNER bely-cli doc rm -h | grep -q -- --yes
-$RUNNER bely-cli entry delete -h | grep -q -- --yes
+$RUNNER bely-cli doc rm -h | grep -q -- --force
+$RUNNER bely-cli entry delete -h | grep -q -- --force
 $RUNNER bely-cli entry rm -h | grep -q -- --id
 $RUNNER bely-cli entry attachment delete -h | grep -q -- --attachment-id
-$RUNNER bely-cli entry attachment rm -h | grep -q -- --yes
+$RUNNER bely-cli entry attachment rm -h | grep -q -- --force
+# --no-prompt is limited to commands with interactive input or credential fallback.
+$RUNNER bely-cli doc new -h | grep -q -- --no-prompt
+$RUNNER bely-cli entry update -h | grep -q -- --no-prompt
+! $RUNNER bely-cli doc show -h | grep -q -- --no-prompt
+! $RUNNER bely-cli entry delete -h | grep -q -- --no-prompt
+! $RUNNER bely-cli tui -h | grep -q -- --no-prompt
 $RUNNER bely-cli tui lookup -h | grep -q -- --format
 $RUNNER bely-cli shell -h | grep -q -- cache
 $RUNNER bely-cli shell init -h | grep -q -- --shell

@@ -108,14 +108,19 @@ def entry_id_option(required=True, help="Log entry ID"):
 
 
 def common_options(f):
-    """Options shared by all leaf commands (--format and --no-prompt)."""
-    return format_option(no_prompt_option(f))
+    """Options shared by format-capable leaf commands."""
+    return format_option(f)
+
+
+def prompting_options(f):
+    """Format and non-interactive options for commands that may prompt."""
+    return common_options(no_prompt_option(f))
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
     """BELY logbook CLI"""
-    pass
+    set_no_prompt(False)
 
 
 # -- auth --
@@ -127,7 +132,7 @@ def auth_group():
 
 
 @auth_group.command("login")
-@common_options
+@prompting_options
 def auth_login(output_format):
     """Log in and cache an authentication token."""
     cmd_auth_login(fmt=output_format)
@@ -173,7 +178,7 @@ def doc_group():
               type=click.Choice(["system", "type", "template"]),
               default=None,
               help="List available values for the given option and exit")
-@common_options
+@prompting_options
 def doc_new(output_format, **kwargs):
     """Create a new log document."""
     if kwargs.get('file') == '-':
@@ -183,7 +188,7 @@ def doc_new(output_format, **kwargs):
 
 @doc_group.command("list")
 @click.option("--limit", default=20, type=int, help="Max documents to return (default 20)")
-@common_options
+@prompting_options
 def doc_list(output_format, **kwargs):
     """List recent log documents created by you."""
     cmd_list_docs(fmt=output_format, **kwargs)
@@ -201,11 +206,15 @@ def doc_show(output_format, **kwargs):
 @doc_group.command("delete")
 @doc_name_option
 @doc_id_option
-@click.option("--yes", is_flag=True, help="Delete without confirmation")
-@click.option("--force", is_flag=True, help="Allow deletion when the document contains entries")
+@click.option(
+    "--force", is_flag=True,
+    help="Delete without confirmation, including documents that contain entries",
+)
 @common_options
 def doc_delete(output_format, **kwargs):
     """Delete a log document."""
+    if kwargs.get("force"):
+        set_no_prompt()
     cmd_delete_doc(fmt=output_format, **kwargs)
 
 
@@ -234,7 +243,7 @@ def entry_attachment_group():
 @entry_id_option()
 @click.option("--file", "-f", required=True, type=click.Path(path_type=str),
               help="File to attach")
-@common_options
+@prompting_options
 def entry_attachment_add(output_format, **kwargs):
     """Upload an attachment to an existing log entry."""
     cmd_add_attachment(fmt=output_format, **kwargs)
@@ -258,10 +267,12 @@ def entry_attachment_list(output_format, **kwargs):
     "--attachment-id", required=True, type=int,
     shell_complete=complete_attachment_ids, help="Numeric attachment ID",
 )
-@click.option("--yes", is_flag=True, help="Delete without confirmation")
+@click.option("--force", is_flag=True, help="Delete without confirmation")
 @common_options
 def entry_attachment_delete(output_format, **kwargs):
     """Delete an attachment from a log entry."""
+    if kwargs.get("force"):
+        set_no_prompt()
     cmd_delete_attachment(fmt=output_format, **kwargs)
 
 
@@ -277,7 +288,7 @@ entry_attachment_group.add_command(entry_attachment_delete, "rm")
 @click.option("--text", "-t", default=None, help="Inline text for the entry")
 @click.option("--add-attachment", default=None, type=click.Path(path_type=str),
               help="File to attach to the entry")
-@common_options
+@prompting_options
 def entry_add(output_format, **kwargs):
     """Add a new log entry to an existing document."""
     if kwargs.get('file') == '-':
@@ -297,7 +308,7 @@ def entry_add(output_format, **kwargs):
 @click.option("--text", "-t", default=None, help="Inline reply text")
 @click.option("--add-attachment", default=None, type=click.Path(path_type=str),
               help="File to attach to the reply")
-@common_options
+@prompting_options
 def entry_reply(output_format, **kwargs):
     """Reply to an existing log entry."""
     if kwargs.get('file') == '-':
@@ -314,7 +325,7 @@ def entry_reply(output_format, **kwargs):
 @click.option("--text", "-t", default=None, help="Inline text for the entry")
 @click.option("--add-attachment", default=None, type=click.Path(path_type=str),
               help="File to attach to the entry")
-@common_options
+@prompting_options
 def entry_update(output_format, **kwargs):
     """Update an existing log entry or reply."""
     if kwargs.get('file') == '-':
@@ -352,10 +363,12 @@ def entry_get(output_format, **kwargs):
 @doc_name_option
 @doc_id_option
 @entry_id_option(help="Log entry or reply ID")
-@click.option("--yes", is_flag=True, help="Delete without confirmation")
+@click.option("--force", is_flag=True, help="Delete without confirmation")
 @common_options
 def entry_delete(output_format, **kwargs):
     """Delete a log entry or reply."""
+    if kwargs.get("force"):
+        set_no_prompt()
     cmd_delete_entry(fmt=output_format, **kwargs)
 
 
@@ -369,7 +382,7 @@ entry_group.add_command(entry_delete, "rm")
 
 # Bare `bely-cli tui` launches the full interactive app, so the group itself
 # is a leaf invocation when no subcommand is given -- the one place
-# --format/--no-prompt sit on a group rather than a leaf command.
+# --format sits on a group rather than a leaf command.
 @cli.group("tui", cls=AliasHelpGroup, invoke_without_command=True)
 @click.option("--limit", default=100, type=int,
               help="Recent documents to load per logbook (default 100)")

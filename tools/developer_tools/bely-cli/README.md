@@ -207,7 +207,7 @@ Aliases accept the same arguments and produce the same output as their canonical
 - `bely-cli auth verify` checks whether the cached token is accepted by the server.
 - `bely-cli auth logout` invalidates the current server session and removes the cached token.
 
-All commands support the shared `--format` and `--no-prompt` options.
+Commands that produce output support `--format`. Commands that may request missing input or credentials support `--no-prompt`; delete commands use `--force` instead.
 
 ### `doc` — log documents
 
@@ -248,12 +248,11 @@ bely-cli doc show --doc-id 99 --format json
 #### `bely-cli doc delete` / `rm`
 
 Delete a document selected by `--doc-name` or `--doc-id`. Confirmation is required unless
-`--yes` is supplied. A document containing entries requires `--force`; `--force` does not
-skip confirmation.
+`--force` is supplied. Deleting a document that contains entries also requires `--force`.
 
 ```bash
 bely-cli doc delete --doc-id 99
-bely-cli doc rm --doc-name "Disposable Log" --force --yes
+bely-cli doc rm --doc-name "Disposable Log" --force
 ```
 
 ### `tui` — interactive terminal UIs
@@ -552,10 +551,10 @@ bely-cli entry attachment ls -n "Shift Report" --id 42 --format json
 
 #### `bely-cli entry attachment delete` / `rm`
 
-Delete an attachment using its numeric ID from `attachment list`:
+Delete an attachment using its numeric ID from `attachment list`. Use `--force` to skip confirmation:
 
 ```bash
-bely-cli entry attachment delete -d 99 --id 42 --attachment-id 7
+bely-cli entry attachment delete -d 99 --id 42 --attachment-id 7 --force
 ```
 
 #### `bely-cli entry update`
@@ -593,12 +592,11 @@ Delete a top-level entry or reply by log ID, with confirmation by default:
 
 ```bash
 bely-cli entry delete -d 99 --id 42
-bely-cli entry rm -n "Shift Report" --id 42 --yes
+bely-cli entry rm -n "Shift Report" --id 42 --force
 ```
 
 All delete commands support structured JSON/YAML output. Declining confirmation returns
-`status: cancelled`; successful deletion returns `status: deleted`. In `--no-prompt` mode,
-`--yes` is required.
+`status: cancelled`; successful deletion returns `status: deleted`. Use `--force` to skip confirmation.
 
 #### `bely-cli entry get`
 
