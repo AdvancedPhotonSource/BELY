@@ -462,7 +462,8 @@ class AttachmentScreen(ModalScreen):
     async def _delete(self, attachment):
         confirmed = await self.app.push_screen_wait(ConfirmScreen(
             f'Delete attachment "{attachment.original_filename}" (id={attachment.id})?',
-            confirm_label="Delete", cancel_label="Cancel", confirm_variant="error"))
+            confirm_label="Delete", cancel_label="Cancel", confirm_variant="error",
+            confirm_shortcut="y"))
         if not confirmed:
             return
         api = await self.app.ensure_auth()

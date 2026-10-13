@@ -226,6 +226,7 @@ class NewDocScreen(DialogScreen):
                 ConfirmScreen(
                     f"Template generated log entry #{entry.log_id}. Edit it now?",
                     confirm_label="Edit now", cancel_label="Leave as-is",
+                    confirm_shortcut="y",
                 )
             )
             if edit_now:
@@ -233,7 +234,9 @@ class NewDocScreen(DialogScreen):
                     self.app, doc, api, entry=entry, factory=self.session.factory)
         else:
             create_entry = await self.app.push_screen_wait(
-                ConfirmScreen("Create a log entry now?", confirm_label="Create entry", cancel_label="Skip")
+                ConfirmScreen(
+                    "Create a log entry now?", confirm_label="Create entry",
+                    cancel_label="Skip", confirm_shortcut="y")
             )
             if create_entry:
                 await open_composer(self.app, doc, api, factory=self.session.factory)

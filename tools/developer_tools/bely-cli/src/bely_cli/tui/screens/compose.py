@@ -109,7 +109,7 @@ class ComposeScreen(DialogScreen):
         discard = await self.app.push_screen_wait(
             ConfirmScreen(
                 "Discard unsaved changes?", confirm_label="Discard", cancel_label="Keep editing",
-                confirm_variant="error",
+                confirm_variant="error", confirm_shortcut="y",
             )
         )
         if discard:

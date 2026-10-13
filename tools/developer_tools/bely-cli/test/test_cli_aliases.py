@@ -1,7 +1,7 @@
 """CLI alias registration and help behavior."""
 
 import unittest
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 from click.testing import CliRunner
 
@@ -10,8 +10,8 @@ from bely_cli.cli import cli
 
 class CliAliasTests(unittest.TestCase):
     ALIASES = {
-        "doc": {"ls": "list", "add": "new"},
-        "entry": {"ls": "list", "show": "get", "edit": "update"},
+        "doc": {"ls": "list", "add": "new", "rm": "delete"},
+        "entry": {"ls": "list", "show": "get", "edit": "update", "rm": "delete"},
         "config": {"ls": "show"},
     }
 
@@ -39,8 +39,8 @@ class CliAliasTests(unittest.TestCase):
     def test_group_help_combines_aliases(self):
         runner = CliRunner()
         expected = {
-            "doc": ("add, new", "list, ls"),
-            "entry": ("edit, update", "get, show", "list, ls"),
+            "doc": ("add, new", "delete, rm", "list, ls"),
+            "entry": ("delete, rm", "edit, update", "get, show", "list, ls"),
             "config": ("ls, show",),
         }
         for group_name, labels in expected.items():
@@ -77,6 +77,43 @@ class CliAliasTests(unittest.TestCase):
             fmt="text", doc_id=99, doc_name=None, entry_id=42,
             output_dir=None, stdout=True,
         )
+
+    def test_delete_force_invokes_handler(self):
+        runner = CliRunner()
+        with patch("bely_cli.cli.cmd_delete_entry") as command, \
+             patch("bely_cli.cli.set_no_prompt") as non_interactive:
+            result = runner.invoke(cli, [
+                "entry", "delete", "--doc-id", "99", "--id", "42", "--force",
+            ])
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(non_interactive.call_args_list, [call(False), call()])
+        command.assert_called_once_with(
+            fmt="text", doc_id=99, doc_name=None, entry_id=42, force=True)
+
+    def test_no_prompt_only_appears_on_prompting_commands(self):
+        runner = CliRunner()
+        prompting = [
+            ("auth", "login"), ("doc", "new"), ("doc", "list"),
+            ("entry", "add"), ("entry", "reply"), ("entry", "update"),
+            ("entry", "attachment", "add"),
+        ]
+        non_prompting = [
+            ("auth", "logout"), ("auth", "verify"), ("doc", "show"),
+            ("doc", "delete"), ("entry", "list"), ("entry", "get"),
+            ("entry", "delete"), ("entry", "attachment", "list"),
+            ("entry", "attachment", "delete"), ("config", "show"),
+            ("config", "set"), ("tui",), ("tui", "lookup"),
+        ]
+        for command in prompting:
+            with self.subTest(command=command):
+                result = runner.invoke(cli, [*command, "--help"])
+                self.assertEqual(result.exit_code, 0)
+                self.assertIn("--no-prompt", result.output)
+        for command in non_prompting:
+            with self.subTest(command=command):
+                result = runner.invoke(cli, [*command, "--help"])
+                self.assertEqual(result.exit_code, 0)
+                self.assertNotIn("--no-prompt", result.output)
 
     def test_reply_invokes_handler(self):
         runner = CliRunner()

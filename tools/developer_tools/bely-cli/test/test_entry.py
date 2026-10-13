@@ -330,7 +330,7 @@ class CmdDeleteTests(unittest.TestCase):
         try:
             buf = io.StringIO()
             with redirect_stdout(buf):
-                entry.cmd_delete_entry("My Doc", None, 11, yes=True, fmt="json")
+                entry.cmd_delete_entry("My Doc", None, 11, force=True, fmt="json")
         finally:
             for patcher in patches:
                 patcher.stop()
@@ -349,7 +349,7 @@ class CmdDeleteTests(unittest.TestCase):
         try:
             buf = io.StringIO()
             with redirect_stdout(buf):
-                entry.cmd_delete_attachment("My Doc", None, 10, 7, yes=True, fmt="json")
+                entry.cmd_delete_attachment("My Doc", None, 10, 7, force=True, fmt="json")
         finally:
             for patcher in patches:
                 patcher.stop()
@@ -366,9 +366,9 @@ class CmdDeleteTests(unittest.TestCase):
             patcher.start()
         try:
             with self.assertRaisesRegex(ValueError, "entry with log_id=99 not found"):
-                entry.cmd_delete_entry("My Doc", None, 99, yes=True)
+                entry.cmd_delete_entry("My Doc", None, 99, force=True)
             with self.assertRaisesRegex(ValueError, "attachment id=99 not found"):
-                entry.cmd_delete_attachment("My Doc", None, 10, 99, yes=True)
+                entry.cmd_delete_attachment("My Doc", None, 10, 99, force=True)
         finally:
             for patcher in patches:
                 patcher.stop()
