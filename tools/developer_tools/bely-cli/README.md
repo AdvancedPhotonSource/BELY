@@ -275,7 +275,7 @@ bely-cli tui --limit 50
 
 Browsing needs no authentication. `Enter` on an entry just keeps it in the preview
 instead of exiting, and `Esc` at the logbook list does nothing (there's nothing above it to
-pop back to) — press `q` to quit. A few keys are available once you've drilled in:
+pop back to) — press `ctrl+q` to quit. Pressing `q` alone shows a reminder instead of exiting. A few keys are available once you've drilled in:
 
 | Key | Level | Action |
 |-----|-------|--------|
@@ -418,7 +418,7 @@ only appear there. `t` appears at the entries level only when the document has r
 | `Up` / `Down`, `PgUp` / `PgDn` | Move the highlight; the preview/info panel follows. |
 | `/` | Reveal and focus the filter box; incrementally filters the current table (case-insensitive substring, matched against the entry text — not the reply tree's glyphs or reply count). |
 | `Enter` | In the filter box, return focus to the table. Elsewhere, drill into the highlighted row, or select the entry at the entries level. |
-| `Esc` / `Backspace` | Go back one level (from the table); does nothing at the logbook list — press `q` to quit. In the filter box, `Esc` returns focus to the table. |
+| `Esc` / `Backspace` | Go back one level (from the table); does nothing at the logbook list — press `ctrl+q` to quit. In the filter box, `Esc` returns focus to the table. |
 | `d` | Logbook/document levels only: create a new document (see `bely-cli tui`'s "New document" above) — a mutation, so this is where the app authenticates if it hasn't already. |
 | `s` | Entries level only: save the highlighted entry's markdown to a file in the current directory. |
 | `y` | Entries level only: copy a `bely-cli entry get` reference for the highlighted entry to the clipboard. |
@@ -430,7 +430,7 @@ only appear there. `t` appears at the entries level only when the document has r
 | `i` | Logbook/document levels only: toggle the side info panel. |
 | `f` | Entries level only: toggle the table to widen the preview pane. |
 | `r` | Refresh the current level, bypassing the in-session cache. Entry selection, preview scroll, filters, and collapsed threads are preserved when possible. |
-| `q` | Quit without selecting. |
+| `ctrl+q` | Quit without selecting. Pressing `q` alone shows a reminder. |
 
 Replies only nest one level deep. Pressing `p` on either a top-level entry or one of its
 replies targets the top-level thread; `n` still adds a separate top-level entry.

@@ -61,7 +61,7 @@ ALL_SHORTCUTS = (
     Shortcut("Space", "Toggle an item in a multi-select picker", "Dialogs and editing", ("dialogs",)),
     Shortcut("?", "Open or close keyboard shortcuts", "Application", ("types", "docs", "entries")),
     Shortcut("Ctrl+P", "Open the command palette", "Application", ("types", "docs", "entries")),
-    Shortcut("q", "Quit", "Application", ("types", "docs", "entries")),
+    Shortcut("Ctrl+Q", "Quit", "Application", ("types", "docs", "entries")),
 )
 
 
