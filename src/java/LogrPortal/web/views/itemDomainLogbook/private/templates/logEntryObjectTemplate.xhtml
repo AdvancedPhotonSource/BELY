@@ -137,6 +137,13 @@ See LICENSE file.
                 <p:tooltip for="#{entityTypeName}LogDestroyButton" value="Delete #{entityTypeName} log entry."/>
             </p:commandLink>
 
+            <p:commandLink id="#{entityTypeName}LogPdfDownload"
+                           ajax="false"
+                           styleClass="logAction-right fa fa-link-icon fa-file-pdf-o" title="Download PDF">
+                <p:tooltip for="#{entityTypeName}LogPdfDownload" value="Download log entry as PDF."/>
+                <p:fileDownload value="#{itemDomainLogbookController.downloadLogEntryPdf(logObject)}"/>
+            </p:commandLink>
+
             <p:commandLink id="#{entityTypeName}LogPermalink"
                            action="#{facesUtility.displayGrowlInfoMessage('Copied', 'Log permalink copied to clipboard.')}"                                        
                            styleClass="logAction-right fa fa-link-icon fa-clipboard" title="Copy permalink">                                    
