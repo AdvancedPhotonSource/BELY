@@ -303,15 +303,14 @@ equivalent of Home's old menu items, plus what Textual provides by default:
 
 **Entry composer**
 
-A Markdown-aware `TextArea` for the entry body, an optional attachment path, and three
-buttons (`Tab`/arrows move focus between the fields and buttons; `Enter` presses the
+A Markdown-aware `TextArea` for the entry body and three buttons (`Tab`/arrows move focus between the fields and buttons; `Enter` presses the
 focused button):
 
 | Button | Action |
 |--------|--------|
-| Save  `^S` | Save (and upload the attachment, if a path was entered). Also `ctrl+s` from anywhere in the dialog. |
+| Save  `^S` | Save the entry. Also `ctrl+s` from anywhere in the dialog. |
 | Edit in $EDITOR | Suspend the TUI and open the buffer in `$EDITOR`; the edited text comes back into the `TextArea`. |
-| Cancel  `Esc` | Cancel; asks for confirmation first if the buffer or attachment has unsaved changes. Also `Esc` from anywhere in the dialog. |
+| Cancel  `Esc` | Cancel; asks for confirmation first if the buffer has unsaved changes. Also `Esc` from anywhere in the dialog. |
 
 An empty new entry is skipped rather than saved, matching `entry add`'s behavior.
 

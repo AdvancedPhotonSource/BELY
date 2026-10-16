@@ -127,6 +127,12 @@ See LICENSE file.
             <p:tooltip for="nextDoc" value="Navigate to next log document" /> 
         </p:commandButton>       
 
+        <p:commandButton id="downloadDocumentPdf" icon="fa fa-file-pdf-o"
+                         ajax="false" style="float: right">
+            <p:tooltip for="downloadDocumentPdf" value="Download log document as PDF" />
+            <p:fileDownload value="#{itemDomainLogbookController.downloadCurrentDocumentPdf()}" />
+        </p:commandButton>
+
         <p:commandButton id="toggleTimestamp" icon="fa fa-clock-o"
                          style="float: right"
                          ajax="true"                        

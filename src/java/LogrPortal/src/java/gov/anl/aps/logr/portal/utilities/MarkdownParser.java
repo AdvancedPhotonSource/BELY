@@ -16,14 +16,17 @@ import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.ast.TextCollectingVisitor;
 import com.vladsch.flexmark.util.data.DataHolder;
+import com.vladsch.flexmark.util.data.DataKey;
 import com.vladsch.flexmark.util.data.MutableDataHolder;
 import com.vladsch.flexmark.util.data.MutableDataSet;
 import com.vladsch.flexmark.util.misc.Extension;
 import com.vladsch.flexmark.util.sequence.BasedSequence;
 import com.vladsch.flexmark.util.sequence.Escaping;
 import com.vladsch.flexmark.ext.tables.TablesExtension;
+import gov.anl.aps.logr.common.constants.CdbProperty;
 import gov.anl.aps.logr.common.constants.CdbPropertyValue;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Arrays;
@@ -73,11 +76,14 @@ public class MarkdownParser {
             
 
     private static String contextRoot = null;
+    private static String permanentContextRootUrl = null;
     
     private static final String LOG_ATTACHMENT_PREFIX = "/log/attachments/"; 
     private static final String API_DOWNLOAD_PREFIX = "/api/Downloads/Attachments/"; 
 
     private static String markdownExampleAsHtml = null;
+
+    private static final DataKey<Boolean> PDF_EXPORT = new DataKey<>("PDF_EXPORT", false);
 
     private static MutableDataHolder options = new MutableDataSet()
             .set(Parser.EXTENSIONS, Arrays.asList(
@@ -91,10 +97,17 @@ public class MarkdownParser {
     private static HtmlRenderer renderer = HtmlRenderer.builder(options).build();
 
     public static String parseMarkdownAsHTML(String text) {
-        Node document = parser.parse(text);
-        String html = renderer.render(document);
+        return renderMarkdown(text, renderer);
+    }
 
-        return html;
+    public static String parseMarkdownAsPdfHTML(String text) {
+        MutableDataHolder pdfOptions = new MutableDataSet(options).set(PDF_EXPORT, true);
+        return renderMarkdown(text, HtmlRenderer.builder(pdfOptions).build());
+    }
+
+    private static String renderMarkdown(String text, HtmlRenderer htmlRenderer) {
+        Node document = parser.parse(text == null ? "" : text);
+        return htmlRenderer.render(document);
     }
 
     public static String getMarkdownExampleText() {
@@ -129,8 +142,10 @@ public class MarkdownParser {
     // Node renderer to customize markdown html output. 
     static class LogrNodeRenderer implements NodeRenderer {
 
-        public LogrNodeRenderer(DataHolder options) {
+        private final boolean pdfExport;
 
+        public LogrNodeRenderer(DataHolder options) {
+            pdfExport = PDF_EXPORT.get(options);
         }
 
         @Override
@@ -147,19 +162,41 @@ public class MarkdownParser {
             }
             return contextRoot;
         }
+
+        private String getPermanentContextRootUrl() {
+            if (permanentContextRootUrl == null) {
+                permanentContextRootUrl = ConfigurationUtility.getPortalProperty(
+                        CdbProperty.PERMANENT_CONTEXT_ROOT_URL_PROPERTY_NAME);
+            }
+            return permanentContextRootUrl;
+        }
         
         private String getAttachmentEndpoint(String url, boolean scaled) {
-            if (url.startsWith(LOG_ATTACHMENT_PREFIX)) { 
-                url = url.replace(LOG_ATTACHMENT_PREFIX, API_DOWNLOAD_PREFIX); 
+            if (url.startsWith(LOG_ATTACHMENT_PREFIX)) {
+                String attachmentName = url.substring(LOG_ATTACHMENT_PREFIX.length());
+                if (pdfExport && scaled) {
+                    return getPdfAttachmentUrl(attachmentName, true);
+                }
 
-                url = getContextRoot() + url; 
-                
+                String root = pdfExport ? getPermanentContextRootUrl() : getContextRoot();
+                url = root + API_DOWNLOAD_PREFIX + attachmentName;
                 if (scaled) {
-                    url = url + '/' + CdbPropertyValue.SCALED_IMAGE_SCALING; 
-                } 
+                    url = url + '/' + CdbPropertyValue.SCALED_IMAGE_SCALING;
+                }
             }
-            
-            return url; 
+
+            return url;
+        }
+
+        private String getPdfAttachmentUrl(String attachmentName, boolean scaled) {
+            File attachmentFile = new File(StorageUtility.getFileSystemLogAttachmentPath(attachmentName));
+            if (scaled) {
+                File scaledFile = new File(attachmentFile.getPath() + CdbPropertyValue.SCALED_IMAGE_EXTENSION);
+                if (scaledFile.isFile()) {
+                    attachmentFile = scaledFile;
+                }
+            }
+            return attachmentFile.toURI().toString();
         }
 
         private void render(Image node, NodeRendererContext context, HtmlWriter html) {
@@ -170,20 +207,22 @@ public class MarkdownParser {
             String fullResUrl = aLink.getUrl();
             String scaledUrl = imgLink.getUrl();
 
-            if (nodeUrl.startsWith("/")) {
-                fullResUrl = getAttachmentEndpoint(fullResUrl, false); 
-                scaledUrl = getAttachmentEndpoint(scaledUrl, true); 
+            boolean storedAttachment = nodeUrl.startsWith("/");
+            if (storedAttachment) {
+                String attachmentName = nodeUrl.subSequence(LOG_ATTACHMENT_PREFIX.length(), nodeUrl.length()).toString();
+                if (pdfExport) {
+                    scaledUrl = getPdfAttachmentUrl(attachmentName, false);
+                } else {
+                    fullResUrl = getAttachmentEndpoint(fullResUrl, false);
+                    scaledUrl = getAttachmentEndpoint(scaledUrl, true);
+                }
             }
 
-            // Create a link to full size image. 
-            html.attr("href", fullResUrl);
-            html.attr("target", "_log_img");
-            html.srcPos(node.getChars()).withAttr(aLink).tag("a");
-
-            // Update image node to use scaled image
-            if (nodeUrl.startsWith("/")) {
-                nodeUrl = nodeUrl.append(CdbPropertyValue.SCALED_IMAGE_EXTENSION);
-                node.setUrl(nodeUrl);
+            if (!pdfExport) {
+                // Web images link to the full-size attachment.
+                html.attr("href", fullResUrl);
+                html.attr("target", "_log_img");
+                html.srcPos(node.getChars()).withAttr(aLink).tag("a");
             }
 
             // Standard image render function. Original is "private" 
@@ -210,8 +249,9 @@ public class MarkdownParser {
             }
             // End of image block 
 
-            // Close a tag after adding image 
-            html.tag("/a");
+            if (!pdfExport) {
+                html.tag("/a");
+            }
         }                
 
         //See https://github.com/vsch/flexmark-java/blob/cc3a2f59ba6e532833f4805f8134b4dc966ff837/flexmark/src/main/java/com/vladsch/flexmark/html/renderer/CoreNodeRenderer.java#L642
