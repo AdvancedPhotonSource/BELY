@@ -42,6 +42,7 @@ import gov.anl.aps.logr.portal.model.db.entities.Reaction;
 import gov.anl.aps.logr.portal.model.db.entities.SettingType;
 import gov.anl.aps.logr.portal.model.db.entities.UserInfo;
 import gov.anl.aps.logr.portal.model.db.utilities.EntityInfoUtility;
+import gov.anl.aps.logr.portal.utilities.LogbookPdfExportUtility;
 import gov.anl.aps.logr.portal.utilities.MarkdownParser;
 import gov.anl.aps.logr.portal.utilities.SearchResult;
 import gov.anl.aps.logr.portal.utilities.SessionUtility;
@@ -74,6 +75,7 @@ import javax.faces.model.SelectItemGroup;
 import javax.inject.Named;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.primefaces.model.StreamedContent;
 
 /**
  * Controller that provides functionality to create, edit, delete, and view
@@ -187,6 +189,26 @@ public class ItemDomainLogbookController extends ItemController<ItemDomainLogboo
 
     public static ItemDomainLogbookController getInstance() {
         return (ItemDomainLogbookController) SessionUtility.findBean(controllerNamed);
+    }
+
+    public StreamedContent downloadCurrentDocumentPdf() {
+        try {
+            return LogbookPdfExportUtility.exportDocument(getCurrent());
+        } catch (Exception ex) {
+            logger.error("Could not export log document PDF", ex);
+            SessionUtility.addErrorMessage("PDF Export Error", "Could not create the log document PDF.");
+            return null;
+        }
+    }
+
+    public StreamedContent downloadLogEntryPdf(Log log) {
+        try {
+            return LogbookPdfExportUtility.exportEntry(getCurrent(), log);
+        } catch (Exception ex) {
+            logger.error("Could not export log entry PDF", ex);
+            SessionUtility.addErrorMessage("PDF Export Error", "Could not create the log entry PDF.");
+            return null;
+        }
     }
 
     @Override

@@ -636,25 +636,18 @@ class ComposeScreenTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(saved.parent_log_id, 7)
         self.assertEqual(saved.log_entry, "reply text")
 
-    async def test_reply_uses_existing_attachment_flow(self):
+    async def test_reply_does_not_show_attachment_field(self):
         api = FakeLogbookApi()
-        api.upload_attachment = lambda **kwargs: None
         doc = SimpleNamespace(id=1, name="Doc")
         parent = SimpleNamespace(log_id=7)
         app = App()
         async with app.run_test() as pilot:
             task = app.run_worker(open_composer(app, doc, api, reply_to=parent))
             await pilot.pause()
-            screen = app.screen
-            screen.query_one("#compose-area", TextArea).text = "reply text"
-            screen.query_one("#compose-attach", Input).value = "/tmp/reply.txt"
-            with patch("bely_cli.core.validate_attachment_path", return_value="/tmp/reply.txt"), \
-                 patch("bely_cli.core.upload_attachment") as upload:
-                screen.query_one("#compose-save", Button).press()
-                await pilot.pause()
-                await pilot.pause()
-                saved = await task.wait()
-        upload.assert_called_once_with(api, 1, saved.log_id, "/tmp/reply.txt")
+            self.assertEqual(len(app.screen.query("#compose-attach")), 0)
+            app.screen.query_one("#compose-cancel", Button).press()
+            await pilot.pause()
+            await task.wait()
 
     async def test_reply_cancel_returns_none(self):
         api = FakeLogbookApi()
@@ -774,40 +767,20 @@ class ComposeScreenTests(unittest.IsolatedAsyncioTestCase):
                 screen.query_one("#compose-area", TextArea).text, "existing text edited")
             # buffer is dirty now, so skip Cancel here -- not what this test covers
 
-    async def test_tab_from_attachment_field_reaches_save_next(self):
+    async def test_composer_modes_do_not_show_attachment_field(self):
         api = FakeLogbookApi()
         doc = SimpleNamespace(id=1, name="Doc")
-        entry = SimpleNamespace(log_id=7, log_entry="existing text")
-        app = App()
-        async with app.run_test() as pilot:
-            app.run_worker(app.push_screen_wait(ComposeScreen(doc, entry, api, is_new=False)))
-            await pilot.pause()
-            screen = app.screen
-            screen.query_one("#compose-attach", Input).focus()
-            await pilot.pause()
-            await pilot.press("tab")
-            await pilot.pause()
-            self.assertIs(screen.focused, screen.query_one("#compose-save", Button))
-
-    async def test_down_and_up_arrows_move_between_attachment_and_buttons(self):
-        api = FakeLogbookApi()
-        doc = SimpleNamespace(id=1, name="Doc")
-        entry = SimpleNamespace(log_id=7, log_entry="existing text")
-        app = App()
-        async with app.run_test() as pilot:
-            app.run_worker(app.push_screen_wait(ComposeScreen(doc, entry, api, is_new=False)))
-            await pilot.pause()
-            screen = app.screen
-            screen.query_one("#compose-attach", Input).focus()
-            await pilot.pause()
-
-            await pilot.press("down")
-            await pilot.pause()
-            self.assertIs(screen.focused, screen.query_one("#compose-save", Button))
-
-            await pilot.press("up")
-            await pilot.pause()
-            self.assertIs(screen.focused, screen.query_one("#compose-attach", Input))
+        for is_new, entry in (
+            (True, SimpleNamespace(log_id=None, log_entry="")),
+            (False, SimpleNamespace(log_id=7, log_entry="existing text")),
+        ):
+            with self.subTest(is_new=is_new):
+                app = App()
+                async with app.run_test() as pilot:
+                    app.run_worker(app.push_screen_wait(
+                        ComposeScreen(doc, entry, api, is_new=is_new)))
+                    await pilot.pause()
+                    self.assertEqual(len(app.screen.query("#compose-attach")), 0)
 
     async def test_left_and_right_arrows_cycle_between_buttons(self):
         api = FakeLogbookApi()
